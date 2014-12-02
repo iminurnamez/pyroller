@@ -1,0 +1,32 @@
+This software is written with the Python (Copyright © 2001-2014 Python Software Foundation; All Rights Reserved) programming language which is licensed under 
+    the PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2. A copy of the license is included as PSFLICENSE.txt
+The Pygame library used in this game is licensed under the Gnu Lesser General Public License Version 2.1.  http://www.pygame.org/LGPL A copy of the license has been included as LGPL.txt
+This game uses the multiscene template written by Mekire (Sean J. McKiernan) which can be found at https://github.com/Mekire/pygame-mutiscene-template-with-movie
+
+
+CC-0             http://creativecommons.org/publicdomain/zero/1.0/legalcode    Summary:  http://creativecommons.org/publicdomain/zero/1.0/
+CC-BY-NC-3  http://creativecommons.org/licenses/by-nc/3.0/legalcode           Summary:  http://creativecommons.org/licenses/by-nc/3.0/
+CC-BY-3        http://creativecommons.org/licenses/by/3.0/legalcode               Summary:  http://creativecommons.org/licenses/by/3.0/
+Sampling+    http://creativecommons.org/licenses/sampling+/1.0/legalcode   Summary:  http://creativecommons.org/licenses/sampling+/1.0/
+OFL              http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
+
+The betting chip images, chip sounds and card sounds were created by Kenney (www.kenney.nl) and are licensed as CC-0. Sources: http://opengameart.org/content/boardgame-pack and http://opengameart.org/content/54-casino-sound-effects-cards-dice-chips
+The card face images were created by Byron Knoll and are licensed as CC-0. https://code.google.com/p/vector-playing-cards/
+The pygame logo (face down card image) was created by TheCorruptor. http://www.pygame.org/docs/logos.html
+The Saniretro font (© Grand Chaos Productions. Some Rights Reserved.) was created by Jayvee D. Enaguas (Grand Chaos) and is licensed under the SIL Open Font License (OFL above). http://www.dafont.com/saniretro.font
+
+The audio files listed below are used under the indicated licenses from the list above:
+
+Audio File: main_stem.ogg
+Source Title: “Main Stem” (by U.S. Army Blues)
+Source URL: http://freemusicarchive.org/music/US_Army_Blues/Live_At_Blues_Alley/0_-_02_-_The_US_Army_Blues_-_Main_Stem
+Source Author: U.S. Army Blues 
+License: CC-0
+
+
+Audio File: 
+Source Title:  
+Source URL: 
+Source Author: 
+License: 
+
