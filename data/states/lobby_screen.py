@@ -11,7 +11,7 @@ class LobbyScreen(tools._State):
     the exit point for the game."""
     def __init__(self):
         super(LobbyScreen, self).__init__()
-        screen_rect = pg.display.get_surface().get_rect()
+        screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
         self.games = [("Blackjack", "BLACKJACK")]
         b_width = 180
@@ -46,13 +46,14 @@ class LobbyScreen(tools._State):
         if event.type == pg.QUIT:
             self.exit_game()
         elif event.type == pg.MOUSEBUTTONDOWN:
-            if self.done_button.rect.collidepoint(event.pos):
+            pos = tools.scaled_mouse_pos(event.pos)
+            if self.done_button.rect.collidepoint(pos):
                 self.exit_game()
-            elif self.stats_button.rect.collidepoint(event.pos):
+            elif self.stats_button.rect.collidepoint(pos):
                 self.done = True
                 self.next = "STATSMENU"
             for button in self.game_buttons:
-                if button.rect.collidepoint(event.pos):
+                if button.rect.collidepoint(pos):
                     self.done = True
                     self.next = button.payload
                     

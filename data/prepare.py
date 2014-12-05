@@ -9,11 +9,11 @@ This module initializes the display and creates dictionaries of resources.
 
 import os
 import pygame as pg
-
 from . import tools
 
 ORIGINAL_CAPTION = "Py Roller Casino"
-SCREEN_SIZE = (800, 800) #(1366, 768)
+SCREEN_SIZE = (600, 600)
+RENDER_SIZE = (800, 800)
 CARD_SIZE = (64, 93)
 CARD_SIZE = (int(CARD_SIZE[0] * 1.5),
                        int(CARD_SIZE[1] * 1.5))
@@ -28,7 +28,7 @@ pg.init()
 os.environ['SDL_VIDEO_CENTERED'] = "TRUE"
 pg.display.set_caption(ORIGINAL_CAPTION)
 SCREEN = pg.display.set_mode(SCREEN_SIZE)
-SCREEN_RECT = SCREEN.get_rect()
+
 
 
 #Resource loading (Fonts and music just contain path names).

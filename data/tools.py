@@ -5,6 +5,7 @@ for States.  Also contained here are resource loading functions.
 
 import os
 import pygame as pg
+import prepare
 
 
 class Control(object):
@@ -13,6 +14,7 @@ class Control(object):
     states is also found here."""
     def __init__(self, caption):
         self.screen = pg.display.get_surface()
+        self.render_surface = pg.Surface(prepare.RENDER_SIZE).convert()
         self.caption = caption
         self.done = False
         self.clock = pg.time.Clock()
@@ -39,7 +41,12 @@ class Control(object):
             self.done = True
         elif self.state.done:
             self.flip_state()
-        self.state.update(self.screen, self.keys, self.current_time, dt)
+        self.state.update(self.render_surface, self.keys, self.current_time, dt)
+        if prepare.RENDER_SIZE != prepare.SCREEN_SIZE:
+            scaled_surf = pg.transform.scale(self.render_surface, (prepare.SCREEN_SIZE))
+            self.screen.blit(scaled_surf, (0, 0))
+        else:
+            self.screen.blit(self.render_surface, (0, 0))
 
     def flip_state(self):
         """When a State changes to done necessary startup and cleanup functions
@@ -123,6 +130,20 @@ class _State(object):
         return msg, rect
 
 
+### Mouse position functions         
+def scaled_mouse_pos(pos=None):
+    """Return the mouse position adjusted for screen size if no pos argument is passed
+    and returns pos adjusted for screen size if pos is passed."""
+    screen = prepare.SCREEN_SIZE
+    render = prepare.RENDER_SIZE
+    if pos is None:
+        x, y = pg.mouse.get_pos() 
+    else:
+        x, y = pos
+    return ((x / float(screen[0])) * render[0],
+                (y / float(screen[1])) * render[1])
+
+    
 ### Resource loading functions.
 def load_all_gfx(directory,colorkey=(0,0,0),accept=(".png",".jpg",".bmp")):
     """Load all graphics with extensions in the accept argument.  If alpha

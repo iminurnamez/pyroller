@@ -7,7 +7,7 @@ class StatsMenu(tools._State):
     want to view or return to the lobby."""
     def __init__(self):
         super(StatsMenu, self).__init__()
-        screen_rect = pg.display.get_surface().get_rect()
+        screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
         self.title = Label(self.font, 64, "Statistics", "darkred", 
                                  {"midtop": (screen_rect.centerx, screen_rect.top + 10)})
@@ -33,11 +33,12 @@ class StatsMenu(tools._State):
         
     def get_event(self, event):
         if event.type == pg.MOUSEBUTTONDOWN:
-            if self.done_button.rect.collidepoint(event.pos):
+            pos = tools.scaled_mouse_pos()
+            if self.done_button.rect.collidepoint(pos):
                 self.done = True
                 self.next = "LOBBYSCREEN"
             for button in self.game_buttons:
-                if button.rect.collidepoint(event.pos):
+                if button.rect.collidepoint(pos):
                     self.persist["current_game_stats"] = button.payload
                     self.next = "STATSSCREEN"
                     self.done = True

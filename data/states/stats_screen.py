@@ -9,7 +9,7 @@ class StatsScreen(tools._State):
     def __init__(self):
         super(StatsScreen, self).__init__()
         self.font = prepare.FONTS["Saniretro"]
-        screen_rect = pg.display.get_surface().get_rect()
+        screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         b_width = 180
         b_height = 80
         left = screen_rect.centerx - (b_width / 2)
@@ -40,7 +40,8 @@ class StatsScreen(tools._State):
         
     def get_event(self, event):
         if event.type == pg.MOUSEBUTTONDOWN:
-            if self.done_button.rect.collidepoint(event.pos):
+            pos = tools.scaled_mouse_pos()
+            if self.done_button.rect.collidepoint(pos):
                 self.done = True
                 self.next = "LOBBYSCREEN"
                 

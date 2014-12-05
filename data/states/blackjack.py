@@ -22,7 +22,7 @@ class Blackjack(tools._State):
         self.deal_sounds = [prepare.SFX[name] for name in names]
         names = ["chipsstack{}".format(x) for x in (3, 5, 6)]
         self.chip_sounds = [prepare.SFX[name] for name in names]
-        self.screen_rect = pg.display.get_surface().get_rect()
+        self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.music_icon = prepare.GFX["speaker"]
         topright = (self.screen_rect.right - 10, self.screen_rect.top + 10)
         self.music_icon_rect = self.music_icon.get_rect(topright=topright)
@@ -218,13 +218,14 @@ class Blackjack(tools._State):
             self.done = True
             self.next = "LOBBYSCREEN"
         elif event.type == pg.MOUSEBUTTONDOWN:
-            if self.music_icon_rect.collidepoint(event.pos):
+            pos = tools.scaled_mouse_pos(event.pos)
+            if self.music_icon_rect.collidepoint(pos):
                 self.play_music = not self.play_music
                 if self.play_music:
                     pg.mixer.music.play(-1)
                 else:
                     pg.mixer.music.stop()
-            elif self.lobby_button.rect.collidepoint(event.pos):
+            elif self.lobby_button.rect.collidepoint(pos):
                 self.cash_out_player()
                 self.game_started = False
                 self.done = True
@@ -233,17 +234,17 @@ class Blackjack(tools._State):
             if self.state == "Player Turn":
                 if not self.moving_cards:
                     for button in self.player_buttons:
-                        if button.active and button.rect.collidepoint(event.pos):
+                        if button.active and button.rect.collidepoint(pos):
                             button.payload(self.player, self.current_player_hand)
             elif self.state == "Betting":
                 if not self.moving_stacks:
                     if event.button == 1:
-                        if self.deal_button.rect.collidepoint(event.pos):
+                        if self.deal_button.rect.collidepoint(pos):
                             if any(x.bet for x in self.player.hands):
                                 self.state = "Dealing"
                                 self.casino_player.stats["Blackjack"]["games played"] += 1
                         for stack in [x for x in self.player.chips.values() if x.chips]:
-                            bet_chips = stack.grab_chips(event.pos)
+                            bet_chips = stack.grab_chips(pos)
                             if bet_chips is not None:
                                 choice(self.chip_sounds).play()
                                 self.moving_stacks.append(bet_chips)
@@ -252,7 +253,7 @@ class Blackjack(tools._State):
                         for hand in self.player.hands:
                             removed = set()
                             for chip in hand.bet:
-                                if chip.rect.collidepoint(event.pos):
+                                if chip.rect.collidepoint(pos):
                                     choice(self.chip_sounds).play()
                                     removed.add(chip)
                                     self.player.add_chips([chip])
@@ -260,17 +261,18 @@ class Blackjack(tools._State):
                             hand.bet = [x for x in hand.bet if x not in removed]
             elif self.state == "Show Results":
                 if event.button == 1:
-                    if self.new_game_button.rect.collidepoint(event.pos):
+                    if self.new_game_button.rect.collidepoint(pos):
                         all_chips = []
                         for stack in self.player.chips.values():
                             all_chips.extend(stack.chips)
                         self.new_game(self.player.cash, all_chips)
         elif event.type == pg.MOUSEBUTTONUP:
+            pos = tools.scaled_mouse_pos(event.pos)
             if self.moving_stacks:
                 if event.button == 1:
                     for stack in self.moving_stacks:
-                        stack.bottomleft = event.pos
-                        if self.chip_rack.rect.collidepoint(event.pos):
+                        stack.bottomleft = pos
+                        if self.chip_rack.rect.collidepoint(pos):
                             self.player.add_chips(self.chip_rack.break_chips(stack.chips))
                         else:    
                             self.current_player_hand.bet.extend(stack.chips)
@@ -282,7 +284,7 @@ class Blackjack(tools._State):
                 pass
             else:
                 for stack in self.moving_stacks:
-                    x, y = pg.mouse.get_pos()
+                    x, y = tools.scaled_mouse_pos()
                     stack.bottomleft = (x - (prepare.CHIP_SIZE[0] // 2),
                                                  y + 6)
         elif self.state == "Dealing":

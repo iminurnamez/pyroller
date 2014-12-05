@@ -13,7 +13,7 @@ class TitleScreen(tools._State):
     def __init__(self):
         super(TitleScreen, self).__init__()
         self.next = "LOBBYSCREEN"
-        screen_rect = pg.display.get_surface().get_rect()
+        screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         font = prepare.FONTS["Saniretro"]
         self.title = Blinker(font, 128, "Py Rollers", "darkred", 
                                    {"midtop": (screen_rect.centerx, 
@@ -52,11 +52,12 @@ class TitleScreen(tools._State):
         
     def get_event(self, event):
         if event.type == pg.MOUSEBUTTONDOWN:
-            if self.new_game_button.rect.collidepoint(event.pos):
+            pos = tools.scaled_mouse_pos(event.pos)
+            if self.new_game_button.rect.collidepoint(pos):
                 if self.new_game_button.active:
                     self.persist["casino_player"] = CasinoPlayer()
                     self.done = True
-            elif self.load_game_button.rect.collidepoint(event.pos):
+            elif self.load_game_button.rect.collidepoint(pos):
                 if self.load_game_button.active:
                     self.persist["casino_player"] = CasinoPlayer(self.stats)
                     self.done = True

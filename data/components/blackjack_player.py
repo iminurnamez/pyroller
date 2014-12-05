@@ -75,16 +75,6 @@ class Player(object):
             card.pos = card.rect.center
         hand.tl = (hand.tl[0] + offset[0],
                         hand.tl[1] + offset[1])
-                        
-    #def align_hands(self):
-    #    total_width = sum([hand.slots[-1].right - hand.slots[0].left
-    #                                 for hand in self.hands])                                    
-    #    num_spaces = len(self.hands) - 1
-    #    spacer = 20
-    #    left = (self.screen_width - (total_width + (num_spaces * spacer)))//2
-    #    for hand in self.hands:
-    #        self.move_hand(hand, (left - hand.tl[0], 0))
-    #        left = hand.slots[-1].right + spacer
         
     def draw_hand_bet(self, hand, surface):
         left, bottom = hand.tl
