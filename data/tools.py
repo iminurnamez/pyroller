@@ -43,7 +43,7 @@ class Control(object):
             self.flip_state()
         self.state.update(self.render_surface, self.keys, self.current_time, dt)
         if prepare.RENDER_SIZE != prepare.SCREEN_SIZE:
-            scaled_surf = pg.transform.scale(self.render_surface, (prepare.SCREEN_SIZE))
+            scaled_surf = pg.transform.smoothscale(self.render_surface, (prepare.SCREEN_SIZE))
             self.screen.blit(scaled_surf, (0, 0))
         else:
             self.screen.blit(self.render_surface, (0, 0))
