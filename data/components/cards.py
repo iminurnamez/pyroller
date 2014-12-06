@@ -44,12 +44,12 @@ class Card(object):
         self.image = pg.transform.scale(image, self.card_size)
         self.back_image = pg.Surface(self.card_size).convert()
         self.back_image.fill(pg.Color("dodgerblue"))
-        pg.draw.rect(self.back_image, pg.Color("gray95"), self.back_image.get_rect(), 2)
-        pg.draw.rect(self.back_image, pg.Color("gray20"), self.back_image.get_rect(), 1)
+        #pg.draw.rect(self.back_image, pg.Color("gray95"), self.back_image.get_rect(), 2)
+        #pg.draw.rect(self.back_image, pg.Color("gray20"), self.back_image.get_rect(), 1)
         snake = prepare.GFX["pysnakeicon"]
-        snake = pg.transform.scale(snake, (self.card_size[0] - 8, self.card_size[1] - 8))
-        s_rect = snake.get_rect(midbottom=(self.back_image.get_rect().centerx,
-                                                               self.back_image.get_rect().bottom - 4))
+        s_rect = snake.get_rect().fit(self.back_image.get_rect())
+        s_rect.midbottom = self.back_image.get_rect().midbottom
+        snake = pg.transform.scale(snake, s_rect.size)
         self.back_image.blit(snake, s_rect)
         pg.draw.rect(self.back_image, pg.Color("gray95"), self.back_image.get_rect(), 4)
         pg.draw.rect(self.back_image, pg.Color("gray20"), self.back_image.get_rect(), 1)
@@ -73,7 +73,7 @@ class Deck(object):
         deck will replenish itself with a new deck upon exhaustion. Reusing 
         discards supersedes infinite replenishment."""
         
-    def __init__(self, topleft, card_size=(64, 93), default_shuffle=True,
+    def __init__(self, topleft, card_size=(84, 122), default_shuffle=True,
                          reuse_discards=True, infinite=False):
         self.topleft = topleft
         self.card_size = card_size

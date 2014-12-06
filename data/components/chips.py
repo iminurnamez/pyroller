@@ -17,8 +17,10 @@ class Chip(object):
     chip_size = prepare.CHIP_SIZE 
     chip_thickness = 6
     
-    def __init__(self, color):
+    def __init__(self, color, chip_size=None):
         self.color = color
+        if chip_size is not None:
+            self.chip_size = chip_size
         self.value = self.chip_values[self.color]
         self.image = self.images[color]
         self.image = pg.transform.scale(self.image, self.chip_size)

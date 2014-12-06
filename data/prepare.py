@@ -12,11 +12,12 @@ import pygame as pg
 from . import tools
 
 ORIGINAL_CAPTION = "Py Roller Casino"
-SCREEN_SIZE = (600, 600)
-RENDER_SIZE = (800, 800)
-CARD_SIZE = (64, 93)
-CARD_SIZE = (int(CARD_SIZE[0] * 1.5),
-                       int(CARD_SIZE[1] * 1.5))
+SCREEN_SIZE = (1024, 768)
+RENDER_SIZE = (1280, 960)
+RESOLUTIONS = [(800, 600), (1024, 768), (1280, 960), (1400, 1050)]
+CARD_SIZE = (84, 122)
+#CARD_SIZE = (int(CARD_SIZE[0] * 1.5),
+#                       int(CARD_SIZE[1] * 1.5))
 CHIP_SIZE = (32, 32)
 
 #Pre-initialize the mixer for less delay before a sound plays
@@ -27,7 +28,7 @@ pg.mixer.pre_init(44100, -16, 1, 512)
 pg.init()
 os.environ['SDL_VIDEO_CENTERED'] = "TRUE"
 pg.display.set_caption(ORIGINAL_CAPTION)
-SCREEN = pg.display.set_mode(SCREEN_SIZE)
+SCREEN = pg.display.set_mode(SCREEN_SIZE, pg.RESIZABLE)
 
 
 

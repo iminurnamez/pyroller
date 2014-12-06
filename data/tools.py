@@ -7,7 +7,6 @@ import os
 import pygame as pg
 import prepare
 
-
 class Control(object):
     """Control class for entire project. Contains the game loop, and contains
     the event_loop which passes events to States as needed. Logic for flipping
@@ -36,6 +35,7 @@ class Control(object):
     def update(self,dt):
         """Checks if a state is done or has called for a game quit.
         State is flipped if neccessary and State.update is called."""
+        self.screen = pg.display.get_surface()
         self.current_time = pg.time.get_ticks()
         if self.state.quit:
             self.done = True
@@ -66,6 +66,24 @@ class Control(object):
                 self.toggle_show_fps(event.key)
             elif event.type == pg.KEYUP:
                 self.keys = pg.key.get_pressed()
+            elif event.type == pg.VIDEORESIZE:
+                res_index = prepare.RESOLUTIONS.index(prepare.SCREEN_SIZE)
+                if event.w > prepare.SCREEN_SIZE[0] or event.h > prepare.SCREEN_SIZE[1]:
+                    try:
+                        new_size = prepare.RESOLUTIONS[res_index + 1]
+                    except IndexError:
+                        new_size = prepare.SCREEN_SIZE
+                elif ((event.w < prepare.SCREEN_SIZE[0] or event.h < prepare.SCREEN_SIZE[1])
+                        and res_index > 0):
+                    try:
+                        new_size = prepare.RESOLUTIONS[res_index - 1]
+                    except IndexError:
+                        new_size = prepare.SCREEN_SIZE
+                else:
+                    new_size = prepare.SCREEN_SIZE
+                prepare.SCREEN = pg.display.set_mode(new_size, pg.RESIZABLE)
+                prepare.SCREEN_SIZE = new_size
+                self.screen = prepare.SCREEN
             self.state.get_event(event)
 
     def toggle_show_fps(self, key):

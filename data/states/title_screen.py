@@ -51,7 +51,10 @@ class TitleScreen(tools._State):
         self.marquees = []
         
     def get_event(self, event):
-        if event.type == pg.MOUSEBUTTONDOWN:
+        if event.type == pg.QUIT:
+            self.done = True
+            self.quit = True
+        elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(event.pos)
             if self.new_game_button.rect.collidepoint(pos):
                 if self.new_game_button.active:
