@@ -7,24 +7,16 @@ and in the prepare module.
 """
 
 from . import prepare, tools
-from .states import title_screen, lobby_screen, stats_menu, stats_screen, blackjack
+from .states import title_screen, lobby_screen, stats_menu
+from .states import stats_screen, blackjack
 
-
-def main():
-    """Add states to control here."""
-    run_it = tools.Control(prepare.ORIGINAL_CAPTION)
-    state_dict = {"SPLASH" : splash.Splash(),
-                  "INTRO"  : intro.Intro(),
-                  "GAME"   : game.Game()}
-    run_it.setup_states(state_dict, "SPLASH")
-    run_it.main()
 
 def main():
     run_it = tools.Control(prepare.ORIGINAL_CAPTION)
     state_dict = {"TITLESCREEN": title_screen.TitleScreen(),
-                        "LOBBYSCREEN": lobby_screen.LobbyScreen(),
-                        "STATSMENU": stats_menu.StatsMenu(),
-                        "STATSSCREEN": stats_screen.StatsScreen(),
-                        "BLACKJACK": blackjack.Blackjack()}
+                  "LOBBYSCREEN": lobby_screen.LobbyScreen(),
+                  "STATSMENU": stats_menu.StatsMenu(),
+                  "STATSSCREEN": stats_screen.StatsScreen(),
+                  "BLACKJACK": blackjack.Blackjack()}
     run_it.setup_states(state_dict, "TITLESCREEN")
     run_it.main()

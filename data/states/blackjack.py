@@ -8,7 +8,7 @@ from ..components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
 from ..components.blackjack_dealer import Dealer
 from ..components.blackjack_player import Player
 from ..components.blackjack_hand import Hand
-            
+
 
 class Blackjack(tools._State):
     """State to represent a blackjack game. Player cash
@@ -29,7 +29,7 @@ class Blackjack(tools._State):
         self.mute_icon = prepare.GFX["mute"]
         self.play_music = True
         self.game_started = False
-        
+
         b_width = 240
         b_height = 60
         left, top = (555, 500)
@@ -43,7 +43,7 @@ class Blackjack(tools._State):
         deal_label = Label(self.font, font_size, "Deal", "gold3", {"center": (0, 0)})
         self.deal_button = Button(left, top, b_width, b_height, deal_label)
         top += b_height + vert_space
-        self.stand_button = PayloadButton(left, top, b_width, b_height, 
+        self.stand_button = PayloadButton(left, top, b_width, b_height,
                                                             next(labels), self.stand)
         top += b_height + vert_space
         self.double_down_button = PayloadButton(left, top, b_width, b_height,
@@ -57,14 +57,14 @@ class Blackjack(tools._State):
         self.player_buttons = [self.hit_button, self.stand_button, self.double_down_button,
                                          self.split_button, self.insurance_button]
         ng_label = Label(self.font, font_size, "New Game", "gold3", {"center": (0, 0)})
-        self.new_game_button = Button(self.screen_rect.centerx - (b_width//2), 
+        self.new_game_button = Button(self.screen_rect.centerx - (b_width//2),
                                                         self.screen_rect.bottom - (b_height + 15),
                                                         b_width, b_height, ng_label)
         lobby_label = Label(self.font, font_size, "Lobby", "gold3", {"center": (0, 0)})
-        self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15), 
+        self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
                                                  b_width, b_height, lobby_label)
-                                                
-    def new_game(self, player_cash, chips=None):    
+
+    def new_game(self, player_cash, chips=None):
         """Start a new round of blackjack."""
         self.deck = Deck((50, 50), prepare.CARD_SIZE)
         self.dealer = Dealer()
@@ -79,14 +79,14 @@ class Blackjack(tools._State):
         self.stand_button.active = True
         self.current_player_hand = self.player.hands[0]
         self.game_started = True
-        
+
     def startup(self, current_time, persistent):
         """Get state ready to resume."""
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
         if not self.game_started:
             self.new_game(self.casino_player.stats["cash"])
-    
+
     def hit(self, player, hand):
         """Draw a card from deck and add to hand."""
         choice(self.deal_sounds).play()
@@ -113,7 +113,7 @@ class Blackjack(tools._State):
             card.destination = hand.slots[-1]
             self.moving_cards.append(card)
             hand.final = True
-    
+
     def split_hand(self, player, hand):
         """Split player's hand into two hands, adjust hand locations
         and deal a new card to both hands."""
@@ -124,7 +124,7 @@ class Blackjack(tools._State):
         if len(hand.cards) == 2:
             c1 = hand.card_values[hand.cards[0].value]
             c2 = hand.card_values[hand.cards[1].value]
-            if c1 == c2:                
+            if c1 == c2:
                 hand.slots = hand.slots[:-1]
                 self.player.move_hands(((self.screen_rect.left + 20) - hand.slots[0].left, 0))
                 p_slot = player.hands[-1].slots[0]
@@ -145,14 +145,14 @@ class Blackjack(tools._State):
                 card2.destination = new_hand.slots[-1]
                 card2.face_up = True
                 self.moving_cards.extend([card1, card2])
-                
+
     def buy_insurance(self, player, hand):
         """Currently unimplemented."""
         chip_total = player.get_chip_total()
         bet = sum([chip.value for chip in hand.bet])
         if chip_total < bet//2:
             return
-    
+
     def tally_hands(self):
         """Calculate result of each player hand and set appropriate
         flag for each hand."""
@@ -162,7 +162,7 @@ class Blackjack(tools._State):
         elif self.dealer.hand.busted:
             for hand in self.player.hands:
                 if not hand.busted and not hand.blackjack:
-                    hand.winner = True                         
+                    hand.winner = True
         else:
             d_score = self.dealer.hand.best_score()
             for hand in self.player.hands:
@@ -176,7 +176,7 @@ class Blackjack(tools._State):
                         hand.push = True
                     else:
                         hand.winner = True
-                        
+
     def pay_out(self):
         """Calculate player win amounts, update stats and return chips
         totalling total win amount."""
@@ -193,32 +193,32 @@ class Blackjack(tools._State):
             elif hand.blackjack:
                 cash += int(bet + (bet * 1.5))
                 self.casino_player.stats["Blackjack"]["blackjacks"] += 1
-                self.casino_player.stats["Blackjack"]["hands won"] += 1  
+                self.casino_player.stats["Blackjack"]["hands won"] += 1
             elif hand.winner:
                 cash += bet * 2
-                self.casino_player.stats["Blackjack"]["hands won"] += 1  
+                self.casino_player.stats["Blackjack"]["hands won"] += 1
             elif hand.push:
                 cash += bet
                 self.casino_player.stats["Blackjack"]["pushes"] += 1
             elif self.dealer.hand.blackjack and hand.insurance:
                 cash += sum([chip.value for chip in hand.insurance])
-            
+
         self.casino_player.stats["Blackjack"]["total winnings"] += cash
         chips = cash_to_chips(cash)
         return chips
-        
+
     def cash_out_player(self):
         """Convert player's chips to cash and update stats."""
         self.casino_player.stats["cash"] = self.player.get_chip_total()
 
-    def get_event(self, event):
+    def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
             self.cash_out_player()
             self.game_started = False
             self.done = True
             self.next = "LOBBYSCREEN"
         elif event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(event.pos)
+            pos = tools.scaled_mouse_pos(scale, event.pos)
             if self.music_icon_rect.collidepoint(pos):
                 self.play_music = not self.play_music
                 if self.play_music:
@@ -230,7 +230,7 @@ class Blackjack(tools._State):
                 self.game_started = False
                 self.done = True
                 self.next = "LOBBYSCREEN"
-            
+
             if self.state == "Player Turn":
                 if not self.moving_cards:
                     for button in self.player_buttons:
@@ -249,7 +249,7 @@ class Blackjack(tools._State):
                                 choice(self.chip_sounds).play()
                                 self.moving_stacks.append(bet_chips)
                                 break
- 
+
                         for hand in self.player.hands:
                             removed = set()
                             for chip in hand.bet:
@@ -267,24 +267,24 @@ class Blackjack(tools._State):
                             all_chips.extend(stack.chips)
                         self.new_game(self.player.cash, all_chips)
         elif event.type == pg.MOUSEBUTTONUP:
-            pos = tools.scaled_mouse_pos(event.pos)
+            pos = tools.scaled_mouse_pos(scale, event.pos)
             if self.moving_stacks:
                 if event.button == 1:
                     for stack in self.moving_stacks:
                         stack.bottomleft = pos
                         if self.chip_rack.rect.collidepoint(pos):
                             self.player.add_chips(self.chip_rack.break_chips(stack.chips))
-                        else:    
+                        else:
                             self.current_player_hand.bet.extend(stack.chips)
-                    self.moving_stacks = []    
-                    
-    def update(self, surface, keys, current_time, dt):
+                    self.moving_stacks = []
+
+    def update(self, surface, keys, current_time, dt, scale):
         if self.state == "Betting":
             if not self.moving_stacks:
                 pass
             else:
                 for stack in self.moving_stacks:
-                    x, y = tools.scaled_mouse_pos()
+                    x, y = tools.scaled_mouse_pos(scale)
                     stack.bottomleft = (x - (prepare.CHIP_SIZE[0] // 2),
                                                  y + 6)
         elif self.state == "Dealing":
@@ -304,19 +304,19 @@ class Blackjack(tools._State):
                     self.moving_cards.append(card)
                 else:
                     self.state = "Player Turn"
-        
+
         elif self.state == "Player Turn":
             self.split_button.active = False
             self.double_down_button.active = True
             self.insurance_button.active = False
-            
+
             if not self.moving_cards:
                 hand = self.current_player_hand
                 hand_score = hand.best_score()
                 if hand_score is None:
                     hand.busted = True
                     hand.final = True
-                
+
                 if len(hand.cards) == 2 and len(self.player.hands) < 2:
                     c1 = hand.card_values[hand.cards[0].value]
                     c2 = hand.card_values[hand.cards[1].value]
@@ -336,7 +336,7 @@ class Blackjack(tools._State):
                     else:
                         next_hand = [x for x in self.player.hands if not x.final][0]
                         self.current_player_hand = next_hand
-        
+
         elif self.state == "Dealer Turn":
             if all([hand.busted for hand in self.player.hands]):
                 self.dealer.hand.final = True
@@ -354,9 +354,9 @@ class Blackjack(tools._State):
                     self.hit(self.dealer, self.dealer.hand)
                 else:
                     self.dealer.hand.final = True
-                if self.dealer.hand.final:    
+                if self.dealer.hand.final:
                     self.state = "End Round"
-        
+
         elif self.state == "End Round":
             self.tally_hands()
             payout = self.pay_out()
@@ -380,16 +380,16 @@ class Blackjack(tools._State):
                 elif hand.push:
                     text, color = "Push", "gold3"
                 elif hand.busted:
-                    text, color = "Bust", "darkred"             
+                    text, color = "Bust", "darkred"
                 else:
                     text, color = "Loss", "darkred"
                 centerx = (hand.slots[0].left + hand.slots[-1].right) // 2
-                centery = hand.slots[0].centery               
-                label = Blinker(self.result_font, text_size, text, color, 
+                centery = hand.slots[0].centery
+                label = Blinker(self.result_font, text_size, text, color,
                                       {"center": (centerx, centery)},
                                       450)
                 self.result_labels.append(label)
-                hand.bet = []                
+                hand.bet = []
             self.state = "Show Results"
 
         arrived = set()
@@ -410,7 +410,7 @@ class Blackjack(tools._State):
         self.moving_cards = [x for x in self.moving_cards if x not in arrived]
         self.chip_rack.update()
         self.draw(surface, dt)
-        
+
     def draw(self, surface, dt):
         surface.fill(pg.Color("darkgreen"))
         self.dealer.draw_hand(surface)
@@ -418,7 +418,7 @@ class Blackjack(tools._State):
         self.chip_rack.draw(surface)
         self.player.draw(surface)
         for card in self.moving_cards:
-            card.draw(surface)  
+            card.draw(surface)
         for stack in self.moving_stacks:
             stack.draw(surface)
         if self.state == "Betting":
@@ -430,7 +430,7 @@ class Blackjack(tools._State):
             hand = self.current_player_hand
             rects = [x.rect for x in hand.cards]
             pg.draw.rect(
-                        surface, pg.Color("gold3"), 
+                        surface, pg.Color("gold3"),
                         hand.cards[0].rect.unionall(rects).inflate(8, 8), 3)
         if self.state == "Show Results":
             for blinker in self.result_labels:
