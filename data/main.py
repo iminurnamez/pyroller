@@ -12,7 +12,8 @@ from .states import stats_screen, blackjack
 
 
 def main():
-    run_it = tools.Control(prepare.ORIGINAL_CAPTION)
+    args = (prepare.ORIGINAL_CAPTION, prepare.RENDER_SIZE, prepare.RESOLUTIONS)
+    run_it = tools.Control(*args)
     state_dict = {"TITLESCREEN": title_screen.TitleScreen(),
                   "LOBBYSCREEN": lobby_screen.LobbyScreen(),
                   "STATSMENU": stats_menu.StatsMenu(),

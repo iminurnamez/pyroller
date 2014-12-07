@@ -5,7 +5,6 @@ for States.  Also contained here are resource loading functions.
 
 import os
 import pygame as pg
-import prepare
 
 
 class Control(object):
@@ -14,11 +13,13 @@ class Control(object):
     the event_loop which passes events to States as needed. Logic for flipping
     states is also found here.
     """
-    def __init__(self, caption):
+    def __init__(self, caption, render_size, resolutions):
         self.screen = pg.display.get_surface()
         self.screen_rect = self.screen.get_rect()
+        self.render_size = render_size
+        self.render_surf = pg.Surface(self.render_size).convert()
+        self.resolutions = resolutions
         self.set_scale()
-        self.render_surf = pg.Surface(prepare.RENDER_SIZE).convert()
         self.caption = caption
         self.done = False
         self.clock = pg.time.Clock()
@@ -51,7 +52,7 @@ class Control(object):
         elif self.state.done:
             self.flip_state()
         self.state.update(self.render_surf,self.keys,self.now,dt,self.scale)
-        if prepare.RENDER_SIZE != self.screen_rect.size:
+        if self.render_size != self.screen_rect.size:
             scale_args = (self.render_surf, self.screen_rect.size)
             scaled_surf = pg.transform.smoothscale(*scale_args)
             self.screen.blit(scaled_surf, (0, 0))
@@ -89,10 +90,10 @@ class Control(object):
         If the user resized the window change to the next available
         resolution depending on scale up or scale down.
         """
-        res_index = prepare.RESOLUTIONS.index(self.screen_rect.size)
+        res_index = self.resolutions.index(self.screen_rect.size)
         adjust = 1 if size > self.screen_rect.size else -1
-        if 0 <= res_index+adjust < len(prepare.RESOLUTIONS):
-            new_size = prepare.RESOLUTIONS[res_index+adjust]
+        if 0 <= res_index+adjust < len(self.resolutions):
+            new_size = self.resolutions[res_index+adjust]
         else:
             new_size = self.screen_rect.size
         self.screen = pg.display.set_mode(new_size, pg.RESIZABLE)
@@ -104,8 +105,8 @@ class Control(object):
         Reset the ratio of render size to window size.
         Used to make sure that mouse clicks are accurate on all resolutions.
         """
-        w_ratio = prepare.RENDER_SIZE[0]/float(self.screen_rect.w)
-        h_ratio = prepare.RENDER_SIZE[1]/float(self.screen_rect.h)
+        w_ratio = self.render_size[0]/float(self.screen_rect.w)
+        h_ratio = self.render_size[1]/float(self.screen_rect.h)
         self.scale = (w_ratio, h_ratio)
 
     def toggle_show_fps(self, key):
