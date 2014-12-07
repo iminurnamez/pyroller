@@ -83,6 +83,7 @@ class Control(object):
                 self.keys = pg.key.get_pressed()
             elif event.type == pg.VIDEORESIZE:
                 self.on_resize(event.size)
+                pg.event.clear(pg.VIDEORESIZE)
             self.state.get_event(event, self.scale)
 
     def on_resize(self, size):
