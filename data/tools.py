@@ -7,59 +7,73 @@ import os
 import pygame as pg
 import prepare
 
+
 class Control(object):
-    """Control class for entire project. Contains the game loop, and contains
+    """
+    Control class for entire project. Contains the game loop, and contains
     the event_loop which passes events to States as needed. Logic for flipping
-    states is also found here."""
+    states is also found here.
+    """
     def __init__(self, caption):
         self.screen = pg.display.get_surface()
-        self.render_surface = pg.Surface(prepare.RENDER_SIZE).convert()
+        self.screen_rect = self.screen.get_rect()
+        self.set_scale()
+        self.render_surf = pg.Surface(prepare.RENDER_SIZE).convert()
         self.caption = caption
         self.done = False
         self.clock = pg.time.Clock()
         self.fps = 60.0
         self.show_fps = False
-        self.current_time = 0.0
+        self.now = 0.0
         self.keys = pg.key.get_pressed()
         self.state_dict = {}
         self.state_name = None
         self.state = None
 
     def setup_states(self, state_dict, start_state):
-        """Given a dictionary of States and a State to start in,
-        builds the self.state_dict."""
+        """
+        Given a dictionary of States and a State to start in,
+        builds the self.state_dict.
+        """
         self.state_dict = state_dict
         self.state_name = start_state
         self.state = self.state_dict[self.state_name]
 
-    def update(self,dt):
-        """Checks if a state is done or has called for a game quit.
-        State is flipped if neccessary and State.update is called."""
+    def update(self, dt):
+        """
+        Checks if a state is done or has called for a game quit.
+        State is flipped if neccessary and State.update is called.
+        """
         self.screen = pg.display.get_surface()
-        self.current_time = pg.time.get_ticks()
+        self.now = pg.time.get_ticks()
         if self.state.quit:
             self.done = True
         elif self.state.done:
             self.flip_state()
-        self.state.update(self.render_surface, self.keys, self.current_time, dt)
-        if prepare.RENDER_SIZE != prepare.SCREEN_SIZE:
-            scaled_surf = pg.transform.smoothscale(self.render_surface, (prepare.SCREEN_SIZE))
+        self.state.update(self.render_surf,self.keys,self.now,dt,self.scale)
+        if prepare.RENDER_SIZE != self.screen_rect.size:
+            scale_args = (self.render_surf, self.screen_rect.size)
+            scaled_surf = pg.transform.smoothscale(*scale_args)
             self.screen.blit(scaled_surf, (0, 0))
         else:
-            self.screen.blit(self.render_surface, (0, 0))
+            self.screen.blit(self.render_surf, (0, 0))
 
     def flip_state(self):
-        """When a State changes to done necessary startup and cleanup functions
-        are called and the current State is changed."""
+        """
+        When a State changes to done necessary startup and cleanup functions
+        are called and the current State is changed.
+        """
         previous,self.state_name = self.state_name, self.state.next
         persist = self.state.cleanup()
         self.state = self.state_dict[self.state_name]
-        self.state.startup(self.current_time, persist)
+        self.state.startup(self.now, persist)
         self.state.previous = previous
 
     def event_loop(self):
-        """Process all events and pass them down to current State.  The f5 key
-        globally turns on/off the display of FPS in the caption"""
+        """
+        Process all events and pass them down to current State.
+        The f5 key globally turns on/off the display of FPS in the caption
+        """
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 self.keys = pg.key.get_pressed()
@@ -67,24 +81,32 @@ class Control(object):
             elif event.type == pg.KEYUP:
                 self.keys = pg.key.get_pressed()
             elif event.type == pg.VIDEORESIZE:
-                res_index = prepare.RESOLUTIONS.index(prepare.SCREEN_SIZE)
-                if event.w > prepare.SCREEN_SIZE[0] or event.h > prepare.SCREEN_SIZE[1]:
-                    try:
-                        new_size = prepare.RESOLUTIONS[res_index + 1]
-                    except IndexError:
-                        new_size = prepare.SCREEN_SIZE
-                elif ((event.w < prepare.SCREEN_SIZE[0] or event.h < prepare.SCREEN_SIZE[1])
-                        and res_index > 0):
-                    try:
-                        new_size = prepare.RESOLUTIONS[res_index - 1]
-                    except IndexError:
-                        new_size = prepare.SCREEN_SIZE
-                else:
-                    new_size = prepare.SCREEN_SIZE
-                prepare.SCREEN = pg.display.set_mode(new_size, pg.RESIZABLE)
-                prepare.SCREEN_SIZE = new_size
-                self.screen = prepare.SCREEN
-            self.state.get_event(event)
+                self.on_resize(event.size)
+            self.state.get_event(event, self.scale)
+
+    def on_resize(self, size):
+        """
+        If the user resized the window change to the next available
+        resolution depending on scale up or scale down.
+        """
+        res_index = prepare.RESOLUTIONS.index(self.screen_rect.size)
+        adjust = 1 if size > self.screen_rect.size else -1
+        if 0 <= res_index+adjust < len(prepare.RESOLUTIONS):
+            new_size = prepare.RESOLUTIONS[res_index+adjust]
+        else:
+            new_size = self.screen_rect.size
+        self.screen = pg.display.set_mode(new_size, pg.RESIZABLE)
+        self.screen_rect.size = new_size
+        self.set_scale()
+
+    def set_scale(self):
+        """
+        Reset the ratio of render size to window size.
+        Used to make sure that mouse clicks are accurate on all resolutions.
+        """
+        w_ratio = prepare.RENDER_SIZE[0]/float(self.screen_rect.w)
+        h_ratio = prepare.RENDER_SIZE[1]/float(self.screen_rect.h)
+        self.scale = (w_ratio, h_ratio)
 
     def toggle_show_fps(self, key):
         """Press f5 to turn on/off displaying the framerate in the caption."""
@@ -107,67 +129,73 @@ class Control(object):
 
 
 class _State(object):
-    """This is a prototype class for States.  All states should inherit from it.
+    """
+    This is a prototype class for States.  All states should inherit from it.
     No direct instances of this class should be created. get_event and update
     must be overloaded in the childclass.  startup and cleanup need to be
-    overloaded when there is data that must persist between States."""
+    overloaded when there is data that must persist between States.
+    """
     def __init__(self):
         self.start_time = 0.0
-        self.current_time = 0.0
+        self.now = 0.0
         self.done = False
         self.quit = False
         self.next = None
         self.previous = None
         self.persist = {}
 
-    def get_event(self, event):
-        """Processes events that were passed from the main event loop.
-        Must be overloaded in children."""
+    def get_event(self, event, scale=(1,1)):
+        """
+        Processes events that were passed from the main event loop.
+        Must be overloaded in children.
+        """
         pass
 
-    def startup(self, current_time, persistent):
-        """Add variables passed in persistent to the proper attributes and
-        set the start time of the State to the current time."""
+    def startup(self, now, persistent):
+        """
+        Add variables passed in persistent to the proper attributes and
+        set the start time of the State to the current time.
+        """
         self.persist = persistent
-        self.start_time = current_time
+        self.start_time = now
 
     def cleanup(self):
-        """Add variables that should persist to the self.persist dictionary.
-        Then reset State.done to False."""
+        """
+        Add variables that should persist to the self.persist dictionary.
+        Then reset State.done to False.
+        """
         self.done = False
         return self.persist
 
-    def update(self, surface, keys, current_time, dt):
+    def update(self, surface, keys, now, dt, scale):
         """Update function for state.  Must be overloaded in children."""
         pass
 
     def render_font(self, font, msg, color, center):
-        """Returns the rendered font surface and its rect centered on center."""
+        """Return the rendered font surface and its rect centered on center."""
         msg = font.render(msg, 1, color)
         rect = msg.get_rect(center=center)
         return msg, rect
 
 
-### Mouse position functions         
-def scaled_mouse_pos(pos=None):
-    """Return the mouse position adjusted for screen size if no pos argument is passed
-    and returns pos adjusted for screen size if pos is passed."""
-    screen = prepare.SCREEN_SIZE
-    render = prepare.RENDER_SIZE
-    if pos is None:
-        x, y = pg.mouse.get_pos() 
-    else:
-        x, y = pos
-    return ((x / float(screen[0])) * render[0],
-                (y / float(screen[1])) * render[1])
+### Mouse position functions
+def scaled_mouse_pos(scale, pos=None):
+    """
+    Return the mouse position adjusted for screen size if no pos argument is
+    passed and returns pos adjusted for screen size if pos is passed.
+    """
+    x,y = pg.mouse.get_pos() if pos is None else pos
+    return (int(x*scale[0]), int(y*scale[1]))
 
-    
+
 ### Resource loading functions.
 def load_all_gfx(directory,colorkey=(0,0,0),accept=(".png",".jpg",".bmp")):
-    """Load all graphics with extensions in the accept argument.  If alpha
+    """
+    Load all graphics with extensions in the accept argument.  If alpha
     transparency is found in the image the image will be converted using
     convert_alpha().  If no alpha transparency is detected image will be
-    converted using convert() and colorkey will be set to colorkey."""
+    converted using convert() and colorkey will be set to colorkey.
+    """
     graphics = {}
     for pic in os.listdir(directory):
         name,ext = os.path.splitext(pic)
@@ -183,8 +211,10 @@ def load_all_gfx(directory,colorkey=(0,0,0),accept=(".png",".jpg",".bmp")):
 
 
 def load_all_music(directory, accept=(".wav", ".mp3", ".ogg", ".mdi")):
-    """Create a dictionary of paths to music files in given directory
-    if their extensions are in accept."""
+    """
+    Create a dictionary of paths to music files in given directory
+    if their extensions are in accept.
+    """
     songs = {}
     for song in os.listdir(directory):
         name,ext = os.path.splitext(song)
@@ -194,21 +224,27 @@ def load_all_music(directory, accept=(".wav", ".mp3", ".ogg", ".mdi")):
 
 
 def load_all_fonts(directory, accept=(".ttf",)):
-    """Create a dictionary of paths to font files in given directory
-    if their extensions are in accept."""
+    """
+    Create a dictionary of paths to font files in given directory
+    if their extensions are in accept.
+    """
     return load_all_music(directory, accept)
 
 
 def load_all_movies(directory, accept=(".mpg",)):
-    """Create a dictionary of paths to movie files in given directory
-    if their extensions are in accept."""
+    """
+    Create a dictionary of paths to movie files in given directory
+    if their extensions are in accept.
+    """
     return load_all_music(directory, accept)
 
 
 def load_all_sfx(directory, accept=(".wav", ".mp3", ".ogg", ".mdi")):
-    """Load all sfx of extensions found in accept.  Unfortunately it is
+    """
+    Load all sfx of extensions found in accept.  Unfortunately it is
     common to need to set sfx volume on a one-by-one basis.  This must be done
-    manually if necessary in the setup module."""
+    manually if necessary in the setup module.
+    """
     effects = {}
     for fx in os.listdir(directory):
         name,ext = os.path.splitext(fx)
@@ -218,8 +254,10 @@ def load_all_sfx(directory, accept=(".wav", ".mp3", ".ogg", ".mdi")):
 
 
 def strip_from_sheet(sheet, start, size, columns, rows=1):
-    """Strips individual frames from a sprite sheet given a start location,
-    sprite size, and number of columns and rows."""
+    """
+    Strips individual frames from a sprite sheet given a start location,
+    sprite size, and number of columns and rows.
+    """
     frames = []
     for j in range(rows):
         for i in range(columns):

@@ -1,8 +1,3 @@
-import os
-import pygame as pg
-from . import tools
-
-
 """
 This module initializes the display and creates dictionaries of resources.
 """
@@ -11,8 +6,9 @@ import os
 import pygame as pg
 from . import tools
 
+
 ORIGINAL_CAPTION = "Py Roller Casino"
-SCREEN_SIZE = (1024, 768)
+START_SIZE = (1024, 768)
 RENDER_SIZE = (1400, 1050)
 RESOLUTIONS = [(800, 600), (1024, 768), (1280, 960), (1400, 1050)]
 CARD_SIZE = (84, 122)
@@ -28,8 +24,7 @@ pg.mixer.pre_init(44100, -16, 1, 512)
 pg.init()
 os.environ['SDL_VIDEO_CENTERED'] = "TRUE"
 pg.display.set_caption(ORIGINAL_CAPTION)
-SCREEN = pg.display.set_mode(SCREEN_SIZE, pg.RESIZABLE)
-
+pg.display.set_mode(START_SIZE, pg.RESIZABLE)
 
 
 #Resource loading (Fonts and music just contain path names).
