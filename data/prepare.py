@@ -25,6 +25,7 @@ pg.init()
 os.environ['SDL_VIDEO_CENTERED'] = "TRUE"
 pg.display.set_caption(ORIGINAL_CAPTION)
 pg.display.set_mode(START_SIZE, pg.RESIZABLE)
+pg.event.clear(pg.VIDEORESIZE)
 
 
 #Resource loading (Fonts and music just contain path names).
