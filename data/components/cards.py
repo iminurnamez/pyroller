@@ -44,8 +44,6 @@ class Card(object):
         self.image = pg.transform.scale(image, self.card_size)
         self.back_image = pg.Surface(self.card_size).convert()
         self.back_image.fill(pg.Color("dodgerblue"))
-        #pg.draw.rect(self.back_image, pg.Color("gray95"), self.back_image.get_rect(), 2)
-        #pg.draw.rect(self.back_image, pg.Color("gray20"), self.back_image.get_rect(), 1)
         snake = prepare.GFX["pysnakeicon"]
         s_rect = snake.get_rect().fit(self.back_image.get_rect())
         s_rect.midbottom = self.back_image.get_rect().midbottom
@@ -73,7 +71,7 @@ class Deck(object):
         deck will replenish itself with a new deck upon exhaustion. Reusing 
         discards supersedes infinite replenishment."""
         
-    def __init__(self, topleft, card_size=(84, 122), default_shuffle=True,
+    def __init__(self, topleft, card_size=prepare.CARD_SIZE, default_shuffle=True,
                          reuse_discards=True, infinite=False):
         self.topleft = topleft
         self.card_size = card_size
@@ -167,4 +165,5 @@ class MultiDeck(Deck):
         self.num_decks = num_decks
         for _ in range(num_decks - 1):
             self.cards.extend(self.make_cards())
-
+        if self.default_shuffle:
+            shuffle(self.cards)

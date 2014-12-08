@@ -30,11 +30,12 @@ class Blackjack(tools._State):
         self.play_music = True
         self.game_started = False
 
-        b_width = 240
-        b_height = 60
-        left, top = (555, 500)
-        vert_space = 20
-        font_size = 48
+        b_width = 360
+        b_height = 90
+        side_margin = 10
+        left, top = (self.screen_rect.right - (b_width + side_margin), 500)
+        vert_space = 30
+        font_size = 64
         action_texts = ("Hit", "Stand", "Double Down", "Split", "Insurance")
         labels = iter([Label(self.font, font_size, text, "gold3", {"center": (0, 0)})
                             for text in action_texts])

@@ -11,9 +11,7 @@ ORIGINAL_CAPTION = "Py Roller Casino"
 START_SIZE = (1024, 768)
 RENDER_SIZE = (1400, 1050)
 RESOLUTIONS = [(800, 600), (1024, 768), (1280, 960), (1400, 1050)]
-CARD_SIZE = (84, 122)
-#CARD_SIZE = (int(CARD_SIZE[0] * 1.5),
-#                       int(CARD_SIZE[1] * 1.5))
+CARD_SIZE = (125, 181)
 CHIP_SIZE = (32, 32)
 
 #Pre-initialize the mixer for less delay before a sound plays
