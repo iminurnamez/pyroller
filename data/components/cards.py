@@ -76,7 +76,7 @@ class Deck(object):
         self.topleft = topleft
         self.card_size = card_size
         self.rect = pg.Rect(self.topleft, self.card_size)
-        self.discard_rect = self.rect.move(self.card_size[0] + 30, 0)
+        self.discard_rect = self.rect.move(int(self.card_size[0] * 1.2), 0)
         self.default_shuffle = default_shuffle
         self.reuse_discards= reuse_discards
         self.infinite = infinite
@@ -89,7 +89,7 @@ class Deck(object):
         return len(self.cards)  
         
     def make_cards(self):
-        """Create a deck of cards."""
+        """Return a list of Cards."""
         suits = ("Clubs", "Hearts", "Diamonds", "Spades")
         cards = [Card(i, suit, self.card_size) for suit in suits for i in range(2, 15)]
         for _ in range(self.num_decks - 1):
@@ -133,31 +133,32 @@ class Deck(object):
             hand.append(self.draw_card())
         return hand
         
-    def draw_pile(self, cards, lefttop, surface):
-        """Draw a deck of cards to surface."""
-        x_offset = 2
-        y_offset = -1
+    def draw_pile(self, surface, cards, lefttop, x_offset=2,
+                           y_offset=-1, toggle_num=4):
+        """Draw a deck of cards to surface. Every toggle_num cards, the card
+        drawing position will be offset by (x_offset, y_offset). This allows you
+        to limit the height of the deck."""
         left, top = lefttop
         toggle = 1
         for card in cards:
             card.rect.topleft = (left, top)
             card.pos = card.rect.center
             card.draw(surface)
-            if not toggle % 4:
+            if not toggle % toggle_num:
                 left += x_offset
                 top += y_offset            
             toggle += 1
         
     def draw(self, surface):
         """Draw deck and discard pile to surface."""
-        self.draw_pile(self.cards, self.topleft, surface)
-        self.draw_pile(self.discards, self.discard_rect.topleft, surface)        
-              
+        self.draw_pile(surface, self.discards, self.discard_rect.topleft)
+        self.draw_pile(surface, self.cards, self.topleft)
+    
             
 class MultiDeck(Deck):
     """A class to represent a deck of cards composed of multiple 
     individual decks."""
-    def __init__(self, num_decks, card_size=(64, 93), default_shuffle=True,
+    def __init__(self, num_decks, card_size=prepare.CARD_SIZE, default_shuffle=True,
                         reuse_discards=True, shuffle_discards=True,
                         infinite=False):
         super(MultiDeck, self).__init__(card_size, default_shuffle, 
