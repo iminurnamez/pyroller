@@ -5,6 +5,7 @@ for States.  Also contained here are resource loading functions.
 
 import os
 import pygame as pg
+import argparse
 
 
 class Control(object):
@@ -299,3 +300,29 @@ def cursor_from_image(image):
             this_row.append(colors.get(pixel, " "))
         icon_string.append("".join(this_row))
     return icon_string
+    
+def get_cli_args(caption, win_pos, start_size):
+    '''modify prepare module globals based on command line arguments,
+    quickly force settings for debugging'''
+    parser = argparse.ArgumentParser(description='{} Arguments'.format(caption))
+    parser.add_argument('-c','--center', action='store_false', 
+        help='position starting window at (0,0), sets SDL_VIDEO_CENTERED to false')
+    parser.add_argument('-w','--winpos', nargs=2, default=win_pos, metavar=('X', 'Y'),
+        help='position starting window at (X,Y), default is (0,0)')
+    parser.add_argument('-s' , '--size', nargs=2, default=start_size, metavar=('WIDTH', 'HEIGHT'),
+        help='set window size to WIDTH HEIGHT, defualt is {}'.format(start_size))
+    parser.add_argument('-f' , '--fullscreen', action='store_true',
+        help='start in fullscreen')
+    parser.add_argument('-m' , '--music_off', action='store_true',
+        help='start with no music')
+        
+    args = vars(parser.parse_args())
+    #check each condition
+    if not args['center'] or (args['winpos'] != win_pos): #if -c or -w options
+        args['center'] = False
+    if args['size'] != start_size: # if screen size is different
+        args['resizable'] = False
+    if args['fullscreen']:
+        args['center'] = False
+        args['resizable'] = False
+    return args
