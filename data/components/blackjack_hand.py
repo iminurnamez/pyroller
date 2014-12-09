@@ -2,7 +2,7 @@ class Hand(object):
     card_values = {i: i for i in range(2, 11)}
     face_values = {i: 10 for i in range(11, 14)}
     card_values.update(face_values)
-    card_values[14] = "Ace"
+    card_values[1] = "Ace"
     
     def __init__(self, topleft, cards=None):
         self.tl = topleft
@@ -21,7 +21,7 @@ class Hand(object):
         scores.append([])
         cards = self.cards
         for card in cards:
-            if card.value == 14:
+            if card.value == 1:
                 new_scores = []
                 for score in scores:
                     new_scores.append(score + [1])

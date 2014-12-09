@@ -7,7 +7,8 @@ from ..components.angles import get_angle, project
 
 class Card(object):
     """Class to represent a single playing card."""
-    card_names = {2: "Two",
+    card_names = {1: "Ace",
+                           2: "Two",
                            3: "Three",
                            4: "Four",
                            5: "Five",
@@ -18,8 +19,7 @@ class Card(object):
                            10: "Ten",
                            11: "Jack",
                            12: "Queen",
-                           13: "King",
-                           14: "Ace"}
+                           13: "King"}
     speed = 5.0
     
     def __init__(self, value, suit, card_size):
@@ -27,7 +27,7 @@ class Card(object):
         self.value = value
         self.suit = suit
         self.long_name = "{} of {}".format(self.card_names[self.value], self.suit)
-        if self.value < 11: 
+        if 1 < self.value < 11: 
             self.name = "{} of {}".format(self.value, self.suit)
             self.short_name = "{}{}".format(self.value, self.suit[0])
         else:
@@ -91,9 +91,9 @@ class Deck(object):
     def make_cards(self):
         """Return a list of Cards."""
         suits = ("Clubs", "Hearts", "Diamonds", "Spades")
-        cards = [Card(i, suit, self.card_size) for suit in suits for i in range(2, 15)]
+        cards = [Card(i, suit, self.card_size) for suit in suits for i in range(1, 14)]
         for _ in range(self.num_decks - 1):
-            cards.extend([Card(i, suit, self.card_size) for suit in suits for i in range(2, 15)])
+            cards.extend([Card(i, suit, self.card_size) for suit in suits for i in range(1, 14)])
         if self.default_shuffle:
             shuffle(cards)
         return cards
@@ -128,10 +128,7 @@ class Deck(object):
 
     def make_hand(self, num_cards=5):
         """Create a hand of cards."""
-        hand = []
-        for _ in range(num_cards):
-            hand.append(self.draw_card())
-        return hand
+        return [self.draw_card() for _ in range(num_cards)]
         
     def draw_pile(self, surface, cards, lefttop, x_offset=2,
                            y_offset=-1, toggle_num=4):
@@ -153,7 +150,7 @@ class Deck(object):
         """Draw deck and discard pile to surface."""
         self.draw_pile(surface, self.discards, self.discard_rect.topleft)
         self.draw_pile(surface, self.cards, self.topleft)
-    
+
             
 class MultiDeck(Deck):
     """A class to represent a deck of cards composed of multiple 
