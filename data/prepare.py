@@ -6,9 +6,9 @@ import pygame as pg
 from . import tools
 
 ORIGINAL_CAPTION = "Py Roller Casino"
-START_SIZE = (1024, 768)
+START_SIZE = (928, 696)
 RENDER_SIZE = (1400, 1050)
-RESOLUTIONS = [(800, 600), (1024, 768), (1280, 960), (1400, 1050)]
+RESOLUTIONS = [(800, 600), (928, 696), (1280, 960), (1400, 1050)]
 CARD_SIZE = (125, 181)
 CHIP_SIZE = (32, 32)
 WIN_POS = (0,0)

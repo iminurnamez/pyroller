@@ -33,10 +33,12 @@ class Blackjack(tools._State):
         b_width = 360
         b_height = 90
         side_margin = 10
-        left, top = (self.screen_rect.right - (b_width + side_margin), 500)
-        vert_space = 30
+        vert_space = 20
+        left = self.screen_rect.right - (b_width + side_margin)
+        top = self.screen_rect.bottom - ((b_height * 5) + vert_space * 4)
+        
         font_size = 64
-        action_texts = ("Hit", "Stand", "Double Down", "Split", "Insurance")
+        action_texts = ("Hit", "Stand", "Double Down", "Split")
         labels = iter([Label(self.font, font_size, text, "gold3", {"center": (0, 0)})
                             for text in action_texts])
         self.hit_button = PayloadButton(left, top, b_width, b_height,
@@ -52,17 +54,15 @@ class Blackjack(tools._State):
         top += b_height + vert_space
         self.split_button = PayloadButton(left, top, b_width, b_height,
                                                           next(labels), self.split_hand)
-        top += b_height + vert_space
-        self.insurance_button = PayloadButton(left, top, b_width, b_height,
-                                                                 next(labels), self.buy_insurance)
-        self.player_buttons = [self.hit_button, self.stand_button, self.double_down_button,
-                                         self.split_button, self.insurance_button]
+        
+        self.player_buttons = [self.hit_button, self.stand_button, 
+                                         self.double_down_button, self.split_button]
         ng_label = Label(self.font, font_size, "New Game", "gold3", {"center": (0, 0)})
         self.new_game_button = Button(self.screen_rect.centerx - (b_width//2),
                                                         self.screen_rect.bottom - (b_height + 15),
                                                         b_width, b_height, ng_label)
         lobby_label = Label(self.font, font_size, "Lobby", "gold3", {"center": (0, 0)})
-        self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
+        self.lobby_button = Button(self.screen_rect.right - (b_width + side_margin), self.screen_rect.bottom - (b_height + 15),
                                                  b_width, b_height, lobby_label)
 
     def new_game(self, player_cash, chips=None):
@@ -147,12 +147,6 @@ class Blackjack(tools._State):
                 card2.face_up = True
                 self.moving_cards.extend([card1, card2])
 
-    def buy_insurance(self, player, hand):
-        """Currently unimplemented."""
-        chip_total = player.get_chip_total()
-        bet = sum([chip.value for chip in hand.bet])
-        if chip_total < bet//2:
-            return
 
     def tally_hands(self):
         """Calculate result of each player hand and set appropriate
@@ -201,8 +195,6 @@ class Blackjack(tools._State):
             elif hand.push:
                 cash += bet
                 self.casino_player.stats["Blackjack"]["pushes"] += 1
-            elif self.dealer.hand.blackjack and hand.insurance:
-                cash += sum([chip.value for chip in hand.insurance])
 
         self.casino_player.stats["Blackjack"]["total winnings"] += cash
         chips = cash_to_chips(cash)
@@ -280,6 +272,11 @@ class Blackjack(tools._State):
                     self.moving_stacks = []
 
     def update(self, surface, keys, current_time, dt, scale):
+        total_text = "Chip Total:  ${}".format(self.player.get_chip_total())
+        screen = self.screen_rect
+        self.chip_total_label = Label(self.font, 48, total_text, "gold3",
+                               {"bottomleft": (screen.left + 5, screen.bottom - 5)})
+        
         if self.state == "Betting":
             if not self.moving_stacks:
                 pass
@@ -309,7 +306,6 @@ class Blackjack(tools._State):
         elif self.state == "Player Turn":
             self.split_button.active = False
             self.double_down_button.active = True
-            self.insurance_button.active = False
 
             if not self.moving_cards:
                 hand = self.current_player_hand
@@ -323,9 +319,6 @@ class Blackjack(tools._State):
                     c2 = hand.card_values[hand.cards[1].value]
                     if c1 == c2:
                         self.split_button.active = True
-                if (self.dealer.hand.cards[1].value == 14
-                    and not hand.insurance):
-                    self.insurance_button.active = True
                 if len(hand.cards) == 2:
                     if hand_score == 21:
                         hand.blackjack = True
@@ -442,3 +435,4 @@ class Blackjack(tools._State):
             surface.blit(self.mute_icon, self.music_icon_rect)
         else:
             surface.blit(self.music_icon, self.music_icon_rect)
+        self.chip_total_label.draw(surface)

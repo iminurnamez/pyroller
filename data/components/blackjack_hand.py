@@ -9,7 +9,6 @@ class Hand(object):
         self.cards = cards if cards is not None else []
         self.final = False
         self.busted = False
-        self.insurance = []
         self.winner = False
         self.loser = False
         self.push = False

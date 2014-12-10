@@ -12,7 +12,7 @@ class Player(object):
             chips = cash_to_chips(self.cash)
             self.cash = 0            
         self.chips = OrderedDict()
-        self.chips_bottomleft = (20, 700)
+        self.chips_bottomleft = (20, 800)
         left, bottom = self.chips_bottomleft
         for color in Chip.chip_values:
             self.chips[color] = ChipStack([x for x in chips if x.color == color], (left, bottom))
@@ -20,7 +20,7 @@ class Player(object):
         self.chip_stacks_rect = pg.Rect(0, 0, left - self.chips_bottomleft[0], 100)
         self.chip_stacks_rect.bottomleft = self.chips_bottomleft
         self.cash = 0
-        self.hand_tls = [(250, 450)]
+        self.hand_tls = [(250, 500)]
         self.hands = [Hand(tl) for tl in self.hand_tls]
         for hand in self.hands:
             hand.slots = [pg.Rect(hand.tl, prepare.CARD_SIZE)]
