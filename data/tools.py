@@ -315,6 +315,8 @@ def get_cli_args(caption, win_pos, start_size):
         help='start in fullscreen')
     parser.add_argument('-m' , '--music_off', action='store_true',
         help='start with no music')
+    parser.add_argument('-S', '--straight', action='store', type=str,
+        help='go straight to the named game')
         
     args = vars(parser.parse_args())
     #check each condition
