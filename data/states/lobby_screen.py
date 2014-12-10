@@ -56,6 +56,9 @@ class LobbyScreen(tools._State):
                 if button.rect.collidepoint(pos):
                     self.done = True
                     self.next = button.payload
+        elif event.type == pg.KEYUP:
+            if event.key == pg.K_ESCAPE:
+                self.exit_game()
 
     def update(self, surface, keys, current_time, dt, scale):
         self.draw(surface)

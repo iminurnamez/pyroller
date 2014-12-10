@@ -29,7 +29,10 @@ class Bingo(tools._State):
     def get_event(self, event, scale=(1,1)):
         """Check for events"""
         super(Bingo, self).get_event(event, scale)
-        if event.type == pg.MOUSEBUTTONDOWN:
+        if event.type == pg.QUIT:
+            self.done = True
+            self.next = "LOBBYSCREEN"
+        elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
             if self.music_icon_rect.collidepoint(pos):
                 self.play_music = not self.play_music
@@ -39,6 +42,10 @@ class Bingo(tools._State):
                     pg.mixer.music.stop()
             elif self.lobby_button.rect.collidepoint(pos):
                 self.game_started = False
+                self.done = True
+                self.next = "LOBBYSCREEN"
+        elif event.type == pg.KEYUP:
+            if event.key == pg.K_ESCAPE:
                 self.done = True
                 self.next = "LOBBYSCREEN"
 
