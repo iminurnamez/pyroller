@@ -13,14 +13,6 @@ class TitleScreen(tools._State):
 
     def __init__(self):
         super(TitleScreen, self).__init__()
-        #
-        # Check options to go straight to a particular game rather than showing the lobby - good for debugging
-        if prepare.ARGS['straight']:
-            self.next = prepare.ARGS['straight']
-            self.done = True
-        else:
-            self.next = "LOBBYSCREEN"
-        #
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         font = prepare.FONTS["Saniretro"]
         self.title = Blinker(font, 128, "Py Rollers", "darkred",
@@ -57,6 +49,14 @@ class TitleScreen(tools._State):
         self.stats = stats
         self.screen_rect = screen_rect
         self.marquees = []
+        #
+        # Check options to go straight to a particular game rather than showing the lobby - good for debugging
+        if prepare.ARGS['straight']:
+            self.persist["casino_player"] = CasinoPlayer(self.stats)
+            self.next = prepare.ARGS['straight']
+            self.done = True
+        else:
+            self.next = "LOBBYSCREEN"
 
     def get_event(self, event, scale):
         if event.type == pg.QUIT:
