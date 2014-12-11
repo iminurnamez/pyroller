@@ -22,9 +22,15 @@ class CasinoPlayer(object):
                     
         if stats is not None:
             self.stats["cash"] = stats["cash"]
-            for game in self.stats:
+            for game in stats:
                 if game != "cash":
-                    for stat in self.stats[game]:
+                    #
+                    # Make sure we have a place holder for the game
+                    if game not in self.stats:
+                        self.stats[game] = OrderedDict()
+                    #
+                    # Update stats
+                    for stat in stats[game]:
                         self.stats[game][stat] = stats[game][stat]
                     
                 

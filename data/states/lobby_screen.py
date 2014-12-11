@@ -13,7 +13,7 @@ class LobbyScreen(tools._State):
         super(LobbyScreen, self).__init__()
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
-        self.games = [("Blackjack", "BLACKJACK"), ("Craps", "CRAPS")]
+        self.games = [("Blackjack", "BLACKJACK"), ("Craps", "CRAPS"), ("Bingo", "BINGO")]
         b_width = 180
         b_height = 80
         left = screen_rect.centerx - (b_width / 2)
@@ -56,6 +56,9 @@ class LobbyScreen(tools._State):
                 if button.rect.collidepoint(pos):
                     self.done = True
                     self.next = button.payload
+        elif event.type == pg.KEYUP:
+            if event.key == pg.K_ESCAPE:
+                self.exit_game()
 
     def update(self, surface, keys, current_time, dt, scale):
         self.draw(surface)
