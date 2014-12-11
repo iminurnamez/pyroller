@@ -1,8 +1,8 @@
 import pygame as pg
 from collections import OrderedDict
 
-from .. import tools, prepare
-from ..components.labels import Label, Button
+from ... import tools, prepare
+from ...components.labels import Label, Button
 
 
 class Bingo(tools._State):
@@ -27,14 +27,14 @@ class Bingo(tools._State):
         lobby_label = Label(self.font, font_size, "Lobby", "gold3", {"center": (0, 0)})
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
                                                  b_width, b_height, lobby_label)
+
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
         self.persist = persistent
-        #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
         #
         # Make sure the player has stat markers
-        if not 'Bingo' in self.casino_player.stats:
+        if 'Bingo' not in self.casino_player.stats:
             self.casino_player.stats['Bingo'] = OrderedDict([
                 ('games played', 0),
                 ('games won', 0),
