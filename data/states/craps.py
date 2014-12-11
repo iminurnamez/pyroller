@@ -51,6 +51,9 @@ class Craps(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
+        if not 'Craps' in self.casino_player.stats:
+            keys = ['times as shooter', 'bets placed', 'bets won', 'bets lost', 'total bets', 'total winnings']
+            self.casino_player.stats['Craps'] = dict.fromkeys(keys, 0)
 
     def get_event(self, event, scale=(1,1)):
         """This method will be called for each event in the event queue
