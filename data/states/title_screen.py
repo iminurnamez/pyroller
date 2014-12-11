@@ -56,6 +56,7 @@ class TitleScreen(tools._State):
             self.quit = True
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
+            self.title.rect.centerx = self.title2.rect.centerx = self.screen_rect.centerx
             if self.new_game_button.rect.collidepoint(pos):
                 if self.new_game_button.active:
                     self.persist["casino_player"] = CasinoPlayer()

@@ -5,12 +5,12 @@ import os
 import pygame as pg
 from . import tools
 
-ORIGINAL_CAPTION = "Py Roller Casino"
+ORIGINAL_CAPTION = "Py Rollers Casino"
 START_SIZE = (928, 696)
 RENDER_SIZE = (1400, 1050)
 RESOLUTIONS = [(800, 600), (928, 696), (1280, 960), (1400, 1050)]
 CARD_SIZE = (125, 181)
-CHIP_SIZE = (32, 32)
+CHIP_SIZE = (32, 19)
 WIN_POS = (0,0)
 ARGS = tools.get_cli_args(ORIGINAL_CAPTION, WIN_POS, START_SIZE)
 #adjust settings based on args

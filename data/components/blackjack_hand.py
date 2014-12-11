@@ -1,10 +1,12 @@
+from ..components.chips import BetPile
+
 class Hand(object):
     card_values = {i: i for i in range(2, 11)}
     face_values = {i: 10 for i in range(11, 14)}
     card_values.update(face_values)
     card_values[1] = "Ace"
     
-    def __init__(self, topleft, cards=None):
+    def __init__(self, topleft, cards=None, bet_chips=None):
         self.tl = topleft
         self.cards = cards if cards is not None else []
         self.final = False
@@ -13,7 +15,7 @@ class Hand(object):
         self.loser = False
         self.push = False
         self.blackjack = False
-        self.bet = []
+        self.bet = BetPile((self.tl[0], self.tl[1] - 20), (48, 30), bet_chips)
         
     def get_scores(self):
         scores = []
