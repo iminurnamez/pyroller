@@ -8,7 +8,7 @@ class CasinoPlayer(object):
     sessions."""
 
     def __init__(self, stats=None):
-        self.stats = OrderedDict([("cash", 10999),
+        self.stats = OrderedDict([("cash", 999),
                                              ("Blackjack", OrderedDict(
                                                     [("games played", 0),
                                                     ("hands played", 0),
