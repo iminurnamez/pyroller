@@ -4,13 +4,16 @@ from collections import OrderedDict
 from ... import tools, prepare
 from ...components.labels import Label, Button
 
+import statemachine
+import states
 
-class Bingo(tools._State):
+
+class Bingo(statemachine.StateMachine):
     """State to represent a bing game"""
 
     def __init__(self):
         """Initialise the bingo game"""
-        super(Bingo, self).__init__()
+        super(Bingo, self).__init__(states.S_INITIALISE)
         #
         self.font = prepare.FONTS["Saniretro"]
         font_size = 64
@@ -65,7 +68,7 @@ class Bingo(tools._State):
                 self.done = True
                 self.next = "LOBBYSCREEN"
 
-    def update(self, surface, keys, now, dt, scale):
+    def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
         surface.fill((0, 255, 0))
         #
@@ -74,3 +77,10 @@ class Bingo(tools._State):
             surface.blit(self.mute_icon, self.music_icon_rect)
         else:
             surface.blit(self.music_icon, self.music_icon_rect)
+
+    def initUI(self):
+        """Initialise the UI display"""
+
+    def initialise(self):
+        """Initialise game"""
+        yield 0
