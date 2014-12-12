@@ -12,10 +12,12 @@ TO DO
 '''
 
 
-
+from collections import OrderedDict
 import pygame as pg
 from .. import tools, prepare
 from ..components.labels import Button, Label
+from ..components.craps_bet import Bet
+
 
 
 class Craps(tools._State):
@@ -40,6 +42,18 @@ class Craps(tools._State):
         self.table_color = (0, 153, 51)
         self.set_table()
         
+        
+        all_rolls = list(range(2,13))
+        self.bets = {
+            #name: Bet(highlighter_size, highlighter_topleft, display_name, payoff)
+            
+            'come'      :Bet((652,120),(178,252), 'Come',           {'1/1':all_rolls}),
+            'field'     :Bet((542,117),(288,373), 'Field',          {'1/1':[3,4,9,10,11], '2/1':[2,12]}),
+            'dont_pass' :Bet((542,65),(288,493), 'Dont\'t Pass',    {'1/1':all_rolls}),
+            'pass'      :Bet((662,65),(170,570), 'Pass',            {'1/1':all_rolls}),
+            'dont_come' :Bet((100,190),(180,53), 'Dont\'t Come',    {'1/1':all_rolls}),
+        }
+        
     def set_table(self):
         self.table_y = (self.screen_rect.height // 4)*3 
         self.table_x = self.screen_rect.width
@@ -51,6 +65,15 @@ class Craps(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
+        if not 'Craps' in self.casino_player.stats:
+            self.casino_player.stats['Craps'] = OrderedDict([
+                ('times as shooter',0),
+                ('bets placed',0), 
+                ('bets won',0), 
+                ('bets lost',0), 
+                ('total bets',0), 
+                ('total winnings',0)
+            ])
 
     def get_event(self, event, scale=(1,1)):
         """This method will be called for each event in the event queue
@@ -92,6 +115,9 @@ class Craps(tools._State):
             surface.blit(self.mute_icon, self.music_icon_rect)
         else:
             surface.blit(self.music_icon, self.music_icon_rect)
+            
+        for h in self.bets.keys():
+            self.bets[h].draw(surface)
         
 
     def update(self, surface, keys, current_time, dt, scale):
@@ -105,4 +131,8 @@ class Craps(tools._State):
         """
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.draw(surface)
+        for h in self.bets.keys():
+            self.bets[h].update(mouse_pos)
+        #print(mouse_pos)
+
 
