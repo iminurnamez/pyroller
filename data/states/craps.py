@@ -12,7 +12,7 @@ TO DO
 '''
 
 
-
+from collections import OrderedDict
 import pygame as pg
 from .. import tools, prepare
 from ..components.labels import Button, Label
@@ -66,8 +66,14 @@ class Craps(tools._State):
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
         if not 'Craps' in self.casino_player.stats:
-            keys = ['times as shooter', 'bets placed', 'bets won', 'bets lost', 'total bets', 'total winnings']
-            self.casino_player.stats['Craps'] = dict.fromkeys(keys, 0)
+            self.casino_player.stats['Craps'] = OrderedDict([
+                ('times as shooter',0),
+                ('bets placed',0), 
+                ('bets won',0), 
+                ('bets lost',0), 
+                ('total bets',0), 
+                ('total winnings',0)
+            ])
 
     def get_event(self, event, scale=(1,1)):
         """This method will be called for each event in the event queue
