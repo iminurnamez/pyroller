@@ -71,6 +71,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.log.info('Current ball is {0}'.format(ball))
         #
         self.current_ball = ball
+        self.current_ball_ui.set_text(str(ball))
 
     def draw(self, surface):
         """Draw the machine"""
