@@ -22,6 +22,7 @@ class BingoLabel(utils.Clickable):
         self.x, self.y = card.x + offset[0], card.y + offset[1]
         self.label = utils.getLabel(self.style_name, (self.x, self.y), text)
         self.highlighter = utils.NamedSprite('bingo-highlight', (self.x, self.y))
+        self.mouse_highlight = utils.NamedSprite('bingo-mouse-highlight', (self.x, self.y))
         #
         super(BingoLabel, self).__init__(name, self.label.rect)
 
@@ -31,7 +32,9 @@ class BingoLabel(utils.Clickable):
 
     def draw(self, surface):
         """Draw the square"""
-        if self.is_highlighted:
+        if self.mouse_over:
+            self.mouse_highlight.draw(surface)
+        elif self.is_highlighted:
             self.highlighter.draw(surface)
         self.label.draw(surface)
 

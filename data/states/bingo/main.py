@@ -81,6 +81,8 @@ class Bingo(statemachine.StateMachine):
                 self.game_started = False
                 self.done = True
                 self.next = "LOBBYSCREEN"
+        elif event.type == pg.MOUSEMOTION:
+            self.cards.process_events(event, scale)
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.done = True

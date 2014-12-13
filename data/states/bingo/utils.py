@@ -37,18 +37,36 @@ class Clickable(EventAware, loggable.Loggable):
         """Initialise the clickable"""
         self.name = name
         self.rect = rect
+        self.mouse_over = False
         self.addLogger()
 
     def process_events(self, event, scale=(1, 1)):
         """Process pygame events"""
+        pos = tools.scaled_mouse_pos(scale, event.pos)
+        #
         if event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(scale, event.pos)
             if self.rect.collidepoint(pos):
                 self.handle_click()
+        elif event.type == pg.MOUSEMOTION:
+            mouse_over = self.rect.collidepoint(pos)
+            if mouse_over != self.mouse_over:
+                if self.mouse_over:
+                    self.handle_mouse_leave()
+                else:
+                    self.handle_mouse_enter()
+            self.mouse_over = mouse_over
 
     def handle_click(self):
         """Do something when we are clicked on"""
         self.log.debug('Clicked on %s' % self.name)
+
+    def handle_mouse_enter(self):
+        """Do something when the mouse enters our rect"""
+        self.log.debug('Mouse enter %s' % self.name)
+
+    def handle_mouse_leave(self):
+        """Do something when the mouse leaves our rect"""
+        self.log.debug('Mouse leave %s' % self.name)
 
 
 class ClickableGroup(list, EventAware):
