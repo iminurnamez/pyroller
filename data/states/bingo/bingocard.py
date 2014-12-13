@@ -49,13 +49,28 @@ class BingoCard(utils.Clickable):
         self.x, self.y = position
         self.squares = utils.KeyedDrawableGroup()
         square_offset = S['card-square-offset']
+        chosen_numbers = set()
+        #
         for x, y in S['card-square-scaled-offsets']:
+            #
+            # Get a number for this column
+            number = self.get_random_number(x, chosen_numbers)
+            chosen_numbers.add(number)
+            #
+            # Place on the card
             self.squares[(x, y)] = BingoSquare(
                 '%s [%d,%d]' % (self.name, x, y),
-                self, (square_offset * x, square_offset * y), 10
+                self, (square_offset * x, square_offset * y), number
             )
         #
         self.clickables = utils.ClickableGroup(self.squares.values())
+
+    def get_random_number(self, column, chosen):
+        """Return a random number for the column, making sure not to duplicate"""
+        while True:
+            number = random.choice(S['card-numbers'][column])
+            if number not in chosen:
+                return number
 
     def draw(self, surface):
         """Draw the square"""

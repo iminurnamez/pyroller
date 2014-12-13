@@ -29,6 +29,14 @@ SETTINGS = {
         (x, y) for x in SQUARE_COLS for y in SQUARE_ROWS
     ],
 
+    'card-numbers': {
+        -2: range(1, 16),
+        -1: range(16, 31),
+        0: range(31, 46),
+        1: range(46, 61),
+        2: range(61, 76),
+    },
+
     #
     # Player settings
     'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 400),
