@@ -7,29 +7,50 @@ from .settings import SETTINGS as S
 from . import utils
 
 
-class BingoSquare(utils.Clickable):
-    """A square on a bingo card"""
+class BingoLabel(utils.Clickable):
+    """A label on a bingo card"""
 
-    def __init__(self, name, card, offset, number):
-        """Initialise the square"""
+    style_name = 'square-label'
+
+    def __init__(self, name, card, offset, text):
+        """Initialise the label"""
         self.name = name
         self.offset = offset
-        self.number = number
+        self.text = text
         self.is_highlighted = False
-        self.is_called = False
         #
-        x, y = card.x + offset[0], card.y + offset[1]
-        self.label = utils.getLabel('square-number', (x, y), number)
-        self.marker = utils.NamedSprite('bingo-marker', (x, y))
-        self.highlighter = utils.NamedSprite('bingo-highlight', (x, y))
+        self.x, self.y = card.x + offset[0], card.y + offset[1]
+        self.label = utils.getLabel(self.style_name, (self.x, self.y), text)
+        self.highlighter = utils.NamedSprite('bingo-highlight', (self.x, self.y))
         #
-        super(BingoSquare, self).__init__(name, self.label.rect)
+        super(BingoLabel, self).__init__(name, self.label.rect)
+
+    def handle_click(self):
+        """Respond to being clicked on"""
+        pass
 
     def draw(self, surface):
         """Draw the square"""
         if self.is_highlighted:
             self.highlighter.draw(surface)
         self.label.draw(surface)
+
+
+class BingoSquare(BingoLabel):
+    """A square on a bingo card"""
+
+    style_name = 'square-number'
+
+    def __init__(self, name, card, offset, number):
+        """Initialise the square"""
+        super(BingoSquare, self).__init__(name, card, offset, number)
+        #
+        self.is_called = False
+        self.marker = utils.NamedSprite('bingo-marker', (self.x, self.y))
+
+    def draw(self, surface):
+        """Draw the square"""
+        super(BingoSquare, self).draw(surface)
         if self.is_called:
             self.marker.draw(surface)
 
@@ -51,6 +72,7 @@ class BingoCard(utils.Clickable):
         square_offset = S['card-square-offset']
         chosen_numbers = set()
         #
+        # Create the numbered squares
         for x, y in S['card-square-scaled-offsets']:
             #
             # Get a number for this column
@@ -59,8 +81,17 @@ class BingoCard(utils.Clickable):
             #
             # Place on the card
             self.squares[(x, y)] = BingoSquare(
-                '%s [%d,%d]' % (self.name, x, y),
+                '{0} [{1}, {2}]'.format(self.name, x, y),
                 self, (square_offset * x, square_offset * y), number
+            )
+        #
+        # Create the labels
+        self.labels = utils.KeyedDrawableGroup()
+        y_offset = min(S['card-square-rows']) - 1
+        for x, letter in zip(S['card-square-cols'], 'BINGO'):
+            self.labels[x] = BingoLabel(
+                '{0} {1} label'.format(self.name, letter),
+                self, (square_offset * x, square_offset * y_offset), letter
             )
         #
         self.clickables = utils.ClickableGroup(self.squares.values())
@@ -75,6 +106,7 @@ class BingoCard(utils.Clickable):
     def draw(self, surface):
         """Draw the square"""
         self.squares.draw(surface)
+        self.labels.draw(surface)
 
     def process_events(self, event, scale=(1, 1)):
         """Process clicking events"""

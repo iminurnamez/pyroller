@@ -22,6 +22,10 @@ SETTINGS = {
     'square-number-font-size': 32,
     'square-number-font-color': 'white',
 
+    'square-label-font': prepare.FONTS["Saniretro"],
+    'square-label-font-size': 32,
+    'square-label-font-color': 'black',
+
     'card-square-rows': SQUARE_ROWS,
     'card-square-cols': SQUARE_COLS,
     'card-square-offset': 40,
