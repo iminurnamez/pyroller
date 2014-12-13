@@ -1,5 +1,6 @@
 """Utility functions - some of these could go be refactored into the core eventually"""
 
+import collections
 import pygame as pg
 
 from ...components import labels
@@ -73,6 +74,15 @@ class DrawableGroup(list, Drawable):
     def draw(self, surface):
         """Draw all these items onto the given surface"""
         for item in self:
+            item.draw(surface)
+
+
+class KeyedDrawableGroup(collections.OrderedDict, Drawable):
+    """A drawable group based on a dictionary so you can retrieve items"""
+
+    def draw(self, surface):
+        """Draw all the items to the given surface"""
+        for item in self.values():
             item.draw(surface)
 
 

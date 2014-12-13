@@ -47,15 +47,15 @@ class BingoCard(utils.Clickable):
         super(BingoCard, self).__init__(name)
         #
         self.x, self.y = position
-        self.squares = utils.DrawableGroup()
+        self.squares = utils.KeyedDrawableGroup()
         square_offset = S['card-square-offset']
         for x, y in S['card-square-scaled-offsets']:
-            self.squares.append(BingoSquare(
+            self.squares[(x, y)] = BingoSquare(
                 '%s [%d,%d]' % (self.name, x, y),
                 self, (square_offset * x, square_offset * y), 10
-            ))
+            )
         #
-        self.clickables = utils.ClickableGroup(self.squares)
+        self.clickables = utils.ClickableGroup(self.squares.values())
 
     def draw(self, surface):
         """Draw the square"""

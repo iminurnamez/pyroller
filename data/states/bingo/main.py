@@ -8,6 +8,7 @@ from . import statemachine
 from . import states
 from . import utils
 from . import bingocard
+from . import patterns
 from .settings import SETTINGS as S
 
 
@@ -102,4 +103,10 @@ class Bingo(statemachine.StateMachine):
 
     def initialise(self):
         """Initialise game"""
-        yield 0
+        pattern = patterns.StampPattern()
+        for squares in pattern.get_matches(self.cards[0]):
+            for square in squares:
+                square.is_highlighted = True
+            yield 1000
+            for square in squares:
+                square.is_highlighted = False

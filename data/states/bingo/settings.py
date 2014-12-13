@@ -3,6 +3,10 @@
 from ... import prepare
 
 
+SQUARE_ROWS = [-2, -1, 0, 1, 2]
+SQUARE_COLS = [-2, -1, 0, 1, 2]
+
+
 SETTINGS = {
 
     'button-font': prepare.FONTS["Saniretro"],
@@ -18,9 +22,11 @@ SETTINGS = {
     'square-number-font-size': 32,
     'square-number-font-color': 'white',
 
+    'card-square-rows': SQUARE_ROWS,
+    'card-square-cols': SQUARE_COLS,
     'card-square-offset': 40,
     'card-square-scaled-offsets': [
-        (x, y) for x in [-2, -1, 0, 1, 2] for y in [-2, -1, 0, 1, 2]
+        (x, y) for x in SQUARE_COLS for y in SQUARE_ROWS
     ],
 
     #
