@@ -1,5 +1,7 @@
 """Classes that manage and display bingo cards"""
 
+import random
+
 from ... import prepare
 from .settings import SETTINGS as S
 from . import utils
@@ -16,15 +18,26 @@ class BingoSquare(utils.Clickable):
         self.is_highlighted = False
         self.is_called = False
         #
+        x, y = card.x + offset[0], card.y + offset[1]
         self.label = utils.getLabel(
-            'square-number', (card.x + offset[0], card.y + offset[1]), number)
-        self.marker = prepare.GFX['bingo-marker']
+            'square-number', (x, y), number)
+        self.marker = utils.NamedSprite('bingo-marker', (x, y))
+        self.highlighter = utils.NamedSprite('bingo-highlight', (x, y))
         #
         super(BingoSquare, self).__init__(name, self.label.rect)
 
     def draw(self, surface):
         """Draw the square"""
+        if self.is_highlighted:
+            self.highlighter.draw(surface)
         self.label.draw(surface)
+        if self.is_called:
+            self.marker.draw(surface)
+
+    def handle_click(self):
+        """The number was clicked on"""
+        self.marker.rotate_to(random.randrange(0, 360))
+        self.is_called = not self.is_called
 
 
 class BingoCard(utils.Clickable):

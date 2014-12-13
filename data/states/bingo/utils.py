@@ -3,6 +3,7 @@
 import pygame as pg
 
 from ...components import labels
+from ... import prepare
 from ... import tools
 
 from .settings import SETTINGS as S
@@ -74,4 +75,29 @@ class DrawableGroup(list, Drawable):
         for item in self:
             item.draw(surface)
 
+
+class NamedSprite(Drawable):
+    """A sprite loaded from a named file"""
+
+    def __init__(self, name, position, filename=None):
+        """Initialise the sprite"""
+        super(NamedSprite, self).__init__()
+        #
+        self.name = name
+        self.angle = 0
+        self.sprite = prepare.GFX[filename if filename else name]
+        w, h = self.sprite.get_size()
+        self.rect = pg.Rect(position[0] - w / 2, position[1] - h / 2, w, h)
+
+    def draw(self, surface):
+        """Draw the sprite"""
+        surface.blit(self.sprite, self.rect)
+
+    def rotate_to(self, angle):
+        """Rotate the sprite"""
+        delta = angle - self.angle
+        x, y = self.rect.x + self.rect.width / 2, self.rect.y + self.rect.height / 2
+        self.sprite = pg.transform.rotate(self.sprite, delta)
+        w, h = self.sprite.get_size()
+        self.rect = pg.Rect(x - w / 2, y - h / 2, w, h)
 
