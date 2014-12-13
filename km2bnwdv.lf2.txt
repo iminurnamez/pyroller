@@ -1,0 +1,28 @@
+﻿Merge branch 'master' of https://github.com/metulburr/pyroller
+
+Conflicts:
+	data/states/stats_menu.py
+	resources/save_game.json
+#
+# It looks like you may be committing a merge.
+# If this is not correct, please remove the file
+#	.git/MERGE_HEAD
+# and try again.
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch is behind 'origin/master' by 2 commits, and can be fast-forwarded.
+#   (use "git pull" to update your local branch)
+#
+# All conflicts fixed but you are still merging.
+#
+# Changes to be committed:
+#	modified:   data/components/chips.py
+#	new file:   data/components/craps_bet.py
+#	modified:   data/components/labels.py
+#	modified:   data/states/craps.py
+#	new file:   resources/save_game.json
+#
+

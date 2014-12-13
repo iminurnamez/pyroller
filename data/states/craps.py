@@ -134,4 +134,8 @@ class Craps(tools._State):
         for h in self.bets.keys():
             self.bets[h].update(mouse_pos)
         #print(mouse_pos)
+<<<<<<< HEAD
+=======
+
+>>>>>>> a7babf78f994fae940ea630a15b290d2b4b8c962
 
