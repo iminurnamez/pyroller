@@ -7,6 +7,27 @@ from . import loggable
 from .settings import SETTINGS as S
 
 
+class Ball(object):
+    """A ball representing a number in the game"""
+
+    def __init__(self, number):
+        """Initialise the ball"""
+        self.number = number
+        #
+        # Get the name for this ball (eg B1, I20)
+        number_lookup = S['card-numbers']
+        for letter, col in zip('BINGO', sorted(number_lookup.keys())):
+            numbers = number_lookup[col]
+            if number in numbers:
+                self.letter = letter
+                self.col = col
+                break
+        else:
+            raise ValueError('Could not locate details for {0}'.format(number))
+        #
+        self.full_name = '{0}{1}'.format(self.letter, self.number)
+
+
 class BallMachine(utils.Drawable, loggable.Loggable):
     """A machine to pick balls at random"""
 
@@ -16,7 +37,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.name = name
         self.state = state
         #
-        self.all_balls = S['machine-balls']
+        self.all_balls = [Ball(n) for n in S['machine-balls']]
         self.balls = []
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-interval'] * 1000
@@ -71,7 +92,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.log.info('Current ball is {0}'.format(ball))
         #
         self.current_ball = ball
-        self.current_ball_ui.set_text(str(ball))
+        self.current_ball_ui.set_text(ball.full_name)
 
     def draw(self, surface):
         """Draw the machine"""
