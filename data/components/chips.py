@@ -13,8 +13,17 @@ class Chip(object):
                 ("red", 5),
                 ("white", 1)]
                 )
-    images = {color: prepare.GFX["chip{}side".format(color)] 
-                    for color in chip_values}
+    images = {(32, 19): {color: prepare.GFX["chip{}side".format(color)] 
+                                    for color in chip_values}
+                   }
+    images[(48, 30)] = {color: pg.transform.scale(prepare.GFX["chip{}side".format(color)], (48, 30))
+                                   for color in chip_values}
+    flat_images = {(32, 19): {color: prepare.GFX["chip{}".format(color)] 
+                                    for color in chip_values}
+                   }
+    flat_images[(48, 30)] = {color: pg.transform.scale(prepare.GFX["chip{}".format(color)], (48, 48))
+                                         for color in chip_values}             
+           
     thicknesses = {19: 5,
                            30: 7}
     
@@ -27,10 +36,8 @@ class Chip(object):
             self.chip_size = chip_size
         self.thickness = self.thicknesses[self.chip_size[1]]    
         self.value = self.chip_values[self.color]
-        self.image = self.images[color]
-        self.image = pg.transform.scale(self.image, self.chip_size)
-        self.flat_image = pg.transform.scale(prepare.GFX["chip{}".format(self.color)],
-                                                              (self.chip_size[0], self.chip_size[0]))
+        self.image = self.images[self.chip_size][self.color]
+        self.flat_image = self.flat_images[self.chip_size][self.color]
         self.rect = self.image.get_rect()
         
     def draw(self, surface):
