@@ -139,3 +139,29 @@ class Bingo(statemachine.StateMachine):
     def initialise(self):
         """Start the game state"""
         yield 0
+        self.add_generator('main-game-loop', self.main_game_loop())
+
+    def main_game_loop(self):
+        """The main game loop"""
+        while True:
+            yield 0
+
+    def ball_picked(self, ball):
+        """A ball was picked"""
+        winning_pattern = patterns.LinesPattern()
+        #
+        # Update the view of how many squares remain
+        for card in self.cards:
+            number_to_go = winning_pattern.get_number_to_go(card, self.ball_machine.called_balls)
+            card.set_label(
+                '{0} to go'.format(number_to_go))
+            if number_to_go == 0:
+                for squares in winning_pattern.get_winning_squares(card, self.ball_machine.called_balls):
+                    for square in squares:
+                        square.is_highlighted = True
+        #
+        # If auto-picking then update the cards
+        if S['debug-auto-pick']:
+            for card in self.cards:
+                card.call_square(ball.number)
+

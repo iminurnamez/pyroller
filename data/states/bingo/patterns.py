@@ -25,6 +25,28 @@ class Pattern(loggable.Loggable):
         """Return a sequence of matching square offsets"""
         raise NotImplementedError('Must implement the get_square_offsets method')
 
+    def get_number_to_go(self, card, called_balls):
+        """Return the number of squares needed to win"""
+        number_to_go = []
+        for squares in self.get_matches(card):
+            number_to_go.append(self.get_number_to_go_for_squares(card, squares, called_balls))
+        #
+        return min(number_to_go)
+
+    def get_number_to_go_for_squares(self, card, squares, called_balls):
+        """Return the number of squares needed to win from a particular set of squares"""
+        number = 0
+        for square in squares:
+            if square.text not in called_balls:
+                number += 1
+        return number
+
+    def get_winning_squares(self, card, called_balls):
+        """Return the winning squares"""
+        for squares in self.get_matches(card):
+            if self.get_number_to_go_for_squares(card, squares, called_balls) == 0:
+                yield squares
+
 
 class CornersPattern(Pattern):
     """All the corners of the card"""

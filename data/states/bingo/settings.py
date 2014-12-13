@@ -41,6 +41,11 @@ SETTINGS = {
         2: range(61, 76),
     },
 
+    'card-label-font': prepare.FONTS["Saniretro"],
+    'card-label-font-size': 18,
+    'card-label-font-color': 'black',
+    'card-label-offset': (0, 110),
+
     #
     # Player settings
     'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 400),
@@ -56,11 +61,14 @@ SETTINGS = {
     #
     # Ball machine settings
     'machine-balls': range(1, 76),
-    'machine-interval': 3,
+    'machine-interval': 1,
 
     'machine-ball-position': (75, 75),
     'machine-ball-font': prepare.FONTS["Saniretro"],
     'machine-ball-font-size': 102,
     'machine-ball-font-color': 'white',
 
+    #
+    # Debug settings
+    'debug-auto-pick': True,
 }

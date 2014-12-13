@@ -39,6 +39,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         #
         self.all_balls = [Ball(n) for n in S['machine-balls']]
         self.balls = []
+        self.called_balls = []
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-interval'] * 1000
         self.running = False
@@ -72,6 +73,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         """Reset the machine"""
         self.running = False
         self.balls = list(self.all_balls)
+        self.called_balls = []
         random.shuffle(self.balls)
         self.interval = self.initial_interval
 
@@ -79,6 +81,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         """Pick the balls"""
         for ball in self.balls:
             self.set_current_ball(ball)
+            self.called_balls.append(ball.number)
             #
             # Wait for next ball
             yield self.interval
@@ -93,6 +96,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         #
         self.current_ball = ball
         self.current_ball_ui.set_text(ball.full_name)
+        self.state.ball_picked(ball)
 
     def draw(self, surface):
         """Draw the machine"""

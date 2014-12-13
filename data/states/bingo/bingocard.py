@@ -97,6 +97,14 @@ class BingoCard(utils.Clickable):
                 self, (square_offset * x, square_offset * y_offset), letter
             )
         #
+        # The label for the card
+        label_offset = S['card-label-offset']
+        self.label = utils.getLabel(
+            'card-label',
+            (self.x + label_offset[0], self.y + label_offset[1]),
+            'Player card'
+        )
+        #
         self.clickables = utils.ClickableGroup(self.squares.values())
 
     def get_random_number(self, column, chosen):
@@ -110,10 +118,21 @@ class BingoCard(utils.Clickable):
         """Draw the square"""
         self.squares.draw(surface)
         self.labels.draw(surface)
+        self.label.draw(surface)
 
     def process_events(self, event, scale=(1, 1)):
         """Process clicking events"""
         self.clickables.process_events(event, scale)
+
+    def set_label(self, text):
+        """Set the card label text"""
+        self.label.set_text(str(text))
+
+    def call_square(self, number):
+        """Call a particular square"""
+        for square in self.squares.values():
+            if square.text == number:
+                square.is_called = True
 
 
 class CardCollection(utils.Drawable, utils.ClickableGroup):
