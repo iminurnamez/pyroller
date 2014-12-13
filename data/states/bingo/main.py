@@ -87,7 +87,7 @@ class Bingo(statemachine.StateMachine):
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
-        surface.fill((0, 0, 0))
+        surface.fill(S['table-color'])
         #
         self.lobby_button.draw(surface)
         self.cards.draw(surface)

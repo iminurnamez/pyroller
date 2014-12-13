@@ -19,8 +19,7 @@ class BingoSquare(utils.Clickable):
         self.is_called = False
         #
         x, y = card.x + offset[0], card.y + offset[1]
-        self.label = utils.getLabel(
-            'square-number', (x, y), number)
+        self.label = utils.getLabel('square-number', (x, y), number)
         self.marker = utils.NamedSprite('bingo-marker', (x, y))
         self.highlighter = utils.NamedSprite('bingo-highlight', (x, y))
         #
