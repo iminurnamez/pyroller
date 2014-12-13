@@ -103,10 +103,19 @@ class Bingo(statemachine.StateMachine):
 
     def initialise(self):
         """Initialise game"""
-        pattern = patterns.StampPattern()
-        for squares in pattern.get_matches(self.cards[0]):
-            for square in squares:
-                square.is_highlighted = True
-            yield 1000
-            for square in squares:
-                square.is_highlighted = False
+        patterns_to_show = [
+            patterns.CornersPattern(),
+            patterns.LinesPattern(),
+            patterns.StampPattern(),
+            patterns.CoverallPattern(),
+        ]
+        #
+        for card, pattern in zip(self.cards, patterns_to_show):
+            self.log.debug('Next pattern {0} - {1}'.format(card, pattern))
+            for squares in pattern.get_matches(card):
+                for square in squares:
+                    square.is_highlighted = True
+                yield 100
+                for square in squares:
+                    square.is_highlighted = False
+                yield 10
