@@ -19,6 +19,13 @@ class CasinoPlayer(object):
                                                     ("busts", 0),
                                                     ("total bets", 0),
                                                     ("total winnings", 0)])),
+                                             ("Craps", OrderedDict(
+                                                    [('times as shooter', 0),
+                                                     ('bets placed', 0),
+                                                     ('bets won', 0),
+                                                     ('bets lost', 0),
+                                                     ('total bets', 0),
+                                                     ('total winnings', 0)])),
                                              ("Bingo", OrderedDict(
                                                     [("games played", 0),
                                                     ("games won", 0)]))                                              
