@@ -1,6 +1,7 @@
 """Implementation of classes to help in running long running statefull operations"""
 
 import collections
+import pygame as pg
 
 from ... import tools
 import pygame
@@ -62,6 +63,9 @@ class StateMachine(tools._State, loggable.Loggable):
         """Update the game state"""
         self.state_clock.tick(dt)
         self.delay -= self.state_clock.get_time() * self.speed_factor
+        #
+        if pg.key.get_mods():
+            self.log.debug('Frame rate {0}'.format(1000 / dt))
         #
         # Process all states
         for executor in list(self.generators):

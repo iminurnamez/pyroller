@@ -52,4 +52,14 @@ SETTINGS = {
     # Table settings
     'table-color': (0, 153, 51),
 
+    #
+    # Ball machine settings
+    'machine-balls': range(1, 76),
+    'machine-interval': 3,
+
+    'machine-ball-position': (50, 50),
+    'machine-ball-font': prepare.FONTS["Saniretro"],
+    'machine-ball-font-size': 32,
+    'machine-ball-font-color': 'white',
+
 }

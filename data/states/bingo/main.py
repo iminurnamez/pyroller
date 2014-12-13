@@ -9,6 +9,7 @@ from . import states
 from . import utils
 from . import bingocard
 from . import patterns
+from . import ballmachine
 from .settings import SETTINGS as S
 
 
@@ -43,6 +44,9 @@ class Bingo(statemachine.StateMachine):
         )
         #
         super(Bingo, self).__init__(states.S_INITIALISE)
+        #
+        self.ball_machine = ballmachine.BallMachine('ball-machine', self)
+        self.ball_machine.start_machine()
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -93,6 +97,7 @@ class Bingo(statemachine.StateMachine):
         #
         self.lobby_button.draw(surface)
         self.cards.draw(surface)
+        self.ball_machine.draw(surface)
         #
         if self.play_music:
             surface.blit(self.mute_icon, self.music_icon_rect)
@@ -102,8 +107,8 @@ class Bingo(statemachine.StateMachine):
     def initUI(self):
         """Initialise the UI display"""
 
-    def initialise(self):
-        """Initialise game"""
+    def test_highlight_patterns(self):
+        """Test method to cycle through the winning patterns"""
         yield 0
         #
         patterns_to_show = [
@@ -130,3 +135,7 @@ class Bingo(statemachine.StateMachine):
             yield 10
         #
         self.add_generator('highlight', self.highlight_pattern(card, pattern))
+
+    def initialise(self):
+        """Start the game state"""
+        yield 0
