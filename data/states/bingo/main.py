@@ -6,6 +6,9 @@ from ...components.labels import Label, Button
 
 import statemachine
 import states
+import utils
+import bingocard
+from settings import SETTINGS as S
 
 
 class Bingo(statemachine.StateMachine):
@@ -27,9 +30,14 @@ class Bingo(statemachine.StateMachine):
         self.mute_icon = prepare.GFX["mute"]
         self.play_music = True
         #
-        lobby_label = Label(self.font, font_size, "Lobby", "gold3", {"center": (0, 0)})
+        lobby_label = utils.getLabel('button', (0, 0), 'Lobby')
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
                                                  b_width, b_height, lobby_label)
+        #
+        self.cards = bingocard.CardCollection(
+            S['player-cards-position'],
+            S['player-card-offsets']
+        )
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -49,8 +57,11 @@ class Bingo(statemachine.StateMachine):
         """Check for events"""
         super(Bingo, self).get_event(event, scale)
         if event.type == pg.QUIT:
-            self.done = True
-            self.next = "LOBBYSCREEN"
+            if prepare.ARGS['straight']:
+                pg.quit()
+            else:
+                self.done = True
+                self.next = "LOBBYSCREEN"
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
             if self.music_icon_rect.collidepoint(pos):
@@ -70,9 +81,11 @@ class Bingo(statemachine.StateMachine):
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
-        surface.fill((0, 255, 0))
+        surface.fill((0, 0, 0))
         #
         self.lobby_button.draw(surface)
+        self.cards.draw(surface)
+        #
         if self.play_music:
             surface.blit(self.mute_icon, self.music_icon_rect)
         else:
