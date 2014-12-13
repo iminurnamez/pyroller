@@ -1,7 +1,12 @@
 """Utility functions - some of these could go be refactored into the core eventually"""
 
+import pygame as pg
+
 from ...components import labels
+from ... import tools
+
 from settings import SETTINGS as S
+import loggable
 
 
 def getLabel(name, position, text):
@@ -13,6 +18,44 @@ def getLabel(name, position, text):
         text=str(text),
         rect_attributes={'center': position},
     )
+
+
+class EventAware(object):
+    """Base class for objects that can handle events"""
+
+    def process_events(self, event, scale=(1, 1)):
+        """Process pygame events"""
+
+
+class Clickable(EventAware, loggable.Loggable):
+
+    """Simple class to make an item clickable"""
+
+    def __init__(self, name, rect=None):
+        """Initialise the clickable"""
+        self.name = name
+        self.rect = rect
+        self.addLogger()
+
+    def process_events(self, event, scale=(1, 1)):
+        """Process pygame events"""
+        if event.type == pg.MOUSEBUTTONDOWN:
+            pos = tools.scaled_mouse_pos(scale, event.pos)
+            if self.rect.collidepoint(pos):
+                self.handle_click()
+
+    def handle_click(self):
+        """Do something when we are clicked on"""
+        self.log.debug('Clicked on %s' % self.name)
+
+
+class ClickableGroup(list, EventAware):
+    """A list of clickable items"""
+
+    def process_events(self, event, scale=(1, 1)):
+        """Process all the events"""
+        for item in self:
+            item.process_events(event, scale)
 
 
 class Drawable(object):
@@ -30,3 +73,5 @@ class DrawableGroup(list, Drawable):
         """Draw all these items onto the given surface"""
         for item in self:
             item.draw(surface)
+
+

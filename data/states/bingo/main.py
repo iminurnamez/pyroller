@@ -2,7 +2,7 @@ import pygame as pg
 from collections import OrderedDict
 
 from ... import tools, prepare
-from ...components.labels import Label, Button
+from ...components.labels import Button
 
 import statemachine
 import states
@@ -17,6 +17,8 @@ class Bingo(statemachine.StateMachine):
     def __init__(self):
         """Initialise the bingo game"""
         super(Bingo, self).__init__(states.S_INITIALISE)
+        #
+        self.verbose = False
         #
         self.font = prepare.FONTS["Saniretro"]
         font_size = 64
@@ -35,6 +37,7 @@ class Bingo(statemachine.StateMachine):
                                                  b_width, b_height, lobby_label)
         #
         self.cards = bingocard.CardCollection(
+            'player-card',
             S['player-cards-position'],
             S['player-card-offsets']
         )
@@ -63,6 +66,9 @@ class Bingo(statemachine.StateMachine):
                 self.done = True
                 self.next = "LOBBYSCREEN"
         elif event.type == pg.MOUSEBUTTONDOWN:
+            #
+            self.cards.process_events(event, scale)
+            #
             pos = tools.scaled_mouse_pos(scale, event.pos)
             if self.music_icon_rect.collidepoint(pos):
                 self.play_music = not self.play_music
