@@ -9,7 +9,7 @@ from ..components.blackjack_dealer import Dealer
 from ..components.blackjack_player import Player
 from ..components.blackjack_hand import Hand
 
-some_list = [1,2,3]
+some_list = [1,2,3,4]
 
 class Blackjack(tools._State):
     """State to represent a blackjack game. Player cash
