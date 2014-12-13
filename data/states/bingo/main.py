@@ -17,7 +17,6 @@ class Bingo(statemachine.StateMachine):
 
     def __init__(self):
         """Initialise the bingo game"""
-        super(Bingo, self).__init__(states.S_INITIALISE)
         #
         self.verbose = False
         #
@@ -42,6 +41,8 @@ class Bingo(statemachine.StateMachine):
             S['player-cards-position'],
             S['player-card-offsets']
         )
+        #
+        super(Bingo, self).__init__(states.S_INITIALISE)
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -103,6 +104,8 @@ class Bingo(statemachine.StateMachine):
 
     def initialise(self):
         """Initialise game"""
+        yield 0
+        #
         patterns_to_show = [
             patterns.CornersPattern(),
             patterns.LinesPattern(),
@@ -111,11 +114,19 @@ class Bingo(statemachine.StateMachine):
         ]
         #
         for card, pattern in zip(self.cards, patterns_to_show):
-            self.log.debug('Next pattern {0} - {1}'.format(card, pattern))
-            for squares in pattern.get_matches(card):
-                for square in squares:
-                    square.is_highlighted = True
-                yield 100
-                for square in squares:
-                    square.is_highlighted = False
-                yield 10
+            self.add_generator(
+                'highlight-patterns-card-%s' % card.name,
+                self.highlight_pattern(card, pattern)
+            )
+
+    def highlight_pattern(self, card, pattern):
+        """Highlight a particular pattern on a card"""
+        for squares in pattern.get_matches(card):
+            for square in squares:
+                square.is_highlighted = True
+            yield 100
+            for square in squares:
+                square.is_highlighted = False
+            yield 10
+        #
+        self.add_generator('highlight', self.highlight_pattern(card, pattern))
