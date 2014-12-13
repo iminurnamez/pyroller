@@ -5,8 +5,8 @@ import pygame as pg
 from ...components import labels
 from ... import tools
 
-from settings import SETTINGS as S
-import loggable
+from .settings import SETTINGS as S
+from . import loggable
 
 
 def getLabel(name, position, text):

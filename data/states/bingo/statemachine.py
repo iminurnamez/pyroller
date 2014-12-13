@@ -1,6 +1,6 @@
 from ... import tools
 import pygame
-import loggable
+from . import loggable
 
 
 class StateMachine(tools._State, loggable.Loggable):
@@ -42,7 +42,7 @@ class StateMachine(tools._State, loggable.Loggable):
                 if self.verbose:
                     self.log.debug('Calling state: %s' % self.state)
             try:
-                self.delay = self.method.next()
+                self.delay = next(self.method)
             except StopIteration:
                 self.method = None
         #

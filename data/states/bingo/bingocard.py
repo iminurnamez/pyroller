@@ -1,8 +1,8 @@
 """Classes that manage and display bingo cards"""
 
-from ...components import labels
-from settings import SETTINGS as S
-import utils
+from ... import prepare
+from .settings import SETTINGS as S
+from . import utils
 
 
 class BingoSquare(utils.Clickable):
@@ -18,6 +18,7 @@ class BingoSquare(utils.Clickable):
         #
         self.label = utils.getLabel(
             'square-number', (card.x + offset[0], card.y + offset[1]), number)
+        self.marker = prepare.GFX['bingo-marker']
         #
         super(BingoSquare, self).__init__(name, self.label.rect)
 

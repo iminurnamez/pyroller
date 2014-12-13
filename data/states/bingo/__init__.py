@@ -1,4 +1,4 @@
-import main
+from . import main
 
 
 def Bingo():

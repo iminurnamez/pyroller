@@ -4,11 +4,11 @@ from collections import OrderedDict
 from ... import tools, prepare
 from ...components.labels import Button
 
-import statemachine
-import states
-import utils
-import bingocard
-from settings import SETTINGS as S
+from . import statemachine
+from . import states
+from . import utils
+from . import bingocard
+from .settings import SETTINGS as S
 
 
 class Bingo(statemachine.StateMachine):
