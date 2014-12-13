@@ -9,7 +9,8 @@ from ..components.blackjack_dealer import Dealer
 from ..components.blackjack_player import Player
 from ..components.blackjack_hand import Hand
 
-#added in dev branch
+#added in master branch added in dev branch
+
 class Blackjack(tools._State):
     """State to represent a blackjack game. Player cash
         will be converted to chips for the game and converted
