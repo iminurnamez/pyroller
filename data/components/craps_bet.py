@@ -37,7 +37,3 @@ class Bet:
         if self.is_draw:
             surface.blit(self.highlighter, self.highlighter_rect)
             self.label_name.draw(surface)
-<<<<<<< HEAD
-=======
-
->>>>>>> a7babf78f994fae940ea630a15b290d2b4b8c962
