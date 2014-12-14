@@ -122,9 +122,9 @@ class StampPattern(Pattern):
 
 
 PATTERNS = [
-    LinesPattern,
-    StampPattern,
-    CornersPattern,
-    CenterPattern,
-    CoverallPattern,
+    LinesPattern(),
+    StampPattern(),
+    CornersPattern(),
+    CenterPattern(),
+    CoverallPattern(),
 ]

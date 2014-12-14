@@ -151,3 +151,31 @@ class ImageButton(Clickable):
     def handle_click(self):
         """Handle the click event"""
         self.callback(self.arg)
+
+
+class ImageOnOffButton(Clickable):
+    """A button with an on and off image and text"""
+
+    def __init__(self, name, position, on_filename, off_filename, text_properties, text, state, callback, arg):
+        """Initialise the button"""
+        self.callback = callback
+        self.arg = arg
+        self.state = state
+        #
+        self.on_image = NamedSprite(name, position, on_filename)
+        self.off_image = NamedSprite(name, position, off_filename)
+        self.label = getLabel(text_properties, position, text)
+        #
+        super(ImageOnOffButton, self).__init__(name, self.on_image.rect)
+
+    def draw(self, surface):
+        """Draw the button"""
+        if self.state:
+            self.on_image.draw(surface)
+        else:
+            self.off_image.draw(surface)
+        self.label.draw(surface)
+
+    def handle_click(self):
+        """Handle the click event"""
+        self.callback(self.arg)

@@ -43,9 +43,10 @@ class Bingo(statemachine.StateMachine):
             S['player-card-offsets']
         )
         #
-        self.winning_pattern = patterns.LinesPattern()
+        self.winning_pattern = patterns.PATTERNS[0]
         #
-        self.buttons = utils.DrawableGroup()
+        self.pattern_buttons = utils.DrawableGroup()
+        self.buttons = utils.DrawableGroup([self.pattern_buttons])
         self.ui = utils.ClickableGroup([self.cards])
         #
         super(Bingo, self).__init__(states.S_INITIALISE)
@@ -113,18 +114,24 @@ class Bingo(statemachine.StateMachine):
     def initUI(self):
         """Initialise the UI display"""
         for idx, pattern in enumerate(patterns.PATTERNS):
-            self.buttons.append(utils.ImageButton(
-                pattern.name, (30 + idx * 200, 400),
-                'bingo-red-button', 'button',
-                pattern.name, self.change_pattern, pattern
+            self.pattern_buttons.append(utils.ImageOnOffButton(
+                pattern.name, (200 + idx * 240, 400),
+                'bingo-red-button', 'bingo-red-off-button', 'button',
+                pattern.name,
+                pattern == self.winning_pattern,
+                self.change_pattern, pattern
             ))
-        self.ui.extend(self.buttons)
+        self.ui.extend(self.pattern_buttons)
 
     def change_pattern(self, pattern):
         """Change the winning pattern"""
         self.log.info('Changing pattern to {0}'.format(pattern.name))
-        self.winning_pattern = pattern()
+        self.winning_pattern = pattern
         self.highlight_patterns(self.winning_pattern, one_shot=True)
+        #
+        # Update UI
+        for button in self.pattern_buttons:
+            button.state = (button.arg == self.winning_pattern)
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""
