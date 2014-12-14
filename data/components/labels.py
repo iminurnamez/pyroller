@@ -13,15 +13,27 @@ class _Label(object):
     def __init__(self, font_path, font_size, text, text_color, rect_attributes,
                          bground_color=None):
         if (font_path, font_size) not in LOADED_FONTS:
-            LOADED_FONTS[(font_path, font_size)] = pg.font.Font(font_path,
-                                                                                             font_size)
-        f = LOADED_FONTS[(font_path, font_size)]    
-        if bground_color is not None:
-            self.text = f.render(text, True, pg.Color(text_color),
-                                         pg.Color(bground_color))
+            LOADED_FONTS[(font_path, font_size)] = pg.font.Font(font_path, font_size)
+        self.f = LOADED_FONTS[(font_path, font_size)]
+        self.background_color = bground_color
+        self.text_color = text_color
+        self.rect_attributes = rect_attributes
+        #
+        self.set_text(text)
+
+    def set_text(self, text):
+        '''Set the text to display'''
+        self.displayed_text = text
+        self.update_text()
+
+    def update_text(self):
+        '''Update the surface using the current properties and text'''
+        if self.background_color is not None:
+            self.text = self.f.render(self.displayed_text, True, pg.Color(self.text_color),
+                                         pg.Color(self.background_color))
         else:
-            self.text = f.render(text, True, pg.Color(text_color))
-        self.rect = self.text.get_rect(**rect_attributes)
+            self.text = self.f.render(self.displayed_text, True, pg.Color(self.text_color))
+        self.rect = self.text.get_rect(**self.rect_attributes)
 
     def draw(self, surface):
         surface.blit(self.text, self.rect)
