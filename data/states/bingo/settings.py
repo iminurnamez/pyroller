@@ -50,8 +50,8 @@ SETTINGS = {
     # Player settings
     'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 400),
     'player-card-offsets': [
-        # (-450, 0), (-150, 0), (150, 0), (450, 0),
-        (-150, 0), (150, 0)
+        (-450, 0), (-150, 0), (150, 0), (450, 0),
+        # (-150, 0), (150, 0)
     ],
 
     #
@@ -67,6 +67,14 @@ SETTINGS = {
     'machine-ball-font': prepare.FONTS["Saniretro"],
     'machine-ball-font-size': 102,
     'machine-ball-font-color': 'white',
+
+    'called-balls-position': (180, 40),
+    'called-balls-offsets': (20, 20),
+    'called-balls-size': (15, 5),
+    'called-ball-number-font': prepare.FONTS["Saniretro"],
+    'called-ball-number-font-size': 16,
+    'called-ball-number-font-color': 'black',
+    'called-ball-number-called-font-color': 'white',
 
     #
     # Debug settings

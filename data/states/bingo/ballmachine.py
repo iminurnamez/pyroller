@@ -51,12 +51,18 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         """Create the UI components"""
         components = utils.DrawableGroup()
         #
+        # The display of the current ball
         self.current_ball_ui = utils.getLabel(
             'machine-ball',
             S['machine-ball-position'],
             '0'
         )
         components.append(self.current_ball_ui)
+        #
+        # The display of all the balls that have been called
+        self.called_balls_ui = CalledBallTray(S['called-balls-position'])
+        components.append(self.called_balls_ui)
+        #
         #
         return components
 
@@ -97,7 +103,37 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.current_ball = ball
         self.current_ball_ui.set_text(ball.full_name)
         self.state.ball_picked(ball)
+        self.called_balls_ui.call_ball(ball)
 
     def draw(self, surface):
         """Draw the machine"""
         self.ui.draw(surface)
+
+
+class CalledBallTray(utils.Drawable, loggable.Loggable):
+    """A display of the balls that have been called"""
+
+    def __init__(self, position):
+        """Initialise the display"""
+        self.addLogger()
+        self.x, self.y = position
+        self.balls = utils.KeyedDrawableGroup()
+        #
+        w, h = S['called-balls-size']
+        dx, dy = S['called-balls-offsets']
+        #
+        for number in S['machine-balls']:
+            xi = (number - 1) % w
+            yi = (number - 1) // w
+            self.balls[number] = utils.getLabel(
+                'called-ball-number', (self.x + xi * dx, self.y + yi * dy), number
+            )
+
+    def call_ball(self, ball):
+        """Call a particular ball"""
+        self.balls[ball.number].text_color = S['called-ball-number-called-font-color']
+        self.balls[ball.number].update_text()
+
+    def draw(self, surface):
+        """Draw the tray"""
+        self.balls.draw(surface)
