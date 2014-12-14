@@ -7,6 +7,7 @@ from .settings import SETTINGS as S
 class Pattern(loggable.Loggable):
     """A pattern of squares that would win the game"""
 
+    name = 'Pattern'
     lx, rx = S['card-square-cols'][0], S['card-square-cols'][-1]
     by, ty = S['card-square-rows'][0], S['card-square-rows'][-1]
 
@@ -51,6 +52,8 @@ class Pattern(loggable.Loggable):
 class CornersPattern(Pattern):
     """All the corners of the card"""
 
+    name = 'Corners'
+
     def get_square_offsets(self):
         """Return a sequence of matching square offsets"""
         return [
@@ -60,6 +63,8 @@ class CornersPattern(Pattern):
 
 class LinesPattern(Pattern):
     """Straight lines"""
+
+    name = 'Lines'
 
     def get_square_offsets(self):
         """Return a sequence of matching square offsets"""
@@ -74,6 +79,8 @@ class LinesPattern(Pattern):
 class CoverallPattern(Pattern):
     """A blackout of the entire card"""
 
+    name = 'Coverall'
+
     def get_square_offsets(self):
         """Return a sequence of matching square offsets"""
         yield [
@@ -84,6 +91,8 @@ class CoverallPattern(Pattern):
 class CenterPattern(Pattern):
     """All the center squares"""
 
+    name = 'Center'
+
     def get_square_offsets(self):
         """Return a sequence of matching square offsets"""
         yield [
@@ -93,6 +102,8 @@ class CenterPattern(Pattern):
 
 class StampPattern(Pattern):
     """A stamp in one corner"""
+
+    name = 'Stamp'
 
     def get_square_offsets(self):
         """Return a sequence of matching square offsets"""
@@ -108,3 +119,12 @@ class StampPattern(Pattern):
         yield [
             (row, col) for row in S['card-square-rows'][3:] for col in S['card-square-cols'][:-3]
         ]
+
+
+PATTERNS = [
+    LinesPattern,
+    StampPattern,
+    CornersPattern,
+    CenterPattern,
+    CoverallPattern,
+]

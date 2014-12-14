@@ -129,3 +129,25 @@ class NamedSprite(Drawable):
         w, h = self.sprite.get_size()
         self.rect = pg.Rect(x - w / 2, y - h / 2, w, h)
 
+
+class ImageButton(Clickable):
+    """A button with an image and text"""
+
+    def __init__(self, name, position, filename, text_properties, text, callback, arg):
+        """Initialise the button"""
+        self.callback = callback
+        self.arg = arg
+        #
+        self.image = NamedSprite(name, position, filename)
+        self.label = getLabel(text_properties, position, text)
+        #
+        super(ImageButton, self).__init__(name, self.image.rect)
+
+    def draw(self, surface):
+        """Draw the button"""
+        self.image.draw(surface)
+        self.label.draw(surface)
+
+    def handle_click(self):
+        """Handle the click event"""
+        self.callback(self.arg)
