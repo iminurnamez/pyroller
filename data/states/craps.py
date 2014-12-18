@@ -45,13 +45,50 @@ class Craps(tools._State):
         
         all_rolls = list(range(2,13))
         self.bets = {
+        
             #name: Bet(highlighter_size, highlighter_topleft, display_name, payoff)
-            
-            'come'      :Bet((652,120),(178,252), 'Come',           {'1/1':all_rolls}),
-            'field'     :Bet((542,117),(288,373), 'Field',          {'1/1':[3,4,9,10,11], '2/1':[2,12]}),
-            'dont_pass' :Bet((542,65),(288,493), 'Dont\'t Pass',    {'1/1':all_rolls}),
-            'pass'      :Bet((662,65),(170,570), 'Pass',            {'1/1':all_rolls}),
-            'dont_come' :Bet((100,190),(180,53), 'Dont\'t Come',    {'1/1':all_rolls}),
+
+            'come'          :Bet((652,120),(178,252), 'Come',           {'1/1':all_rolls}),
+            'field'         :Bet((542,117),(288,373), 'Field',          {'1/1':[3,4,9,10,11], '2/1':[2,12]}),
+            'dont_pass'     :Bet((542,65),(288,493), 'Dont\'t Pass',    {'1/1':all_rolls}),
+            'pass'          :Bet((662,65),(170,570), 'Pass',            {'1/1':all_rolls}),
+            'dont_come'     :Bet((100,190),(180,53), 'Dont\'t Come',    {'1/1':all_rolls}),
+            'any_seven'     :Bet((388,45),(964,295), 'Any Seven',       {'5/1':all_rolls}),
+            'hard_6'        :Bet((194,80),(964,342), 'Hard 6',          {'10/1':all_rolls}),
+            'hard_10'       :Bet((194,80),(1161,342), 'Hard 10',        {'8/1':all_rolls}),
+            'hard_4'        :Bet((194,80),(1161,431), 'Hard 4',         {'8/1':all_rolls}),
+            'hard_8'        :Bet((194,80),(965,431), 'Hard 8',          {'10/1':all_rolls}),
+            'size_five'     :Bet((194,80),(965,603), 'Siz Five',        {'16/1':all_rolls}),
+            'ace_deuce'     :Bet((194,80),(1161,603), 'Ace Deuce',      {'16/1':all_rolls}),
+            'aces'          :Bet((194,80),(965,517), 'Aces',            {'31/1':all_rolls}),
+            'two_sixes'     :Bet((194,80),(1161,517), 'Two Sixes',      {'31/1':all_rolls}),
+            'any_craps'     :Bet((388,45),(964,689), 'Any Seven',       {'8/1':all_rolls}),
+            'big 6'         :Bet((67,125),(113,371), 'Big 6',           {'1/1':all_rolls}),
+            'big 8'         :Bet((105,67),(179,497), 'Big 8',           {'1/1':all_rolls}),
+            'place_lose_4'  :Bet((106,15),(288,53), 'Place Lose 4',     {'5/11':all_rolls}),
+            'lay_4'         :Bet((106,15),(288,75), 'Lay 4',            {'1/1':all_rolls}),
+            'buy_4'         :Bet((106,15),(288,206), 'Buy 4',           {'1/1':all_rolls}),
+            'place_win_4'   :Bet((106,15),(288,229), 'Place Win 4',     {'9/5':all_rolls}),
+            'place_lose_5'  :Bet((106,15),(396,53), 'Place Lose 5',     {'4/6':all_rolls}),
+            'lay_5'         :Bet((106,15),(396,75), 'Lay 5',            {'1/1':all_rolls}),
+            'buy_5'         :Bet((106,15),(396,206), 'Buy 5',           {'1/1':all_rolls}),
+            'place_win_5'   :Bet((106,15),(396,229), 'Place Win 5',     {'7/6':all_rolls}),
+            'place_lose_6'  :Bet((106,15),(506,53), 'Place Lose 6',     {'4/6':all_rolls}),
+            'lay_6'         :Bet((106,15),(506,75), 'Lay 6',            {'1/1':all_rolls}),
+            'buy_6'         :Bet((106,15),(506,206), 'Buy 6',           {'1/1':all_rolls}),
+            'place_win_6'   :Bet((106,15),(506,229), 'Place Win 6',     {'7/6':all_rolls}),
+            'place_lose_8'  :Bet((106,15),(615,53), 'Place Lose 8',     {'4/6':all_rolls}),
+            'lay_8'         :Bet((106,15),(615,75), 'Lay 8',            {'1/1':all_rolls}),
+            'buy_8'         :Bet((106,15),(615,206), 'Buy 8',           {'1/1':all_rolls}),
+            'place_win_8'   :Bet((106,15),(615,229), 'Place Win 8',     {'7/6':all_rolls}),
+            'place_lose_9'  :Bet((106,15),(725,53), 'Place Lose 9',     {'5/8':all_rolls}),
+            'lay_9'         :Bet((106,15),(725,75), 'Lay 9',            {'1/1':all_rolls}),
+            'buy_9'         :Bet((106,15),(725,206), 'Buy 9',           {'1/1':all_rolls}),
+            'place_win_9'   :Bet((106,15),(725,229), 'Place Win 9',     {'7/5':all_rolls}),
+            'place_lose_10' :Bet((106,15),(834,53), 'Place Lose 10',    {'5/11':all_rolls}),
+            'lay_10'        :Bet((106,15),(834,75), 'Lay 10',           {'1/1':all_rolls}),
+            'buy_10'        :Bet((106,15),(834,206), 'Buy 10',          {'1/1':all_rolls}),
+            'place_win_10'  :Bet((106,15),(834,229), 'Place Win 10',    {'9/5':all_rolls}),
         }
         
     def set_table(self):
@@ -65,15 +102,6 @@ class Craps(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
-        if not 'Craps' in self.casino_player.stats:
-            self.casino_player.stats['Craps'] = OrderedDict([
-                ('times as shooter',0),
-                ('bets placed',0), 
-                ('bets won',0), 
-                ('bets lost',0), 
-                ('total bets',0), 
-                ('total winnings',0)
-            ])
 
     def get_event(self, event, scale=(1,1)):
         """This method will be called for each event in the event queue
@@ -133,6 +161,6 @@ class Craps(tools._State):
         self.draw(surface)
         for h in self.bets.keys():
             self.bets[h].update(mouse_pos)
-        #print(mouse_pos)
+        print(mouse_pos)
 
 
