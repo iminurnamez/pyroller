@@ -20,10 +20,10 @@ class Card(object):
                            11: "Jack",
                            12: "Queen",
                            13: "King"}
-    speed = 5.0
     
-    def __init__(self, value, suit, card_size):
+    def __init__(self, value, suit, card_size, speed):
         self.card_size = card_size
+        self.speed = speed
         self.value = value
         self.suit = suit
         self.long_name = "{} of {}".format(self.card_names[self.value], self.suit)
@@ -139,15 +139,13 @@ class Deck(object):
         drawing position will be offset by (x_offset, y_offset). This allows you
         to limit the height of the deck."""
         left, top = lefttop
-        toggle = 1
-        for card in cards:
+        for i, card in enumerate(cards, start=1):
             card.rect.topleft = (left, top)
             card.pos = card.rect.center
             card.draw(surface)
-            if not toggle % toggle_num:
+            if not i % toggle_num:
                 left += x_offset
                 top += y_offset            
-            toggle += 1
         
     def draw(self, surface):
         """Draw deck and discard pile to surface."""
