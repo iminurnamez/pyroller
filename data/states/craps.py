@@ -47,11 +47,13 @@ class Craps(tools._State):
         self.bets = {
         
             #name: Bet(highlighter_size, highlighter_topleft, display_name, payoff)
-
+            
             'come'          :Bet((652,120),(178,252), 'Come',           {'1/1':all_rolls}),
             'field'         :Bet((542,117),(288,373), 'Field',          {'1/1':[3,4,9,10,11], '2/1':[2,12]}),
             'dont_pass'     :Bet((542,65),(288,493), 'Dont\'t Pass',    {'1/1':all_rolls}),
             'pass'          :Bet((662,65),(170,570), 'Pass',            {'1/1':all_rolls}),
+            'dont_pass_odds':Bet((331,65),(502,645), 'Dont\'t Pass Odds',{'2/1':all_rolls}),
+            'pass_odds'     :Bet((331,65),(170,645), 'Pass Odds',       {'2/1':all_rolls}),
             'dont_come'     :Bet((100,190),(180,53), 'Dont\'t Come',    {'1/1':all_rolls}),
             'any_seven'     :Bet((388,45),(964,295), 'Any Seven',       {'5/1':all_rolls}),
             'hard_6'        :Bet((194,80),(964,342), 'Hard 6',          {'10/1':all_rolls}),
