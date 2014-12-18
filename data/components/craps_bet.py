@@ -3,7 +3,6 @@ import pygame as pg
 from .labels import Label
 from .. import prepare
 
-
 class Bet:
     def __init__(self, size, topleft, name, mult_dict):
         self.name = name
