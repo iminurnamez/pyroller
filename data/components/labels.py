@@ -5,7 +5,27 @@ from .. import prepare
 
 LOADED_FONTS = {}
 
-                   
+#Helper function for MultiLineLabel class
+def wrap_text(text, char_limit, separator=" "):
+    """Splits a string into a list of strings no longer than char_limit."""
+    words = text.split(separator)
+    lines = []
+    current_line = []
+    current_length = 0
+    for word in words:
+
+        if len(word) + current_length <= char_limit:
+            current_length += len(word) + len(separator)
+            current_line.append(word)
+        else:
+            lines.append(separator.join(current_line))
+            current_line = [word]
+            current_length = len(word) + len(separator)
+    if current_line:
+        lines.append(separator.join(current_line))
+    return lines
+
+
 class _Label(object):
     '''Parent class all labels inherit from. Color arguments can use color names
        or an RGB tuple. rect_attributes should be a dict with keys of
@@ -48,14 +68,42 @@ class Label(_Label):
         super(Label, self).__init__(font_path, font_size, text, text_color,
                                                 rect_attributes, bground_color)
 
-       
-class GroupLabel(Label):                             
+
+class GroupLabel(Label):
     '''Creates a Label object which is then appended to group.'''
     def __init__(self, group, font_path, font_size, text, text_color,
                          rect_attributes, bground_color=None):
         super(GroupLabel, self).__init__(font_path, font_size, text, text_color,
                                                         rect_attributes, bground_color)
         group.append(self)
+
+
+class MultiLineLabel(object):
+    """Creates a single surface with multiple labels blitted to it."""
+    def __init__(self, font_path, font_size, text, text_color, rect_attributes,
+                         bground_color=None, char_limit=42, align="left", vert_space=0):
+        lines = wrap_text(text, char_limit)
+        labels = [Label(font_path, font_size, line, text_color, {"center": (0, 0)}, bground_color)
+                      for line in lines]
+        width = max([x.rect.width for x in labels])
+        height = sum([x.rect.height for x in labels]) + (vert_space * (len(lines) - 1))
+        self.surf = pg.Surface((width, height)).convert()
+        self.surf.set_colorkey(pg.Color("black"))
+        self.surf.fill(pg.Color("black"))
+        self.rect = self.surf.get_rect(**rect_attributes)
+        aligns = {"left": {"left": 0},
+                      "center": {"centerx": self.rect.width // 2},
+                      "right": {"right": self.rect.width}
+                      }
+        y = 0
+        for label in labels:
+            label.rect = label.text.get_rect(**aligns[align])
+            label.rect.top = y
+            label.draw(self.surf)
+            y += label.rect.height + vert_space
+
+    def draw(self, surface):
+        surface.blit(self.surf, self.rect)
 
 
 class Blinker(Label):
@@ -69,17 +117,18 @@ class Blinker(Label):
         self.elapsed = 0.0
         self.on = True
         self.blinking = True
-        
+
     def draw(self, surface, dt):
         self.elapsed += dt
         if self.elapsed >= self.frequency:
             self.elapsed -= self.frequency
             if self.blinking:
                 self.on = not self.on
-        if self.on:    
+        if self.on:
             surface.blit(self.text, self.rect)
-            
-            
+
+
+#Label Enhancements
 class Bulb(object):
     """Class to represent an individual light bulb for
     MarqueeFrame objects."""
@@ -88,19 +137,19 @@ class Bulb(object):
         self.radius = radius
         self.color = pg.Color(color)
         self.on = False
-        
+
     def draw(self, surface):
         """Draw bulb to surface."""
         pg.draw.circle(surface, self.color, self.center_point, self.radius)
 
-        
+
 class MarqueeFrame(object):
     """A MarqueeFrame draws a ring of blinking lights around a label."""
     def __init__(self, label, bulb_radius=20, bulb_color="goldenrod3",
                         frequency=120):
         diam = bulb_radius * 2
         width = ((label.rect.width // diam) + 1) * diam
-        height = ((label.rect.height // diam) + 1) * diam       
+        height = ((label.rect.height // diam) + 1) * diam
         self.rect = pg.Rect((0, 0), (width, height))
         self.rect.center = label.rect.center
         self.bulbs = []
@@ -109,7 +158,7 @@ class MarqueeFrame(object):
         for i in range(-diam, self.rect.width + diam, diam):
             x = self.rect.left + i + bulb_radius
             y = self.rect.top - bulb_radius
-            y2 = self.rect.bottom + bulb_radius            
+            y2 = self.rect.bottom + bulb_radius
             self.bulbs.append(Bulb((x, y), bulb_radius, bulb_color))
             bottom_bulbs.append(Bulb((x, y2), bulb_radius, bulb_color))
         for j in range(0, self.rect.height + diam, diam):
@@ -127,27 +176,27 @@ class MarqueeFrame(object):
         for i, bulb in enumerate(self.bulbs):
             if not i % 2:
                 bulb.on = True
-                
+
     def update(self, dt):
         self.elapsed += dt
         if self.elapsed > self.frequency:
             self.elapsed -= self.frequency
             for bulb in self.bulbs:
                 bulb.on = not bulb.on
-            
+
     def draw(self, surface):
         for bulb in self.bulbs:
             if bulb.on:
                 bulb.draw(surface)
-            
-            
+
+
 class Button(object):
     """A simple button class."""
     def __init__(self, left, top, width, height, label):
         self.rect = pg.Rect(left, top, width, height)
         label.rect.center = self.rect.center
         self.label = label
-        
+
     def draw(self, surface):
         """Draw button to surface."""
         pg.draw.rect(surface, pg.Color("gray10"), self.rect)
@@ -162,10 +211,10 @@ class Button(object):
                       (self.rect.bottomleft, border.bottomleft),
                       (self.rect.bottomright, border.bottomright)]
         for pair in points:
-            pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)        
+            pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)
         self.label.draw(surface)
-       
-       
+
+
 class PayloadButton(Button):
     """A button that holds a "payload" value."""
     def __init__(self, left, top, width, height, label, payload):
@@ -179,7 +228,7 @@ class FunctionButton(Button):
         super(FunctionButton, self).__init__(left, top, width, height, label)
         self.function = function
         self.function_args = function_args
-        
+
     def click(self, dynamic_args=None):
         """If the button's function requires arguments that need to be
         calculated at the time the button is clicked they can be passed
