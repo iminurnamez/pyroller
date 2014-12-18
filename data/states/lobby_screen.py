@@ -33,6 +33,9 @@ class LobbyScreen(tools._State):
         self.done_button = Button(left, screen_rect.bottom - (b_height + 20),
                                                 b_width, b_height, done_label)
 
+
+
+
     def startup(self, current_time, persistent):
         self.persist = persistent
 
@@ -42,6 +45,7 @@ class LobbyScreen(tools._State):
         self.done = True
         self.quit = True
 
+    # Currently trying to figure out how to add a "rebuy" button.
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
             self.exit_game()
@@ -52,6 +56,7 @@ class LobbyScreen(tools._State):
             elif self.stats_button.rect.collidepoint(pos):
                 self.done = True
                 self.next = "STATSMENU"
+
             for button in self.game_buttons:
                 if button.rect.collidepoint(pos):
                     self.done = True

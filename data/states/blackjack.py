@@ -9,6 +9,8 @@ from ..components.blackjack_dealer import Dealer
 from ..components.blackjack_player import Player
 from ..components.blackjack_hand import Hand
 
+# TODO: rebuy button. Adds to stats & gives you e.g. $1000 play cash.
+# TODO: options to change blackjack rules to match popular casino house rules.
 
 class Blackjack(tools._State):
     """State to represent a blackjack game. Player cash

@@ -49,6 +49,7 @@ class StatsScreen(tools._State):
         surface.fill(pg.Color("black"))
         for label in self.labels:
             label.draw(surface)
+
         self.done_button.draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):

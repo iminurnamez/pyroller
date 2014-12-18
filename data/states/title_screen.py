@@ -30,20 +30,26 @@ class TitleScreen(tools._State):
         b_height = 80
         left = screen_rect.centerx - (b_width / 2)
         top = self.title2.rect.bottom + 100
-        new_game = Label(font, 32, "New Game", "goldenrod3",
-                                     {"center": (0, 0)})
+        # Our button labels
+        new_game = Label(font, 32, "New Game", "goldenrod3", {"center": (0, 0)})
+        lobby = Label(font, 32, "Lobby", "goldenrod3", {"center": (0, 0)})
+        load_game = Label(font, 32, "Load Game", "goldenrod3", {"center": (0, 0)})
+
+        # Buttons
         self.new_game_button = Button(left, top, b_width, b_height, new_game)
         self.new_game_button.active = False
         top = self.new_game_button.rect.bottom + 50
-        load_game = Label(font, 32, "Load Game", "goldenrod3",
-                                         {"center": (0, 0)})
         self.load_game_button = Button(left, top, b_width, b_height, load_game)
         self.load_game_button.active = False
-        self.buttons = [self.new_game_button, self.load_game_button]
+        top = self.load_game_button.rect.bottom + 50
+        self.lobby_button = Button(left, top, b_width, b_height, lobby)
+        self.lobby_button.active=False
+        self.buttons = [self.lobby_button,self.new_game_button, self.load_game_button ]
 
         try:
             with open(os.path.join("resources", "save_game.json")) as saved_file:
                 stats = json.load(saved_file)
+                print "cash: {}".format(stats['cash'])
         except:
             stats = None
         self.stats = stats
@@ -73,6 +79,10 @@ class TitleScreen(tools._State):
                 if self.load_game_button.active:
                     self.persist["casino_player"] = CasinoPlayer(self.stats)
                     self.done = True
+            elif self.lobby_button.rect.collidepoint(pos):
+                if self.lobby_button.active:
+                    self.persist["casino_player"] = CasinoPlayer(self.stats)
+                    self.done = True
 
     def update(self, surface, keys, current_time, dt, scale):
         if self.title.rect.centerx < self.screen_rect.centerx:
@@ -84,7 +94,9 @@ class TitleScreen(tools._State):
                 for title in (self.title, self.title2):
                     self.marquees.append(MarqueeFrame(title))
                     title.blinking = True
+                # Activate our buttons
                 self.new_game_button.active = True
+                self.lobby_button.active=True
                 if self.stats is not None:
                     self.load_game_button.active = True
         for marquee in self.marquees:
