@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from .. import prepare
 
 class CasinoPlayer(object):
     """Class to represent the player/user. A new 
@@ -8,7 +9,7 @@ class CasinoPlayer(object):
     sessions."""
 
     def __init__(self, stats=None):
-        self.stats = OrderedDict([("cash", 999),
+        self.stats = OrderedDict([("cash", prepare.MONEY),
                                              ("Blackjack", OrderedDict(
                                                     [("games played", 0),
                                                     ("hands played", 0),

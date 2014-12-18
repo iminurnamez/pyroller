@@ -301,7 +301,7 @@ def cursor_from_image(image):
         icon_string.append("".join(this_row))
     return icon_string
     
-def get_cli_args(caption, win_pos, start_size):
+def get_cli_args(caption, win_pos, start_size, money):
     '''modify prepare module globals based on command line arguments,
     quickly force settings for debugging'''
     parser = argparse.ArgumentParser(description='{} Arguments'.format(caption))
@@ -317,6 +317,8 @@ def get_cli_args(caption, win_pos, start_size):
         help='start with no music')
     parser.add_argument('-S', '--straight', action='store', type=str,
         help='go straight to the named game')
+    parser.add_argument('-M', '--money', nargs=1, default=money, metavar='VALUE',
+        help='set money to value')
         
     args = vars(parser.parse_args())
     #check each condition
