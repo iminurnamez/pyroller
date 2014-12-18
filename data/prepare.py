@@ -16,8 +16,7 @@ MONEY = 999
 ARGS = tools.get_cli_args(ORIGINAL_CAPTION, WIN_POS, START_SIZE, MONEY)
 #adjust settings based on args
 START_SIZE = int(ARGS['size'][0]), int(ARGS['size'][1])
-print(ARGS['money'])
-MONEY = int(ARGS['money'][0])
+MONEY = int(ARGS['money'])
 
 #Pre-initialize the mixer for less delay before a sound plays
 pg.mixer.pre_init(44100, -16, 1, 512)
