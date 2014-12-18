@@ -71,10 +71,11 @@ class Deck(object):
         deck will replenish itself with a new deck upon exhaustion. Reusing 
         discards supersedes infinite replenishment."""
         
-    def __init__(self, topleft, card_size=prepare.CARD_SIZE, default_shuffle=True,
-                         reuse_discards=True, infinite=False):
+    def __init__(self, topleft, card_size=prepare.CARD_SIZE, card_speed=20.0,
+                        default_shuffle=True, reuse_discards=True, infinite=False):
         self.topleft = topleft
         self.card_size = card_size
+        self.card_speed = card_speed
         self.rect = pg.Rect(self.topleft, self.card_size)
         self.discard_rect = self.rect.move(int(self.card_size[0] * 1.2), 0)
         self.default_shuffle = default_shuffle
@@ -91,9 +92,11 @@ class Deck(object):
     def make_cards(self):
         """Return a list of Cards."""
         suits = ("Clubs", "Hearts", "Diamonds", "Spades")
-        cards = [Card(i, suit, self.card_size) for suit in suits for i in range(1, 14)]
+        cards = [Card(i, suit, self.card_size, self.card_speed)
+                     for suit in suits for i in range(1, 14)]
         for _ in range(self.num_decks - 1):
-            cards.extend([Card(i, suit, self.card_size) for suit in suits for i in range(1, 14)])
+            cards.extend([Card(i, suit, self.card_size, self.card_speed)
+                                 for suit in suits for i in range(1, 14)])
         if self.default_shuffle:
             shuffle(cards)
         return cards
@@ -155,10 +158,10 @@ class Deck(object):
 class MultiDeck(Deck):
     """A class to represent a deck of cards composed of multiple 
     individual decks."""
-    def __init__(self, num_decks, card_size=prepare.CARD_SIZE, default_shuffle=True,
-                        reuse_discards=True, shuffle_discards=True,
+    def __init__(self, num_decks, card_size=prepare.CARD_SIZE, card_speed=20.0,
+                        default_shuffle=True, reuse_discards=True, shuffle_discards=True,
                         infinite=False):
-        super(MultiDeck, self).__init__(card_size, default_shuffle, 
+        super(MultiDeck, self).__init__(card_size, card_speed, default_shuffle, 
                                                       reuse_discards, infinite)
         self.num_decks = num_decks
         for _ in range(num_decks - 1):
