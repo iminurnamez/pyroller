@@ -8,7 +8,7 @@ from ..components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
 from ..components.blackjack_dealer import Dealer
 from ..components.blackjack_player import Player
 from ..components.blackjack_hand import Hand
-
+from ..components.blackjack_advisor_window import AdvisorWindow
 
 class Blackjack(tools._State):
     """State to represent a blackjack game. Player cash
@@ -80,6 +80,7 @@ class Blackjack(tools._State):
         self.hit_button.active = True
         self.stand_button.active = True
         self.current_player_hand = self.player.hands[0]
+        self.advisor_window = None
         self.game_started = True
 
     def startup(self, current_time, persistent):
@@ -212,6 +213,8 @@ class Blackjack(tools._State):
             self.next = "LOBBYSCREEN"
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
+            if self.advisor_window:
+                self.advisor_window.get_event(pos)
             if self.music_icon_rect.collidepoint(pos):
                 self.play_music = not self.play_music
                 if self.play_music:
@@ -263,6 +266,10 @@ class Blackjack(tools._State):
                         else:
                             self.current_player_hand.bet.add_chips(stack.chips)
                     self.moving_stacks = []
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_a and not self.advisor_window:
+                test_text = "This is a test string to simulate the advice that a blackjack advisor would give. The string should be broken up into shorter lines aligned to the left."
+                self.advisor_window = AdvisorWindow((700, 500), test_text)
 
     def update(self, surface, keys, current_time, dt, scale):
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
@@ -270,6 +277,9 @@ class Blackjack(tools._State):
         self.chip_total_label = Label(self.font, 48, total_text, "gold3",
                                {"bottomleft": (screen.left + 3, screen.bottom - 3)})
 
+        if self.advisor_window:
+            if self.advisor_window.done:
+                self.advisor_window = None
         if self.state == "Betting":
             if not self.moving_stacks:
                 pass
@@ -429,3 +439,5 @@ class Blackjack(tools._State):
         else:
             surface.blit(self.music_icon, self.music_icon_rect)
         self.chip_total_label.draw(surface)
+        if self.advisor_window:
+            self.advisor_window.draw(surface)
