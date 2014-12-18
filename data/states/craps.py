@@ -47,7 +47,7 @@ class Craps(tools._State):
         self.bets = {
         
             #name: Bet(highlighter_size, highlighter_topleft, display_name, payoff)
-            
+
             'come'          :Bet((652,120),(178,252), 'Come',           {'1/1':all_rolls}),
             'field'         :Bet((542,117),(288,373), 'Field',          {'1/1':[3,4,9,10,11], '2/1':[2,12]}),
             'dont_pass'     :Bet((542,65),(288,493), 'Dont\'t Pass',    {'1/1':all_rolls}),
@@ -91,6 +91,9 @@ class Craps(tools._State):
             'lay_10'        :Bet((106,15),(834,75), 'Lay 10',           {'1/1':all_rolls}),
             'buy_10'        :Bet((106,15),(834,206), 'Buy 10',          {'1/1':all_rolls}),
             'place_win_10'  :Bet((106,15),(834,229), 'Place 10 to Win',    {'9/5':all_rolls}),
+
+            'CE_eleven'     :Bet((30,30),(876,390), 'Yo Eleven',       {'7/1':all_rolls}),
+            'CE_craps'     :Bet((30,30),(920,401), 'Any Craps',       {'7/1':all_rolls}),
         }
         
     def set_table(self):
