@@ -4,10 +4,11 @@ from ..components.craps_bet import Bet
 all_rolls = list(range(2,13))
 BETS = {
 
-    #name: Bet(highlighter_size, highlighter_topleft, display_name, payoff)
+    #name: Bet(highlighter_size, highlighter_topleft, display_name, payoff, extra highlighter points, extra pos, extra size)
 
     'come'          :Bet((652,120),(178,252), 'Come',           {'1/1':all_rolls}),
-    'field'         :Bet((542,117),(288,373), 'Field',          {'1/1':[3,4,9,10,11], '2/1':[2,12]}),
+    'field'         :Bet((542,117),(288,373), 'Field',          {'1/1':[3,4,9,10,11], '2/1':[2,12]}, 
+                        [[(0,0), (109,0), (109,121)]], (180,372), (110,120)),
     'dont_pass'     :Bet((542,65),(288,493), 'Dont\'t Pass',    {'1/1':all_rolls}),
     'pass'          :Bet((662,65),(170,570), 'Pass',            {'1/1':all_rolls}),
     'dont_pass_odds':Bet((331,65),(502,645), 'Dont\'t Pass Odds',{'2/1':all_rolls}),
@@ -22,9 +23,11 @@ BETS = {
     '3_craps'       :Bet((194,80),(1161,603), 'Horn 3 Craps',      {'16/1':all_rolls}),
     '2_craps'       :Bet((194,80),(965,517), 'Horn 2 Craps',            {'31/1':all_rolls}),
     '12_craps'      :Bet((194,80),(1161,517), 'Horn 12 Craps',      {'31/1':all_rolls}),
-    'any_craps'     :Bet((388,45),(964,689), 'Any Seven',       {'8/1':all_rolls}),
-    'big 6'         :Bet((67,125),(113,371), 'Big 6',           {'1/1':all_rolls}),
-    'big 8'         :Bet((105,67),(179,497), 'Big 8',           {'1/1':all_rolls}),
+    'any_craps'     :Bet((388,45),(964,689), 'Any Craps',       {'8/1':all_rolls}),
+    'big 6'         :Bet((67,125),(113,371), 'Big 6',           {'1/1':all_rolls},
+                        [[(67,0), (117,60), (65,121)], [(0,124),(65,121),(16,175)]], (113,371), (120,200)),
+    'big 8'         :Bet((105,67),(179,497), 'Big 8',           {'1/1':all_rolls},
+                        [[(120,10), (178,76), (60,77)], [(18,124),(65,77),(66,145)]], (113,420), (200,150)),
     'place_lose_4'  :Bet((106,15),(288,53), 'Place Against 4',     {'5/11':all_rolls}),
     'lay_4'         :Bet((106,15),(288,75), 'Lay 4',            {'1/1':all_rolls}),
     'buy_4'         :Bet((106,15),(288,206), 'Buy 4',           {'1/1':all_rolls}),
