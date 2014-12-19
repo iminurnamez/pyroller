@@ -319,6 +319,8 @@ def get_cli_args(caption, win_pos, start_size, money):
         help='go straight to the named game')
     parser.add_argument('-M', '--money', default=money, metavar='VALUE',
         help='set money to value')
+    parser.add_argument('-d', '--debug', action='store_true',
+        help='run game in debug mode')
         
     args = vars(parser.parse_args())
     #check each condition
