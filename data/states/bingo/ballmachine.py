@@ -75,6 +75,12 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         """Stop the machine"""
         self.running = False
 
+    def reset_timer(self, interval):
+        """Reset the timer on the machine"""
+        self.interval = interval
+        self.state.stop_generator('ball-machine')
+        self.state.add_generator('ball-machine', self.pick_balls())
+
     def reset_machine(self):
         """Reset the machine"""
         self.running = False

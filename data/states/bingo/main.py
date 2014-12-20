@@ -157,7 +157,7 @@ class Bingo(statemachine.StateMachine):
         for idx, button in enumerate(self.speed_buttons):
             button.state = idx == selected_idx
         #
-        self.ball_machine.interval = interval * 1000
+        self.ball_machine.reset_timer(interval * 1000)
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""

@@ -80,3 +80,12 @@ class StateMachine(tools._State, loggable.Loggable):
         """Add a new generator to run"""
         self.log.debug('Adding new executor {0}, {1}'.format(name, generator))
         self.generators.append(StateExecutor(name, generator))
+
+    def stop_generator(self, name):
+        """Stop a generator with a specific name"""
+        for generator in self.generators[:]:
+            if generator.name == name:
+                self.generators.remove(generator)
+                break
+        else:
+            raise ValueError('A generator named {0} was not found'.format(name))
