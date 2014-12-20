@@ -42,7 +42,8 @@ class Bingo(statemachine.StateMachine):
         self.cards = bingocard.CardCollection(
             'player-card',
             S['player-cards-position'],
-            S['player-card-offsets']
+            S['player-card-offsets'],
+            self
         )
         #
         self.winning_pattern = patterns.PATTERNS[0]

@@ -75,11 +75,12 @@ class BingoSquare(BingoLabel):
 class BingoCard(utils.Clickable):
     """A bingo card comprising a number of squares"""
 
-    def __init__(self, name, position, value):
+    def __init__(self, name, position, value, state):
         """Initialise the bingo card"""
         super(BingoCard, self).__init__(name)
         #
-        self.initial_value = value
+        self.initial_value = self.value = value
+        self.state = state
         self.x, self.y = position
         self.squares = utils.KeyedDrawableGroup()
         square_offset = S['card-square-offset']
@@ -190,14 +191,15 @@ class BingoCard(utils.Clickable):
 class CardCollection(utils.Drawable, utils.ClickableGroup):
     """A set of bingo cards"""
 
-    def __init__(self, name, position, offsets):
+    def __init__(self, name, position, offsets, state):
         """Initialise the collection"""
         self.name = name
         self.x, self.y = position
+        self.state = state
         self.cards = utils.DrawableGroup([BingoCard(
             '%s(%d)' % (self.name, i + 1),
             (self.x + x, self.y + y),
-            S['card-initial-value']) for i, (x, y) in enumerate(offsets)]
+            S['card-initial-value'], state) for i, (x, y) in enumerate(offsets)]
         )
         #
         super(CardCollection, self).__init__(self.cards)
