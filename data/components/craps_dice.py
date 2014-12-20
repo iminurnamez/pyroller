@@ -42,10 +42,10 @@ class Die:
                         self.dice_moving_left = False
                     else:
                         self.dice_rect.x -= self.dice_speed
-                        self.roll_value = random.randrange(0,5)
+                        #self.roll_value = random.randrange(0,5)
                 else:
                     self.dice_rect.x += self.dice_speed
-                    self.dice_speed -= random.randrange(1,5)
+                    self.dice_speed -= random.randint(1,5)
                     if self.dice_speed < 0:
                         self.dice_speed = 0
                         self.rolling = False
@@ -64,6 +64,7 @@ class Die:
             self.dice_moving_left = True
             self.rolling = True
             self.dice_rect.center = self.dice_starting_pos
+            self.roll_value = random.randint(0,5)
             
     def value(self):
         if not self.rolling and not self.draw_dice:
