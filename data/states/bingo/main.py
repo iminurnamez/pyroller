@@ -131,11 +131,12 @@ class Bingo(statemachine.StateMachine):
         # Buttons that show the speed
         for idx, (name, interval) in enumerate(S['machine-speeds']):
             self.speed_buttons.append(utils.ImageOnOffButton(
-                name, (50 + idx * 100, 200),
-                'bingo-red-button', 'bingo-red-off-button', 'button',
+                name, (150 + idx * 120, 200),
+                'bingo-red-button', 'bingo-red-off-button', 'small-button',
                 name,
-                idx == 1,
-                self.change_speed, (idx, interval)
+                interval == S['machine-interval'],
+                self.change_speed, (idx, interval),
+                scale=S['speed-button-scale']
             ))
         self.ui.extend(self.speed_buttons)
 

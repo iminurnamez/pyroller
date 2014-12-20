@@ -107,7 +107,7 @@ class KeyedDrawableGroup(collections.OrderedDict, Drawable):
 class NamedSprite(Drawable):
     """A sprite loaded from a named file"""
 
-    def __init__(self, name, position, filename=None):
+    def __init__(self, name, position, filename=None, scale=1.0):
         """Initialise the sprite"""
         super(NamedSprite, self).__init__()
         #
@@ -115,6 +115,12 @@ class NamedSprite(Drawable):
         self.angle = 0
         self.sprite = prepare.GFX[filename if filename else name]
         w, h = self.sprite.get_size()
+        #
+        # Scale if needed
+        if scale != 1.0:
+            self.sprite = pg.transform.scale(self.sprite, (int(w * scale), int(h * scale)))
+            w, h = w * scale, h * scale
+        #
         self.rect = pg.Rect(position[0] - w / 2, position[1] - h / 2, w, h)
 
     def draw(self, surface):
@@ -156,14 +162,14 @@ class ImageButton(Clickable):
 class ImageOnOffButton(Clickable):
     """A button with an on and off image and text"""
 
-    def __init__(self, name, position, on_filename, off_filename, text_properties, text, state, callback, arg):
+    def __init__(self, name, position, on_filename, off_filename, text_properties, text, state, callback, arg, scale=1.0):
         """Initialise the button"""
         self.callback = callback
         self.arg = arg
         self.state = state
         #
-        self.on_image = NamedSprite(name, position, on_filename)
-        self.off_image = NamedSprite(name, position, off_filename)
+        self.on_image = NamedSprite(name, position, on_filename, scale=scale)
+        self.off_image = NamedSprite(name, position, off_filename, scale=scale)
         self.label = getLabel(text_properties, position, text)
         #
         super(ImageOnOffButton, self).__init__(name, self.on_image.rect)
