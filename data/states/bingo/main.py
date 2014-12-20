@@ -137,12 +137,12 @@ class Bingo(statemachine.StateMachine):
         # Buttons that show the speed
         for idx, (name, interval) in enumerate(S['machine-speeds']):
             self.speed_buttons.append(utils.ImageOnOffButton(
-                name, (150 + idx * 120, 200),
+                name, (150 + idx * 130, 200),
                 'bingo-blue-button', 'bingo-blue-off-button', 'small-button',
                 name,
                 interval == S['machine-interval'],
                 self.change_speed, (idx, interval),
-                scale=S['speed-button-scale']
+                scale=S['small-button-scale']
             ))
         self.ui.extend(self.speed_buttons)
         #
@@ -154,7 +154,14 @@ class Bingo(statemachine.StateMachine):
                 'Auto pick',
                 S['debug-auto-pick'],
                 self.toggle_auto_pick, None,
-                scale=S['speed-button-scale']
+                scale=S['small-button-scale']
+            ))
+            self.debug_buttons.append(utils.ImageButton(
+                'restart', S['debug-restart-position'],
+                'bingo-yellow-button', 'small-button',
+                'Restart',
+                self.restart_game, None,
+                scale=S['small-button-scale']
             ))
             self.ui.extend(self.debug_buttons)
 
@@ -182,6 +189,12 @@ class Bingo(statemachine.StateMachine):
         self.log.debug('Toggling auto-pick')
         self.auto_pick = not self.auto_pick
         self.debug_buttons[0].state = self.auto_pick
+
+    def restart_game(self, arg):
+        """Restart the game"""
+        self.log.info('Restart game')
+        self.ball_machine.reset_machine()
+        self.cards.reset()
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""

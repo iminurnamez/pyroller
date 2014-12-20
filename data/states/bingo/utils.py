@@ -139,12 +139,12 @@ class NamedSprite(Drawable):
 class ImageButton(Clickable):
     """A button with an image and text"""
 
-    def __init__(self, name, position, filename, text_properties, text, callback, arg):
+    def __init__(self, name, position, filename, text_properties, text, callback, arg, scale=1.0):
         """Initialise the button"""
         self.callback = callback
         self.arg = arg
         #
-        self.image = NamedSprite(name, position, filename)
+        self.image = NamedSprite(name, position, filename, scale=scale)
         self.label = getLabel(text_properties, position, text)
         #
         super(ImageButton, self).__init__(name, self.image.rect)

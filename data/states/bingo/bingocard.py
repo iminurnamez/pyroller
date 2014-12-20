@@ -38,6 +38,10 @@ class BingoLabel(utils.Clickable):
             self.highlighter.draw(surface)
         self.label.draw(surface)
 
+    def reset(self):
+        """Reset the label"""
+        self.is_highlighted = False
+
 
 class BingoSquare(BingoLabel):
     """A square on a bingo card"""
@@ -61,6 +65,11 @@ class BingoSquare(BingoLabel):
         """The number was clicked on"""
         self.marker.rotate_to(random.randrange(0, 360))
         self.is_called = not self.is_called
+
+    def reset(self):
+        """Reset the square"""
+        super(BingoSquare, self).reset()
+        self.is_called = False
 
 
 class BingoCard(utils.Clickable):
@@ -134,6 +143,13 @@ class BingoCard(utils.Clickable):
             if square.text == number:
                 square.is_called = True
 
+    def reset(self):
+        """Reset the card"""
+        for square in self.squares.values():
+            square.reset()
+        for label in self.labels.values():
+            label.reset()
+
 
 class CardCollection(utils.Drawable, utils.ClickableGroup):
     """A set of bingo cards"""
@@ -152,3 +168,8 @@ class CardCollection(utils.Drawable, utils.ClickableGroup):
     def draw(self, surface):
         """Draw the cards"""
         self.cards.draw(surface)
+
+    def reset(self):
+        """Reset all the cards"""
+        for card in self.cards:
+            card.reset()

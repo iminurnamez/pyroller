@@ -18,7 +18,7 @@ SETTINGS = {
     'small-button-font-size': 32,
     'small-button-font-color': 'gold3',
     'small-button-size': (180, 45),
-
+    'small-button-scale': 0.6,
 
     #
     # Settings for a single Bingo Card
@@ -84,10 +84,10 @@ SETTINGS = {
     'machine-speeds': [
         ('Slow', 10), ('Medium', 5), ('Fast', 1),
     ],
-    'speed-button-scale': 0.6,
 
     #
     # Debug settings
     'debug-auto-pick': True,
     'debug-auto-pick-position': (1250, 40),
+    'debug-restart-position': (1250, 120),
 }

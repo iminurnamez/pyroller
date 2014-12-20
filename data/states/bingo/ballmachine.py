@@ -87,6 +87,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.balls = list(self.all_balls)
         self.called_balls = []
         random.shuffle(self.balls)
+        self.called_balls_ui.reset_display()
         self.interval = self.initial_interval
 
     def pick_balls(self):
@@ -143,3 +144,9 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
     def draw(self, surface):
         """Draw the tray"""
         self.balls.draw(surface)
+
+    def reset_display(self):
+        """Reset the display of the balls"""
+        for ball in self.balls.values():
+            ball.text_color = S['called-ball-number-font-color']
+            ball.update_text()
