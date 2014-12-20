@@ -46,10 +46,16 @@ SETTINGS = {
         2: range(61, 76),
     },
 
-    'card-label-font': prepare.FONTS["Saniretro"],
-    'card-label-font-size': 18,
-    'card-label-font-color': 'black',
-    'card-label-offset': (0, 110),
+    'card-remaining-label-font': prepare.FONTS["Saniretro"],
+    'card-remaining-label-font-size': 18,
+    'card-remaining-label-font-color': 'black',
+    'card-remaining-label-offset': (0, 110),
+
+    'card-value-label-font': prepare.FONTS["Saniretro"],
+    'card-value-label-font-size': 22,
+    'card-value-label-font-color': 'yellow',
+    'card-value-label-offset': (0, -160),
+    'card-initial-value': 5,
 
     #
     # Player settings

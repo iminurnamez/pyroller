@@ -75,10 +75,11 @@ class BingoSquare(BingoLabel):
 class BingoCard(utils.Clickable):
     """A bingo card comprising a number of squares"""
 
-    def __init__(self, name, position):
+    def __init__(self, name, position, value):
         """Initialise the bingo card"""
         super(BingoCard, self).__init__(name)
         #
+        self.value = value
         self.x, self.y = position
         self.squares = utils.KeyedDrawableGroup()
         square_offset = S['card-square-offset']
@@ -106,15 +107,28 @@ class BingoCard(utils.Clickable):
                 self, (square_offset * x, square_offset * y_offset), letter
             )
         #
-        # The label for the card
-        label_offset = S['card-label-offset']
-        self.label = utils.getLabel(
-            'card-label',
+        # The label for display of the card value
+        label_offset = S['card-value-label-offset']
+        self.value_label = utils.getLabel(
+            'card-value-label',
+            (self.x + label_offset[0], self.y + label_offset[1]),
+            '*PLACEHOLDER*'
+        )
+        self.update_value(value)
+        #
+        #
+        # The label for display of the remaining squares on the card
+        label_offset = S['card-remaining-label-offset']
+        self.remaining_label = utils.getLabel(
+            'card-remaining-label',
             (self.x + label_offset[0], self.y + label_offset[1]),
             'Player card'
         )
         #
         self.clickables = utils.ClickableGroup(self.squares.values())
+        self.drawables = utils.DrawableGroup([
+            self.squares, self.labels, self.remaining_label, self.value_label
+        ])
 
     def get_random_number(self, column, chosen):
         """Return a random number for the column, making sure not to duplicate"""
@@ -125,9 +139,7 @@ class BingoCard(utils.Clickable):
 
     def draw(self, surface):
         """Draw the square"""
-        self.squares.draw(surface)
-        self.labels.draw(surface)
-        self.label.draw(surface)
+        self.drawables.draw(surface)
 
     def process_events(self, event, scale=(1, 1)):
         """Process clicking events"""
@@ -135,7 +147,7 @@ class BingoCard(utils.Clickable):
 
     def set_label(self, text):
         """Set the card label text"""
-        self.label.set_text(str(text))
+        self.remaining_label.set_text(str(text))
 
     def call_square(self, number):
         """Call a particular square"""
@@ -150,6 +162,11 @@ class BingoCard(utils.Clickable):
         for label in self.labels.values():
             label.reset()
 
+    def update_value(self, value):
+        """Update the value of the card"""
+        self.value = value
+        self.value_label.set_text('Card value ${0}'.format(value))
+
 
 class CardCollection(utils.Drawable, utils.ClickableGroup):
     """A set of bingo cards"""
@@ -160,7 +177,8 @@ class CardCollection(utils.Drawable, utils.ClickableGroup):
         self.x, self.y = position
         self.cards = utils.DrawableGroup([BingoCard(
             '%s(%d)' % (self.name, i + 1),
-            (self.x + x, self.y + y)) for i, (x, y) in enumerate(offsets)]
+            (self.x + x, self.y + y),
+            S['card-initial-value']) for i, (x, y) in enumerate(offsets)]
         )
         #
         super(CardCollection, self).__init__(self.cards)
