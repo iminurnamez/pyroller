@@ -79,7 +79,7 @@ class BingoCard(utils.Clickable):
         """Initialise the bingo card"""
         super(BingoCard, self).__init__(name)
         #
-        self.value = value
+        self.initial_value = value
         self.x, self.y = position
         self.squares = utils.KeyedDrawableGroup()
         square_offset = S['card-square-offset']
@@ -116,7 +116,6 @@ class BingoCard(utils.Clickable):
         )
         self.update_value(value)
         #
-        #
         # The label for display of the remaining squares on the card
         label_offset = S['card-remaining-label-offset']
         self.remaining_label = utils.getLabel(
@@ -125,9 +124,23 @@ class BingoCard(utils.Clickable):
             'Player card'
         )
         #
+        # The button to double down the bet
+        label_offset = S['card-double-down-button-offset']
+        self.double_down_button = utils.ImageOnOffButton(
+            'double-down',
+            (self.x + label_offset[0], self.y + label_offset[1]),
+            'bingo-red-button', 'bingo-red-off-button',
+            'card-double-down-button',
+            'Double', True, self.double_down, None,
+            S['small-button-scale'],
+        )
+        #
         self.clickables = utils.ClickableGroup(self.squares.values())
+        self.clickables.append(self.double_down_button)
+        #
         self.drawables = utils.DrawableGroup([
-            self.squares, self.labels, self.remaining_label, self.value_label
+            self.squares, self.labels, self.remaining_label, self.value_label,
+            self.double_down_button,
         ])
 
     def get_random_number(self, column, chosen):
@@ -161,11 +174,17 @@ class BingoCard(utils.Clickable):
             square.reset()
         for label in self.labels.values():
             label.reset()
+        self.update_value(self.initial_value)
 
     def update_value(self, value):
         """Update the value of the card"""
         self.value = value
         self.value_label.set_text('Card value ${0}'.format(value))
+
+    def double_down(self, arg):
+        """Double down the card"""
+        self.log.info('Doubling down on the card')
+        self.update_value(self.value * 2)
 
 
 class CardCollection(utils.Drawable, utils.ClickableGroup):
