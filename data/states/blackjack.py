@@ -2,13 +2,13 @@ from random import choice
 import pygame as pg
 from .. import tools, prepare
 from ..components.angles import get_distance, get_angle, project
-from ..components.labels import Label, Button, PayloadButton, Blinker
+from ..components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel
 from ..components.cards import Deck
 from ..components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
 from ..components.blackjack_dealer import Dealer
 from ..components.blackjack_player import Player
 from ..components.blackjack_hand import Hand
-
+from ..components.blackjack_advisor_window import AdvisorWindow
 
 class Blackjack(tools._State):
     """State to represent a blackjack game. Player cash
@@ -37,7 +37,7 @@ class Blackjack(tools._State):
         vert_space = 20
         left = self.screen_rect.right - (b_width + side_margin)
         top = self.screen_rect.bottom - ((b_height * 5) + vert_space * 4)
-        
+
         font_size = 64
         action_texts = ("Hit", "Stand", "Double Down", "Split")
         labels = iter([Label(self.font, font_size, text, "gold3", {"center": (0, 0)})
@@ -55,8 +55,8 @@ class Blackjack(tools._State):
         top += b_height + vert_space
         self.split_button = PayloadButton(left, top, b_width, b_height,
                                                           next(labels), self.split_hand)
-        
-        self.player_buttons = [self.hit_button, self.stand_button, 
+
+        self.player_buttons = [self.hit_button, self.stand_button,
                                          self.double_down_button, self.split_button]
         ng_label = Label(self.font, font_size, "New Game", "gold3", {"center": (0, 0)})
         self.new_game_button = Button(self.deal_button.rect.left - (b_width + 15),
@@ -68,7 +68,7 @@ class Blackjack(tools._State):
 
     def new_game(self, player_cash, chips=None):
         """Start a new round of blackjack."""
-        self.deck = Deck((20, 20), prepare.CARD_SIZE)
+        self.deck = Deck((20, 20), prepare.CARD_SIZE, 20)
         self.dealer = Dealer()
         self.chip_rack = ChipRack((1100, 200), self.chip_size)
         self.moving_cards =  []
@@ -80,6 +80,7 @@ class Blackjack(tools._State):
         self.hit_button.active = True
         self.stand_button.active = True
         self.current_player_hand = self.player.hands[0]
+        self.advisor_window = None
         self.game_started = True
 
     def startup(self, current_time, persistent):
@@ -132,7 +133,7 @@ class Blackjack(tools._State):
                 p_slot = player.hands[-1].slots[0]
                 hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 2.5), 0)
                 card = hand.cards.pop()
-                new_hand = Hand((hand_slot.topleft[0], hand_slot.topleft[1] - 20), [card], 
+                new_hand = Hand((hand_slot.topleft[0], hand_slot.topleft[1] - 20), [card],
                                             self.player.chip_pile.withdraw_chips(bet))
                 new_hand.slots = [hand_slot]
                 card.rect.topleft = hand_slot.topleft
@@ -147,7 +148,6 @@ class Blackjack(tools._State):
                 card2.destination = new_hand.slots[-1]
                 card2.face_up = True
                 self.moving_cards.extend([card1, card2])
-
 
     def tally_hands(self):
         """Calculate result of each player hand and set appropriate
@@ -213,6 +213,8 @@ class Blackjack(tools._State):
             self.next = "LOBBYSCREEN"
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
+            if self.advisor_window:
+                self.advisor_window.get_event(pos)
             if self.music_icon_rect.collidepoint(pos):
                 self.play_music = not self.play_music
                 if self.play_music:
@@ -246,12 +248,12 @@ class Blackjack(tools._State):
                             if unbet_stack:
                                 choice(self.chip_sounds).play()
                                 self.player.chip_pile.add_chips(unbet_stack.chips)
-                                
+
             elif self.state == "Show Results":
                 if event.button == 1:
                     if self.new_game_button.rect.collidepoint(pos):
                         self.new_game(self.player.chip_pile.get_chip_total())
-                        
+
         elif event.type == pg.MOUSEBUTTONUP:
             pos = tools.scaled_mouse_pos(scale, event.pos)
             if self.moving_stacks:
@@ -264,13 +266,20 @@ class Blackjack(tools._State):
                         else:
                             self.current_player_hand.bet.add_chips(stack.chips)
                     self.moving_stacks = []
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_a and not self.advisor_window:
+                test_text = "This is a test string to simulate the advice that a blackjack advisor would give. The string should be broken up into shorter lines aligned to the left."
+                self.advisor_window = AdvisorWindow((700, 500), test_text)
 
     def update(self, surface, keys, current_time, dt, scale):
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
         screen = self.screen_rect
         self.chip_total_label = Label(self.font, 48, total_text, "gold3",
                                {"bottomleft": (screen.left + 3, screen.bottom - 3)})
-        
+
+        if self.advisor_window:
+            if self.advisor_window.done:
+                self.advisor_window = None
         if self.state == "Betting":
             if not self.moving_stacks:
                 pass
@@ -430,3 +439,5 @@ class Blackjack(tools._State):
         else:
             surface.blit(self.music_icon, self.music_icon_rect)
         self.chip_total_label.draw(surface)
+        if self.advisor_window:
+            self.advisor_window.draw(surface)

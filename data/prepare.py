@@ -12,9 +12,12 @@ RESOLUTIONS = [(800, 600), (928, 696), (1280, 960), (1400, 1050)]
 CARD_SIZE = (125, 181)
 CHIP_SIZE = (32, 19)
 WIN_POS = (0,0)
-ARGS = tools.get_cli_args(ORIGINAL_CAPTION, WIN_POS, START_SIZE)
+MONEY = 999
+ARGS = tools.get_cli_args(ORIGINAL_CAPTION, WIN_POS, START_SIZE, MONEY)
 #adjust settings based on args
 START_SIZE = int(ARGS['size'][0]), int(ARGS['size'][1])
+MONEY = int(ARGS['money'])
+DEBUG = bool(ARGS['debug'])
 
 #Pre-initialize the mixer for less delay before a sound plays
 pg.mixer.pre_init(44100, -16, 1, 512)
