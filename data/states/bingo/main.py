@@ -132,7 +132,7 @@ class Bingo(statemachine.StateMachine):
         for idx, (name, interval) in enumerate(S['machine-speeds']):
             self.speed_buttons.append(utils.ImageOnOffButton(
                 name, (150 + idx * 120, 200),
-                'bingo-red-button', 'bingo-red-off-button', 'small-button',
+                'bingo-blue-button', 'bingo-blue-off-button', 'small-button',
                 name,
                 interval == S['machine-interval'],
                 self.change_speed, (idx, interval),
