@@ -84,7 +84,7 @@ SETTINGS = {
     'machine-speeds': [
         ('Slow', 10), ('Medium', 5), ('Fast', 1),
     ],
-    'speed-button-scale': 0.5,
+    'speed-button-scale': 0.6,
 
     #
     # Debug settings

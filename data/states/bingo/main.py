@@ -33,6 +33,7 @@ class Bingo(statemachine.StateMachine):
         self.music_icon_rect = self.music_icon.get_rect(topright=topright)
         self.mute_icon = prepare.GFX["mute"]
         self.play_music = True
+        self.auto_pick = S['debug-auto-pick']
         #
         lobby_label = utils.getLabel('button', (0, 0), 'Lobby')
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
@@ -48,7 +49,12 @@ class Bingo(statemachine.StateMachine):
         #
         self.pattern_buttons = utils.DrawableGroup()
         self.speed_buttons = utils.DrawableGroup()
+        self.debug_buttons = utils.DrawableGroup()
         self.buttons = utils.DrawableGroup([self.pattern_buttons, self.speed_buttons])
+        #
+        if prepare.DEBUG:
+            self.buttons.append(self.debug_buttons)
+        #
         self.ui = utils.ClickableGroup([self.cards])
         #
         super(Bingo, self).__init__(states.S_INITIALISE)
@@ -139,6 +145,18 @@ class Bingo(statemachine.StateMachine):
                 scale=S['speed-button-scale']
             ))
         self.ui.extend(self.speed_buttons)
+        #
+        # Debugging buttons
+        if prepare.DEBUG:
+            self.debug_buttons.append(utils.ImageOnOffButton(
+                'auto-pick', (600, 100),
+                'bingo-yellow-button', 'bingo-yellow-off-button', 'small-button',
+                'Auto pick',
+                S['debug-auto-pick'],
+                self.toggle_auto_pick, None,
+                scale=S['speed-button-scale']
+            ))
+            self.ui.extend(self.debug_buttons)
 
     def change_pattern(self, pattern):
         """Change the winning pattern"""
@@ -158,6 +176,12 @@ class Bingo(statemachine.StateMachine):
             button.state = idx == selected_idx
         #
         self.ball_machine.reset_timer(interval * 1000)
+
+    def toggle_auto_pick(self, arg):
+        """Toggle whether we are auto-picking numbers"""
+        self.log.debug('Toggling auto-pick')
+        self.auto_pick = not self.auto_pick
+        self.debug_buttons[0].state = self.auto_pick
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""
@@ -204,7 +228,7 @@ class Bingo(statemachine.StateMachine):
                         square.is_highlighted = True
         #
         # If auto-picking then update the cards
-        if S['debug-auto-pick']:
+        if self.auto_pick:
             for card in self.cards:
                 card.call_square(ball.number)
 
