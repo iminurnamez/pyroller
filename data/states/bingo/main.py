@@ -1,3 +1,4 @@
+import sys
 import pygame as pg
 from collections import OrderedDict
 
@@ -74,6 +75,7 @@ class Bingo(statemachine.StateMachine):
         if event.type == pg.QUIT:
             if prepare.ARGS['straight']:
                 pg.quit()
+                sys.exit()
             else:
                 self.done = True
                 self.next = "LOBBYSCREEN"
