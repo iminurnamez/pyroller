@@ -47,7 +47,8 @@ class Bingo(statemachine.StateMachine):
         self.winning_pattern = patterns.PATTERNS[0]
         #
         self.pattern_buttons = utils.DrawableGroup()
-        self.buttons = utils.DrawableGroup([self.pattern_buttons])
+        self.speed_buttons = utils.DrawableGroup()
+        self.buttons = utils.DrawableGroup([self.pattern_buttons, self.speed_buttons])
         self.ui = utils.ClickableGroup([self.cards])
         #
         super(Bingo, self).__init__(states.S_INITIALISE)
@@ -115,6 +116,8 @@ class Bingo(statemachine.StateMachine):
 
     def initUI(self):
         """Initialise the UI display"""
+        #
+        # Buttons that show the winning patterns
         for idx, pattern in enumerate(patterns.PATTERNS):
             self.pattern_buttons.append(utils.ImageOnOffButton(
                 pattern.name, (200 + idx * 240, 400),
@@ -124,6 +127,17 @@ class Bingo(statemachine.StateMachine):
                 self.change_pattern, pattern
             ))
         self.ui.extend(self.pattern_buttons)
+        #
+        # Buttons that show the speed
+        for idx, (name, interval) in enumerate(S['machine-speeds']):
+            self.speed_buttons.append(utils.ImageOnOffButton(
+                name, (50 + idx * 100, 200),
+                'bingo-red-button', 'bingo-red-off-button', 'button',
+                name,
+                idx == 1,
+                self.change_speed, (idx, interval)
+            ))
+        self.ui.extend(self.speed_buttons)
 
     def change_pattern(self, pattern):
         """Change the winning pattern"""
@@ -134,6 +148,15 @@ class Bingo(statemachine.StateMachine):
         # Update UI
         for button in self.pattern_buttons:
             button.state = (button.arg == self.winning_pattern)
+
+    def change_speed(self, arg):
+        """Change the speed of the ball machine"""
+        selected_idx, interval = arg
+        self.log.info('Changing machine speed to {0}'.format(interval))
+        for idx, button in enumerate(self.speed_buttons):
+            button.state = idx == selected_idx
+        #
+        self.ball_machine.interval = interval * 1000
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""

@@ -76,6 +76,10 @@ SETTINGS = {
     'called-ball-number-font-color': 'black',
     'called-ball-number-called-font-color': 'white',
 
+    'machine-speeds': [
+        ('Slow', 10), ('Medium', 5), ('Fast', 2),
+    ],
+
     #
     # Debug settings
     'debug-auto-pick': True,
