@@ -89,4 +89,5 @@ SETTINGS = {
     #
     # Debug settings
     'debug-auto-pick': True,
+    'debug-auto-pick-position': (1250, 40),
 }
