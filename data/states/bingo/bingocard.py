@@ -10,6 +10,8 @@ class BingoLabel(utils.Clickable):
     """A label on a bingo card"""
 
     style_name = 'square-label'
+    show_label = True
+    show_mouse_over = True
 
     def __init__(self, name, card, offset, text):
         """Initialise the label"""
@@ -31,11 +33,12 @@ class BingoLabel(utils.Clickable):
 
     def draw(self, surface):
         """Draw the square"""
-        if self.mouse_over:
+        if self.show_mouse_over and self.mouse_over:
             self.mouse_highlight.draw(surface)
         elif self.is_highlighted:
             self.highlighter.draw(surface)
-        self.label.draw(surface)
+        if self.show_label:
+            self.label.draw(surface)
 
     def reset(self):
         """Reset the label"""
@@ -75,6 +78,7 @@ class BingoCard(utils.Clickable):
     """A bingo card comprising a number of squares"""
 
     square_class = BingoSquare
+    show_col_labels = True
 
     def __init__(self, name, position, state):
         """Initialise the bingo card"""
@@ -101,12 +105,13 @@ class BingoCard(utils.Clickable):
         #
         # Create the labels
         self.labels = utils.KeyedDrawableGroup()
-        y_offset = min(S['card-square-rows']) - 1
-        for x, letter in zip(S['card-square-cols'], 'BINGO'):
-            self.labels[x] = BingoLabel(
-                '{0} {1} label'.format(self.name, letter),
-                self, (square_offset * x, square_offset * y_offset), letter
-            )
+        if self.show_col_labels:
+            y_offset = min(S['card-square-rows']) - 1
+            for x, letter in zip(S['card-square-cols'], 'BINGO'):
+                self.labels[x] = BingoLabel(
+                    '{0} {1} label'.format(self.name, letter),
+                    self, (square_offset * x, square_offset * y_offset), letter
+                )
         #
         # The label for display of the remaining squares on the card
         label_offset = S['card-remaining-label-offset']
@@ -157,7 +162,7 @@ class BingoCard(utils.Clickable):
 class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
     """A set of bingo cards"""
 
-    card_class = None
+    card_class = NotImplementedError
 
     def __init__(self, name, position, offsets, state):
         """Initialise the collection"""
@@ -171,7 +176,6 @@ class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
             (self.x + x, self.y + y),
             state) for i, (x, y) in enumerate(offsets)]
         )
-        #
 
     def reset(self):
         """Reset all the cards"""
