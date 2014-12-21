@@ -2,7 +2,6 @@
 
 import random
 
-from ... import prepare
 from .settings import SETTINGS as S
 from . import utils
 
@@ -75,11 +74,12 @@ class BingoSquare(BingoLabel):
 class BingoCard(utils.Clickable):
     """A bingo card comprising a number of squares"""
 
-    def __init__(self, name, position, value, state):
+    square_class = BingoSquare
+
+    def __init__(self, name, position, state):
         """Initialise the bingo card"""
         super(BingoCard, self).__init__(name)
         #
-        self.initial_value = self.value = value
         self.state = state
         self.x, self.y = position
         self.squares = utils.KeyedDrawableGroup()
@@ -94,7 +94,7 @@ class BingoCard(utils.Clickable):
             chosen_numbers.add(number)
             #
             # Place on the card
-            self.squares[(x, y)] = BingoSquare(
+            self.squares[(x, y)] = self.square_class(
                 '{0} [{1}, {2}]'.format(self.name, x, y),
                 self, (square_offset * x, square_offset * y), number
             )
@@ -108,15 +108,6 @@ class BingoCard(utils.Clickable):
                 self, (square_offset * x, square_offset * y_offset), letter
             )
         #
-        # The label for display of the card value
-        label_offset = S['card-value-label-offset']
-        self.value_label = utils.getLabel(
-            'card-value-label',
-            (self.x + label_offset[0], self.y + label_offset[1]),
-            '*PLACEHOLDER*'
-        )
-        self.update_value(value)
-        #
         # The label for display of the remaining squares on the card
         label_offset = S['card-remaining-label-offset']
         self.remaining_label = utils.getLabel(
@@ -125,23 +116,9 @@ class BingoCard(utils.Clickable):
             'Player card'
         )
         #
-        # The button to double down the bet
-        label_offset = S['card-double-down-button-offset']
-        self.double_down_button = utils.ImageOnOffButton(
-            'double-down',
-            (self.x + label_offset[0], self.y + label_offset[1]),
-            'bingo-red-button', 'bingo-red-off-button',
-            'card-double-down-button',
-            'Double', True, self.double_down, None,
-            S['small-button-scale'],
-        )
-        #
         self.clickables = utils.ClickableGroup(self.squares.values())
-        self.clickables.append(self.double_down_button)
-        #
         self.drawables = utils.DrawableGroup([
-            self.squares, self.labels, self.remaining_label, self.value_label,
-            self.double_down_button,
+            self.squares, self.labels, self.remaining_label,
         ])
 
     def get_random_number(self, column, chosen):
@@ -177,39 +154,21 @@ class BingoCard(utils.Clickable):
             label.reset()
         self.update_value(self.initial_value)
 
-    def update_value(self, value):
-        """Update the value of the card"""
-        self.value = value
-        self.value_label.set_text('Card value ${0}'.format(value))
-
-    def double_down(self, arg):
-        """Double down the card"""
-        if self.double_down_button.state:
-            self.log.info('Doubling down on the card')
-            self.update_value(self.value * 2)
-            self.double_down_button.state = False
-            self.state.add_generator('re-enable-double-down', self.enable_double_down_button(
-                S['card-double-down-delay'] * 1000
-            ))
-
-    def enable_double_down_button(self, delay):
-        """Re-enable the double down button"""
-        yield delay
-        self.double_down_button.state = True
-
 
 class CardCollection(utils.Drawable, utils.ClickableGroup):
     """A set of bingo cards"""
+
+    card_class = None
 
     def __init__(self, name, position, offsets, state):
         """Initialise the collection"""
         self.name = name
         self.x, self.y = position
         self.state = state
-        self.cards = utils.DrawableGroup([BingoCard(
+        self.cards = utils.DrawableGroup([self.card_class(
             '%s(%d)' % (self.name, i + 1),
             (self.x + x, self.y + y),
-            S['card-initial-value'], state) for i, (x, y) in enumerate(offsets)]
+            state) for i, (x, y) in enumerate(offsets)]
         )
         #
         super(CardCollection, self).__init__(self.cards)

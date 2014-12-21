@@ -8,7 +8,8 @@ from ...components.labels import Button
 from . import statemachine
 from . import states
 from . import utils
-from . import bingocard
+from . import playercard
+from . import dealercard
 from . import patterns
 from . import ballmachine
 from .settings import SETTINGS as S
@@ -39,7 +40,7 @@ class Bingo(statemachine.StateMachine):
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
                                                  b_width, b_height, lobby_label)
         #
-        self.cards = bingocard.CardCollection(
+        self.cards = playercard.PlayerCardCollection(
             'player-card',
             S['player-cards-position'],
             S['player-card-offsets'],
@@ -62,6 +63,9 @@ class Bingo(statemachine.StateMachine):
         #
         self.ball_machine = ballmachine.BallMachine('ball-machine', self)
         self.ball_machine.start_machine()
+        #
+        self.dealer_card = dealercard.DealerCard('dealer-card', (800, 200), self)
+        self.cards.append(self.dealer_card)
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -113,6 +117,7 @@ class Bingo(statemachine.StateMachine):
         #
         self.lobby_button.draw(surface)
         self.cards.draw(surface)
+        self.dealer_card.draw(surface)
         self.ball_machine.draw(surface)
         self.buttons.draw(surface)
         #
