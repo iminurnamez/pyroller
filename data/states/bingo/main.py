@@ -207,6 +207,7 @@ class Bingo(statemachine.StateMachine):
         self.log.info('Restart game')
         self.ball_machine.reset_machine()
         self.cards.reset()
+        self.dealer_cards.reset()
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""
