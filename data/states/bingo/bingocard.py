@@ -9,7 +9,7 @@ from . import utils
 class BingoLabel(utils.Clickable):
     """A label on a bingo card"""
 
-    style_name = 'square-label'
+    style_name = 'square-number'
     show_label = True
     show_mouse_over = True
 
@@ -22,10 +22,16 @@ class BingoLabel(utils.Clickable):
         #
         self.x, self.y = card.x + offset[0], card.y + offset[1]
         self.label = utils.getLabel(self.style_name, (self.x, self.y), text)
-        self.highlighter = utils.NamedSprite('bingo-highlight', (self.x, self.y))
-        self.mouse_highlight = utils.NamedSprite('bingo-mouse-highlight', (self.x, self.y))
+        self.highlighter = utils.NamedSprite(
+            'bingo-highlight', (self.x, self.y), scale=self.get_scale())
+        self.mouse_highlight = utils.NamedSprite(
+            'bingo-mouse-highlight', (self.x, self.y), scale=self.get_scale())
         #
         super(BingoLabel, self).__init__(name, self.label.rect)
+
+    def get_scale(self):
+        """Return the scale to use for graphics"""
+        return S['{0}-scale'.format(self.style_name)]
 
     def handle_click(self):
         """Respond to being clicked on"""
@@ -48,14 +54,15 @@ class BingoLabel(utils.Clickable):
 class BingoSquare(BingoLabel):
     """A square on a bingo card"""
 
-    style_name = 'square-number'
+    style_name = 'square-label'
 
     def __init__(self, name, card, offset, number):
         """Initialise the square"""
         super(BingoSquare, self).__init__(name, card, offset, number)
         #
         self.is_called = False
-        self.marker = utils.NamedSprite('bingo-marker', (self.x, self.y))
+        self.marker = utils.NamedSprite(
+            'bingo-marker', (self.x, self.y), scale=self.get_scale())
 
     def draw(self, surface):
         """Draw the square"""
@@ -79,6 +86,7 @@ class BingoCard(utils.Clickable):
 
     square_class = BingoSquare
     show_col_labels = True
+    style_name = 'card-square'
 
     def __init__(self, name, position, state):
         """Initialise the bingo card"""
@@ -87,7 +95,7 @@ class BingoCard(utils.Clickable):
         self.state = state
         self.x, self.y = position
         self.squares = utils.KeyedDrawableGroup()
-        square_offset = S['card-square-offset']
+        square_offset = S['{0}-offset'.format(self.style_name)]
         chosen_numbers = set()
         #
         # Create the numbered squares
@@ -114,7 +122,7 @@ class BingoCard(utils.Clickable):
                 )
         #
         # The label for display of the remaining squares on the card
-        label_offset = S['card-remaining-label-offset']
+        label_offset = S['{0}-remaining-label-offset'.format(self.style_name)]
         self.remaining_label = utils.getLabel(
             'card-remaining-label',
             (self.x + label_offset[0], self.y + label_offset[1]),

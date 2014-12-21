@@ -26,17 +26,25 @@ SETTINGS = {
     'square-number-font': prepare.FONTS["Saniretro"],
     'square-number-font-size': 32,
     'square-number-font-color': 'white',
+    'square-number-scale': 1.0,
 
-    'square-label-font': prepare.FONTS["Saniretro"],
-    'square-label-font-size': 32,
-    'square-label-font-color': 'black',
+    'player-square-label-font': prepare.FONTS["Saniretro"],
+    'player-square-label-font-size': 32,
+    'player-square-label-font-color': 'black',
+    'player-square-label-scale': 1.0,
+
+    'dealer-square-label-font': prepare.FONTS["Saniretro"],
+    'dealer-square-label-font-size': 32,
+    'dealer-square-label-font-color': 'black',
+    'dealer-square-label-scale': 0.5,
 
     'card-square-rows': SQUARE_ROWS,
     'card-square-cols': SQUARE_COLS,
-    'card-square-offset': 40,
     'card-square-scaled-offsets': [
         (x, y) for x in SQUARE_COLS for y in SQUARE_ROWS
     ],
+    'player-card-square-offset': 40,
+    'dealer-card-square-offset': 20,
 
     'card-numbers': {
         -2: range(1, 16),
@@ -49,7 +57,9 @@ SETTINGS = {
     'card-remaining-label-font': prepare.FONTS["Saniretro"],
     'card-remaining-label-font-size': 18,
     'card-remaining-label-font-color': 'black',
-    'card-remaining-label-offset': (0, 110),
+
+    'player-card-square-remaining-label-offset': (0, 110),
+    'dealer-card-square-remaining-label-offset': (0, 55),
 
     'card-value-label-font': prepare.FONTS["Saniretro"],
     'card-value-label-font-size': 22,

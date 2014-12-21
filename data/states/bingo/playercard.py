@@ -9,9 +9,14 @@ from . import utils
 class PlayerSquare(bingocard.BingoSquare):
     """A square on a player card"""
 
+    style_name = 'player-square-label'
+
 
 class PlayerCard(bingocard.BingoCard):
     """The player card"""
+
+    square_class = PlayerSquare
+    style_name = 'player-card-square'
 
     def __init__(self, name, position, state):
         """Initialise the card"""

@@ -14,6 +14,7 @@ class DealerSquare(bingocard.BingoSquare):
 
     show_label = False
     show_mouse_over = False
+    style_name = 'dealer-square-label'
 
 
 class DealerCard(bingocard.BingoCard):
@@ -21,6 +22,7 @@ class DealerCard(bingocard.BingoCard):
 
     square_class = DealerSquare
     show_col_labels = False
+    style_name = 'dealer-card-square'
 
 
 class DealerCardCollection(bingocard.CardCollection):
