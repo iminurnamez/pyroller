@@ -9,17 +9,20 @@ and in the prepare module.
 from . import prepare, tools
 from .states import title_screen, lobby_screen, stats_menu
 from .states import stats_screen, blackjack, craps, bingo
+from .states import credits_screen, snake_splash
 
 def main():
     args = (prepare.ORIGINAL_CAPTION, prepare.RENDER_SIZE, prepare.RESOLUTIONS)
     run_it = tools.Control(*args)
-    state_dict = {"TITLESCREEN" : title_screen.TitleScreen(),
+    state_dict = {"SNAKESPLASH": snake_splash.SnakeSplash(),
+                  "TITLESCREEN" : title_screen.TitleScreen(),
                   "LOBBYSCREEN" : lobby_screen.LobbyScreen(),
                   "STATSMENU"   : stats_menu.StatsMenu(),
                   "STATSSCREEN" : stats_screen.StatsScreen(),
+                  "CREDITSSCREEN": credits_screen.CreditsScreen(),
                   "BLACKJACK"   : blackjack.Blackjack(),
                   "CRAPS"       : craps.Craps(),
                   "BINGO"       : bingo.Bingo(),
     }
-    run_it.setup_states(state_dict, "TITLESCREEN")
+    run_it.setup_states(state_dict, "SNAKESPLASH")
     run_it.main()

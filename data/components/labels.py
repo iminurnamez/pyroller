@@ -215,6 +215,17 @@ class Button(object):
         self.label.draw(surface)
 
 
+class ImageButton(object):
+    def __init__(self, image, rect_attributes, label):
+        self.image = image
+        self.rect = self.image.get_rect(**rect_attributes)
+        self.label = label
+        self.label.rect.midtop = self.rect.midbottom
+        
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+        self.label.draw(surface)
+        
 class PayloadButton(Button):
     """A button that holds a "payload" value."""
     def __init__(self, left, top, width, height, label, payload):
