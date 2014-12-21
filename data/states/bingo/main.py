@@ -38,7 +38,7 @@ class Bingo(statemachine.StateMachine):
         #
         lobby_label = utils.getLabel('button', (0, 0), 'Lobby')
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
-                                                 b_width, b_height, lobby_label)
+                                   b_width, b_height, lobby_label)
         #
         self.cards = playercard.PlayerCardCollection(
             'player-card',
@@ -46,6 +46,14 @@ class Bingo(statemachine.StateMachine):
             S['player-card-offsets'],
             self
         )
+        self.dealer_cards = dealercard.DealerCardCollection(
+            'dealer-card',
+            S['dealer-cards-position'],
+            S['dealer-card-offsets'],
+            self
+        )
+        #
+        self.ui = utils.ClickableGroup(self.cards)
         #
         self.winning_pattern = patterns.PATTERNS[0]
         #
@@ -57,15 +65,14 @@ class Bingo(statemachine.StateMachine):
         if prepare.DEBUG:
             self.buttons.append(self.debug_buttons)
         #
-        self.ui = utils.ClickableGroup([self.cards])
-        #
         super(Bingo, self).__init__(states.S_INITIALISE)
         #
         self.ball_machine = ballmachine.BallMachine('ball-machine', self)
         self.ball_machine.start_machine()
         #
-        self.dealer_card = dealercard.DealerCard('dealer-card', (800, 200), self)
-        self.cards.append(self.dealer_card)
+        self.all_cards = utils.DrawableGroup()
+        self.all_cards.extend(self.cards)
+        self.all_cards.extend(self.dealer_cards)
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -116,7 +123,7 @@ class Bingo(statemachine.StateMachine):
         surface.fill(S['table-color'])
         #
         self.lobby_button.draw(surface)
-        self.cards.draw(surface)
+        self.all_cards.draw(surface)
         self.ball_machine.draw(surface)
         self.buttons.draw(surface)
         #
@@ -236,7 +243,7 @@ class Bingo(statemachine.StateMachine):
         """A ball was picked"""
         #
         # Update the view of how many squares remain
-        for card in self.cards:
+        for card in self.all_cards:
             number_to_go, winners = self.winning_pattern.get_number_to_go_and_winners(card, self.ball_machine.called_balls)
             if number_to_go > 1 or len(winners) == 0:
                 extra = ''
@@ -255,6 +262,6 @@ class Bingo(statemachine.StateMachine):
         #
         # If auto-picking then update the cards
         if self.auto_pick:
-            for card in self.cards:
+            for card in self.all_cards:
                 card.call_square(ball.number)
 

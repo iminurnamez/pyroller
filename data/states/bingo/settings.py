@@ -80,6 +80,11 @@ SETTINGS = {
         (-450, 0), (-150, 0), (150, 0), (450, 0),
         # (-150, 0), (150, 0)
     ],
+    'dealer-cards-position': (prepare.RENDER_SIZE[0] / 2 + 200, prepare.RENDER_SIZE[1] - 900),
+    'dealer-card-offsets': [
+        (-190, 0), (-70, 0), (70, 0), (190, 0),
+        # (-150, 0), (150, 0)
+    ],
 
     #
     # Table settings
