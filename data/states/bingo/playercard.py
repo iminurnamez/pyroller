@@ -64,6 +64,11 @@ class PlayerCard(bingocard.BingoCard):
         yield delay
         self.double_down_button.state = True
 
+    def reset(self):
+        """Reset the card"""
+        super(PlayerCard, self).reset()
+        self.update_value(self.initial_value)
+
 
 class PlayerCardCollection(bingocard.CardCollection):
     """A collection of player cards"""

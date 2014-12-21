@@ -152,10 +152,9 @@ class BingoCard(utils.Clickable):
             square.reset()
         for label in self.labels.values():
             label.reset()
-        self.update_value(self.initial_value)
 
 
-class CardCollection(utils.Drawable, utils.ClickableGroup):
+class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
     """A set of bingo cards"""
 
     card_class = None
@@ -165,19 +164,16 @@ class CardCollection(utils.Drawable, utils.ClickableGroup):
         self.name = name
         self.x, self.y = position
         self.state = state
-        self.cards = utils.DrawableGroup([self.card_class(
+        #
+        utils.ClickableGroup.__init__(self)
+        utils.DrawableGroup.__init__(self, [self.card_class(
             '%s(%d)' % (self.name, i + 1),
             (self.x + x, self.y + y),
             state) for i, (x, y) in enumerate(offsets)]
         )
         #
-        super(CardCollection, self).__init__(self.cards)
-
-    def draw(self, surface):
-        """Draw the cards"""
-        self.cards.draw(surface)
 
     def reset(self):
         """Reset all the cards"""
-        for card in self.cards:
+        for card in self:
             card.reset()

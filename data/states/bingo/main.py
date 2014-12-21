@@ -117,7 +117,6 @@ class Bingo(statemachine.StateMachine):
         #
         self.lobby_button.draw(surface)
         self.cards.draw(surface)
-        self.dealer_card.draw(surface)
         self.ball_machine.draw(surface)
         self.buttons.draw(surface)
         #
