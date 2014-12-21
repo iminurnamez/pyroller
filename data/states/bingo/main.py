@@ -261,7 +261,8 @@ class Bingo(statemachine.StateMachine):
                         square.is_highlighted = True
         #
         # If auto-picking then update the cards
+        auto_pick_cards = list(self.dealer_cards)
         if self.auto_pick:
-            for card in self.all_cards:
-                card.call_square(ball.number)
-
+            auto_pick_cards.extend(self.cards)
+        for card in auto_pick_cards:
+            card.call_square(ball.number)
