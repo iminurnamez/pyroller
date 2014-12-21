@@ -7,7 +7,7 @@ x set highlight positions for each bet position
 - setup AI rollers and betters
 - setup buttons (roll, bet, info)
 - make point chip image
-- dice animation
+x dice animation
 
 '''
 
@@ -15,8 +15,9 @@ x set highlight positions for each bet position
 from collections import OrderedDict
 import pygame as pg
 from .. import tools, prepare
-from ..components.labels import Button, Label
-from ..components import craps_bet_types
+from ..components.labels import Button, Label, FunctionButton
+from ..components import craps_bet_types, craps_dice
+import random
 
 class Craps(tools._State):
     def __init__(self):
@@ -27,10 +28,15 @@ class Craps(tools._State):
         topright = (self.screen_rect.right - 10, self.screen_rect.top + 10)
         b_width = 360
         b_height = 90
-        font_size = 64
-        lobby_label = Label(self.font, font_size, "Lobby", "gold3", {"center": (0, 0)})
-        self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
-                                                 b_width, b_height, lobby_label)
+        self.font_size = 64
+        lobby_label = Label(self.font, self.font_size, "Lobby", "gold3", {"center": (0, 0)})
+        self.lobby_button = Button(
+            20, self.screen_rect.bottom - (b_height + 15), b_width, b_height, lobby_label
+        )
+        roll_label = Label(self.font, self.font_size, "Roll", "gold3", {"center": (0, 0)})
+        self.roll_button = FunctionButton(
+            420, self.screen_rect.bottom - (b_height + 15),b_width, b_height, roll_label, self.roll, None
+        )
         self.music_icon_rect = self.music_icon.get_rect(topright=topright)
         self.mute_icon = prepare.GFX["mute"]
         self.play_music = True
@@ -40,7 +46,26 @@ class Craps(tools._State):
         self.set_table()
         self.bets = craps_bet_types.BETS
         
+        self.dice = [craps_dice.Die(self.screen_rect), craps_dice.Die(self.screen_rect, 50)]
+        self.dice_total = 0
+        self.update_total_label()
+        self.history = [] #[(1,1),(5,4)]
+        self.dice_sounds = [
+            prepare.SFX['dice_sound1'],
+            prepare.SFX['dice_sound2'],
+            prepare.SFX['dice_sound3'],
+            prepare.SFX['dice_sound4'],
+        ]
 
+    def roll(self):
+        if not self.dice[0].rolling:
+            self.update_history()
+            for die in self.dice:
+                die.reset()
+            if prepare.DEBUG:
+                print(self.history)
+            random.choice(self.dice_sounds).play()
+        
         
     def set_table(self):
         self.table_y = (self.screen_rect.height // 4)*3 
@@ -52,6 +77,9 @@ class Craps(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
+        for die in self.dice:
+            die.draw_dice = False
+        self.history = []
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
@@ -74,16 +102,22 @@ class Craps(tools._State):
                 self.game_started = False
                 self.done = True
                 self.next = "LOBBYSCREEN"
+            elif self.roll_button.rect.collidepoint(pos):
+                self.roll()
         elif event.type == pg.VIDEORESIZE:
             self.set_table()
 
     def cash_out_player(self):
         self.casino_player.stats["cash"] = self.player.get_chip_total()
+        
+    def update_total_label(self):
+        self.dice_total_label = Label(self.font, self.font_size, str(self.dice_total), "gold3", {"center": (1165, 50)})
 
     def draw(self, surface):
         surface.fill(self.table_color)
         surface.blit(self.table, self.table_rect)
         self.lobby_button.draw(surface)
+        self.roll_button.draw(surface)
         if self.play_music:
             surface.blit(self.mute_icon, self.music_icon_rect)
         else:
@@ -92,12 +126,30 @@ class Craps(tools._State):
         for h in self.bets.keys():
             self.bets[h].draw(surface)
         
+        for die in self.dice:
+            die.draw(surface)
+        if not self.dice[0].rolling and self.dice[0].draw_dice:
+            self.dice_total_label.draw(surface)
+            
+    def update_history(self):
+        dice = []
+        for die in self.dice:
+            dice.append(die.value())
+        if dice[0]:
+            self.history.append(dice)
+        if len(self.history) > 10:
+            self.history.pop(0)
 
     def update(self, surface, keys, current_time, dt, scale):
+        self.dice_total = 0
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.draw(surface)
         for h in self.bets.keys():
             self.bets[h].update(mouse_pos)
-        print(mouse_pos)
-
-
+        for die in self.dice:
+            die.update(current_time)
+            v = die.value()
+            if v:
+                self.dice_total += v
+        self.update_total_label()
+        #print(mouse_pos)
