@@ -132,15 +132,14 @@ class Blinker(Label):
 class Bulb(object):
     """Class to represent an individual light bulb for
     MarqueeFrame objects."""
-    def __init__(self, center_point, radius, color):
-        self.center_point = center_point
-        self.radius = radius
-        self.color = pg.Color(color)
+    def __init__(self, center_point):
+        self.image = prepare.GFX["bulb"]
+        self.rect = self.image.get_rect(center=center_point)
         self.on = False
 
     def draw(self, surface):
         """Draw bulb to surface."""
-        pg.draw.circle(surface, self.color, self.center_point, self.radius)
+        surface.blit(self.image, self.rect)
 
 
 class MarqueeFrame(object):
@@ -159,14 +158,14 @@ class MarqueeFrame(object):
             x = self.rect.left + i + bulb_radius
             y = self.rect.top - bulb_radius
             y2 = self.rect.bottom + bulb_radius
-            self.bulbs.append(Bulb((x, y), bulb_radius, bulb_color))
-            bottom_bulbs.append(Bulb((x, y2), bulb_radius, bulb_color))
+            self.bulbs.append(Bulb((x, y)))
+            bottom_bulbs.append(Bulb((x, y2)))
         for j in range(0, self.rect.height + diam, diam):
             x1 = self.rect.left - bulb_radius
             x2 = self.rect.right + bulb_radius
             y = self.rect.top + j + bulb_radius
-            left_bulbs.append(Bulb((x1, y), bulb_radius, bulb_color))
-            self.bulbs.append(Bulb((x2, y), bulb_radius, bulb_color))
+            left_bulbs.append(Bulb((x1, y)))
+            self.bulbs.append(Bulb((x2, y)))
         self.bulbs.extend(bottom_bulbs[1:-1][::-1])
         self.bulbs.extend(left_bulbs[::-1])
         self.bulb_cycle = cycle(self.bulbs)
@@ -221,11 +220,11 @@ class ImageButton(object):
         self.rect = self.image.get_rect(**rect_attributes)
         self.label = label
         self.label.rect.midtop = self.rect.midbottom
-        
+
     def draw(self, surface):
         surface.blit(self.image, self.rect)
         self.label.draw(surface)
-        
+
 class PayloadButton(Button):
     """A button that holds a "payload" value."""
     def __init__(self, left, top, width, height, label, payload):
