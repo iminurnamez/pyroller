@@ -24,5 +24,8 @@ def main():
                   "CRAPS"       : craps.Craps(),
                   "BINGO"       : bingo.Bingo(),
     }
-    run_it.setup_states(state_dict, "SNAKESPLASH")
+    if prepare.ARGS['straight']:
+        run_it.setup_states(state_dict, "TITLESCREEN")
+    else:
+        run_it.setup_states(state_dict, "SNAKESPLASH")
     run_it.main()
