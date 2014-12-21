@@ -205,7 +205,7 @@ class Bingo(statemachine.StateMachine):
     def restart_game(self, arg):
         """Restart the game"""
         self.log.info('Restart game')
-        self.ball_machine.reset_machine()
+        self.ball_machine.reset_machine(self.ball_machine.interval)
         self.cards.reset()
         self.dealer_cards.reset()
 

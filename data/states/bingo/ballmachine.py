@@ -81,14 +81,15 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.state.stop_generator('ball-machine')
         self.state.add_generator('ball-machine', self.pick_balls())
 
-    def reset_machine(self):
+    def reset_machine(self, interval=None):
         """Reset the machine"""
         self.running = False
         self.balls = list(self.all_balls)
         self.called_balls = []
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
-        self.interval = self.initial_interval
+        self.interval = interval if interval else self.initial_interval
+        self.current_ball_ui.set_text('-')
 
     def pick_balls(self):
         """Pick the balls"""
