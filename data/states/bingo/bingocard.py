@@ -184,8 +184,18 @@ class BingoCard(utils.Clickable):
 
     def double_down(self, arg):
         """Double down the card"""
-        self.log.info('Doubling down on the card')
-        self.update_value(self.value * 2)
+        if self.double_down_button.state:
+            self.log.info('Doubling down on the card')
+            self.update_value(self.value * 2)
+            self.double_down_button.state = False
+            self.state.add_generator('re-enable-double-down', self.enable_double_down_button(
+                S['card-double-down-delay'] * 1000
+            ))
+
+    def enable_double_down_button(self, delay):
+        """Re-enable the double down button"""
+        yield delay
+        self.double_down_button.state = True
 
 
 class CardCollection(utils.Drawable, utils.ClickableGroup):

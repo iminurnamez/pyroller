@@ -61,6 +61,7 @@ SETTINGS = {
     'card-double-down-button-font-size': 18,
     'card-double-down-button-font-color': 'black',
     'card-double-down-button-offset': (0, 160),
+    'card-double-down-delay': 2,
 
     #
     # Player settings
