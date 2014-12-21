@@ -103,16 +103,17 @@ class Bingo(statemachine.StateMachine):
             self.ui.process_events(event, scale)
             #
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            if self.music_icon_rect.collidepoint(pos):
-                self.play_music = not self.play_music
-                if self.play_music:
-                    pg.mixer.music.play(-1)
-                else:
-                    pg.mixer.music.stop()
-            elif self.lobby_button.rect.collidepoint(pos):
-                self.game_started = False
-                self.done = True
-                self.next = "LOBBYSCREEN"
+            if event.type == pg.MOUSEBUTTONDOWN:
+                if self.music_icon_rect.collidepoint(pos):
+                    self.play_music = not self.play_music
+                    if self.play_music:
+                        pg.mixer.music.play(-1)
+                    else:
+                        pg.mixer.music.stop()
+                elif self.lobby_button.rect.collidepoint(pos):
+                    self.game_started = False
+                    self.done = True
+                    self.next = "LOBBYSCREEN"
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.done = True
