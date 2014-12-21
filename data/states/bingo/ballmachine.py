@@ -39,6 +39,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         #
         self.all_balls = [Ball(n) for n in S['machine-balls']]
         self.balls = []
+        self.called_balls = []
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-interval'] * 1000
         self.running = False
@@ -50,12 +51,18 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         """Create the UI components"""
         components = utils.DrawableGroup()
         #
+        # The display of the current ball
         self.current_ball_ui = utils.getLabel(
             'machine-ball',
             S['machine-ball-position'],
             '0'
         )
         components.append(self.current_ball_ui)
+        #
+        # The display of all the balls that have been called
+        self.called_balls_ui = CalledBallTray(S['called-balls-position'])
+        components.append(self.called_balls_ui)
+        #
         #
         return components
 
@@ -68,17 +75,26 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         """Stop the machine"""
         self.running = False
 
+    def reset_timer(self, interval):
+        """Reset the timer on the machine"""
+        self.interval = interval
+        self.state.stop_generator('ball-machine')
+        self.state.add_generator('ball-machine', self.pick_balls())
+
     def reset_machine(self):
         """Reset the machine"""
         self.running = False
         self.balls = list(self.all_balls)
+        self.called_balls = []
         random.shuffle(self.balls)
+        self.called_balls_ui.reset_display()
         self.interval = self.initial_interval
 
     def pick_balls(self):
         """Pick the balls"""
         for ball in self.balls:
             self.set_current_ball(ball)
+            self.called_balls.append(ball.number)
             #
             # Wait for next ball
             yield self.interval
@@ -93,7 +109,44 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         #
         self.current_ball = ball
         self.current_ball_ui.set_text(ball.full_name)
+        self.state.ball_picked(ball)
+        self.called_balls_ui.call_ball(ball)
 
     def draw(self, surface):
         """Draw the machine"""
         self.ui.draw(surface)
+
+
+class CalledBallTray(utils.Drawable, loggable.Loggable):
+    """A display of the balls that have been called"""
+
+    def __init__(self, position):
+        """Initialise the display"""
+        self.addLogger()
+        self.x, self.y = position
+        self.balls = utils.KeyedDrawableGroup()
+        #
+        w, h = S['called-balls-size']
+        dx, dy = S['called-balls-offsets']
+        #
+        for number in S['machine-balls']:
+            xi = (number - 1) % w
+            yi = (number - 1) // w
+            self.balls[number] = utils.getLabel(
+                'called-ball-number', (self.x + xi * dx, self.y + yi * dy), number
+            )
+
+    def call_ball(self, ball):
+        """Call a particular ball"""
+        self.balls[ball.number].text_color = S['called-ball-number-called-font-color']
+        self.balls[ball.number].update_text()
+
+    def draw(self, surface):
+        """Draw the tray"""
+        self.balls.draw(surface)
+
+    def reset_display(self):
+        """Reset the display of the balls"""
+        for ball in self.balls.values():
+            ball.text_color = S['called-ball-number-font-color']
+            ball.update_text()

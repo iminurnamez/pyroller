@@ -38,6 +38,10 @@ class BingoLabel(utils.Clickable):
             self.highlighter.draw(surface)
         self.label.draw(surface)
 
+    def reset(self):
+        """Reset the label"""
+        self.is_highlighted = False
+
 
 class BingoSquare(BingoLabel):
     """A square on a bingo card"""
@@ -62,14 +66,21 @@ class BingoSquare(BingoLabel):
         self.marker.rotate_to(random.randrange(0, 360))
         self.is_called = not self.is_called
 
+    def reset(self):
+        """Reset the square"""
+        super(BingoSquare, self).reset()
+        self.is_called = False
+
 
 class BingoCard(utils.Clickable):
     """A bingo card comprising a number of squares"""
 
-    def __init__(self, name, position):
+    def __init__(self, name, position, value, state):
         """Initialise the bingo card"""
         super(BingoCard, self).__init__(name)
         #
+        self.initial_value = self.value = value
+        self.state = state
         self.x, self.y = position
         self.squares = utils.KeyedDrawableGroup()
         square_offset = S['card-square-offset']
@@ -97,7 +108,41 @@ class BingoCard(utils.Clickable):
                 self, (square_offset * x, square_offset * y_offset), letter
             )
         #
+        # The label for display of the card value
+        label_offset = S['card-value-label-offset']
+        self.value_label = utils.getLabel(
+            'card-value-label',
+            (self.x + label_offset[0], self.y + label_offset[1]),
+            '*PLACEHOLDER*'
+        )
+        self.update_value(value)
+        #
+        # The label for display of the remaining squares on the card
+        label_offset = S['card-remaining-label-offset']
+        self.remaining_label = utils.getLabel(
+            'card-remaining-label',
+            (self.x + label_offset[0], self.y + label_offset[1]),
+            'Player card'
+        )
+        #
+        # The button to double down the bet
+        label_offset = S['card-double-down-button-offset']
+        self.double_down_button = utils.ImageOnOffButton(
+            'double-down',
+            (self.x + label_offset[0], self.y + label_offset[1]),
+            'bingo-red-button', 'bingo-red-off-button',
+            'card-double-down-button',
+            'Double', True, self.double_down, None,
+            S['small-button-scale'],
+        )
+        #
         self.clickables = utils.ClickableGroup(self.squares.values())
+        self.clickables.append(self.double_down_button)
+        #
+        self.drawables = utils.DrawableGroup([
+            self.squares, self.labels, self.remaining_label, self.value_label,
+            self.double_down_button,
+        ])
 
     def get_random_number(self, column, chosen):
         """Return a random number for the column, making sure not to duplicate"""
@@ -108,24 +153,53 @@ class BingoCard(utils.Clickable):
 
     def draw(self, surface):
         """Draw the square"""
-        self.squares.draw(surface)
-        self.labels.draw(surface)
+        self.drawables.draw(surface)
 
     def process_events(self, event, scale=(1, 1)):
         """Process clicking events"""
         self.clickables.process_events(event, scale)
 
+    def set_label(self, text):
+        """Set the card label text"""
+        self.remaining_label.set_text(str(text))
+
+    def call_square(self, number):
+        """Call a particular square"""
+        for square in self.squares.values():
+            if square.text == number:
+                square.is_called = True
+
+    def reset(self):
+        """Reset the card"""
+        for square in self.squares.values():
+            square.reset()
+        for label in self.labels.values():
+            label.reset()
+        self.update_value(self.initial_value)
+
+    def update_value(self, value):
+        """Update the value of the card"""
+        self.value = value
+        self.value_label.set_text('Card value ${0}'.format(value))
+
+    def double_down(self, arg):
+        """Double down the card"""
+        self.log.info('Doubling down on the card')
+        self.update_value(self.value * 2)
+
 
 class CardCollection(utils.Drawable, utils.ClickableGroup):
     """A set of bingo cards"""
 
-    def __init__(self, name, position, offsets):
+    def __init__(self, name, position, offsets, state):
         """Initialise the collection"""
         self.name = name
         self.x, self.y = position
+        self.state = state
         self.cards = utils.DrawableGroup([BingoCard(
             '%s(%d)' % (self.name, i + 1),
-            (self.x + x, self.y + y)) for i, (x, y) in enumerate(offsets)]
+            (self.x + x, self.y + y),
+            S['card-initial-value'], state) for i, (x, y) in enumerate(offsets)]
         )
         #
         super(CardCollection, self).__init__(self.cards)
@@ -133,3 +207,8 @@ class CardCollection(utils.Drawable, utils.ClickableGroup):
     def draw(self, surface):
         """Draw the cards"""
         self.cards.draw(surface)
+
+    def reset(self):
+        """Reset all the cards"""
+        for card in self.cards:
+            card.reset()
