@@ -293,15 +293,27 @@ class Bingo(statemachine.StateMachine):
     def player_picked(self, square, arg):
         """The player picked a square"""
         #
+        # Check to see if we created a new potentially winning square
+        called_squares = list(square.card.called_squares)
+        prior_called_squares = list(called_squares)
+        prior_called_squares.remove(square.text)
+        #
+        _, winners = self.winning_pattern.get_number_to_go_and_winners(square.card, called_squares)
+        _, prior_winners = self.winning_pattern.get_number_to_go_and_winners(square.card, prior_called_squares)
+        self.log.debug('{0} / {1}'.format(winners, prior_winners))
+        #
+        if len(winners) > len(prior_winners):
+            prepare.SFX['bingo-potential-winner'].play()
+        #
         # Increment sound if we did this quickly
         if time.time() - self.last_pick_time < S['player-pick-interval']:
             self.current_pick_sound = min(self.current_pick_sound + 1, len(S['player-pick-sounds']) - 1)
         else:
             self.current_pick_sound = 0
         self.last_pick_time = time.time()
+        S['player-pick-sounds'][self.current_pick_sound].play()
         #
         self.log.info('Player picked {0}'.format(square))
-        S['player-pick-sounds'][self.current_pick_sound].play()
 
     def player_unpicked(self, square, arg):
         """The player unpicked a square"""
