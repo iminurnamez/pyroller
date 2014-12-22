@@ -117,4 +117,5 @@ SETTINGS = {
     'debug-auto-pick': True,
     'debug-auto-pick-position': (1250, 40),
     'debug-restart-position': (1250, 120),
+    'debug-next-ball-position': (1250, 200),
 }

@@ -118,6 +118,8 @@ class Bingo(statemachine.StateMachine):
             if event.key == pg.K_ESCAPE:
                 self.done = True
                 self.next = "LOBBYSCREEN"
+            elif event.key == pg.K_SPACE:
+                self.next_ball(None)
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
@@ -169,11 +171,21 @@ class Bingo(statemachine.StateMachine):
                 self.toggle_auto_pick, None,
                 scale=S['small-button-scale']
             ))
+            #
             self.debug_buttons.append(utils.ImageButton(
                 'restart', S['debug-restart-position'],
                 'bingo-yellow-button', 'small-button',
                 'Restart',
                 self.restart_game, None,
+                scale=S['small-button-scale']
+            ))
+            self.ui.extend(self.debug_buttons)
+            #
+            self.debug_buttons.append(utils.ImageButton(
+                'next-ball', S['debug-next-ball-position'],
+                'bingo-yellow-button', 'small-button',
+                'Next Ball',
+                self.next_ball, None,
                 scale=S['small-button-scale']
             ))
             self.ui.extend(self.debug_buttons)
@@ -209,6 +221,10 @@ class Bingo(statemachine.StateMachine):
         self.ball_machine.reset_machine(self.ball_machine.interval)
         self.cards.reset()
         self.dealer_cards.reset()
+
+    def next_ball(self, arg):
+        """Move on to the next ball"""
+        self.ball_machine.call_next_ball()
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""

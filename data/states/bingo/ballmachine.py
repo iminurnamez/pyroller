@@ -43,6 +43,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-interval'] * 1000
         self.running = False
+        self.timer = None
         #
         self.ui = self.create_ui()
         self.reset_machine()
@@ -69,7 +70,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def start_machine(self):
         """Start the machine"""
         self.running = True
-        self.state.add_generator('ball-machine', self.pick_balls())
+        self.timer = self.state.add_generator('ball-machine', self.pick_balls())
 
     def stop_machine(self):
         """Stop the machine"""
@@ -78,8 +79,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def reset_timer(self, interval):
         """Reset the timer on the machine"""
         self.interval = interval
-        self.state.stop_generator('ball-machine')
-        self.state.add_generator('ball-machine', self.pick_balls())
+        self.timer.update_interval(interval)
 
     def reset_machine(self, interval=None):
         """Reset the machine"""
@@ -122,6 +122,10 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def draw(self, surface):
         """Draw the machine"""
         self.ui.draw(surface)
+
+    def call_next_ball(self):
+        """Immediately call the next ball"""
+        self.timer.next_step()
 
 
 class CalledBallTray(utils.Drawable, loggable.Loggable):
