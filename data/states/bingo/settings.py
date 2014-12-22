@@ -115,6 +115,15 @@ SETTINGS = {
         ('Slow', 10), ('Medium', 5), ('Fast', 1),
     ],
 
+    # Player picking
+    'player-pick-sounds': [
+        prepare.SFX['bingo-pick-1'],
+        prepare.SFX['bingo-pick-2'],
+        prepare.SFX['bingo-pick-3'],
+        prepare.SFX['bingo-pick-4'],
+    ],
+    'player-pick-interval': 0.5,
+
     #
     # Debug settings
     'debug-auto-pick': True,

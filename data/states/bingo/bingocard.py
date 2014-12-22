@@ -2,9 +2,10 @@
 
 import random
 
+from ...prepare import BROADCASTER as B
 from .settings import SETTINGS as S
 from . import utils
-
+from . import events
 
 class BingoLabel(utils.Clickable):
     """A label on a bingo card"""
@@ -79,8 +80,10 @@ class BingoSquare(BingoLabel):
         self.is_called = not self.is_called
         if self.is_called:
             self.card.call_square(self.text)
+            B.processEvent((events.E_PLAYER_PICKED, self))
         else:
             self.card.reset_square(self.text)
+            B.processEvent((events.E_PLAYER_UNPICKED, self))
 
     def reset(self):
         """Reset the square"""

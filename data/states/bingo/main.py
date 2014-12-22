@@ -1,9 +1,11 @@
+import time
 import sys
 import pygame as pg
 from collections import OrderedDict
 
 from ... import tools, prepare
 from ...components.labels import Button
+from ...prepare import BROADCASTER as B
 
 from . import statemachine
 from . import states
@@ -12,6 +14,7 @@ from . import playercard
 from . import dealercard
 from . import patterns
 from . import ballmachine
+from . import events
 from .settings import SETTINGS as S
 
 
@@ -73,6 +76,12 @@ class Bingo(statemachine.StateMachine):
         self.all_cards = utils.DrawableGroup()
         self.all_cards.extend(self.cards)
         self.all_cards.extend(self.dealer_cards)
+        #
+        B.linkEvent(events.E_PLAYER_PICKED, self.player_picked)
+        B.linkEvent(events.E_PLAYER_UNPICKED, self.player_unpicked)
+        #
+        self.current_pick_sound = 0
+        self.last_pick_time = 0
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -84,7 +93,7 @@ class Bingo(statemachine.StateMachine):
             self.casino_player.stats['Bingo'] = OrderedDict([
                 ('games played', 0),
                 ('games won', 0),
-            ])
+                ])
         #
         self.casino_player.stats['Bingo']['games played'] += 1
 
@@ -220,6 +229,8 @@ class Bingo(statemachine.StateMachine):
         self.ball_machine.reset_machine(self.ball_machine.interval)
         self.cards.reset()
         self.dealer_cards.reset()
+        self.current_pick_sound = 0
+        self.last_pick_time = 0
 
     def next_ball(self, arg):
         """Move on to the next ball"""
@@ -269,3 +280,21 @@ class Bingo(statemachine.StateMachine):
         # Highlight the card labels
         for card in self.all_cards:
             card.highlight_column(ball.letter)
+
+    def player_picked(self, square, arg):
+        """The player picked a square"""
+        #
+        # Increment sound if we did this quickly
+        if time.time() - self.last_pick_time < S['player-pick-interval']:
+            self.current_pick_sound = min(self.current_pick_sound + 1, len(S['player-pick-sounds']) - 1)
+        else:
+            self.current_pick_sound = 0
+        self.last_pick_time = time.time()
+        #
+        self.log.info('Player picked {0}'.format(square))
+        S['player-pick-sounds'][self.current_pick_sound].play()
+
+    def player_unpicked(self, square, arg):
+        """The player unpicked a square"""
+        self.log.info('Player unpicked {0}'.format(square))
+        prepare.SFX['bingo-unpick'].play()
