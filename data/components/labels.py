@@ -38,7 +38,6 @@ class _Label(object):
         self.background_color = bground_color
         self.text_color = text_color
         self.rect_attributes = rect_attributes
-        #
         self.set_text(text)
 
     def set_text(self, text):
@@ -110,12 +109,13 @@ class Blinker(Label):
     """A label that blinks. blink_frequency is the number of milliseconds
     between blinks."""
     def __init__(self, font_path, font_size, text, text_color, rect_attributes,
-                         blink_frequency, bground_color=None):
+                         blink_frequency, bground_color=None, image=None):
         super(Blinker, self).__init__(font_path, font_size, text, text_color,
-                                                  rect_attributes, bground_color)
+                                      rect_attributes, bground_color)
+        self.image = image
         self.frequency = blink_frequency
         self.elapsed = 0.0
-        self.on = True
+        self.on = False
         self.blinking = True
 
     def draw(self, surface, dt):
@@ -124,8 +124,13 @@ class Blinker(Label):
             self.elapsed -= self.frequency
             if self.blinking:
                 self.on = not self.on
-        if self.on:
+        if self.image:
             surface.blit(self.text, self.rect)
+            if self.on:
+                surface.blit(self.image, self.rect)
+        elif self.on:
+            surface.blit(self.text, self.rect)
+
 
 
 #Label Enhancements
