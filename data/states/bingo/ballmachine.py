@@ -2,6 +2,7 @@
 
 import random
 
+from ... import prepare
 from . import utils
 from . import loggable
 from .settings import SETTINGS as S
@@ -44,6 +45,8 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.interval = self.initial_interval = S['machine-interval'] * 1000
         self.running = False
         self.timer = None
+        #
+        self.ball_chosen = prepare.SFX['bingo-ball-chosen']
         #
         self.ui = self.create_ui()
         self.reset_machine()
@@ -102,6 +105,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
             #
             self.called_balls.append(ball.number)
             self.set_current_ball(ball)
+            self.ball_chosen.play()
             #
             # Wait for next ball
             yield self.interval

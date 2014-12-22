@@ -59,7 +59,9 @@ SETTINGS = {
     'card-remaining-label-font-color': 'black',
 
     'player-card-square-remaining-label-offset': (0, 110),
+    'player-card-square-max-chars': 20,
     'dealer-card-square-remaining-label-offset': (0, 57),
+    'dealer-card-square-max-chars': 20,
 
     'card-value-label-font': prepare.FONTS["Saniretro"],
     'card-value-label-font-size': 22,
