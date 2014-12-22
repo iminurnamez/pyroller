@@ -2,6 +2,7 @@
 
 import random
 
+from ... import prepare
 from . import utils
 from . import loggable
 from .settings import SETTINGS as S
@@ -43,6 +44,9 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-interval'] * 1000
         self.running = False
+        self.timer = None
+        #
+        self.ball_chosen = prepare.SFX['bingo-ball-chosen']
         #
         self.ui = self.create_ui()
         self.reset_machine()
@@ -69,7 +73,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def start_machine(self):
         """Start the machine"""
         self.running = True
-        self.state.add_generator('ball-machine', self.pick_balls())
+        self.timer = self.state.add_generator('ball-machine', self.pick_balls())
 
     def stop_machine(self):
         """Stop the machine"""
@@ -78,23 +82,30 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def reset_timer(self, interval):
         """Reset the timer on the machine"""
         self.interval = interval
-        self.state.stop_generator('ball-machine')
-        self.state.add_generator('ball-machine', self.pick_balls())
+        self.timer.update_interval(interval)
 
-    def reset_machine(self):
+    def reset_machine(self, interval=None):
         """Reset the machine"""
         self.running = False
         self.balls = list(self.all_balls)
         self.called_balls = []
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
-        self.interval = self.initial_interval
+        self.interval = interval if interval else self.initial_interval
+        self.current_ball_ui.set_text('-')
 
     def pick_balls(self):
         """Pick the balls"""
         for ball in self.balls:
-            self.set_current_ball(ball)
+            #
+            # Under some circumstances we will restart this iterator so this
+            # makes sure we don't repeat balls
+            if ball.number in self.called_balls:
+                continue
+            #
             self.called_balls.append(ball.number)
+            self.set_current_ball(ball)
+            self.ball_chosen.play()
             #
             # Wait for next ball
             yield self.interval
@@ -105,7 +116,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
 
     def set_current_ball(self, ball):
         """Set the current ball"""
-        self.log.info('Current ball is {0}'.format(ball))
+        self.log.info('Current ball is {0}'.format(ball.full_name))
         #
         self.current_ball = ball
         self.current_ball_ui.set_text(ball.full_name)
@@ -116,6 +127,10 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         """Draw the machine"""
         self.ui.draw(surface)
 
+    def call_next_ball(self):
+        """Immediately call the next ball"""
+        self.timer.next_step()
+
 
 class CalledBallTray(utils.Drawable, loggable.Loggable):
     """A display of the balls that have been called"""
@@ -125,6 +140,7 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
         self.addLogger()
         self.x, self.y = position
         self.balls = utils.KeyedDrawableGroup()
+        self.called_balls = []
         #
         w, h = S['called-balls-size']
         dx, dy = S['called-balls-offsets']
@@ -138,8 +154,11 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
 
     def call_ball(self, ball):
         """Call a particular ball"""
-        self.balls[ball.number].text_color = S['called-ball-number-called-font-color']
-        self.balls[ball.number].update_text()
+        self.called_balls.append(ball)
+        ball_colours = S['called-ball-font-colors']
+        for colour, ball in zip(ball_colours, reversed(self.called_balls[-len(ball_colours):])):
+            self.balls[ball.number].text_color = colour
+            self.balls[ball.number].update_text()
 
     def draw(self, surface):
         """Draw the tray"""
@@ -150,3 +169,4 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
         for ball in self.balls.values():
             ball.text_color = S['called-ball-number-font-color']
             ball.update_text()
+        self.called_balls = []
