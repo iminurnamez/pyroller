@@ -43,7 +43,7 @@ class Pattern(loggable.Loggable):
         numbers = set()
         for square in squares:
             if square.text not in called_balls:
-                numbers.add(square.text)
+                numbers.add(square)
         return numbers
 
     def get_winning_squares(self, card, called_balls):

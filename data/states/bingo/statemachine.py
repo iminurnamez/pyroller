@@ -49,6 +49,10 @@ class StateExecutor(loggable.Loggable):
         time_to_go = interval - time_elapsed
         self.delay = time_to_go
 
+    def stop(self):
+        """Stop this executor"""
+        self.done = True
+
 
 class StateMachine(tools._State, loggable.Loggable):
     """A state machine to use for handling the screen"""

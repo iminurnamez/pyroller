@@ -75,6 +75,11 @@ SETTINGS = {
     'card-double-down-button-offset': (0, 160),
     'card-double-down-delay': 2,
 
+    'card-focus-flash-timing': [
+        (True, 0.5),
+        (False, 0.1),
+    ],
+
     #
     # Player settings
     'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 400),
