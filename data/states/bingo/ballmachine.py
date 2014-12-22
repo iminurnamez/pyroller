@@ -136,6 +136,7 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
         self.addLogger()
         self.x, self.y = position
         self.balls = utils.KeyedDrawableGroup()
+        self.last_called = None
         #
         w, h = S['called-balls-size']
         dx, dy = S['called-balls-offsets']
@@ -149,8 +150,13 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
 
     def call_ball(self, ball):
         """Call a particular ball"""
-        self.balls[ball.number].text_color = S['called-ball-number-called-font-color']
+        if self.last_called:
+            self.last_called.text_color = S['called-ball-number-called-font-color']
+            self.last_called.fon = S['called-ball-number-called-font-color']
+            self.last_called.update_text()
+        self.balls[ball.number].text_color = S['called-ball-number-last-font-color']
         self.balls[ball.number].update_text()
+        self.last_called = self.balls[ball.number]
 
     def draw(self, surface):
         """Draw the tray"""
@@ -161,3 +167,4 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
         for ball in self.balls.values():
             ball.text_color = S['called-ball-number-font-color']
             ball.update_text()
+        self.last_called = None

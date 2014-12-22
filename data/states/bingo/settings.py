@@ -106,7 +106,8 @@ SETTINGS = {
     'called-ball-number-font': prepare.FONTS["Saniretro"],
     'called-ball-number-font-size': 16,
     'called-ball-number-font-color': 'black',
-    'called-ball-number-called-font-color': 'white',
+    'called-ball-number-called-font-color': 'grey',
+    'called-ball-number-last-font-color': 'white',
 
     'machine-speeds': [
         ('Slow', 10), ('Medium', 5), ('Fast', 1),
