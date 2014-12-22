@@ -16,11 +16,13 @@ class TitleScreen(tools._State):
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         font = prepare.FONTS["Saniretro"]
         self.title = Blinker(font, 128, "Py Rollers", "darkred",
-                                   {"midtop": (screen_rect.centerx,
-                                                     screen_rect.top + 50)}, 600)
+                             {"midtop": (screen_rect.centerx,
+                                         screen_rect.top + 50)}, 600,
+                             image=prepare.GFX["pyrollers_shiny"])
         self.title2 = Blinker(font, 128, "Casino", "darkred",
-                                    {"midtop": (screen_rect.centerx,
-                                                     self.title.rect.bottom + 120)}, 600)
+                              {"midtop": (screen_rect.centerx,
+                                          self.title.rect.bottom + 120)}, 600,
+                              image=prepare.GFX["casino_shiny"])
         self.title.rect.left -= 1200
         self.title2.rect.left += 1600
         self.title.blinking = False
