@@ -93,7 +93,7 @@ SETTINGS = {
     #
     # Ball machine settings
     'machine-balls': range(1, 76),
-    'machine-interval': 10,
+    'machine-interval': 1,
 
     'machine-ball-position': (75, 75),
     'machine-ball-font': prepare.FONTS["Saniretro"],

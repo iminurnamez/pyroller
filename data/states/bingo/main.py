@@ -179,7 +179,6 @@ class Bingo(statemachine.StateMachine):
                 self.restart_game, None,
                 scale=S['small-button-scale']
             ))
-            self.ui.extend(self.debug_buttons)
             #
             self.debug_buttons.append(utils.ImageButton(
                 'next-ball', S['debug-next-ball-position'],
