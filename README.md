@@ -1,4 +1,4 @@
-<p align="center"><img src="http://i1192.photobucket.com/albums/aa340/Mekire/logo_horiz_small.gif~original"/></p>  
+<p align="center"><img src="http://i.imgur.com/JyE27u3.gif"/></p>  
  
 #Py Rollers Casino
 
