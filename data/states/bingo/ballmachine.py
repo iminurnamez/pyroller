@@ -100,8 +100,8 @@ class BallMachine(utils.Drawable, loggable.Loggable):
             if ball.number in self.called_balls:
                 continue
             #
-            self.set_current_ball(ball)
             self.called_balls.append(ball.number)
+            self.set_current_ball(ball)
             #
             # Wait for next ball
             yield self.interval
