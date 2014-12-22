@@ -170,6 +170,9 @@ class Bingo(statemachine.StateMachine):
             ))
         self.ui.extend(self.speed_buttons)
         #
+        # Simple generator to flash the potentially winning squares
+        self.add_generator('potential-winners', self.flash_potential_winners())
+        #
         # Debugging buttons
         if prepare.DEBUG:
             self.debug_buttons.append(utils.ImageOnOffButton(
@@ -298,3 +301,12 @@ class Bingo(statemachine.StateMachine):
         """The player unpicked a square"""
         self.log.info('Player unpicked {0}'.format(square))
         prepare.SFX['bingo-unpick'].play()
+
+    def flash_potential_winners(self):
+        """Flash the squares that are potential winners"""
+        while True:
+            for state, delay in S['card-focus-flash-timing']:
+                for card in self.all_cards:
+                    for square in card.potential_winning_squares:
+                        square.is_focused = state
+                yield delay * 1000

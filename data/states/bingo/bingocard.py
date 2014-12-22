@@ -152,8 +152,7 @@ class BingoCard(utils.Clickable):
             self.squares, self.labels, self.remaining_label,
         ])
         #
-        self.focus_flashers = None
-        self.flashing_squares = None
+        self.potential_winning_squares = []
 
     def get_random_number(self, column, chosen):
         """Return a random number for the column, making sure not to duplicate"""
@@ -201,57 +200,22 @@ class BingoCard(utils.Clickable):
 
     def update_squares_to_go(self):
         """Update a card with the number of squares to go"""
-        number_to_go, winners = self.state.winning_pattern.get_number_to_go_and_winners(self, self.called_squares)
-        if number_to_go > 1 or len(winners) == 0:
-            extra = ''
-        else:
-            #
-            # Make potential winning squares flash
-            self.start_flashing(winners)
+        number_to_go, self.potential_winning_squares = self.state.winning_pattern.get_number_to_go_and_winners(self, self.called_squares)
         #
         self.set_label(
             '{0} to go'.format(number_to_go))
+        #
         if number_to_go == 0:
             for squares in self.state.winning_pattern.get_winning_squares(self, self.called_squares):
                 for square in squares:
                     square.is_highlighted = True
-                    if square in self.flashing_squares:
-                        square.is_focused = False
-                        self.flashing_squares.remove(square)
+                    square.is_focused = False
 
     def highlight_column(self, column):
         """Highlight a particular column"""
         if self.show_col_labels:
             for letter, label in self.labels.items():
                 label.is_highlighted = letter == column
-
-    def start_flashing(self, squares):
-        """Start a series of squares flashing"""
-        #
-        # Make sure there is a change in the squares to flash
-        if squares == self.flashing_squares:
-            return
-        #
-        # If we were previously flashing then turn that, and the squares, off
-        if self.focus_flashers:
-            for square in self.flashing_squares:
-                square.is_focused = False
-            self.focus_flashers.stop()
-        #
-        # Now start the flashing
-        self.focus_flashers = self.state.add_generator(
-            'focus-flasher',
-            self.do_flashing(squares)
-        )
-        self.flashing_squares = squares
-
-    def do_flashing(self, squares):
-        """Flash a series of squares"""
-        while True:
-            for state, delay in S['card-focus-flash-timing']:
-                for square in squares:
-                    square.is_focused = state
-                yield delay * 1000
 
 
 class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
