@@ -10,6 +10,7 @@ class BingoLabel(utils.Clickable):
     """A label on a bingo card"""
 
     style_name = 'square-number'
+    highlight_name = 'bingo-label-highlight'
     show_label = True
     show_mouse_over = True
 
@@ -24,7 +25,7 @@ class BingoLabel(utils.Clickable):
         self.x, self.y = card.x + offset[0], card.y + offset[1]
         self.label = utils.getLabel(self.style_name, (self.x, self.y), text)
         self.highlighter = utils.NamedSprite(
-            'bingo-highlight', (self.x, self.y), scale=self.get_scale())
+            self.highlight_name, (self.x, self.y), scale=self.get_scale())
         self.mouse_highlight = utils.NamedSprite(
             'bingo-mouse-highlight', (self.x, self.y), scale=self.get_scale())
         #
@@ -56,6 +57,7 @@ class BingoSquare(BingoLabel):
     """A square on a bingo card"""
 
     style_name = 'square-label'
+    highlight_name = 'bingo-highlight'
 
     def __init__(self, name, card, offset, number):
         """Initialise the square"""
@@ -122,7 +124,7 @@ class BingoCard(utils.Clickable):
         if self.show_col_labels:
             y_offset = min(S['card-square-rows']) - 1
             for x, letter in zip(S['card-square-cols'], 'BINGO'):
-                self.labels[x] = BingoLabel(
+                self.labels[letter] = BingoLabel(
                     '{0} {1} label'.format(self.name, letter),
                     self, (square_offset * x, square_offset * y_offset), letter
                 )
@@ -201,6 +203,12 @@ class BingoCard(utils.Clickable):
             for squares in self.state.winning_pattern.get_winning_squares(self, self.called_squares):
                 for square in squares:
                     square.is_highlighted = True
+
+    def highlight_column(self, column):
+        """Highlight a particular column"""
+        if self.show_col_labels:
+            for letter, label in self.labels.items():
+                label.is_highlighted = letter == column
 
 
 class CardCollection(utils.ClickableGroup, utils.DrawableGroup):

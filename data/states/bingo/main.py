@@ -265,3 +265,7 @@ class Bingo(statemachine.StateMachine):
             auto_pick_cards.extend(self.cards)
         for card in auto_pick_cards:
             card.call_square(ball.number)
+        #
+        # Highlight the card labels
+        for card in self.all_cards:
+            card.highlight_column(ball.letter)
