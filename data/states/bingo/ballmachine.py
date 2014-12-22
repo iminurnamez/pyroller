@@ -94,6 +94,12 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def pick_balls(self):
         """Pick the balls"""
         for ball in self.balls:
+            #
+            # Under some circumstances we will restart this iterator so this
+            # makes sure we don't repeat balls
+            if ball.number in self.called_balls:
+                continue
+            #
             self.set_current_ball(ball)
             self.called_balls.append(ball.number)
             #
@@ -106,7 +112,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
 
     def set_current_ball(self, ball):
         """Set the current ball"""
-        self.log.info('Current ball is {0}'.format(ball))
+        self.log.info('Current ball is {0}'.format(ball.full_name))
         #
         self.current_ball = ball
         self.current_ball_ui.set_text(ball.full_name)
