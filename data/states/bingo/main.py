@@ -259,24 +259,6 @@ class Bingo(statemachine.StateMachine):
     def ball_picked(self, ball):
         """A ball was picked"""
         #
-        # Update the view of how many squares remain
-        for card in self.all_cards:
-            number_to_go, winners = self.winning_pattern.get_number_to_go_and_winners(card, self.ball_machine.called_balls)
-            if number_to_go > 1 or len(winners) == 0:
-                extra = ''
-            else:
-                numbers = sorted(map(str, winners))
-                if len(numbers) > 3:
-                    numbers[3:] = [' ...']
-                extra = ' (need {0})'.format(' or '.join(numbers))
-            #
-            card.set_label(
-                '{0} to go{1}'.format(number_to_go, extra))
-            if number_to_go == 0:
-                for squares in self.winning_pattern.get_winning_squares(card, self.ball_machine.called_balls):
-                    for square in squares:
-                        square.is_highlighted = True
-        #
         # If auto-picking then update the cards
         auto_pick_cards = list(self.dealer_cards)
         if self.auto_pick:

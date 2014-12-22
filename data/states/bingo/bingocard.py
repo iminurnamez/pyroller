@@ -19,6 +19,7 @@ class BingoLabel(utils.Clickable):
         self.offset = offset
         self.text = text
         self.is_highlighted = False
+        self.card = card
         #
         self.x, self.y = card.x + offset[0], card.y + offset[1]
         self.label = utils.getLabel(self.style_name, (self.x, self.y), text)
@@ -74,6 +75,10 @@ class BingoSquare(BingoLabel):
         """The number was clicked on"""
         self.marker.rotate_to(random.randrange(0, 360))
         self.is_called = not self.is_called
+        if self.is_called:
+            self.card.call_square(self.text)
+        else:
+            self.card.reset_square(self.text)
 
     def reset(self):
         """Reset the square"""
@@ -97,6 +102,7 @@ class BingoCard(utils.Clickable):
         self.squares = utils.KeyedDrawableGroup()
         square_offset = S['{0}-offset'.format(self.style_name)]
         chosen_numbers = set()
+        self.called_squares = []
         #
         # Create the numbered squares
         for x, y in S['card-square-scaled-offsets']:
@@ -158,6 +164,16 @@ class BingoCard(utils.Clickable):
         for square in self.squares.values():
             if square.text == number:
                 square.is_called = True
+        self.called_squares.append(number)
+        self.update_squares_to_go()
+
+    def reset_square(self, number):
+        """Reset a particular square"""
+        for square in self.squares.values():
+            if square.text == number:
+                square.is_called = False
+        self.called_squares.remove(number)
+        self.update_squares_to_go()
 
     def reset(self):
         """Reset the card"""
@@ -165,6 +181,26 @@ class BingoCard(utils.Clickable):
             square.reset()
         for label in self.labels.values():
             label.reset()
+        self.called_squares = []
+        self.update_squares_to_go()
+
+    def update_squares_to_go(self):
+        """Update a card with the number of squares to go"""
+        number_to_go, winners = self.state.winning_pattern.get_number_to_go_and_winners(self, self.called_squares)
+        if number_to_go > 1 or len(winners) == 0:
+            extra = ''
+        else:
+            numbers = sorted(map(str, winners))
+            if len(numbers) > 3:
+                numbers[3:] = [' ...']
+            extra = ' (need {0})'.format(' or '.join(numbers))
+        #
+        self.set_label(
+            '{0} to go{1}'.format(number_to_go, extra))
+        if number_to_go == 0:
+            for squares in self.state.winning_pattern.get_winning_squares(self, self.called_squares):
+                for square in squares:
+                    square.is_highlighted = True
 
 
 class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
