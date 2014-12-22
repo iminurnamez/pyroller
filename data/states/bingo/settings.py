@@ -122,7 +122,7 @@ SETTINGS = {
         prepare.SFX['bingo-pick-3'],
         prepare.SFX['bingo-pick-4'],
     ],
-    'player-pick-interval': 0.5,
+    'player-pick-interval': 1.0,
 
     #
     # Debug settings
