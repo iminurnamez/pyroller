@@ -207,6 +207,12 @@ class Bingo(statemachine.StateMachine):
         self.winning_pattern = pattern
         self.highlight_patterns(self.winning_pattern, one_shot=True)
         #
+        # Clear all flashing squares
+        for card in self.all_cards:
+            card.potential_winning_squares = []
+            for square in card.squares.values():
+                square.is_focused = False
+        #
         # Update UI
         for button in self.pattern_buttons:
             button.state = (button.arg == self.winning_pattern)
