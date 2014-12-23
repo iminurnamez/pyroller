@@ -47,6 +47,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.interval = self.initial_interval = S['machine-interval'] * 1000
         self.running = False
         self.timer = None
+        self.speed_transitions = {}
         #
         self.ui = self.create_ui()
         self.reset_machine()
@@ -68,7 +69,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         components.append(self.called_balls_ui)
         #
         # Buttons that show the speed
-        for idx, (name, interval) in enumerate(S['machine-speeds']):
+        for idx, (name, interval, number_balls) in enumerate(S['machine-speeds']):
             self.speed_buttons.append(utils.ImageOnOffButton(
                 name,
                 (150 + idx * 65, 200),
@@ -78,6 +79,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
                 self.change_speed, (idx, interval),
                 scale=S['tiny-button-scale']
             ))
+            self.speed_transitions[number_balls] = (idx, interval)
         components.extend(self.speed_buttons)
         self.buttons.extend(self.speed_buttons)
         #
@@ -127,7 +129,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
 
     def pick_balls(self):
         """Pick the balls"""
-        for ball in self.balls:
+        for idx, ball in enumerate(self.balls):
             #
             # Under some circumstances we will restart this iterator so this
             # makes sure we don't repeat balls
@@ -137,6 +139,15 @@ class BallMachine(utils.Drawable, loggable.Loggable):
             self.called_balls.append(ball.number)
             self.set_current_ball(ball)
             self.state.play_sound('bingo-ball-chosen')
+            #
+            # Watch for speed transition
+            try:
+                button_idx, new_interval = self.speed_transitions[idx]
+            except KeyError:
+                # No transition
+                pass
+            else:
+                self.change_speed((button_idx, new_interval))
             #
             # Wait for next ball
             yield self.interval
