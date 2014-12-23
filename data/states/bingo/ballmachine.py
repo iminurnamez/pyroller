@@ -70,12 +70,13 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         # Buttons that show the speed
         for idx, (name, interval) in enumerate(S['machine-speeds']):
             self.speed_buttons.append(utils.ImageOnOffButton(
-                name, (150 + idx * 130, 200),
-                'bingo-blue-button', 'bingo-blue-off-button', 'small-button',
+                name,
+                (150 + idx * 65, 200),
+                'bingo-blue-button', 'bingo-blue-off-button', 'tiny-button',
                 name,
                 interval == S['machine-interval'],
                 self.change_speed, (idx, interval),
-                scale=S['small-button-scale']
+                scale=S['tiny-button-scale']
             ))
         components.extend(self.speed_buttons)
         self.buttons.extend(self.speed_buttons)

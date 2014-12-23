@@ -20,6 +20,11 @@ SETTINGS = {
     'small-button-size': (180, 45),
     'small-button-scale': 0.6,
 
+    'tiny-button-font': prepare.FONTS["Saniretro"],
+    'tiny-button-font-size': 16,
+    'tiny-button-font-color': 'gold3',
+    'tiny-button-size': (30, 45),
+    'tiny-button-scale': 0.4,
     #
     # Settings for a single Bingo Card
 
@@ -116,7 +121,16 @@ SETTINGS = {
     'called-ball-font-colors': ['black', 'white', 'grey'],
 
     'machine-speeds': [
-        ('Slow', 10), ('Medium', 5), ('Fast', 1),
+        ('1', 10),
+        ('2', 9),
+        ('3', 8),
+        ('4', 7),
+        ('5', 6),
+        ('6', 5),
+        ('7', 4),
+        ('8', 3),
+        ('9', 2),
+        ('10', 1),
     ],
 
     # Player picking
