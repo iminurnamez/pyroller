@@ -295,6 +295,8 @@ class Bingo(statemachine.StateMachine):
 
     def player_picked(self, square, arg):
         """The player picked a square"""
+        if not square.card.is_active:
+            return
         #
         # Check to see if we created a new potentially winning square
         called_squares = list(square.card.called_squares)

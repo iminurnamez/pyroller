@@ -22,6 +22,7 @@ class BingoLabel(utils.Clickable):
         self.text = text
         self.is_highlighted = False
         self.card = card
+        self.is_active = True
         #
         self.x, self.y = card.x + offset[0], card.y + offset[1]
         self.label = utils.getLabel(self.style_name, (self.x, self.y), text)
@@ -42,7 +43,7 @@ class BingoLabel(utils.Clickable):
 
     def draw(self, surface):
         """Draw the square"""
-        if self.show_mouse_over and self.mouse_over:
+        if self.is_active and self.show_mouse_over and self.mouse_over:
             self.mouse_highlight.draw(surface)
         elif self.is_highlighted:
             self.highlighter.draw(surface)
@@ -78,11 +79,13 @@ class BingoSquare(BingoLabel):
         super(BingoSquare, self).draw(surface)
         if self.is_called:
             self.marker.draw(surface)
-        if self.is_focused:
+        if self.is_active and self.is_focused:
             self.focus_marker.draw(surface)
 
     def handle_click(self):
         """The number was clicked on"""
+        if not self.is_active:
+            return
         self.marker.rotate_to(random.randrange(0, 360))
         self.is_called = not self.is_called
         if self.is_called:
@@ -153,6 +156,7 @@ class BingoCard(utils.Clickable):
         ])
         #
         self.potential_winning_squares = []
+        self.is_active = True
 
     def get_random_number(self, column, chosen):
         """Return a random number for the column, making sure not to duplicate"""
@@ -175,6 +179,8 @@ class BingoCard(utils.Clickable):
 
     def call_square(self, number):
         """Call a particular square"""
+        if not self.active:
+            return
         for square in self.squares.values():
             if square.text == number:
                 square.is_called = True
@@ -183,6 +189,8 @@ class BingoCard(utils.Clickable):
 
     def reset_square(self, number):
         """Reset a particular square"""
+        if not self.active:
+            return
         for square in self.squares.values():
             if square.text == number:
                 square.is_called = False
@@ -197,6 +205,7 @@ class BingoCard(utils.Clickable):
             label.reset()
         self.called_squares = []
         self.update_squares_to_go()
+        self.is_active = False
 
     def update_squares_to_go(self):
         """Update a card with the number of squares to go"""
@@ -210,12 +219,25 @@ class BingoCard(utils.Clickable):
                 for square in squares:
                     square.is_highlighted = True
                     square.is_focused = False
+            self.active = False
 
     def highlight_column(self, column):
         """Highlight a particular column"""
         if self.show_col_labels:
             for letter, label in self.labels.items():
                 label.is_highlighted = letter == column
+
+    @property
+    def active(self):
+        """Whether the card is active"""
+        return self.is_active
+
+    @active.setter
+    def active(self, value):
+        """Set whether the card is active"""
+        self.is_active = value
+        for square in self.squares.values():
+            square.is_active = value
 
 
 class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
