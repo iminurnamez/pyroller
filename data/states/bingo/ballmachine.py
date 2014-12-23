@@ -46,8 +46,6 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.running = False
         self.timer = None
         #
-        self.ball_chosen = prepare.SFX['bingo-ball-chosen']
-        #
         self.ui = self.create_ui()
         self.reset_machine()
 
@@ -105,7 +103,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
             #
             self.called_balls.append(ball.number)
             self.set_current_ball(ball)
-            self.ball_chosen.play()
+            self.state.play_sound('bingo-ball-chosen')
             #
             # Wait for next ball
             yield self.interval

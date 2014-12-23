@@ -25,6 +25,7 @@ class Bingo(statemachine.StateMachine):
         """Initialise the bingo game"""
         #
         self.verbose = False
+        self.sound_muted = False
         #
         self.font = prepare.FONTS["Saniretro"]
         font_size = 64
@@ -129,6 +130,8 @@ class Bingo(statemachine.StateMachine):
                 self.next = "LOBBYSCREEN"
             elif event.key == pg.K_SPACE:
                 self.next_ball(None)
+            elif event.key == pg.K_m:
+                self.sound_muted = not self.sound_muted
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
@@ -303,7 +306,7 @@ class Bingo(statemachine.StateMachine):
         self.log.debug('{0} / {1}'.format(winners, prior_winners))
         #
         if len(winners) > len(prior_winners):
-            prepare.SFX['bingo-potential-winner'].play()
+            self.play_sound('bingo-potential-winner')
         #
         # Increment sound if we did this quickly
         if time.time() - self.last_pick_time < S['player-pick-interval']:
@@ -311,14 +314,14 @@ class Bingo(statemachine.StateMachine):
         else:
             self.current_pick_sound = 0
         self.last_pick_time = time.time()
-        S['player-pick-sounds'][self.current_pick_sound].play()
+        self.play_sound(S['player-pick-sounds'][self.current_pick_sound])
         #
         self.log.info('Player picked {0}'.format(square))
 
     def player_unpicked(self, square, arg):
         """The player unpicked a square"""
         self.log.info('Player unpicked {0}'.format(square))
-        prepare.SFX['bingo-unpick'].play()
+        self.play_sound('bingo-unpick')
 
     def flash_potential_winners(self):
         """Flash the squares that are potential winners"""
@@ -328,3 +331,8 @@ class Bingo(statemachine.StateMachine):
                     for square in card.potential_winning_squares:
                         square.is_focused = state
                 yield delay * 1000
+
+    def play_sound(self, name):
+        """Play a named sound - respects the mute settings"""
+        if not self.sound_muted:
+            prepare.SFX[name].play()

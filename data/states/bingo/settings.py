@@ -121,10 +121,10 @@ SETTINGS = {
 
     # Player picking
     'player-pick-sounds': [
-        prepare.SFX['bingo-pick-1'],
-        prepare.SFX['bingo-pick-2'],
-        prepare.SFX['bingo-pick-3'],
-        prepare.SFX['bingo-pick-4'],
+        'bingo-pick-1',
+        'bingo-pick-2',
+        'bingo-pick-3',
+        'bingo-pick-4',
     ],
     'player-pick-interval': 1.0,
 

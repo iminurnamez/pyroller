@@ -185,3 +185,4 @@ class ImageOnOffButton(Clickable):
     def handle_click(self):
         """Handle the click event"""
         self.callback(self.arg)
+
