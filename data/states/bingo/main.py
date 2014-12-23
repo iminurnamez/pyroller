@@ -62,9 +62,8 @@ class Bingo(statemachine.StateMachine):
         self.winning_pattern = patterns.PATTERNS[0]
         #
         self.pattern_buttons = utils.DrawableGroup()
-        self.speed_buttons = utils.DrawableGroup()
         self.debug_buttons = utils.DrawableGroup()
-        self.buttons = utils.DrawableGroup([self.pattern_buttons, self.speed_buttons])
+        self.buttons = utils.DrawableGroup([self.pattern_buttons])
         #
         if prepare.DEBUG:
             self.buttons.append(self.debug_buttons)
@@ -73,6 +72,7 @@ class Bingo(statemachine.StateMachine):
         #
         self.ball_machine = ballmachine.BallMachine('ball-machine', self)
         self.ball_machine.start_machine()
+        self.ui.append(self.ball_machine.buttons)
         #
         self.all_cards = utils.DrawableGroup()
         self.all_cards.extend(self.cards)
@@ -161,18 +161,6 @@ class Bingo(statemachine.StateMachine):
             ))
         self.ui.extend(self.pattern_buttons)
         #
-        # Buttons that show the speed
-        for idx, (name, interval) in enumerate(S['machine-speeds']):
-            self.speed_buttons.append(utils.ImageOnOffButton(
-                name, (150 + idx * 130, 200),
-                'bingo-blue-button', 'bingo-blue-off-button', 'small-button',
-                name,
-                interval == S['machine-interval'],
-                self.change_speed, (idx, interval),
-                scale=S['small-button-scale']
-            ))
-        self.ui.extend(self.speed_buttons)
-        #
         # Simple generator to flash the potentially winning squares
         self.add_generator('potential-winners', self.flash_potential_winners())
         #
@@ -219,24 +207,6 @@ class Bingo(statemachine.StateMachine):
         # Update UI
         for button in self.pattern_buttons:
             button.state = (button.arg == self.winning_pattern)
-
-    def change_speed(self, arg):
-        """Change the speed of the ball machine"""
-        selected_idx, interval = arg
-        self.log.info('Changing machine speed to {0}'.format(interval))
-        #
-        # Play appropriate sound
-        if interval < self.ball_machine.interval / 1000:
-            self.play_sound('bingo-speed-up')
-        else:
-            self.play_sound('bingo-slow-down')
-        #
-        # Set button visibility
-        for idx, button in enumerate(self.speed_buttons):
-            button.state = idx == selected_idx
-        #
-        # Set speed of the machine
-        self.ball_machine.reset_timer(interval * 1000)
 
     def toggle_auto_pick(self, arg):
         """Toggle whether we are auto-picking numbers"""

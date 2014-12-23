@@ -41,6 +41,8 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.all_balls = [Ball(n) for n in S['machine-balls']]
         self.balls = []
         self.called_balls = []
+        self.speed_buttons = utils.DrawableGroup()
+        self.buttons = utils.ClickableGroup()
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-interval'] * 1000
         self.running = False
@@ -65,8 +67,38 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.called_balls_ui = CalledBallTray(S['called-balls-position'])
         components.append(self.called_balls_ui)
         #
+        # Buttons that show the speed
+        for idx, (name, interval) in enumerate(S['machine-speeds']):
+            self.speed_buttons.append(utils.ImageOnOffButton(
+                name, (150 + idx * 130, 200),
+                'bingo-blue-button', 'bingo-blue-off-button', 'small-button',
+                name,
+                interval == S['machine-interval'],
+                self.change_speed, (idx, interval),
+                scale=S['small-button-scale']
+            ))
+        components.extend(self.speed_buttons)
+        self.buttons.extend(self.speed_buttons)
         #
         return components
+
+    def change_speed(self, arg):
+        """Change the speed of the ball machine"""
+        selected_idx, interval = arg
+        self.log.info('Changing machine speed to {0}'.format(interval))
+        #
+        # Play appropriate sound
+        if interval < self.interval / 1000:
+            self.state.play_sound('bingo-speed-up')
+        else:
+            self.state.play_sound('bingo-slow-down')
+        #
+        # Set button visibility
+        for idx, button in enumerate(self.speed_buttons):
+            button.state = idx == selected_idx
+        #
+        # Set speed of the machine
+        self.reset_timer(interval * 1000)
 
     def start_machine(self):
         """Start the machine"""
