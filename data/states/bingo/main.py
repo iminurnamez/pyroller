@@ -224,9 +224,18 @@ class Bingo(statemachine.StateMachine):
         """Change the speed of the ball machine"""
         selected_idx, interval = arg
         self.log.info('Changing machine speed to {0}'.format(interval))
+        #
+        # Play appropriate sound
+        if interval < self.ball_machine.interval / 1000:
+            self.play_sound('bingo-speed-up')
+        else:
+            self.play_sound('bingo-slow-down')
+        #
+        # Set button visibility
         for idx, button in enumerate(self.speed_buttons):
             button.state = idx == selected_idx
         #
+        # Set speed of the machine
         self.ball_machine.reset_timer(interval * 1000)
 
     def toggle_auto_pick(self, arg):
