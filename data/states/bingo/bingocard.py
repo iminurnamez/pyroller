@@ -126,16 +126,12 @@ class BingoCard(utils.Clickable):
         self.called_squares = []
         #
         # Create the numbered squares
+        numbers = self.get_random_number_set()
         for x, y in S['card-square-scaled-offsets']:
-            #
-            # Get a number for this column
-            number = self.get_random_number(x, chosen_numbers)
-            chosen_numbers.add(number)
-            #
-            # Place on the card
             self.squares[(x, y)] = self.square_class(
                 '{0} [{1}, {2}]'.format(self.name, x, y),
-                self, (square_offset * x, square_offset * y), number
+                self, (square_offset * x, square_offset * y),
+                numbers[(x, y)]
             )
         #
         # Create the labels
@@ -164,13 +160,22 @@ class BingoCard(utils.Clickable):
         self.potential_winning_squares = []
         self.is_active = True
 
-    def draw_new_numbers(self):
+    def set_new_numbers(self, numbers=None):
         """Draw new numbers for this card"""
+        if numbers is None:
+            numbers = self.get_random_number_set()
+        for x, y in numbers:
+            self.squares[(x, y)].set_number(numbers[(x, y)])
+
+    def get_random_number_set(self):
+        """Return a set of random numbers to use for this card"""
+        numbers = {}
         chosen_numbers = set()
         for x, y in S['card-square-scaled-offsets']:
             number = self.get_random_number(x, chosen_numbers)
             chosen_numbers.add(number)
-            self.squares[(x, y)].set_number(number)
+            numbers[(x, y)] = number
+        return numbers
 
     def get_random_number(self, column, chosen):
         """Return a random number for the column, making sure not to duplicate"""
@@ -280,4 +285,5 @@ class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
     def draw_new_numbers(self):
         """Draw new numbers for all cards"""
         for card in self:
-            card.draw_new_numbers()
+            card.set_new_numbers()
+
