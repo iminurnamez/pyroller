@@ -62,11 +62,9 @@ class Clickable(EventAware, loggable.Loggable):
 
     def handle_mouse_enter(self):
         """Do something when the mouse enters our rect"""
-        self.log.debug('Mouse enter %s' % self.name)
 
     def handle_mouse_leave(self):
         """Do something when the mouse leaves our rect"""
-        self.log.debug('Mouse leave %s' % self.name)
 
 
 class ClickableGroup(list, EventAware):
