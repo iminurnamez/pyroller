@@ -25,7 +25,7 @@ class Bingo(statemachine.StateMachine):
         """Initialise the bingo game"""
         #
         self.verbose = False
-        self.sound_muted = False
+        self.sound_muted = prepare.ARGS['debug']
         #
         self.font = prepare.FONTS["Saniretro"]
         font_size = 64
@@ -44,12 +44,7 @@ class Bingo(statemachine.StateMachine):
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
                                    b_width, b_height, lobby_label)
         #
-        self.cards = playercard.PlayerCardCollection(
-            'player-card',
-            S['player-cards-position'],
-            S['player-card-offsets'],
-            self
-        )
+        self.cards = self.get_card_collection()
         self.dealer_cards = dealercard.DealerCardCollection(
             'dealer-card',
             S['dealer-cards-position'],
@@ -190,6 +185,14 @@ class Bingo(statemachine.StateMachine):
                 self.next_ball, None,
                 scale=S['small-button-scale']
             ))
+            #
+            self.debug_buttons.append(utils.ImageButton(
+                'new-cards', S['debug-new-cards-position'],
+                'bingo-yellow-button', 'small-button',
+                'New Cards',
+                self.draw_new_cards, None,
+                scale=S['small-button-scale']
+            ))
             self.ui.extend(self.debug_buttons)
 
     def change_pattern(self, pattern):
@@ -226,6 +229,21 @@ class Bingo(statemachine.StateMachine):
     def next_ball(self, arg):
         """Move on to the next ball"""
         self.ball_machine.call_next_ball()
+
+    def draw_new_cards(self, arg):
+        """Draw a new set of cards"""
+        self.log.debug('Drawing new set of cards')
+        self.cards.draw_new_numbers()
+        self.cards.reset()
+
+    def get_card_collection(self):
+        """Return a new card collection"""
+        return playercard.PlayerCardCollection(
+            'player-card',
+            S['player-cards-position'],
+            S['player-card-offsets'],
+            self
+        )
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""

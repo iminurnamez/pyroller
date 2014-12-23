@@ -101,6 +101,11 @@ class BingoSquare(BingoLabel):
         self.is_called = False
         self.is_focused = False
 
+    def set_number(self, number):
+        """Set the number to use"""
+        self.text = number
+        self.label.set_text(str(number))
+
 
 class BingoCard(utils.Clickable):
     """A bingo card comprising a number of squares"""
@@ -158,6 +163,14 @@ class BingoCard(utils.Clickable):
         #
         self.potential_winning_squares = []
         self.is_active = True
+
+    def draw_new_numbers(self):
+        """Draw new numbers for this card"""
+        chosen_numbers = set()
+        for x, y in S['card-square-scaled-offsets']:
+            number = self.get_random_number(x, chosen_numbers)
+            chosen_numbers.add(number)
+            self.squares[(x, y)].set_number(number)
 
     def get_random_number(self, column, chosen):
         """Return a random number for the column, making sure not to duplicate"""
@@ -263,3 +276,8 @@ class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
         """Reset all the cards"""
         for card in self:
             card.reset()
+
+    def draw_new_numbers(self):
+        """Draw new numbers for all cards"""
+        for card in self:
+            card.draw_new_numbers()
