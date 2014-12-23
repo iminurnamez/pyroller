@@ -99,6 +99,7 @@ class BingoSquare(BingoLabel):
         """Reset the square"""
         super(BingoSquare, self).reset()
         self.is_called = False
+        self.is_focused = False
 
 
 class BingoCard(utils.Clickable):
@@ -205,7 +206,7 @@ class BingoCard(utils.Clickable):
             label.reset()
         self.called_squares = []
         self.update_squares_to_go()
-        self.is_active = False
+        self.active = True
 
     def update_squares_to_go(self):
         """Update a card with the number of squares to go"""
