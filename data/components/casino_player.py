@@ -29,7 +29,8 @@ class CasinoPlayer(object):
                                                      ('total winnings', 0)])),
                                              ("Bingo", OrderedDict(
                                                     [("games played", 0),
-                                                    ("games won", 0)]))                                              
+                                                    ("games won", 0),
+                                                    ("_last squares", [])]))
                                             ])
                     
         if stats is not None:

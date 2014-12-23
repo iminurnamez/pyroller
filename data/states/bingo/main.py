@@ -89,9 +89,11 @@ class Bingo(statemachine.StateMachine):
             self.casino_player.stats['Bingo'] = OrderedDict([
                 ('games played', 0),
                 ('games won', 0),
+                ('_last squares', []),
                 ])
         #
         self.casino_player.stats['Bingo']['games played'] += 1
+        self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
 
     def get_event(self, event, scale=(1,1)):
         """Check for events"""
@@ -119,6 +121,8 @@ class Bingo(statemachine.StateMachine):
                     self.game_started = False
                     self.done = True
                     self.next = "LOBBYSCREEN"
+                    self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
+                    pass
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.done = True

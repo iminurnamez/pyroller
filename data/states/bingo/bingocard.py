@@ -167,6 +167,13 @@ class BingoCard(utils.Clickable):
         for x, y in numbers:
             self.squares[(x, y)].set_number(numbers[(x, y)])
 
+    def get_numbers(self):
+        """Return the numbers on this card"""
+        numbers = {}
+        for x, y in self.squares:
+            numbers['{0}:{1}'.format(x, y)] = self.squares[(x, y)].text
+        return numbers
+
     def get_random_number_set(self):
         """Return a set of random numbers to use for this card"""
         numbers = {}
@@ -287,3 +294,25 @@ class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
         for card in self:
             card.set_new_numbers()
 
+    def get_card_numbers(self):
+        """Return the numbers on all the cards for recreating later"""
+        numbers = []
+        for card in self:
+            numbers.append(card.get_numbers())
+        return numbers
+
+    def set_card_numbers(self, numbers):
+        """Set the numbers on all the cards"""
+        for card in self:
+            if not numbers:
+                break
+            #
+            # Recreate the right form of the dictionary
+            new_numbers = numbers.pop(0)
+            new_numbers_dict = {}
+            for text, number in new_numbers.items():
+                x, y = map(int, text.split(':'))
+                new_numbers_dict[(x, y)] = number
+            #
+            # Now set numbers in the card
+            card.set_new_numbers(new_numbers_dict)
