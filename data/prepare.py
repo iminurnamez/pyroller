@@ -4,6 +4,8 @@ This module initializes the display and creates dictionaries of resources.
 import os
 import pygame as pg
 from . import tools
+from . import events
+
 
 ORIGINAL_CAPTION = "Py Rollers Casino"
 START_SIZE = (928, 696)
@@ -47,3 +49,6 @@ pg.mixer.music.load(MUSIC["main_stem"])
 pg.mixer.music.set_volume(.2)
 if not ARGS['music_off']:
     pg.mixer.music.play(-1)
+
+# Singleton to broadcast events throughout the game
+BROADCASTER = events.Broadcaster()

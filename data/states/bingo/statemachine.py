@@ -16,7 +16,7 @@ class StateExecutor(loggable.Loggable):
         self.addLogger()
         self.name = name
         self.generator = generator
-        self.delay = delay
+        self.last_delay = self.delay = delay
         self.done = False
         #
         self.state_clock = pygame.time.Clock()
@@ -27,9 +27,31 @@ class StateExecutor(loggable.Loggable):
         self.delay -= self.state_clock.get_time()
         if not self.done and self.delay < 0:
             try:
-                self.delay = next(self.generator)
+                self.last_delay = self.delay = next(self.generator)
             except StopIteration:
                 self.done = True
+
+    def next_step(self):
+        """Immediately make the generator go to the next step"""
+        self.delay = 0
+
+    def update_interval(self, interval):
+        """Update the interval we are waiting for
+
+        This behaves as though the last delay requested is
+        immediately changed to the specified value.
+
+        If we have already waited for the specified time
+        then immediately go to the next step
+
+        """
+        time_elapsed = self.last_delay - self.delay
+        time_to_go = interval - time_elapsed
+        self.delay = time_to_go
+
+    def stop(self):
+        """Stop this executor"""
+        self.done = True
 
 
 class StateMachine(tools._State, loggable.Loggable):
@@ -79,7 +101,9 @@ class StateMachine(tools._State, loggable.Loggable):
     def add_generator(self, name, generator):
         """Add a new generator to run"""
         self.log.debug('Adding new executor {0}, {1}'.format(name, generator))
-        self.generators.append(StateExecutor(name, generator))
+        new_generator = StateExecutor(name, generator)
+        self.generators.append(new_generator)
+        return new_generator
 
     def stop_generator(self, name):
         """Stop a generator with a specific name"""

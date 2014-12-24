@@ -1,0 +1,47 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="player picking_data" version="1.3.0" audacityversion="2.0.3" sel0="4.7006041667" sel1="5.1037544793" vpos="0" h="4.0455115482" zoom="992.2107383016" rate="48000.0">
+	<tags/>
+	<wavetrack name="177258__sergeeo__ukulele-chord-4-acorde-de-ukelele-4" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" isSelected="1" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="216340">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000830.au" len="126941" min="-0.08184" max="0.092222" rms="0.012081"/>
+				</waveblock>
+				<waveblock start="126941">
+					<simpleblockfile filename="e0000e37.au" len="89399" min="-0.079851" max="0.086386" rms="0.011134"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+		<waveclip offset="4.70060417">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="20512">
+				<waveblock start="0">
+					<simpleblockfile filename="e000071f.au" len="20512" min="-0.08184" max="0.092222" rms="0.01138"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="177258__sergeeo__ukulele-chord-4-acorde-de-ukelele-4" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" isSelected="1" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="216340">
+				<waveblock start="0">
+					<simpleblockfile filename="e000016f.au" len="126941" min="-0.072733" max="0.06919" rms="0.009882"/>
+				</waveblock>
+				<waveblock start="126941">
+					<simpleblockfile filename="e0000b74.au" len="89399" min="-0.072651" max="0.068908" rms="0.009478"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+		<waveclip offset="4.70060417">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="20512">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000579.au" len="20512" min="-0.072733" max="0.06919" rms="0.009873"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+</project>

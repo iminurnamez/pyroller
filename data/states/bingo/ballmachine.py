@@ -2,6 +2,7 @@
 
 import random
 
+from ... import prepare
 from . import utils
 from . import loggable
 from .settings import SETTINGS as S
@@ -40,9 +41,13 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.all_balls = [Ball(n) for n in S['machine-balls']]
         self.balls = []
         self.called_balls = []
+        self.speed_buttons = utils.DrawableGroup()
+        self.buttons = utils.ClickableGroup()
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-interval'] * 1000
         self.running = False
+        self.timer = None
+        self.speed_transitions = {}
         #
         self.ui = self.create_ui()
         self.reset_machine()
@@ -63,13 +68,45 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.called_balls_ui = CalledBallTray(S['called-balls-position'])
         components.append(self.called_balls_ui)
         #
+        # Buttons that show the speed
+        for idx, (name, interval, number_balls) in enumerate(S['machine-speeds']):
+            self.speed_buttons.append(utils.ImageOnOffButton(
+                name,
+                (150 + idx * 65, 200),
+                'bingo-blue-button', 'bingo-blue-off-button', 'tiny-button',
+                name,
+                interval == S['machine-interval'],
+                self.change_speed, (idx, interval),
+                scale=S['tiny-button-scale']
+            ))
+            self.speed_transitions[number_balls] = (idx, interval)
+        components.extend(self.speed_buttons)
+        self.buttons.extend(self.speed_buttons)
         #
         return components
+
+    def change_speed(self, arg):
+        """Change the speed of the ball machine"""
+        selected_idx, interval = arg
+        self.log.info('Changing machine speed to {0}'.format(interval))
+        #
+        # Play appropriate sound
+        if interval < self.interval / 1000:
+            self.state.play_sound('bingo-speed-up')
+        else:
+            self.state.play_sound('bingo-slow-down')
+        #
+        # Set button visibility
+        for idx, button in enumerate(self.speed_buttons):
+            button.state = idx == selected_idx
+        #
+        # Set speed of the machine
+        self.reset_timer(interval * 1000)
 
     def start_machine(self):
         """Start the machine"""
         self.running = True
-        self.state.add_generator('ball-machine', self.pick_balls())
+        self.timer = self.state.add_generator('ball-machine', self.pick_balls())
 
     def stop_machine(self):
         """Stop the machine"""
@@ -78,23 +115,39 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def reset_timer(self, interval):
         """Reset the timer on the machine"""
         self.interval = interval
-        self.state.stop_generator('ball-machine')
-        self.state.add_generator('ball-machine', self.pick_balls())
+        self.timer.update_interval(interval)
 
-    def reset_machine(self):
+    def reset_machine(self, interval=None):
         """Reset the machine"""
         self.running = False
         self.balls = list(self.all_balls)
         self.called_balls = []
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
-        self.interval = self.initial_interval
+        self.interval = interval if interval else self.initial_interval
+        self.current_ball_ui.set_text('-')
 
     def pick_balls(self):
         """Pick the balls"""
-        for ball in self.balls:
-            self.set_current_ball(ball)
+        for idx, ball in enumerate(self.balls):
+            #
+            # Under some circumstances we will restart this iterator so this
+            # makes sure we don't repeat balls
+            if ball.number in self.called_balls:
+                continue
+            #
             self.called_balls.append(ball.number)
+            self.set_current_ball(ball)
+            self.state.play_sound('bingo-ball-chosen')
+            #
+            # Watch for speed transition
+            try:
+                button_idx, new_interval = self.speed_transitions[idx]
+            except KeyError:
+                # No transition
+                pass
+            else:
+                self.change_speed((button_idx, new_interval))
             #
             # Wait for next ball
             yield self.interval
@@ -105,7 +158,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
 
     def set_current_ball(self, ball):
         """Set the current ball"""
-        self.log.info('Current ball is {0}'.format(ball))
+        self.log.info('Current ball is {0}'.format(ball.full_name))
         #
         self.current_ball = ball
         self.current_ball_ui.set_text(ball.full_name)
@@ -116,6 +169,10 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         """Draw the machine"""
         self.ui.draw(surface)
 
+    def call_next_ball(self):
+        """Immediately call the next ball"""
+        self.timer.next_step()
+
 
 class CalledBallTray(utils.Drawable, loggable.Loggable):
     """A display of the balls that have been called"""
@@ -125,6 +182,7 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
         self.addLogger()
         self.x, self.y = position
         self.balls = utils.KeyedDrawableGroup()
+        self.called_balls = []
         #
         w, h = S['called-balls-size']
         dx, dy = S['called-balls-offsets']
@@ -138,8 +196,11 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
 
     def call_ball(self, ball):
         """Call a particular ball"""
-        self.balls[ball.number].text_color = S['called-ball-number-called-font-color']
-        self.balls[ball.number].update_text()
+        self.called_balls.append(ball)
+        ball_colours = S['called-ball-font-colors']
+        for colour, ball in zip(ball_colours, reversed(self.called_balls[-len(ball_colours):])):
+            self.balls[ball.number].text_color = colour
+            self.balls[ball.number].update_text()
 
     def draw(self, surface):
         """Draw the tray"""
@@ -150,3 +211,4 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
         for ball in self.balls.values():
             ball.text_color = S['called-ball-number-font-color']
             ball.update_text()
+        self.called_balls = []
