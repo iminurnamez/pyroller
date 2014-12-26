@@ -12,10 +12,8 @@ class MusicHandler(object):
                       ("buckin_the_dice", "Buckin' The Dice - Fats Waller and His Rhythm", .2),
                       ("money_burns_a_hole_in_my_pocket", "Money Burns A Hole In My Pocket - Dean Martin", .2),
                       ("ace_in_the_hole", "Ace In The Hole - Ella Fitzgerald", .25),
-                      ("on_the_street_where_you_live", "On The Street Where You Live - Shelly Manne & Andre Previn", .5),
                       ("world_on_a_string", "I've Got The World On A String - Frank Sinatra", .3),
-                      ("im_shooting_high", "I'm Shooting High - Chris Connor", .4),
-                      ("caravan", "Caravan - Thelonious Monk", .3),
+                      ("im_shooting_high", "I'm Shooting High - Chris Connor", .5),
                       ("anything_for_you", "Anything For You - Kay Starr with Van Alexander's Orchestra", .35)
                 ]
         self.current_song = "main_stem"
