@@ -15,7 +15,7 @@ class LobbyScreen(tools._State):
         self.music_handler = MusicHandler()
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
-        self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"), ("Craps", "CRAPS")]
+        self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"), ("Craps", "CRAPS"), ("Keno", "KENO")]
         num_columns = 3
         left = screen_rect.width // (num_columns + 1)
         top = screen_rect.top + 80
