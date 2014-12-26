@@ -18,15 +18,27 @@ The Saniretro font (© Grand Chaos Productions. Some Rights Reserved.) was creat
 The audio files listed below are used under the indicated licenses from the list above:
 
 Audio File: main_stem.ogg
-Source Title: “Main Stem” (by U.S. Army Blues)
+Source Title: “Main Stem”
 Source URL: http://freemusicarchive.org/music/US_Army_Blues/Live_At_Blues_Alley/0_-_02_-_The_US_Army_Blues_-_Main_Stem
-Source Author: U.S. Army Blues 
+Composer: Duke Ellington 
+Performed By: U.S. Army Blues
 License: CC-0
 
+Audio File: gospel_truth.ogg
+Source Title: "The Gospel Truth"
+Source URL: http://www.usarmyband.com/recording-notes/audio/blues-something-old/the-gospel-truth-recordings/the-gospel-truth-full-band.mp3
+Composer: Craig Friedrich
+Performed By: U.S. Army Blues 
+License: CC-0
 
-Audio File: 
-Source Title:  
-Source URL: 
-Source Author: 
-License: 
+Audio File: betcha_nickel.ogg
+Source Title: "Betcha' Nickel"
+Source URL: http://www.jazz-on-line.com/
+Artist: Ella Fitzgerald and Her Famous Orhcestra 
+License: CC-0
 
+Audio File: buckin_the_dice.ogg
+Source Title: "Buckin' The Dice" 
+Source URL: http://www.jazz-on-line.com/
+Artist: Fats Waller and His Rhythm
+License: CC-0

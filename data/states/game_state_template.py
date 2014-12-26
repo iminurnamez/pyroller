@@ -25,6 +25,7 @@ class GameName(tools._State):
             #Use tools.scaled_mouse_pos(scale, event.pos) for correct mouse
             #position relative to the pygame window size.
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
+            self.persist["music_handler"].get_event(event, scale)
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
@@ -40,5 +41,6 @@ class GameName(tools._State):
         the last frame.
         """
         mouse_pos = tools.scaled_mouse_pos(scale)
+        self.persist["music_handler"].update()
         self.draw(surface)
 

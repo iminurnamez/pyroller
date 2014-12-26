@@ -24,11 +24,6 @@ class Blackjack(tools._State):
         self.chip_sounds = [prepare.SFX[name] for name in names]
         self.chip_size = (48, 30)
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.music_icon = prepare.GFX["speaker"]
-        topright = (self.screen_rect.right - 10, self.screen_rect.top + 10)
-        self.music_icon_rect = self.music_icon.get_rect(topright=topright)
-        self.mute_icon = prepare.GFX["mute"]
-        self.play_music = True
         self.game_started = False
 
         b_width = 360
@@ -213,15 +208,10 @@ class Blackjack(tools._State):
             self.next = "LOBBYSCREEN"
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
+            self.persist["music_handler"].get_event(event, scale)
             if self.advisor_window:
                 self.advisor_window.get_event(pos)
-            if self.music_icon_rect.collidepoint(pos):
-                self.play_music = not self.play_music
-                if self.play_music:
-                    pg.mixer.music.play(-1)
-                else:
-                    pg.mixer.music.stop()
-            elif self.lobby_button.rect.collidepoint(pos):
+            if self.lobby_button.rect.collidepoint(pos):
                 self.cash_out_player()
                 self.game_started = False
                 self.done = True
@@ -277,6 +267,7 @@ class Blackjack(tools._State):
         self.chip_total_label = Label(self.font, 48, total_text, "gold3",
                                {"bottomleft": (screen.left + 3, screen.bottom - 3)})
 
+        self.persist["music_handler"].update()
         if self.advisor_window:
             if self.advisor_window.done:
                 self.advisor_window = None
@@ -434,10 +425,7 @@ class Blackjack(tools._State):
                 blinker.draw(surface, dt)
             self.new_game_button.draw(surface)
         self.lobby_button.draw(surface)
-        if self.play_music:
-            surface.blit(self.mute_icon, self.music_icon_rect)
-        else:
-            surface.blit(self.music_icon, self.music_icon_rect)
+        self.persist["music_handler"].draw(surface)
         self.chip_total_label.draw(surface)
         if self.advisor_window:
             self.advisor_window.draw(surface)
