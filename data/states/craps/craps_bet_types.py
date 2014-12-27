@@ -1,5 +1,5 @@
 
-from ..components.craps_bet import Bet
+from .craps_bet import Bet
 
 all_rolls = list(range(2,13))
 BETS = {

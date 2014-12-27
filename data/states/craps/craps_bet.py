@@ -1,7 +1,7 @@
 from __future__ import division
 import pygame as pg
-from .labels import Label
-from .. import prepare
+from ...components.labels import Label
+from ... import prepare
 
 class Bet:
     def __init__(self, size, topleft, name, mult_dict, triangles=None, pos=None, size2=None):

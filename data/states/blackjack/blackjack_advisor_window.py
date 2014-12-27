@@ -1,7 +1,7 @@
 import pygame as pg
-from .. import prepare
-from ..tools import scaled_mouse_pos
-from .labels import Label, MultiLineLabel, Button
+from ... import prepare
+from ...tools import scaled_mouse_pos
+from ...components.labels import Label, MultiLineLabel, Button
 
 class AdvisorWindow(object):
     def __init__(self, center, text):
