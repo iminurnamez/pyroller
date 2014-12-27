@@ -368,3 +368,7 @@ class Bingo(statemachine.StateMachine):
         """Play a named sound - respects the mute settings"""
         if not self.sound_muted:
             prepare.SFX[name].play()
+
+    def get_missing_squares(self, squares):
+        """Return a list of the numbers that have not been called"""
+        return [square for square in squares if square.text not in self.ball_machine.called_balls]

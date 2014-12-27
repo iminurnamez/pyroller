@@ -7,6 +7,7 @@ from .settings import SETTINGS as S
 from . import utils
 from . import events
 
+
 class BingoLabel(utils.Clickable):
     """A label on a bingo card"""
 
@@ -240,11 +241,18 @@ class BingoCard(utils.Clickable):
         self.set_label(
             '{0} to go'.format(number_to_go))
         #
+        # Check if a line completed
         if self.active and number_to_go == 0:
             for squares in self.state.winning_pattern.get_winning_squares(self, self.called_squares):
-                self.state.add_generator('flash-squares', self.flash_squares(squares, True))
+                missing_squares = self.state.get_missing_squares(squares)
+                if not missing_squares:
+                    self.state.add_generator('flash-squares', self.flash_squares(squares, True))
+                    self.state.play_sound('bingo-card-success')
+                else:
+                    self.state.add_generator('flash-squares', self.flash_squares(missing_squares, False))
+                    self.state.play_sound('bingo-card-failure')
+            #
             self.active = False
-            self.state.play_sound('bingo-card-success')
 
     def highlight_column(self, column):
         """Highlight a particular column"""
