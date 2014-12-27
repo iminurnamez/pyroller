@@ -119,13 +119,16 @@ class BallMachine(utils.Drawable, loggable.Loggable):
 
     def reset_machine(self, interval=None):
         """Reset the machine"""
-        self.running = False
         self.balls = list(self.all_balls)
         self.called_balls = []
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
         self.interval = interval if interval else self.initial_interval
         self.current_ball_ui.set_text('-')
+        if self.timer:
+            self.timer.stop()
+        self.start_machine()
+        self.running = False
 
     def pick_balls(self):
         """Pick the balls"""
