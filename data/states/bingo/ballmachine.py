@@ -105,6 +105,8 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def start_machine(self):
         """Start the machine"""
         self.running = True
+        if self.timer:
+            self.state.stop_generator('ball-machine')
         self.timer = self.state.add_generator('ball-machine', self.pick_balls())
 
     def stop_machine(self):
@@ -124,10 +126,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.called_balls_ui.reset_display()
         self.interval = interval if interval else self.initial_interval
         self.current_ball_ui.set_text('-')
-        if self.timer:
-            self.timer.stop()
         self.start_machine()
-        self.running = False
 
     def pick_balls(self):
         """Pick the balls"""
@@ -153,10 +152,6 @@ class BallMachine(utils.Drawable, loggable.Loggable):
             #
             # Wait for next ball
             yield self.interval
-            #
-            # Wait until we are running
-            if not self.running:
-                yield 0
 
     def set_current_ball(self, ball):
         """Set the current ball"""
