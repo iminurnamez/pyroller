@@ -44,7 +44,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.speed_buttons = utils.DrawableGroup()
         self.buttons = utils.ClickableGroup()
         self.current_ball = None
-        self.interval = self.initial_interval = S['machine-interval'] * 1000
+        self.interval = self.initial_interval = S['machine-speeds'][0][1] * 1000
         self.running = False
         self.timer = None
         self.speed_transitions = {}
@@ -75,7 +75,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
                 (150 + idx * 65, 200),
                 'bingo-blue-button', 'bingo-blue-off-button', 'tiny-button',
                 name,
-                interval == S['machine-interval'],
+                interval == self.initial_interval / 1000,
                 self.change_speed, (idx, interval),
                 scale=S['tiny-button-scale']
             ))
