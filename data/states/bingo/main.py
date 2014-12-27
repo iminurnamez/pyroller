@@ -41,19 +41,25 @@ class Bingo(statemachine.StateMachine):
         self.play_music = True
         self.auto_pick = S['debug-auto-pick']
         #
+        self.ui = utils.ClickableGroup()
+        #
         lobby_label = utils.getLabel('button', (0, 0), 'Lobby')
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
                                    b_width, b_height, lobby_label)
         #
+        # The controls to allow selection of different numbers of cards
+        self.card_selector = cardselector.CardSelector('card-selector', self)
+        self.card_selector.linkEvent(events.E_NUM_CARDS_CHANGED, self.change_number_of_cards)
+        self.ui.append(self.card_selector.ui)
+        #
         self.cards = self.get_card_collection()
+        self.ui.extend(self.cards)
         self.dealer_cards = dealercard.DealerCardCollection(
             'dealer-card',
             S['dealer-cards-position'],
             S['dealer-card-offsets'],
             self
         )
-        #
-        self.ui = utils.ClickableGroup(self.cards)
         #
         self.winning_pattern = patterns.PATTERNS[0]
         #
@@ -70,10 +76,6 @@ class Bingo(statemachine.StateMachine):
         self.ball_machine = ballmachine.BallMachine('ball-machine', self)
         self.ball_machine.start_machine()
         self.ui.append(self.ball_machine.buttons)
-        #
-        # The controls to allow selection of different numbers of cards
-        self.card_selector = cardselector.CardSelector('card-selector', self)
-        self.ui.append(self.card_selector.ui)
         #
         self.all_cards = utils.DrawableGroup()
         self.all_cards.extend(self.cards)
@@ -252,9 +254,22 @@ class Bingo(statemachine.StateMachine):
         return playercard.PlayerCardCollection(
             'player-card',
             S['player-cards-position'],
-            S['player-card-offsets'],
+            S['player-card-offsets'][:self.card_selector.number_of_cards],
             self
         )
+
+    def change_number_of_cards(self, number, arg=None):
+        """Change the number of cards in play"""
+        self.log.info('Changing the number of cards to {0}'.format(number))
+        #
+        # Remove old cards
+        for card in self.cards:
+            self.all_cards.remove(card)
+        #
+        # Create new cards
+        self.cards = self.get_card_collection()
+        self.all_cards.extend(self.cards)
+        self.restart_game(None)
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""
