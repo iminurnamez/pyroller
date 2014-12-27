@@ -262,12 +262,17 @@ class Bingo(statemachine.StateMachine):
         """Change the number of cards in play"""
         self.log.info('Changing the number of cards to {0}'.format(number))
         #
+        # Store off the old card number to reuse
+        self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
+        #
         # Remove old cards
         for card in self.cards:
             self.all_cards.remove(card)
         #
         # Create new cards
         self.cards = self.get_card_collection()
+        self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
+        #
         self.all_cards.extend(self.cards)
         self.restart_game(None)
 
