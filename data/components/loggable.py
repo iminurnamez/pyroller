@@ -29,6 +29,9 @@ class Loggable(object):
     use this to log output. The `log` attribute is a logger with the
     usual *debug*, *warn*, *info*, and *error* methods.
 
+    Classes should ensure that they call addLogger early in the
+    initialisation process.
+
     """
 
     log = None
