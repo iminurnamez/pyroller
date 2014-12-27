@@ -254,7 +254,7 @@ class Bingo(statemachine.StateMachine):
         return playercard.PlayerCardCollection(
             'player-card',
             S['player-cards-position'],
-            S['player-card-offsets'][:self.card_selector.number_of_cards],
+            S['player-card-offsets'][self.card_selector.number_of_cards],
             self
         )
 

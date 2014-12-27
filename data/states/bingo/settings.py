@@ -88,10 +88,13 @@ SETTINGS = {
     #
     # Player settings
     'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 400),
-    'player-card-offsets': [
-        (-450, 0), (-150, 0), (150, 0), (450, 0),
-        # (-150, 0), (150, 0)
-    ],
+    'player-card-offsets': {
+        1: [(0, 0)],
+        2: [(-150, 0), (150, 0)],
+        3: [(-300, 0), (0, 0), (300, 0)],
+        4: [(-450, 0), (-150, 0), (150, 0), (450, 0)],
+        5: [(-560, 0), (-280, 0), (0, 0), (280, 0), (560, 0)],
+    },
     'dealer-cards-position': (prepare.RENDER_SIZE[0] / 2 + 200, prepare.RENDER_SIZE[1] - 900),
     'dealer-card-offsets': [
         (-190, 0), (-70, 0), (70, 0), (190, 0),
