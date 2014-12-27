@@ -25,9 +25,9 @@ SETTINGS = {
     'tiny-button-font-color': 'gold3',
     'tiny-button-size': (30, 45),
     'tiny-button-scale': 0.4,
+
     #
     # Settings for a single Bingo Card
-
     'square-number-font': prepare.FONTS["Saniretro"],
     'square-number-font-size': 32,
     'square-number-font-color': 'white',
@@ -83,6 +83,19 @@ SETTINGS = {
     'card-focus-flash-timing': [
         (True, 0.5),
         (False, 0.1),
+    ],
+
+    'card-winning-flash-timing': [
+        (True, 0.05),
+        (False, 0.01),
+        (True, 0.05),
+        (False, 0.01),
+        (True, 0.05),
+        (False, 0.01),
+        (True, 0.05),
+        (False, 0.01),
+        (True, 0.05),
+        (False, 0.01),
     ],
 
     #

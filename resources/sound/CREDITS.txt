@@ -4,3 +4,5 @@ Some of the sounds here are CC from external sources:
 - bingo pick: http://www.freesound.org/people/sergeeo/sounds/177258/
 - bingo potential winner: http://www.freesound.org/people/yourliver/sounds/238076/
 - speed up: http://www.freesound.org/people/acclivity/sounds/25886/
+- bingo card success: http://www.freesound.org/people/fins/sounds/171671/
+- bingo card failure: http://www.freesound.org/people/suntemple/sounds/253174/

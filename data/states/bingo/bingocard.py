@@ -240,18 +240,28 @@ class BingoCard(utils.Clickable):
         self.set_label(
             '{0} to go'.format(number_to_go))
         #
-        if number_to_go == 0:
+        if self.active and number_to_go == 0:
             for squares in self.state.winning_pattern.get_winning_squares(self, self.called_squares):
-                for square in squares:
-                    square.is_highlighted = True
-                    square.is_focused = False
+                self.state.add_generator('flash-squares', self.flash_squares(squares, True))
             self.active = False
+            self.state.play_sound('bingo-card-success')
 
     def highlight_column(self, column):
         """Highlight a particular column"""
         if self.show_col_labels:
             for letter, label in self.labels.items():
                 label.is_highlighted = letter == column
+
+    def flash_squares(self, squares, end_state):
+        """Flash a set of squares"""
+        for state, delay in S['card-winning-flash-timing']:
+            for square in squares:
+                square.is_highlighted = state
+                square.is_focused = False
+            yield delay * 1000
+        #
+        for square in squares:
+            square.is_highlighted = end_state
 
     @property
     def active(self):

@@ -268,12 +268,14 @@ class Bingo(statemachine.StateMachine):
         # Remove old cards
         for card in self.cards:
             self.all_cards.remove(card)
+            self.ui.remove(card)
         #
         # Create new cards
         self.cards = self.get_card_collection()
         self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
         #
         self.all_cards.extend(self.cards)
+        self.ui.extend(self.cards)
         self.restart_game(None)
 
     def highlight_patterns(self, pattern, one_shot):
