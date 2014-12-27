@@ -5,6 +5,7 @@ from .. import tools, prepare
 from ..components.labels import Label, Blinker, MarqueeFrame, Button
 from ..components.casino_player import CasinoPlayer
 from ..components.cards import Deck
+from ..components.music_handler import MusicHandler
 
 
 class TitleScreen(tools._State):
@@ -27,6 +28,8 @@ class TitleScreen(tools._State):
         self.title2.rect.left += 1600
         self.title.blinking = False
         self.title2.blinking = False
+        self.title.on = True
+        self.title2.on = True
 
         b_width = 180
         b_height = 80
@@ -78,9 +81,9 @@ class TitleScreen(tools._State):
 
     def update(self, surface, keys, current_time, dt, scale):
         if self.title.rect.centerx < self.screen_rect.centerx:
-            self.title.rect.left += 6
+            self.title.rect.left += 10
         if self.title2.rect.centerx > self.screen_rect.centerx:
-            self.title2.rect.left -= 6
+            self.title2.rect.left -= 10
         else:
             if not self.marquees:
                 for title in (self.title, self.title2):

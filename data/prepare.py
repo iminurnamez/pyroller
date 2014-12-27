@@ -47,8 +47,8 @@ GFX   = tools.load_all_gfx(os.path.join("resources", "graphics"))
 #It's time to start the music, it's time to light the lights
 pg.mixer.music.load(MUSIC["main_stem"])
 pg.mixer.music.set_volume(.2)
-if not ARGS['music_off']:
-    pg.mixer.music.play(-1)
+if not ARGS["music_off"]:
+    pg.mixer.music.play()
 
 # Singleton to broadcast events throughout the game
 BROADCASTER = events.Broadcaster()

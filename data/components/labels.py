@@ -125,7 +125,7 @@ class Blinker(Label):
             if self.blinking:
                 self.on = not self.on
         if self.image:
-            surface.blit(self.text, self.rect)
+            #surface.blit(self.text, self.rect)
             if self.on:
                 surface.blit(self.image, self.rect)
         elif self.on:

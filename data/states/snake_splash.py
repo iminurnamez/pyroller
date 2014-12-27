@@ -1,7 +1,7 @@
 from random import randint
 import pygame as pg
 from .. import tools, prepare
-
+from ..components.music_handler import MusicHandler
 
 class SnakeSplash(tools._State):
     """Class to represent a casino game."""
@@ -12,6 +12,7 @@ class SnakeSplash(tools._State):
         self.image = prepare.GFX["snakesign"]
         self.on = False
         self.duration = 3000
+        self.persist["music_handler"] = MusicHandler()
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
