@@ -7,12 +7,17 @@ from .settings import SETTINGS as S
 from . import utils
 from . import events
 
+# Highlight states
+S_NONE = 0
+S_GOOD = 1
+S_BAD = 2
+
 
 class BingoLabel(utils.Clickable):
     """A label on a bingo card"""
 
     style_name = 'square-number'
-    highlight_name = 'bingo-label-highlight'
+    highlight_names = ['bingo-label-highlight', 'bingo-label-bad-highlight']
     show_label = True
     show_mouse_over = True
 
@@ -21,14 +26,17 @@ class BingoLabel(utils.Clickable):
         self.name = name
         self.offset = offset
         self.text = text
-        self.is_highlighted = False
+        self.highlighted_state = S_NONE
         self.card = card
         self.is_active = True
         #
         self.x, self.y = card.x + offset[0], card.y + offset[1]
         self.label = utils.getLabel(self.style_name, (self.x, self.y), text)
-        self.highlighter = utils.NamedSprite(
-            self.highlight_name, (self.x, self.y), scale=self.get_scale())
+        self.highlighters = [
+            utils.NamedSprite(highlighter_name, (self.x, self.y), scale=self.get_scale())
+            for highlighter_name in self.highlight_names
+
+        ]
         self.mouse_highlight = utils.NamedSprite(
             'bingo-mouse-highlight', (self.x, self.y), scale=self.get_scale())
         #
@@ -46,21 +54,21 @@ class BingoLabel(utils.Clickable):
         """Draw the square"""
         if self.is_active and self.show_mouse_over and self.mouse_over:
             self.mouse_highlight.draw(surface)
-        elif self.is_highlighted:
-            self.highlighter.draw(surface)
+        elif self.highlighted_state:
+            self.highlighters[self.highlighted_state - 1].draw(surface)
         if self.show_label:
             self.label.draw(surface)
 
     def reset(self):
         """Reset the label"""
-        self.is_highlighted = False
+        self.highlighted_state = S_NONE
 
 
 class BingoSquare(BingoLabel):
     """A square on a bingo card"""
 
     style_name = 'square-label'
-    highlight_name = 'bingo-highlight'
+    highlight_names = ['bingo-highlight', 'bingo-bad-highlight']
 
     def __init__(self, name, card, offset, number):
         """Initialise the square"""
@@ -246,10 +254,10 @@ class BingoCard(utils.Clickable):
             for squares in self.state.winning_pattern.get_winning_squares(self, self.called_squares):
                 missing_squares = self.state.get_missing_squares(squares)
                 if not missing_squares:
-                    self.state.add_generator('flash-squares', self.flash_squares(squares, True))
+                    self.state.add_generator('flash-squares', self.flash_squares(squares, S_GOOD, S_GOOD))
                     self.state.play_sound('bingo-card-success')
                 else:
-                    self.state.add_generator('flash-squares', self.flash_squares(missing_squares, False))
+                    self.state.add_generator('flash-squares', self.flash_squares(missing_squares, S_BAD, S_BAD))
                     self.state.play_sound('bingo-card-failure')
             #
             self.active = False
@@ -258,18 +266,18 @@ class BingoCard(utils.Clickable):
         """Highlight a particular column"""
         if self.show_col_labels:
             for letter, label in self.labels.items():
-                label.is_highlighted = letter == column
+                label.highlighted_state = S_NONE if letter != column else S_GOOD
 
-    def flash_squares(self, squares, end_state):
+    def flash_squares(self, squares, on_state, end_state):
         """Flash a set of squares"""
         for state, delay in S['card-winning-flash-timing']:
             for square in squares:
-                square.is_highlighted = state
+                square.highlighted_state = on_state if state else S_NONE
                 square.is_focused = False
             yield delay * 1000
         #
         for square in squares:
-            square.is_highlighted = end_state
+            square.highlighted_state = end_state
 
     @property
     def active(self):
