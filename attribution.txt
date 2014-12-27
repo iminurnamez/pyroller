@@ -31,14 +31,49 @@ Composer: Craig Friedrich
 Performed By: U.S. Army Blues 
 License: CC-0
 
+
+The following recordings are believed to be in the public domain, but cannot be verified as such. These files may be copyrighted.
+If you are the copyright owner of any of these recordings, please contact easinerf@gmail.com.
+
 Audio File: betcha_nickel.ogg
 Source Title: "Betcha' Nickel"
 Source URL: http://www.jazz-on-line.com/
 Artist: Ella Fitzgerald and Her Famous Orhcestra 
-License: CC-0
+License: Believed to be in the public domain
 
 Audio File: buckin_the_dice.ogg
 Source Title: "Buckin' The Dice" 
 Source URL: http://www.jazz-on-line.com/
 Artist: Fats Waller and His Rhythm
-License: CC-0
+License: Believed to be in the public domain
+
+Audio File: im_shooting_high.ogg
+Source Title: "I'm Shooting High" 
+Source URL: http://www.jazz-on-line.com/
+Artist: Chris Connor
+License: Believed to be in the public domain
+
+Audio File: money_burns_a_hole_in_my_pocket.ogg
+Source Title: "Money Burns A Hole In My Pocket" 
+Source URL: http://www.jazz-on-line.com/
+Artist: Dean Martin
+License: Believed to be in the public domain
+
+Audio File: world_on_a_string.ogg
+Source Title: "I've Got The World On A String" 
+Source URL: http://www.jazz-on-line.com/
+Artist: Frank Sinatra
+License: Believed to be in the public domain
+
+Audio File: anything_for_you.ogg
+Source Title: "Anything For You" 
+Source URL: http://www.jazz-on-line.com/
+Artist: Kay Starr with Van Alexander's Orchestra
+License: Believed to be in the public domain
+
+Audio File: ace_in_the_hole.ogg
+Source Title: "Ace In The Hole" 
+Source URL: http://www.jazz-on-line.com/
+Artist: Ella Fitzgerald
+License: Believed to be in the public domain
+
