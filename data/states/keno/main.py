@@ -29,6 +29,8 @@ class Keno(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
+        
+        self.casino_player.stats["Keno"]["games played"] += 1
 
     def get_event(self, event, scale=(1,1)):
         """This method will be called for each event in the event queue
