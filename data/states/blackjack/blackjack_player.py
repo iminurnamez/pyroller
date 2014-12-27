@@ -1,8 +1,8 @@
 import pygame as pg
 from collections import OrderedDict, defaultdict
-from .. import prepare
-from ..components.chips import Chip, ChipStack, ChipPile
-from ..components.blackjack_hand import Hand
+from ... import prepare
+from ...components.chips import Chip, ChipStack, ChipPile
+from .blackjack_hand import Hand
 
 class Player(object):
     def __init__(self, chip_size, cash=0, chips=None):

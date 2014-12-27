@@ -1,4 +1,4 @@
-from ..components.chips import BetPile
+from ...components.chips import BetPile
 
 class Hand(object):
     card_values = {i: i for i in range(2, 11)}

@@ -1,6 +1,6 @@
 import pygame as pg
-from .. import prepare
-from ..components.blackjack_hand import Hand
+from ... import prepare
+from .blackjack_hand import Hand
 
 class Dealer(object):
     def __init__(self, cards=None):

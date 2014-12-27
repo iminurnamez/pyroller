@@ -14,9 +14,9 @@ x dice animation
 
 from collections import OrderedDict
 import pygame as pg
-from .. import tools, prepare
-from ..components.labels import Button, Label, FunctionButton
-from ..components import craps_bet_types, craps_dice
+from ... import tools, prepare
+from ...components.labels import Button, Label, FunctionButton
+from . import craps_bet_types, craps_dice
 import random
 
 class Craps(tools._State):

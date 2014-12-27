@@ -1,14 +1,14 @@
 from random import choice
 import pygame as pg
-from .. import tools, prepare
-from ..components.angles import get_distance, get_angle, project
-from ..components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel
-from ..components.cards import Deck
-from ..components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
-from ..components.blackjack_dealer import Dealer
-from ..components.blackjack_player import Player
-from ..components.blackjack_hand import Hand
-from ..components.blackjack_advisor_window import AdvisorWindow
+from ... import tools, prepare
+from ...components.angles import get_distance, get_angle, project
+from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel
+from ...components.cards import Deck
+from ...components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
+from .blackjack_dealer import Dealer
+from .blackjack_player import Player
+from .blackjack_hand import Hand
+from .blackjack_advisor_window import AdvisorWindow
 
 class Blackjack(tools._State):
     """State to represent a blackjack game. Player cash
