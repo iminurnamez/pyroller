@@ -44,6 +44,25 @@ MUSIC = tools.load_all_music(os.path.join("resources", "music"))
 SFX   = tools.load_all_sfx(os.path.join("resources", "sound"))
 GFX   = tools.load_all_gfx(os.path.join("resources", "graphics"))
 
+#strip cards from sheet and add to GFX individually
+card_width = 125
+card_height = 181
+sheet = GFX["cardsheet"]
+card_names = ["ace"]
+card_names.extend(list(range(2, 11)))
+card_names.extend(["jack", "queen", "king"])
+top = 0
+for suit in ["clubs", "hearts", "diamonds", "spades"]:
+    left = 0
+    for name in card_names:
+        rect = pg.Rect(left, top, card_width, card_height)
+        key = "{}_of_{}".format(name, suit)
+        GFX[key] = sheet.subsurface(rect)
+        left += card_width
+    top += card_height
+
+
+
 #It's time to start the music, it's time to light the lights
 pg.mixer.music.load(MUSIC["main_stem"])
 pg.mixer.music.set_volume(.2)
