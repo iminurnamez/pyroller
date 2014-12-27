@@ -2,7 +2,6 @@
 
 import random
 
-from ... import prepare
 from . import utils
 from . import loggable
 from .settings import SETTINGS as S

@@ -14,6 +14,7 @@ from . import playercard
 from . import dealercard
 from . import patterns
 from . import ballmachine
+from . import cardselector
 from . import events
 from .settings import SETTINGS as S
 
@@ -65,9 +66,14 @@ class Bingo(statemachine.StateMachine):
         #
         super(Bingo, self).__init__(states.S_INITIALISE)
         #
+        # The machine for picking balls
         self.ball_machine = ballmachine.BallMachine('ball-machine', self)
         self.ball_machine.start_machine()
         self.ui.append(self.ball_machine.buttons)
+        #
+        # The controls to allow selection of different numbers of cards
+        self.card_selector = cardselector.CardSelector('card-selector', self)
+        self.ui.append(self.card_selector.ui)
         #
         self.all_cards = utils.DrawableGroup()
         self.all_cards.extend(self.cards)
@@ -140,6 +146,7 @@ class Bingo(statemachine.StateMachine):
         self.all_cards.draw(surface)
         self.ball_machine.draw(surface)
         self.buttons.draw(surface)
+        self.card_selector.draw(surface)
         #
         if self.play_music:
             surface.blit(self.mute_icon, self.music_icon_rect)

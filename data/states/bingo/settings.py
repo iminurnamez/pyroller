@@ -143,6 +143,19 @@ SETTINGS = {
     'player-pick-interval': 1.0,
 
     #
+    # Card selection
+    'card-selection-default': 2,
+    'card-selection': [
+        ('One', 1),
+        ('Two', 2),
+        ('Three', 3),
+        ('Four', 4),
+        ('Five', 5),
+    ],
+    'card-selection-position': (1320, 600),
+    'card-selection-offsets': (0, 40),
+
+    #
     # Debug settings
     'debug-auto-pick': True,
     'debug-auto-pick-position': (1250, 40),
