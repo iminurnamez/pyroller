@@ -1,5 +1,5 @@
 import random
-from .. import prepare, tools
+from ... import prepare, tools
 import pygame as pg
 
 class Die:
