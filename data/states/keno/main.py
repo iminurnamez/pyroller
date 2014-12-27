@@ -1,6 +1,6 @@
 import pygame as pg
-from ..components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel
-from .. import tools, prepare
+from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel
+from ... import tools, prepare
 
 
 class Keno(tools._State):
