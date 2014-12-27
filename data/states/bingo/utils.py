@@ -9,9 +9,10 @@ from ...components import common
 from .settings import SETTINGS as S
 
 
-# The following functions are intended to provide temporary backwards
+# The following functions / classes are intended to provide temporary backwards
 # compatibility to minimize changes while this framework change is being
 # evaluated
+
 
 def getLabel(name, position, text):
     """Return a label using the current settings"""
@@ -19,9 +20,15 @@ def getLabel(name, position, text):
 
 
 def ImageButton(name, position, filename, text_properties, text, callback, arg, scale=1.0):
-    return common.ImageButton(name, position, filename, text_properties, text, callback, arg, S, scale)
+    obj = common.ImageButton(name, position, filename, text_properties, text, S, scale)
+    obj.linkEvent(E_MOUSE_CLICK, lambda o, a: callback(arg))
+    obj.arg = arg
+    return obj
 
 
 def ImageOnOffButton(name, position, on_filename, off_filename, text_properties, text, state, callback, arg, scale=1.0):
-    return common.ImageOnOffButton(name, position, on_filename, off_filename, text_properties, text, state,
-                                   callback, arg, S, scale)
+    obj = common.ImageOnOffButton(name, position, on_filename, off_filename, text_properties, text, state,
+                                   S, scale)
+    obj.linkEvent(E_MOUSE_CLICK, lambda o, a: callback(arg))
+    obj.arg = arg
+    return obj

@@ -8,8 +8,16 @@ import pygame as pg
 from . import labels
 from .. import prepare
 from .. import tools
+from ..events import EventAware
 
 from . import loggable
+
+
+# Events for the components
+E_MOUSE_CLICK = 'mouse-click'
+E_MOUSE_ENTER = 'mouse-enter'
+E_MOUSE_MOVE = 'mouse-move'
+E_MOUSE_LEAVE = 'mouse-leave'
 
 
 def getLabel(name, position, text, settings):
@@ -23,23 +31,18 @@ def getLabel(name, position, text, settings):
     )
 
 
-class EventAware(object):
-    """Base class for objects that can handle events"""
-
-    def process_events(self, event, scale=(1, 1)):
-        """Process pygame events"""
-
-
 class Clickable(EventAware, loggable.Loggable):
 
     """Simple class to make an item clickable"""
 
     def __init__(self, name, rect=None):
         """Initialise the clickable"""
+        self.initEvents()
+        self.addLogger()
+        #
         self.name = name
         self.rect = rect
         self.mouse_over = False
-        self.addLogger()
 
     def process_events(self, event, scale=(1, 1)):
         """Process pygame events"""
@@ -59,17 +62,25 @@ class Clickable(EventAware, loggable.Loggable):
 
     def handle_click(self):
         """Do something when we are clicked on"""
-        self.log.debug('Clicked on %s' % self.name)
+        self.processEvent((E_MOUSE_CLICK, self))
 
     def handle_mouse_enter(self):
         """Do something when the mouse enters our rect"""
+        self.processEvent((E_MOUSE_ENTER, self))
 
     def handle_mouse_leave(self):
         """Do something when the mouse leaves our rect"""
+        self.processEvent((E_MOUSE_LEAVE, self))
 
 
 class ClickableGroup(list, EventAware):
     """A list of clickable items"""
+
+    def __init__(self, items=None):
+        """Initialise the group"""
+        super(ClickableGroup, self).__init__(items if items else [])
+        #
+        self.initEvents()
 
     def process_events(self, event, scale=(1, 1)):
         """Process all the events"""
@@ -139,10 +150,8 @@ class ImageButton(Clickable):
     """A button with an image and text"""
 
     def __init__(self, name, position, filename, text_properties, text,
-                 callback, arg, settings, scale=1.0):
+                 settings, scale=1.0):
         """Initialise the button"""
-        self.callback = callback
-        self.arg = arg
         #
         self.image = NamedSprite(name, position, filename, scale=scale)
         self.label = getLabel(text_properties, position, text, settings)
@@ -154,19 +163,13 @@ class ImageButton(Clickable):
         self.image.draw(surface)
         self.label.draw(surface)
 
-    def handle_click(self):
-        """Handle the click event"""
-        self.callback(self.arg)
-
 
 class ImageOnOffButton(Clickable):
     """A button with an on and off image and text"""
 
     def __init__(self, name, position, on_filename, off_filename, text_properties, text, state,
-                 callback, arg, settings, scale=1.0):
+                 settings, scale=1.0):
         """Initialise the button"""
-        self.callback = callback
-        self.arg = arg
         self.state = state
         #
         self.on_image = NamedSprite(name, position, on_filename, scale=scale)
@@ -182,9 +185,3 @@ class ImageOnOffButton(Clickable):
         else:
             self.off_image.draw(surface)
         self.label.draw(surface)
-
-    def handle_click(self):
-        """Handle the click event"""
-        self.callback(self.arg)
-
-
