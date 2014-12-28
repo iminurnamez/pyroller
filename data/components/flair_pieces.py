@@ -2,9 +2,18 @@ import os
 from math import degrees
 from random import choice
 from itertools import cycle
+
 import pygame as pg
 from ..tools import strip_from_sheet
+from .chips import Chip
 from .. import prepare
+
+
+SPINNER_Y = {"blue"  : 0,
+             "red"   : 80,
+             "black" : 160,
+             "green" : 240,
+             "white" : 320}
 
 
 class Fadeout(object):
@@ -38,9 +47,9 @@ class Spinner(object):
         self.spin_frequency = spin_frequency
         self.elapsed = 0.0
         self.acceleration = .1
-
-        sheet = prepare.GFX["spinner{}".format(color)]
-        self.images = strip_from_sheet(sheet, (0, 0), (80, 80), 10, rows=1)
+        sheet = prepare.GFX["spinners"]
+        y = SPINNER_Y[color]
+        self.images = strip_from_sheet(sheet, (0, y), (80, 80), 10, rows=1)
         self.switch_image = self.images[-1]
         flipped = [pg.transform.flip(img, True, True) for img in self.images[1:-1]]
         self.images.extend(flipped[::-1])
@@ -142,7 +151,7 @@ class ChipCurtain(object):
 
 class Roller(object):
     def __init__(self, center, color, direction, speed):
-        self.image = prepare.GFX["chip{}".format(color)]
+        self.image = Chip.flat_images[(32,19)][color]
         self.rect = self.image.get_rect(center=center)
         self.pos = center
         self.rot_image = self.image
