@@ -2,8 +2,10 @@ import os
 from math import degrees
 from random import choice
 from itertools import cycle
+
 import pygame as pg
 from ..tools import strip_from_sheet
+from .chips import Chip
 from .. import prepare
 
 
@@ -149,7 +151,7 @@ class ChipCurtain(object):
 
 class Roller(object):
     def __init__(self, center, color, direction, speed):
-        self.image = prepare.GFX["chip{}".format(color)]
+        self.image = Chip.flat_images[(32,19)][color]
         self.rect = self.image.get_rect(center=center)
         self.pos = center
         self.rot_image = self.image
