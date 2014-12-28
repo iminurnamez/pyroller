@@ -18,6 +18,7 @@ class StateExecutor(loggable.Loggable):
         self.generator = generator
         self.last_delay = self.delay = delay
         self.done = False
+        self.verbose = False
         #
         self.state_clock = pygame.time.Clock()
 
@@ -26,6 +27,8 @@ class StateExecutor(loggable.Loggable):
         self.state_clock.tick(dt)
         self.delay -= self.state_clock.get_time()
         if not self.done and self.delay < 0:
+            if self.verbose:
+                self.log.debug('{0} {1} doing action'.format(self.name, id(self)))
             try:
                 self.last_delay = self.delay = next(self.generator)
             except StopIteration:
@@ -100,8 +103,8 @@ class StateMachine(tools._State, loggable.Loggable):
 
     def add_generator(self, name, generator):
         """Add a new generator to run"""
-        self.log.debug('Adding new executor {0}, {1}'.format(name, generator))
         new_generator = StateExecutor(name, generator)
+        self.log.debug('Adding new executor {0}, {1}'.format(name, id(new_generator)))
         self.generators.append(new_generator)
         return new_generator
 
@@ -110,6 +113,7 @@ class StateMachine(tools._State, loggable.Loggable):
         for generator in self.generators[:]:
             if generator.name == name:
                 self.generators.remove(generator)
+                self.log.debug('Removing executor {0}, {1}'.format(name, id(generator)))
                 break
         else:
             raise ValueError('A generator named {0} was not found'.format(name))

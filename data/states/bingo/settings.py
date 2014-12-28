@@ -25,9 +25,9 @@ SETTINGS = {
     'tiny-button-font-color': 'gold3',
     'tiny-button-size': (30, 45),
     'tiny-button-scale': 0.4,
+
     #
     # Settings for a single Bingo Card
-
     'square-number-font': prepare.FONTS["Saniretro"],
     'square-number-font-size': 32,
     'square-number-font-color': 'white',
@@ -85,13 +85,29 @@ SETTINGS = {
         (False, 0.1),
     ],
 
+    'card-winning-flash-timing': [
+        (True, 0.05),
+        (False, 0.01),
+        (True, 0.05),
+        (False, 0.01),
+        (True, 0.05),
+        (False, 0.01),
+        (True, 0.05),
+        (False, 0.01),
+        (True, 0.05),
+        (False, 0.01),
+    ],
+
     #
     # Player settings
     'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 400),
-    'player-card-offsets': [
-        (-450, 0), (-150, 0), (150, 0), (450, 0),
-        # (-150, 0), (150, 0)
-    ],
+    'player-card-offsets': {
+        1: [(0, 0)],
+        2: [(-150, 0), (150, 0)],
+        3: [(-300, 0), (0, 0), (300, 0)],
+        4: [(-450, 0), (-150, 0), (150, 0), (450, 0)],
+        5: [(-560, 0), (-280, 0), (0, 0), (280, 0), (560, 0)],
+    },
     'dealer-cards-position': (prepare.RENDER_SIZE[0] / 2 + 200, prepare.RENDER_SIZE[1] - 900),
     'dealer-card-offsets': [
         (-190, 0), (-70, 0), (70, 0), (190, 0),
@@ -105,7 +121,6 @@ SETTINGS = {
     #
     # Ball machine settings
     'machine-balls': range(1, 76),
-    'machine-interval': 1,
 
     'machine-ball-position': (75, 75),
     'machine-ball-font': prepare.FONTS["Saniretro"],
@@ -142,6 +157,19 @@ SETTINGS = {
         'bingo-pick-4',
     ],
     'player-pick-interval': 1.0,
+
+    #
+    # Card selection
+    'card-selection-default': 2,
+    'card-selection': [
+        ('One', 1),
+        ('Two', 2),
+        ('Three', 3),
+        ('Four', 4),
+        ('Five', 5),
+    ],
+    'card-selection-position': (1320, 600),
+    'card-selection-offsets': (0, 40),
 
     #
     # Debug settings

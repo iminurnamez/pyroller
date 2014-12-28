@@ -2,7 +2,6 @@
 
 import random
 
-from ... import prepare
 from . import utils
 from . import loggable
 from .settings import SETTINGS as S
@@ -44,7 +43,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.speed_buttons = utils.DrawableGroup()
         self.buttons = utils.ClickableGroup()
         self.current_ball = None
-        self.interval = self.initial_interval = S['machine-interval'] * 1000
+        self.interval = self.initial_interval = S['machine-speeds'][0][1] * 1000
         self.running = False
         self.timer = None
         self.speed_transitions = {}
@@ -75,7 +74,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
                 (150 + idx * 65, 200),
                 'bingo-blue-button', 'bingo-blue-off-button', 'tiny-button',
                 name,
-                interval == S['machine-interval'],
+                interval == self.initial_interval / 1000,
                 self.change_speed, (idx, interval),
                 scale=S['tiny-button-scale']
             ))
@@ -106,6 +105,8 @@ class BallMachine(utils.Drawable, loggable.Loggable):
     def start_machine(self):
         """Start the machine"""
         self.running = True
+        if self.timer:
+            self.state.stop_generator('ball-machine')
         self.timer = self.state.add_generator('ball-machine', self.pick_balls())
 
     def stop_machine(self):
@@ -119,13 +120,13 @@ class BallMachine(utils.Drawable, loggable.Loggable):
 
     def reset_machine(self, interval=None):
         """Reset the machine"""
-        self.running = False
         self.balls = list(self.all_balls)
         self.called_balls = []
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
         self.interval = interval if interval else self.initial_interval
         self.current_ball_ui.set_text('-')
+        self.start_machine()
 
     def pick_balls(self):
         """Pick the balls"""
@@ -151,10 +152,6 @@ class BallMachine(utils.Drawable, loggable.Loggable):
             #
             # Wait for next ball
             yield self.interval
-            #
-            # Wait until we are running
-            if not self.running:
-                yield 0
 
     def set_current_ball(self, ball):
         """Set the current ball"""
