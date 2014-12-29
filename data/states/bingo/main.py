@@ -137,7 +137,7 @@ class Bingo(statemachine.StateMachine):
                 self.done = True
                 self.next = "LOBBYSCREEN"
             elif event.key == pg.K_SPACE:
-                self.next_ball(None)
+                self.next_ball(None, None)
             elif event.key == pg.K_m:
                 self.sound_muted = not self.sound_muted
 
@@ -184,29 +184,29 @@ class Bingo(statemachine.StateMachine):
                 scale=S['small-button-scale']
             ))
             #
-            self.debug_buttons.append(utils.ImageButton(
+            self.debug_buttons.append(common.ImageButton(
                 'restart', S['debug-restart-position'],
                 'bingo-yellow-button', 'small-button',
                 'Restart',
-                self.restart_game, None,
-                scale=S['small-button-scale']
+                S, scale=S['small-button-scale']
             ))
+            self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.restart_game)
             #
-            self.debug_buttons.append(utils.ImageButton(
+            self.debug_buttons.append(common.ImageButton(
                 'next-ball', S['debug-next-ball-position'],
                 'bingo-yellow-button', 'small-button',
                 'Next Ball',
-                self.next_ball, None,
-                scale=S['small-button-scale']
+                S, scale=S['small-button-scale']
             ))
+            self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.next_ball)
             #
-            self.debug_buttons.append(utils.ImageButton(
+            self.debug_buttons.append(common.ImageButton(
                 'new-cards', S['debug-new-cards-position'],
                 'bingo-yellow-button', 'small-button',
                 'New Cards',
-                self.draw_new_cards, None,
-                scale=S['small-button-scale']
+                S, scale=S['small-button-scale']
             ))
+            self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.draw_new_cards)
             self.ui.extend(self.debug_buttons)
 
     def change_pattern(self, pattern):
@@ -231,7 +231,7 @@ class Bingo(statemachine.StateMachine):
         self.auto_pick = not self.auto_pick
         self.debug_buttons[0].state = self.auto_pick
 
-    def restart_game(self, arg):
+    def restart_game(self, obj, arg):
         """Restart the game"""
         self.log.info('Restart game')
         self.ball_machine.reset_machine(self.ball_machine.interval)
@@ -240,11 +240,11 @@ class Bingo(statemachine.StateMachine):
         self.current_pick_sound = 0
         self.last_pick_time = 0
 
-    def next_ball(self, arg):
+    def next_ball(self, obj, arg):
         """Move on to the next ball"""
         self.ball_machine.call_next_ball()
 
-    def draw_new_cards(self, arg):
+    def draw_new_cards(self, obj,  arg):
         """Draw a new set of cards"""
         self.log.debug('Drawing new set of cards')
         self.cards.draw_new_numbers()

@@ -13,13 +13,6 @@ from .settings import SETTINGS as S
 # compatibility to minimize changes while this framework change is being
 # evaluated
 
-def ImageButton(name, position, filename, text_properties, text, callback, arg, scale=1.0):
-    obj = common.ImageButton(name, position, filename, text_properties, text, S, scale)
-    obj.linkEvent(E_MOUSE_CLICK, lambda o, a: callback(arg))
-    obj.arg = arg
-    return obj
-
-
 def ImageOnOffButton(name, position, on_filename, off_filename, text_properties, text, state, callback, arg, scale=1.0):
     obj = common.ImageOnOffButton(name, position, on_filename, off_filename, text_properties, text, state,
                                    S, scale)
