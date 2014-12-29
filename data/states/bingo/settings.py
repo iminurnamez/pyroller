@@ -172,6 +172,15 @@ SETTINGS = {
     'card-selection-offsets': (0, 40),
 
     #
+    # Money display
+    'money-num-digits': 5,
+    'money-digit-font': prepare.FONTS["Saniretro"],
+    'money-digit-font-size': 32,
+    'money-digit-font-color': 'black',
+    'money-position': (500, 50),
+    'money-offsets': (40, 0),
+
+    #
     # Debug settings
     'debug-auto-pick': True,
     'debug-restart-position': (1250, 120),

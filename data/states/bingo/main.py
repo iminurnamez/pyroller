@@ -17,6 +17,7 @@ from . import ballmachine
 from . import cardselector
 from . import events
 from . import bingocard
+from . import moneydisplay
 from .settings import SETTINGS as S
 
 
@@ -140,6 +141,7 @@ class Bingo(statemachine.StateMachine):
         self.ball_machine.draw(surface)
         self.buttons.draw(surface)
         self.card_selector.draw(surface)
+        self.money_display.draw(surface)
         #
         self.persist["music_handler"].draw(surface)
 
@@ -159,6 +161,11 @@ class Bingo(statemachine.StateMachine):
         #
         # Simple generator to flash the potentially winning squares
         self.add_generator('potential-winners', self.flash_potential_winners())
+        #
+        # Display of the money the player has
+        self.money_display = moneydisplay.MoneyDisplay(
+            'money-display', S['money-position'],
+        )
         #
         # Debugging buttons
         if prepare.DEBUG:
