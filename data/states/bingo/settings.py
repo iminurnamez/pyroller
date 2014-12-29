@@ -175,10 +175,12 @@ SETTINGS = {
     # Money display
     'money-num-digits': 5,
     'money-digit-font': prepare.FONTS["Saniretro"],
-    'money-digit-font-size': 32,
+    'money-digit-font-size': 60,
     'money-digit-font-color': 'black',
-    'money-position': (500, 50),
-    'money-offsets': (40, 0),
+    'money-position': (650, 20),
+    'money-offsets': (50, 0),
+    'money-hide-offsets': (0, -16),
+    'money-hide-repeats': 5,
 
     #
     # Debug settings

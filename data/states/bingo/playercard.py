@@ -1,9 +1,11 @@
 """Represents the player's bingo card"""
 
 
+from ... import prepare
 from . import bingocard
 from .settings import SETTINGS as S
 from . import utils
+from . import events
 
 
 class PlayerSquare(bingocard.BingoSquare):
@@ -58,6 +60,7 @@ class PlayerCard(bingocard.BingoCard):
         """Double down the card"""
         if self.double_down_button.state:
             self.log.info('Doubling down on the card')
+            prepare.BROADCASTER.processEvent((events.E_SPEND_MONEY, -self.value))
             self.update_value(self.value * 2)
             self.double_down_button.state = False
             self.state.add_generator('re-enable-double-down', self.enable_double_down_button(

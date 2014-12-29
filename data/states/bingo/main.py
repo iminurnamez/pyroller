@@ -1,3 +1,5 @@
+"""Main bingo game state"""
+
 import time
 import sys
 import pygame as pg
@@ -130,7 +132,8 @@ class Bingo(statemachine.StateMachine):
             elif event.key == pg.K_SPACE:
                 self.next_ball(None)
             elif event.key == pg.K_m:
-                self.persist["music_handler"].mute_unmute_music()
+                #self.persist["music_handler"].mute_unmute_music()
+                self.sound_muted = not self.sound_muted
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
@@ -164,8 +167,9 @@ class Bingo(statemachine.StateMachine):
         #
         # Display of the money the player has
         self.money_display = moneydisplay.MoneyDisplay(
-            'money-display', S['money-position'],
+            'money-display', S['money-position'], 123, self
         )
+        prepare.BROADCASTER.linkEvent(events.E_SPEND_MONEY, self.spend_money)
         #
         # Debugging buttons
         if prepare.DEBUG:
@@ -202,6 +206,13 @@ class Bingo(statemachine.StateMachine):
                 scale=S['small-button-scale']
             ))
             self.ui.extend(self.debug_buttons)
+
+    def spend_money(self, amount, arg):
+        """Money has been spent"""
+        self.log.info('Money has been spent {1} by {0}'.format(arg, amount))
+        self.money_display.add_money(amount)
+        if amount < 0:
+            self.play_sound('bingo-pay-money')
 
     def change_pattern(self, pattern):
         """Change the winning pattern"""
