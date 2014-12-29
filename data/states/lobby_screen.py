@@ -58,7 +58,7 @@ class LobbyScreen(tools._State):
                                                       variable_spin=False, spin_frequency=120,
                                                       scroll_speed=.8, cycle_colors=True)
         self.persist["music_handler"] = self.music_handler
-        
+
     def exit_game(self):
         with open(os.path.join("resources", "save_game.json"), "w") as f:
             json.dump(self.persist["casino_player"].stats, f)
@@ -86,10 +86,10 @@ class LobbyScreen(tools._State):
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.exit_game()
-                
+
     def update(self, surface, keys, current_time, dt, scale):
         self.chip_curtain.update(dt)
-        self.music_handler.update()        
+        self.music_handler.update(scale)
         self.draw(surface)
 
     def draw(self, surface):

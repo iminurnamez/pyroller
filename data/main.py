@@ -12,7 +12,7 @@ from .states import stats_screen, blackjack, craps, bingo, keno
 from .states import credits_screen, snake_splash
 
 def main():
-    args = (prepare.ORIGINAL_CAPTION, prepare.RENDER_SIZE, prepare.RESOLUTIONS)
+    args = (prepare.CAPTION, prepare.RENDER_SIZE, prepare.RESOLUTIONS)
     run_it = tools.Control(*args)
     state_dict = {"SNAKESPLASH": snake_splash.SnakeSplash(),
                   "TITLESCREEN" : title_screen.TitleScreen(),
