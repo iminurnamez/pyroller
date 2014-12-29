@@ -16,6 +16,7 @@ from . import patterns
 from . import ballmachine
 from . import cardselector
 from . import events
+from . import bingocard
 from .settings import SETTINGS as S
 
 
@@ -267,6 +268,7 @@ class Bingo(statemachine.StateMachine):
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""
+        self.log.debug('Creating new highlight pattern generators')
         for card in self.cards:
             self.add_generator(
                 'highlight-patterns-card-%s' % card.name,
@@ -277,10 +279,10 @@ class Bingo(statemachine.StateMachine):
         """Highlight a particular pattern on a card"""
         for squares in pattern.get_matches(card):
             for square in squares:
-                square.is_highlighted = True
+                square.highlighted_state = bingocard.S_GOOD
             yield 100
             for square in squares:
-                square.is_highlighted = False
+                square.highlighted_state = bingocard.S_NONE
             yield 10
         #
         if not one_shot:
