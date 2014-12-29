@@ -1,3 +1,5 @@
+"""Main bingo game state"""
+
 import time
 import sys
 import pygame as pg
@@ -16,6 +18,8 @@ from . import patterns
 from . import ballmachine
 from . import cardselector
 from . import events
+from . import bingocard
+from . import moneydisplay
 from .settings import SETTINGS as S
 
 
@@ -128,7 +132,8 @@ class Bingo(statemachine.StateMachine):
             elif event.key == pg.K_SPACE:
                 self.next_ball(None, None)
             elif event.key == pg.K_m:
-                self.persist["music_handler"].mute_unmute_music()
+                #self.persist["music_handler"].mute_unmute_music()
+                self.sound_muted = not self.sound_muted
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
@@ -139,6 +144,7 @@ class Bingo(statemachine.StateMachine):
         self.ball_machine.draw(surface)
         self.buttons.draw(surface)
         self.card_selector.draw(surface)
+        self.money_display.draw(surface)
         #
         self.persist["music_handler"].draw(surface)
 
@@ -159,6 +165,12 @@ class Bingo(statemachine.StateMachine):
         #
         # Simple generator to flash the potentially winning squares
         self.add_generator('potential-winners', self.flash_potential_winners())
+        #
+        # Display of the money the player has
+        self.money_display = moneydisplay.MoneyDisplay(
+            'money-display', S['money-position'], 123, self
+        )
+        prepare.BROADCASTER.linkEvent(events.E_SPEND_MONEY, self.spend_money)
         #
         # Debugging buttons
         if prepare.DEBUG:
@@ -195,6 +207,13 @@ class Bingo(statemachine.StateMachine):
             ))
             self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.draw_new_cards)
             self.ui.extend(self.debug_buttons)
+
+    def spend_money(self, amount, arg):
+        """Money has been spent"""
+        self.log.info('Money has been spent {1} by {0}'.format(arg, amount))
+        self.money_display.add_money(amount)
+        if amount < 0:
+            self.play_sound('bingo-pay-money')
 
     def change_pattern(self, obj, pattern):
         """Change the winning pattern"""
@@ -268,6 +287,7 @@ class Bingo(statemachine.StateMachine):
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""
+        self.log.debug('Creating new highlight pattern generators')
         for card in self.cards:
             self.add_generator(
                 'highlight-patterns-card-%s' % card.name,
@@ -278,10 +298,10 @@ class Bingo(statemachine.StateMachine):
         """Highlight a particular pattern on a card"""
         for squares in pattern.get_matches(card):
             for square in squares:
-                square.is_highlighted = True
+                square.highlighted_state = bingocard.S_GOOD
             yield 100
             for square in squares:
-                square.is_highlighted = False
+                square.highlighted_state = bingocard.S_NONE
             yield 10
         #
         if not one_shot:
