@@ -16,25 +16,27 @@ class LobbyScreen(tools._State):
     """
     def __init__(self):
         super(LobbyScreen, self).__init__()
-        self.music_handler = MusicHandler()
+        self.persist["music_handler"] = MusicHandler()
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
-        self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"), ("Craps", "CRAPS"), ("Keno", "KENO")]
+        self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
+                      ("Craps", "CRAPS"), ("Keno", "KENO")]
         num_columns = 3
         left = screen_rect.width // (num_columns + 1)
         top = screen_rect.top + 80
         self.game_buttons = []
 
         for game in self.games:
-            icon = pg.transform.scale(prepare.GFX["screenshot_{}".format(game[0].lower())],
-                                                  (280, 210))
+            icon_raw = prepare.GFX["screenshot_{}".format(game[0].lower())]
+            icon = pg.transform.scale(icon_raw, (280, 210))
             icon.set_colorkey(pg.Color("purple"))
             icon_rect = icon.get_rect(midtop=(left, top))
             label = Label(self.font, 48, game[0], "gold3", {"center": (0, 0)})
             button = ImageButton(icon, {"midtop": (left, top)}, label)
             button.payload = game[1]
             b = button.rect
-            button.frame_rect = pg.Rect(b.topleft, (b.width, b.height + label.rect.height))
+            button.frame_rect = pg.Rect(b.topleft,
+                                       (b.width,b.height+label.rect.height))
             self.game_buttons.append(button)
             left += screen_rect.width // (num_columns + 1)
             if left > screen_rect.width - 100:
@@ -58,13 +60,9 @@ class LobbyScreen(tools._State):
     def startup(self, current_time, persistent):
         self.persist = persistent
         self.chip_curtain = ChipCurtain(None, single_color=True,
-                                                      start_y=prepare.RENDER_SIZE[1] - 5,
-                                                      variable_spin=False, spin_frequency=120,
-                                                      scroll_speed=.8, cycle_colors=True)
-        if "music_handler" not in self.persist:
-            self.persist["music_handler"] = self.music_handler
-        else:
-            self.music_handler = self.persist["music_handler"]
+                                        start_y=prepare.RENDER_SIZE[1]-5,
+                                        variable_spin=False,spin_frequency=120,
+                                        scroll_speed=.8, cycle_colors=True)
 
     def exit_game(self):
         with open(os.path.join("resources", "save_game.json"), "w") as f:
@@ -77,7 +75,7 @@ class LobbyScreen(tools._State):
             self.exit_game()
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            self.music_handler.get_event(event, scale)
+            self.persist["music_handler"].get_event(event, scale)
             if self.done_button.rect.collidepoint(pos):
                 self.exit_game()
             elif self.stats_button.rect.collidepoint(pos):
@@ -96,7 +94,7 @@ class LobbyScreen(tools._State):
 
     def update(self, surface, keys, current_time, dt, scale):
         self.chip_curtain.update(dt)
-        self.music_handler.update(scale)
+        self.persist["music_handler"].update(scale)
         self.draw(surface)
 
     def draw(self, surface):
@@ -110,4 +108,4 @@ class LobbyScreen(tools._State):
         self.stats_button.draw(surface)
         self.done_button.draw(surface)
         self.credits_button.draw(surface)
-        self.music_handler.draw(surface)
+        self.persist["music_handler"].draw(surface)

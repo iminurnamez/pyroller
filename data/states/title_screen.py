@@ -54,10 +54,10 @@ class TitleScreen(tools._State):
         self.stats = stats
         self.screen_rect = screen_rect
         self.marquees = []
-        #
-        # Check options to go straight to a particular game rather than showing the lobby - good for debugging
+
+        # Check options to go straight to a particular game
+        # rather than showing the lobby - good for debugging
         if prepare.ARGS['straight']:
-            self.persist["music_handler"] = MusicHandler()
             self.persist["casino_player"] = CasinoPlayer(self.stats)
             self.next = prepare.ARGS['straight']
             self.done = True
