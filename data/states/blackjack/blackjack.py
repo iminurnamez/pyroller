@@ -267,7 +267,7 @@ class Blackjack(tools._State):
         self.chip_total_label = Label(self.font, 48, total_text, "gold3",
                                {"bottomleft": (screen.left + 3, screen.bottom - 3)})
 
-        self.persist["music_handler"].update()
+        self.persist["music_handler"].update(scale)
         if self.advisor_window:
             if self.advisor_window.done:
                 self.advisor_window = None

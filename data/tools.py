@@ -138,14 +138,14 @@ class _State(object):
     must be overloaded in the childclass.  startup and cleanup need to be
     overloaded when there is data that must persist between States.
     """
-    def __init__(self):
+    def __init__(self, persistant={}):
         self.start_time = 0.0
         self.now = 0.0
         self.done = False
         self.quit = False
         self.next = None
         self.previous = None
-        self.persist = {}
+        self.persist = persistant
 
     def get_event(self, event, scale=(1,1)):
         """
@@ -300,12 +300,15 @@ def cursor_from_image(image):
             this_row.append(colors.get(pixel, " "))
         icon_string.append("".join(this_row))
     return icon_string
-    
+
+
 def get_cli_args(caption, win_pos, start_size, money):
-    '''modify prepare module globals based on command line arguments,
-    quickly force settings for debugging'''
+    """
+    Modify prepare module globals based on command line arguments,
+    quickly force settings for debugging.
+    """
     parser = argparse.ArgumentParser(description='{} Arguments'.format(caption))
-    parser.add_argument('-c','--center', action='store_false', 
+    parser.add_argument('-c','--center', action='store_false',
         help='position starting window at (0,0), sets SDL_VIDEO_CENTERED to false')
     parser.add_argument('-w','--winpos', nargs=2, default=win_pos, metavar=('X', 'Y'),
         help='position starting window at (X,Y), default is (0,0)')
@@ -321,7 +324,7 @@ def get_cli_args(caption, win_pos, start_size, money):
         help='set money to value')
     parser.add_argument('-d', '--debug', action='store_true',
         help='run game in debug mode')
-        
+
     args = vars(parser.parse_args())
     #check each condition
     if not args['center'] or (args['winpos'] != win_pos): #if -c or -w options

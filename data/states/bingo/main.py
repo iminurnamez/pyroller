@@ -34,10 +34,6 @@ class Bingo(statemachine.StateMachine):
         b_height = 90
         #
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.music_icon = prepare.GFX["speaker"]
-        topright = (self.screen_rect.right - 10, self.screen_rect.top + 10)
-        self.music_icon_rect = self.music_icon.get_rect(topright=topright)
-        self.mute_icon = prepare.GFX["mute"]
         self.play_music = True
         self.auto_pick = S['debug-auto-pick']
         #
@@ -119,18 +115,12 @@ class Bingo(statemachine.StateMachine):
             #
             pos = tools.scaled_mouse_pos(scale, event.pos)
             if event.type == pg.MOUSEBUTTONDOWN:
-                if self.music_icon_rect.collidepoint(pos):
-                    self.play_music = not self.play_music
-                    if self.play_music:
-                        pg.mixer.music.play(-1)
-                    else:
-                        pg.mixer.music.stop()
-                elif self.lobby_button.rect.collidepoint(pos):
+                self.persist["music_handler"].get_event(event, scale)
+                if self.lobby_button.rect.collidepoint(pos):
                     self.game_started = False
                     self.done = True
                     self.next = "LOBBYSCREEN"
                     self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
-                    pass
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.done = True
@@ -138,7 +128,7 @@ class Bingo(statemachine.StateMachine):
             elif event.key == pg.K_SPACE:
                 self.next_ball(None)
             elif event.key == pg.K_m:
-                self.sound_muted = not self.sound_muted
+                self.persist["music_handler"].mute_unmute_music()
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
@@ -150,10 +140,7 @@ class Bingo(statemachine.StateMachine):
         self.buttons.draw(surface)
         self.card_selector.draw(surface)
         #
-        if self.play_music:
-            surface.blit(self.mute_icon, self.music_icon_rect)
-        else:
-            surface.blit(self.music_icon, self.music_icon_rect)
+        self.persist["music_handler"].draw(surface)
 
     def initUI(self):
         """Initialise the UI display"""

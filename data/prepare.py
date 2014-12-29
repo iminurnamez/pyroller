@@ -7,7 +7,7 @@ from . import tools
 from . import events
 
 
-ORIGINAL_CAPTION = "Py Rollers Casino"
+CAPTION = "Py Rollers Casino"
 START_SIZE = (928, 696)
 RENDER_SIZE = (1400, 1050)
 RESOLUTIONS = [(600,400),(800, 600), (928, 696), (1280, 960), (1400, 1050)]
@@ -15,7 +15,7 @@ CARD_SIZE = (125, 181)
 CHIP_SIZE = (32, 19)
 WIN_POS = (0,0)
 MONEY = 999
-ARGS = tools.get_cli_args(ORIGINAL_CAPTION, WIN_POS, START_SIZE, MONEY)
+ARGS = tools.get_cli_args(CAPTION, WIN_POS, START_SIZE, MONEY)
 #adjust settings based on args
 START_SIZE = int(ARGS['size'][0]), int(ARGS['size'][1])
 MONEY = int(ARGS['money'])
@@ -30,7 +30,7 @@ if ARGS['center']:
     os.environ['SDL_VIDEO_CENTERED'] = "True"
 else:
     os.environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(ARGS['winpos'][0], ARGS['winpos'][1])
-pg.display.set_caption(ORIGINAL_CAPTION)
+pg.display.set_caption(CAPTION)
 if ARGS['fullscreen']:
     pg.display.set_mode(START_SIZE, pg.FULLSCREEN)
 else:
@@ -38,29 +38,35 @@ else:
     pg.event.clear(pg.VIDEORESIZE)
 
 
+def _get_graphics_and_cards():
+    """
+    Load all graphics into a dictionary; then cut up the card sprite sheet
+    so each card can be accessed individually.
+    Placed in a function to avoid adding unnecessary names to the
+    prepare namespace.
+    """
+    gfx = tools.load_all_gfx(os.path.join("resources", "graphics"))
+    card_width = 125
+    card_height = 181
+    sheet = gfx["cardsheet"]
+    card_names = ["ace", 2, 3, 4, 5, 6, 7, 8, 9, 10, "jack", "queen", "king"]
+    top = 0
+    for suit in ["clubs", "hearts", "diamonds", "spades"]:
+        left = 0
+        for name in card_names:
+            rect = pg.Rect(left, top, card_width, card_height)
+            key = "{}_of_{}".format(name, suit)
+            gfx[key] = sheet.subsurface(rect)
+            left += card_width
+        top += card_height
+    return gfx
+
+
 #Resource loading (Fonts and music just contain path names).
 FONTS = tools.load_all_fonts(os.path.join("resources", "fonts"))
 MUSIC = tools.load_all_music(os.path.join("resources", "music"))
 SFX   = tools.load_all_sfx(os.path.join("resources", "sound"))
-GFX   = tools.load_all_gfx(os.path.join("resources", "graphics"))
-
-#strip cards from sheet and add to GFX individually
-card_width = 125
-card_height = 181
-sheet = GFX["cardsheet"]
-card_names = ["ace"]
-card_names.extend(list(range(2, 11)))
-card_names.extend(["jack", "queen", "king"])
-top = 0
-for suit in ["clubs", "hearts", "diamonds", "spades"]:
-    left = 0
-    for name in card_names:
-        rect = pg.Rect(left, top, card_width, card_height)
-        key = "{}_of_{}".format(name, suit)
-        GFX[key] = sheet.subsurface(rect)
-        left += card_width
-    top += card_height
-
+GFX   = _get_graphics_and_cards()
 
 
 #It's time to start the music, it's time to light the lights
