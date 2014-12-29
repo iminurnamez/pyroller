@@ -3,6 +3,7 @@
 import random
 
 from ...prepare import BROADCASTER as B
+from ...components import common
 from .settings import SETTINGS as S
 from . import utils
 from . import events
@@ -31,7 +32,7 @@ class BingoLabel(utils.Clickable):
         self.is_active = True
         #
         self.x, self.y = card.x + offset[0], card.y + offset[1]
-        self.label = utils.getLabel(self.style_name, (self.x, self.y), text)
+        self.label = common.getLabel(self.style_name, (self.x, self.y), text, S)
         self.highlighters = [
             utils.NamedSprite(highlighter_name, (self.x, self.y), scale=self.get_scale())
             for highlighter_name in self.highlight_names
@@ -155,10 +156,10 @@ class BingoCard(utils.Clickable):
         #
         # The label for display of the remaining squares on the card
         label_offset = S['{0}-remaining-label-offset'.format(self.style_name)]
-        self.remaining_label = utils.getLabel(
+        self.remaining_label = common.getLabel(
             'card-remaining-label',
             (self.x + label_offset[0], self.y + label_offset[1]),
-            'Player card'
+            'Player card', S
         )
         #
         self.clickables = utils.ClickableGroup(self.squares.values())

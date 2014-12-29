@@ -2,6 +2,7 @@
 
 import random
 
+from ...components import common
 from . import utils
 from . import loggable
 from .settings import SETTINGS as S
@@ -56,10 +57,11 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         components = utils.DrawableGroup()
         #
         # The display of the current ball
-        self.current_ball_ui = utils.getLabel(
+        self.current_ball_ui = common.getLabel(
             'machine-ball',
             S['machine-ball-position'],
-            '0'
+            '0',
+            S
         )
         components.append(self.current_ball_ui)
         #
@@ -187,8 +189,8 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
         for number in S['machine-balls']:
             xi = (number - 1) % w
             yi = (number - 1) // w
-            self.balls[number] = utils.getLabel(
-                'called-ball-number', (self.x + xi * dx, self.y + yi * dy), number
+            self.balls[number] = common.getLabel(
+                'called-ball-number', (self.x + xi * dx, self.y + yi * dy), number, S
             )
 
     def call_ball(self, ball):

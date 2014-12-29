@@ -1,6 +1,7 @@
 """Represents the player's bingo card"""
 
 
+from ...components import common
 from . import bingocard
 from .settings import SETTINGS as S
 from . import utils
@@ -37,10 +38,10 @@ class PlayerCard(bingocard.BingoCard):
         #
         # The label for display of the card value
         label_offset = S['card-value-label-offset']
-        self.value_label = utils.getLabel(
+        self.value_label = common.getLabel(
             'card-value-label',
             (self.x + label_offset[0], self.y + label_offset[1]),
-            '*PLACEHOLDER*'
+            '*PLACEHOLDER*', S
         )
         self.update_value(self.initial_value)
         #

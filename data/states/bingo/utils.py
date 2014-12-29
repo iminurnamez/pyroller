@@ -13,12 +13,6 @@ from .settings import SETTINGS as S
 # compatibility to minimize changes while this framework change is being
 # evaluated
 
-
-def getLabel(name, position, text):
-    """Return a label using the current settings"""
-    return common.getLabel(name, position, text, S)
-
-
 def ImageButton(name, position, filename, text_properties, text, callback, arg, scale=1.0):
     obj = common.ImageButton(name, position, filename, text_properties, text, S, scale)
     obj.linkEvent(E_MOUSE_CLICK, lambda o, a: callback(arg))

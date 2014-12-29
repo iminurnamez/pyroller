@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from ... import tools, prepare
 from ...components.labels import Button
+from ...components import common
 from ...prepare import BROADCASTER as B
 
 from . import statemachine
@@ -43,7 +44,7 @@ class Bingo(statemachine.StateMachine):
         #
         self.ui = utils.ClickableGroup()
         #
-        lobby_label = utils.getLabel('button', (0, 0), 'Lobby')
+        lobby_label = common.getLabel('button', (0, 0), 'Lobby', S)
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
                                    b_width, b_height, lobby_label)
         #
