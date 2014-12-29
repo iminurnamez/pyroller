@@ -93,6 +93,7 @@ class StateMachine(tools._State, loggable.Loggable):
             self.log.debug('Frame rate {0}'.format(1000 / dt))
         #
         # Process all states
+        self.persist["music_handler"].update(scale)
         for executor in list(self.generators):
             executor.update(dt)
             if executor.done:

@@ -10,7 +10,7 @@ class Keno(tools._State):
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.game_started = False
         self.font = prepare.FONTS["Saniretro"]
-        
+
         b_width = 360
         b_height = 90
         side_margin = 10
@@ -19,7 +19,7 @@ class Keno(tools._State):
         top = self.screen_rect.bottom - ((b_height * 5) + vert_space * 4)
 
         font_size = 64
-        
+
         lobby_label = Label(self.font, font_size, "Lobby", "gold3", {"center": (0, 0)})
         self.lobby_button = Button(self.screen_rect.right - (b_width + side_margin), self.screen_rect.bottom - (b_height + 15),
                                                  b_width, b_height, lobby_label)
@@ -29,7 +29,7 @@ class Keno(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
-        
+
         self.casino_player.stats["Keno"]["games played"] += 1
 
     def get_event(self, event, scale=(1,1)):
@@ -66,6 +66,6 @@ class Keno(tools._State):
         the last frame.
         """
         mouse_pos = tools.scaled_mouse_pos(scale)
-        self.persist["music_handler"].update()
+        self.persist["music_handler"].update(scale)
         self.draw(surface)
 

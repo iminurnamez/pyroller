@@ -24,7 +24,6 @@ class Craps(tools._State):
         super(Craps, self).__init__()
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
-        self.music_icon = prepare.GFX["speaker"]
         topright = (self.screen_rect.right - 10, self.screen_rect.top + 10)
         b_width = 360
         b_height = 90
@@ -37,15 +36,12 @@ class Craps(tools._State):
         self.roll_button = FunctionButton(
             420, self.screen_rect.bottom - (b_height + 15),b_width, b_height, roll_label, self.roll, None
         )
-        self.music_icon_rect = self.music_icon.get_rect(topright=topright)
-        self.mute_icon = prepare.GFX["mute"]
-        self.play_music = True
-        
+
         self.table_orig = prepare.GFX['craps_table']
         self.table_color = (0, 153, 51)
         self.set_table()
         self.bets = craps_bet_types.BETS
-        
+
         self.dice = [craps_dice.Die(self.screen_rect), craps_dice.Die(self.screen_rect, 50)]
         self.dice_total = 0
         self.update_total_label()
@@ -65,10 +61,10 @@ class Craps(tools._State):
             if prepare.DEBUG:
                 print(self.history)
             random.choice(self.dice_sounds).play()
-        
-        
+
+
     def set_table(self):
-        self.table_y = (self.screen_rect.height // 4)*3 
+        self.table_y = (self.screen_rect.height // 4)*3
         self.table_x = self.screen_rect.width
         self.table = pg.transform.scale(self.table_orig, (self.table_x, self.table_y))
         self.table_rect = self.table.get_rect()
@@ -91,13 +87,8 @@ class Craps(tools._State):
             #position relative to the pygame window size.
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            if self.music_icon_rect.collidepoint(pos):
-                self.play_music = not self.play_music
-                if self.play_music:
-                    pg.mixer.music.play(-1)
-                else:
-                    pg.mixer.music.stop()
-            elif self.lobby_button.rect.collidepoint(pos):
+            self.persist["music_handler"].get_event(event, scale)
+            if self.lobby_button.rect.collidepoint(pos):
                 #self.cash_out_player()
                 self.game_started = False
                 self.done = True
@@ -109,7 +100,7 @@ class Craps(tools._State):
 
     def cash_out_player(self):
         self.casino_player.stats["cash"] = self.player.get_chip_total()
-        
+
     def update_total_label(self):
         self.dice_total_label = Label(self.font, self.font_size, str(self.dice_total), "gold3", {"center": (1165, 50)})
 
@@ -118,19 +109,16 @@ class Craps(tools._State):
         surface.blit(self.table, self.table_rect)
         self.lobby_button.draw(surface)
         self.roll_button.draw(surface)
-        if self.play_music:
-            surface.blit(self.mute_icon, self.music_icon_rect)
-        else:
-            surface.blit(self.music_icon, self.music_icon_rect)
-            
+        self.persist["music_handler"].draw(surface)
+
         for h in self.bets.keys():
             self.bets[h].draw(surface)
-        
+
         for die in self.dice:
             die.draw(surface)
         if not self.dice[0].rolling and self.dice[0].draw_dice:
             self.dice_total_label.draw(surface)
-            
+
     def update_history(self):
         dice = []
         for die in self.dice:
@@ -141,6 +129,7 @@ class Craps(tools._State):
             self.history.pop(0)
 
     def update(self, surface, keys, current_time, dt, scale):
+        self.persist["music_handler"].update(scale)
         self.dice_total = 0
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.draw(surface)
