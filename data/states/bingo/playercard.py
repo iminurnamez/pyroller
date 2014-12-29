@@ -5,7 +5,6 @@ from ...components import common
 from ... import prepare
 from . import bingocard
 from .settings import SETTINGS as S
-from . import utils
 from . import events
 
 
