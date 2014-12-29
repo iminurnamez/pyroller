@@ -41,8 +41,8 @@ else:
 def _get_graphics_and_cards():
     """
     Load all graphics into a dictionary; then cut up the card sprite sheet
-    so each card can be accessed individually.
-    Placed in a function to avoid adding unnecessary names to the
+    so each card can be accessed individually. Also strips buttons from
+    button sheet. Placed in a function to avoid adding unnecessary names to the
     prepare namespace.
     """
     gfx = tools.load_all_gfx(os.path.join("resources", "graphics"))
@@ -59,6 +59,19 @@ def _get_graphics_and_cards():
             gfx[key] = sheet.subsurface(rect)
             left += card_width
         top += card_height
+    b_width = 318
+    b_height = 101
+    b_sheet = gfx["button_sheet"]
+    b_texts = ["Bingo", "Blackjack", "Craps", "Keno", "Credits", "Exit", "Stats"]
+    b_top = 0
+    for text in b_texts:
+        off_rect = pg.Rect(0, b_top, b_width, b_height)
+        on_rect = off_rect.move(b_width, 0)
+        off_key = "neon_button_off_{}".format(text.lower())
+        on_key = "neon_button_on_{}".format(text.lower())
+        gfx[off_key] = b_sheet.subsurface(off_rect)
+        gfx[on_key] = b_sheet.subsurface(on_rect)
+        b_top += b_height
     return gfx
 
 
