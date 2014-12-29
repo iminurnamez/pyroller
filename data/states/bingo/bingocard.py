@@ -5,7 +5,6 @@ import random
 from ...prepare import BROADCASTER as B
 from ...components import common
 from .settings import SETTINGS as S
-from . import utils
 from . import events
 
 # Highlight states
@@ -14,7 +13,7 @@ S_GOOD = 1
 S_BAD = 2
 
 
-class BingoLabel(utils.Clickable):
+class BingoLabel(common.Clickable):
     """A label on a bingo card"""
 
     style_name = 'square-number'
@@ -34,11 +33,11 @@ class BingoLabel(utils.Clickable):
         self.x, self.y = card.x + offset[0], card.y + offset[1]
         self.label = common.getLabel(self.style_name, (self.x, self.y), text, S)
         self.highlighters = [
-            utils.NamedSprite(highlighter_name, (self.x, self.y), scale=self.get_scale())
+            common.NamedSprite(highlighter_name, (self.x, self.y), scale=self.get_scale())
             for highlighter_name in self.highlight_names
 
         ]
-        self.mouse_highlight = utils.NamedSprite(
+        self.mouse_highlight = common.NamedSprite(
             'bingo-mouse-highlight', (self.x, self.y), scale=self.get_scale())
         #
         super(BingoLabel, self).__init__(name, self.label.rect)
@@ -76,11 +75,11 @@ class BingoSquare(BingoLabel):
         super(BingoSquare, self).__init__(name, card, offset, number)
         #
         self.is_called = False
-        self.marker = utils.NamedSprite(
+        self.marker = common.NamedSprite(
             'bingo-marker', (self.x, self.y), scale=self.get_scale())
         #
         self.is_focused = False
-        self.focus_marker = utils.NamedSprite(
+        self.focus_marker = common.NamedSprite(
             'bingo-close-highlight', (self.x, self.y), scale=self.get_scale()
         )
 
@@ -117,7 +116,7 @@ class BingoSquare(BingoLabel):
         self.label.set_text(str(number))
 
 
-class BingoCard(utils.Clickable):
+class BingoCard(common.Clickable):
     """A bingo card comprising a number of squares"""
 
     square_class = BingoSquare
@@ -130,7 +129,7 @@ class BingoCard(utils.Clickable):
         #
         self.state = state
         self.x, self.y = position
-        self.squares = utils.KeyedDrawableGroup()
+        self.squares = common.KeyedDrawableGroup()
         square_offset = S['{0}-offset'.format(self.style_name)]
         chosen_numbers = set()
         self.called_squares = []
@@ -145,7 +144,7 @@ class BingoCard(utils.Clickable):
             )
         #
         # Create the labels
-        self.labels = utils.KeyedDrawableGroup()
+        self.labels = common.KeyedDrawableGroup()
         if self.show_col_labels:
             y_offset = min(S['card-square-rows']) - 1
             for x, letter in zip(S['card-square-cols'], 'BINGO'):
@@ -162,8 +161,8 @@ class BingoCard(utils.Clickable):
             'Player card', S
         )
         #
-        self.clickables = utils.ClickableGroup(self.squares.values())
-        self.drawables = utils.DrawableGroup([
+        self.clickables = common.ClickableGroup(self.squares.values())
+        self.drawables = common.DrawableGroup([
             self.squares, self.labels, self.remaining_label,
         ])
         #
@@ -293,7 +292,7 @@ class BingoCard(utils.Clickable):
             square.is_active = value
 
 
-class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
+class CardCollection(common.ClickableGroup, common.DrawableGroup):
     """A set of bingo cards"""
 
     card_class = NotImplementedError
@@ -304,8 +303,8 @@ class CardCollection(utils.ClickableGroup, utils.DrawableGroup):
         self.x, self.y = position
         self.state = state
         #
-        utils.ClickableGroup.__init__(self)
-        utils.DrawableGroup.__init__(self, [self.card_class(
+        common.ClickableGroup.__init__(self)
+        common.DrawableGroup.__init__(self, [self.card_class(
             '%s(%d)' % (self.name, i + 1),
             (self.x + x, self.y + y),
             state) for i, (x, y) in enumerate(offsets)]

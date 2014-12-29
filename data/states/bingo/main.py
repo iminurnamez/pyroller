@@ -10,7 +10,6 @@ from ...prepare import BROADCASTER as B
 
 from . import statemachine
 from . import states
-from . import utils
 from . import playercard
 from . import dealercard
 from . import patterns
@@ -42,7 +41,7 @@ class Bingo(statemachine.StateMachine):
         self.play_music = True
         self.auto_pick = S['debug-auto-pick']
         #
-        self.ui = utils.ClickableGroup()
+        self.ui = common.ClickableGroup()
         #
         lobby_label = common.getLabel('button', (0, 0), 'Lobby', S)
         self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
@@ -64,9 +63,9 @@ class Bingo(statemachine.StateMachine):
         #
         self.winning_pattern = patterns.PATTERNS[0]
         #
-        self.pattern_buttons = utils.DrawableGroup()
-        self.debug_buttons = utils.DrawableGroup()
-        self.buttons = utils.DrawableGroup([self.pattern_buttons])
+        self.pattern_buttons = common.DrawableGroup()
+        self.debug_buttons = common.DrawableGroup()
+        self.buttons = common.DrawableGroup([self.pattern_buttons])
         #
         if prepare.DEBUG:
             self.buttons.append(self.debug_buttons)
@@ -78,7 +77,7 @@ class Bingo(statemachine.StateMachine):
         self.ball_machine.start_machine()
         self.ui.append(self.ball_machine.buttons)
         #
-        self.all_cards = utils.DrawableGroup()
+        self.all_cards = common.DrawableGroup()
         self.all_cards.extend(self.cards)
         self.all_cards.extend(self.dealer_cards)
         #
@@ -161,13 +160,14 @@ class Bingo(statemachine.StateMachine):
         #
         # Buttons that show the winning patterns
         for idx, pattern in enumerate(patterns.PATTERNS):
-            self.pattern_buttons.append(utils.ImageOnOffButton(
+            self.pattern_buttons.append(common.ImageOnOffButton(
                 pattern.name, (200 + idx * 240, 400),
                 'bingo-red-button', 'bingo-red-off-button', 'button',
                 pattern.name,
-                pattern == self.winning_pattern,
-                self.change_pattern, pattern
+                pattern == self.winning_pattern, S
             ))
+            self.pattern_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
+            self.pattern_buttons[-1].pattern = pattern
         self.ui.extend(self.pattern_buttons)
         #
         # Simple generator to flash the potentially winning squares
@@ -175,14 +175,14 @@ class Bingo(statemachine.StateMachine):
         #
         # Debugging buttons
         if prepare.DEBUG:
-            self.debug_buttons.append(utils.ImageOnOffButton(
+            self.debug_buttons.append(common.ImageOnOffButton(
                 'auto-pick', S['debug-auto-pick-position'],
                 'bingo-yellow-button', 'bingo-yellow-off-button', 'small-button',
                 'Auto pick',
                 S['debug-auto-pick'],
-                self.toggle_auto_pick, None,
-                scale=S['small-button-scale']
+                S, scale=S['small-button-scale']
             ))
+            self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.toggle_auto_pick)
             #
             self.debug_buttons.append(common.ImageButton(
                 'restart', S['debug-restart-position'],
@@ -209,7 +209,7 @@ class Bingo(statemachine.StateMachine):
             self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.draw_new_cards)
             self.ui.extend(self.debug_buttons)
 
-    def change_pattern(self, pattern):
+    def change_pattern(self, obj, pattern):
         """Change the winning pattern"""
         self.log.info('Changing pattern to {0}'.format(pattern.name))
         self.winning_pattern = pattern
@@ -223,9 +223,9 @@ class Bingo(statemachine.StateMachine):
         #
         # Update UI
         for button in self.pattern_buttons:
-            button.state = (button.arg == self.winning_pattern)
+            button.state = (button.pattern == self.winning_pattern)
 
-    def toggle_auto_pick(self, arg):
+    def toggle_auto_pick(self, obj, arg):
         """Toggle whether we are auto-picking numbers"""
         self.log.debug('Toggling auto-pick')
         self.auto_pick = not self.auto_pick
@@ -277,7 +277,7 @@ class Bingo(statemachine.StateMachine):
         #
         self.all_cards.extend(self.cards)
         self.ui.extend(self.cards)
-        self.restart_game(None)
+        self.restart_game(None, None)
 
     def highlight_patterns(self, pattern, one_shot):
         """Test method to cycle through the winning patterns"""
