@@ -1,15 +1,19 @@
 import os
 import json
 import pygame as pg
+
 from .. import tools, prepare
 from ..components.labels import Label, Button, PayloadButton, ImageButton
 from ..components.flair_pieces import ChipCurtain
 from ..components.music_handler import MusicHandler
 
+
 class LobbyScreen(tools._State):
-    """This state represents the casino lobby where the player can choose
+    """
+    This state represents the casino lobby where the player can choose
     which game they want to play or view their game statistics. This is also
-    the exit point for the game."""
+    the exit point for the game.
+    """
     def __init__(self):
         super(LobbyScreen, self).__init__()
         self.music_handler = MusicHandler()
@@ -57,7 +61,10 @@ class LobbyScreen(tools._State):
                                                       start_y=prepare.RENDER_SIZE[1] - 5,
                                                       variable_spin=False, spin_frequency=120,
                                                       scroll_speed=.8, cycle_colors=True)
-        self.persist["music_handler"] = self.music_handler
+        if "music_handler" not in self.persist:
+            self.persist["music_handler"] = self.music_handler
+        else:
+            self.music_handler = self.persist["music_handler"]
 
     def exit_game(self):
         with open(os.path.join("resources", "save_game.json"), "w") as f:
