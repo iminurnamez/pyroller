@@ -8,6 +8,25 @@ from .settings import SETTINGS as S
 from . import events
 
 
+class PlayerLabel(bingocard.BingoLabel):
+    """A label for the players square"""
+
+    style_name = 'square-number'
+    highlight_names = ['bingo-headers-off', 'bingo-headers-on', None]
+    show_label = False
+
+    def get_highlighter(self, name):
+        """Return the highlighter sprite"""
+        if not name:
+            return None
+        else:
+            idx = 'BINGO'.index(self.text)
+            main_sprite = common.NamedSprite.from_sprite_sheet(
+                name, (5, 1), (idx, 0), (self.x, self.y),
+            )
+            return main_sprite
+
+
 class PlayerSquare(bingocard.BingoSquare):
     """A square on a player card"""
 
@@ -18,6 +37,7 @@ class PlayerCard(bingocard.BingoCard):
     """The player card"""
 
     square_class = PlayerSquare
+    label_class = PlayerLabel
     style_name = 'player-card-square'
 
     def __init__(self, name, position, state):

@@ -20,7 +20,7 @@ class DealerCard(bingocard.BingoCard):
     """The dealer card"""
 
     square_class = DealerSquare
-    show_col_labels = False
+    label_class = None
     style_name = 'dealer-card-square'
 
 
