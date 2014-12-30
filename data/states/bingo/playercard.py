@@ -1,9 +1,11 @@
 """Represents the player's bingo card"""
 
 
+from ...components import common
+from ... import prepare
 from . import bingocard
 from .settings import SETTINGS as S
-from . import utils
+from . import events
 
 
 class PlayerSquare(bingocard.BingoSquare):
@@ -26,21 +28,22 @@ class PlayerCard(bingocard.BingoCard):
         #
         # The button to double down the bet
         label_offset = S['card-double-down-button-offset']
-        self.double_down_button = utils.ImageOnOffButton(
+        self.double_down_button = common.ImageOnOffButton(
             'double-down',
             (self.x + label_offset[0], self.y + label_offset[1]),
             'bingo-red-button', 'bingo-red-off-button',
             'card-double-down-button',
-            'Double', True, self.double_down, None,
-            S['small-button-scale'],
+            'Double', True,
+            S, S['small-button-scale'],
         )
+        self.double_down_button.linkEvent(common.E_MOUSE_CLICK, self.double_down)
         #
         # The label for display of the card value
         label_offset = S['card-value-label-offset']
-        self.value_label = utils.getLabel(
+        self.value_label = common.getLabel(
             'card-value-label',
             (self.x + label_offset[0], self.y + label_offset[1]),
-            '*PLACEHOLDER*'
+            '*PLACEHOLDER*', S
         )
         self.update_value(self.initial_value)
         #
@@ -54,10 +57,11 @@ class PlayerCard(bingocard.BingoCard):
         self.value = value
         self.value_label.set_text('Card value ${0}'.format(value))
 
-    def double_down(self, arg):
+    def double_down(self, obj, arg):
         """Double down the card"""
         if self.double_down_button.state:
             self.log.info('Doubling down on the card')
+            prepare.BROADCASTER.processEvent((events.E_SPEND_MONEY, -self.value))
             self.update_value(self.value * 2)
             self.double_down_button.state = False
             self.state.add_generator('re-enable-double-down', self.enable_double_down_button(

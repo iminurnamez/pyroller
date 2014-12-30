@@ -1,8 +1,9 @@
 import os
 import json
 import pygame as pg
+
 from .. import tools, prepare
-from ..components.labels import Label, Blinker, MarqueeFrame, Button, NeonButton
+from ..components.labels import Label, Blinker, MarqueeFrame, NeonButton
 from ..components.casino_player import CasinoPlayer
 from ..components.cards import Deck
 from ..components.music_handler import MusicHandler
@@ -32,26 +33,20 @@ class TitleScreen(tools._State):
         self.title2.on = True
 
         b_width = 318
-        b_height = 101
-        left = screen_rect.centerx - (b_width / 2)
-        top = self.title2.rect.bottom + 200
-        #new_game = Label(font, 32, "New Game", "goldenrod3",
-        #                             {"center": (0, 0)})
-        #self.new_game_button = Button(left, top, b_width, b_height, new_game)
-        self.new_game_button = NeonButton((left, top), "New Game", bground=False)
+        left = screen_rect.centerx-(b_width//2)
+        top = self.title2.rect.bottom + 150
+        self.new_game_button = NeonButton((left, top), "New")
         self.new_game_button.active = False
         top = self.new_game_button.rect.bottom + 50
-        #load_game = Label(font, 32, "Load Game", "goldenrod3",
-        #                                 {"center": (0, 0)})
-        #self.load_game_button = Button(left, top, b_width, b_height, load_game)
-        self.load_game_button = NeonButton((left, top), "Load Game", bground=False)
+        self.load_game_button = NeonButton((left, top), "Load")
         self.load_game_button.active = False
         self.buttons = [self.new_game_button, self.load_game_button]
 
         try:
-            with open(os.path.join("resources", "save_game.json")) as saved_file:
+            path = os.path.join("resources", "save_game.json")
+            with open(path) as saved_file:
                 stats = json.load(saved_file)
-        except:
+        except IOError:
             stats = None
         self.stats = stats
         self.screen_rect = screen_rect
@@ -72,7 +67,8 @@ class TitleScreen(tools._State):
             self.quit = True
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            self.title.rect.centerx = self.title2.rect.centerx = self.screen_rect.centerx
+            self.title.rect.centerx = self.screen_rect.centerx
+            self.title2.rect.centerx = self.screen_rect.centerx
             if self.new_game_button.rect.collidepoint(pos):
                 if self.new_game_button.active:
                     self.persist["casino_player"] = CasinoPlayer()
@@ -103,7 +99,7 @@ class TitleScreen(tools._State):
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
-        surface.fill(pg.Color("gray1"))
+        surface.fill(prepare.BACKGROUND_BASE)
         self.title.draw(surface, dt)
         self.title2.draw(surface, dt)
         for marquee in self.marquees:
