@@ -183,6 +183,19 @@ SETTINGS = {
     'money-hide-repeats': 5,
 
     #
+    # Flashing patterns
+    'label-flash-delay-on': 0.1,
+    'label-flash-states': [
+        'BINGO', '', 'BINGO', '', 'BINGO', '',
+        'B', 'I', 'N', 'G', 'O', '',
+        'O', 'G', 'N', 'I', 'B', '',
+        'BO', 'IG', 'N', '',
+        'N', 'IG', 'BO',
+        'BNO', 'IG', 'BNO', 'IG', 'BNO', 'IG',
+        'BNO', 'IG', 'BNO', 'IG', 'BNO', 'IG',
+    ],
+
+    #
     # Debug settings
     'debug-auto-pick': True,
     'debug-restart-position': (1250, 120),

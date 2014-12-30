@@ -295,6 +295,16 @@ class BingoCard(common.Clickable):
         for square in self.squares.values():
             square.is_active = value
 
+    def flash_labels(self):
+        """Flash labels in a nice pattern"""
+        on_time = S['label-flash-delay-on'] * 1000
+        #
+        # One at a time
+        for letters in S['label-flash-states']:
+            for letter in 'BINGO':
+                self.labels[letter].highlighted_state = letter in letters
+            yield on_time
+
 
 class CardCollection(common.ClickableGroup, common.DrawableGroup):
     """A set of bingo cards"""

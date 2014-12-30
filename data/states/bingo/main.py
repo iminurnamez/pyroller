@@ -134,6 +134,9 @@ class Bingo(statemachine.StateMachine):
             elif event.key == pg.K_m:
                 #self.persist["music_handler"].mute_unmute_music()
                 self.sound_muted = not self.sound_muted
+            elif event.key == pg.K_f:
+                for card in self.cards:
+                    self.add_generator('flash-labels', card.flash_labels())
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
