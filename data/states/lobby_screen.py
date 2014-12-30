@@ -106,7 +106,7 @@ class LobbyScreen(tools._State):
                 font = prepare.FONTS["Saniretro"]
                 button_img = prepare.GFX["button_neon_off"]
                 w, h  = button_img.get_size()
-                texts = ["Bingo", "Blackjack", "Craps", "Keno", "Credits", "Exit", "Stats"]
+                texts = ["Bingo", "Blackjack", "Craps", "Keno", "Credits", "Exit", "Stats", "New Game", "Load Game"]
                 surf = pg.Surface((w, h * len(texts))).convert_alpha()
                 surf.fill((0,0,0,0))
                 top = 0

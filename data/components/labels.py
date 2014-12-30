@@ -221,12 +221,14 @@ class Button(object):
         
 class NeonButton(object):
     """Neon sign style button that glows on mouseover."""
-    def __init__(self, lefttop, text):
+    def __init__(self, lefttop, text, bground=True):
         on = "neon_button_on_{}".format(text.lower())
         off = "neon_button_off_{}".format(text.lower())
         self.on_image = prepare.GFX[on]
         self.off_image = prepare.GFX[off]
+        self.bg_image = prepare.GFX["button_neon_background"]
         self.on = False
+        self.bground = bground
         self.rect = self.on_image.get_rect(topleft=lefttop)
         
     def update(self, mouse_pos):
@@ -235,6 +237,8 @@ class NeonButton(object):
             self.on = True
             
     def draw(self, surface):
+        if self.bground:
+            surface.blit(self.bg_image, self.rect)
         img = self.on_image if self.on else self.off_image
         surface.blit(img, self.rect)
         

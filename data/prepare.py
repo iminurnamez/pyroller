@@ -62,7 +62,7 @@ def _get_graphics_and_cards():
     b_width = 318
     b_height = 101
     b_sheet = gfx["button_sheet"]
-    b_texts = ["Bingo", "Blackjack", "Craps", "Keno", "Credits", "Exit", "Stats"]
+    b_texts = ["Bingo", "Blackjack", "Craps", "Keno", "Credits", "Exit", "Stats", "New Game", "Load Game"]
     b_top = 0
     for text in b_texts:
         off_rect = pg.Rect(0, b_top, b_width, b_height)
