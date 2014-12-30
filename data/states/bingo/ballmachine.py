@@ -56,13 +56,8 @@ class BallMachine(common.Drawable, loggable.Loggable):
         components = common.DrawableGroup()
         #
         # The display of the current ball
-        self.current_ball_ui = common.getLabel(
-            'machine-ball',
-            S['machine-ball-position'],
-            '0',
-            S
-        )
-        components.append(self.current_ball_ui)
+        self.conveyor = common.DrawableGroup()
+        components.append(self.conveyor)
         #
         # The display of all the balls that have been called
         self.called_balls_ui = CalledBallTray(S['called-balls-position'])
@@ -126,7 +121,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
         self.interval = interval if interval else self.initial_interval
-        self.current_ball_ui.set_text('-')
+        self.conveyor.clear()
         self.start_machine()
 
     def pick_balls(self):
@@ -159,7 +154,9 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.log.info('Current ball is {0}'.format(ball.full_name))
         #
         self.current_ball = ball
-        self.current_ball_ui.set_text(ball.full_name)
+        self.conveyor.append(
+            SingleBallDisplay('ball', S['machine-ball-position'], ball)
+        )
         self.state.ball_picked(ball)
         self.called_balls_ui.call_ball(ball)
 
@@ -210,3 +207,42 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
             ball.text_color = S['called-ball-number-font-color']
             ball.update_text()
         self.called_balls = []
+
+
+class SingleBallDisplay(common.Drawable, loggable.Loggable):
+    """A ball displayed on the screen"""
+
+    def __init__(self, name, position, ball):
+        """Initialise the ball"""
+        self.addLogger()
+        #
+        self.name = name
+        #
+        # Create the background chip
+        self.background = common.NamedSprite.from_sprite_sheet(
+            'chips', (2, 5),
+            S['called-ball-sprite-lookup'][ball.col], position,
+            scale=S['machine-ball-sprite-scale']
+        )
+        #
+        # And the text for the number
+        self.text = common.getLabel(
+            'machine-ball',
+            (self.background.rect.width / 2, self.background.rect.height / 2), str(ball.number), S
+        )
+        self.text.text_color = S['called-ball-font-color'][ball.col]
+        self.text.update_text()
+        #
+        # Write the number on the background
+        self.text.draw(self.background.sprite)
+        #
+        # And rotate a bit
+        self.background.rotate_to(random.uniform(*S['machine-ball-angle-range']))
+
+    def set_text(self, text):
+        """For compatibility"""
+        # TODO: remove this
+
+    def draw(self, surface):
+        """Draw the ball"""
+        self.background.draw(surface)

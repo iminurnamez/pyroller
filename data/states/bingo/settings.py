@@ -124,8 +124,10 @@ SETTINGS = {
 
     'machine-ball-position': (75, 75),
     'machine-ball-font': prepare.FONTS["Saniretro"],
-    'machine-ball-font-size': 102,
+    'machine-ball-font-size': 76,
     'machine-ball-font-color': 'white',
+    'machine-ball-sprite-scale': 2.0,
+    'machine-ball-angle-range': (-20, 20),
 
     'called-balls-position': (180, 40),
     'called-balls-offsets': (20, 20),
@@ -134,6 +136,20 @@ SETTINGS = {
     'called-ball-number-font-size': 16,
     'called-ball-number-font-color': 'black',
     'called-ball-font-colors': ['black', 'white', 'grey'],
+    'called-ball-sprite-lookup': {
+        -2: (0, 0),
+        -1: (0, 3),
+        0: (0, 2),
+        1: (0, 1),
+        2: (0, 4),
+    },
+    'called-ball-font-color': {
+        -2: 'white',
+        -1: 'white',
+        0: 'white',
+        1: 'white',
+        2: 'black',
+    },
 
     'machine-speeds': [
         # Text, interval (s), balls to increase
