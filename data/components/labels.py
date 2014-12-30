@@ -227,7 +227,6 @@ class NeonButton(object):
         self.payload = payload or text
         self.on_image = prepare.GFX[on]
         self.off_image = prepare.GFX[off]
-        self.bg_image = prepare.GFX["button_neon_background"]
         self.on = False
         self.active = True
         self.rect = self.on_image.get_rect(topleft=lefttop)
@@ -236,8 +235,6 @@ class NeonButton(object):
         self.on = self.rect.collidepoint(mouse_pos)
 
     def draw(self, surface):
-        if self.bground:
-            surface.blit(self.bg_image, self.rect)
         img = self.on_image if self.on else self.off_image
         surface.blit(img, self.rect)
 
