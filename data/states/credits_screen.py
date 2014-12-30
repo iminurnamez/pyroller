@@ -3,7 +3,7 @@ from itertools import cycle
 
 import pygame as pg
 from .. import tools, prepare
-from ..components.labels import Label
+from ..components.labels import Label, NeonButton
 from ..components.flair_pieces import Spinner, Roller, Fadeout, ChipCurtain
 
 
@@ -88,6 +88,11 @@ class CreditsScreen(tools._State):
         self.zipper_blocks =[]
         self.zipper_block = None
         self.chip_curtain = None
+        b_width = 318
+        b_height = 101
+        self.done_button = NeonButton((self.screen.centerx-(b_width//2),
+                                      self.screen.bottom - (b_height + 10)),
+                                      "Lobby")
 
     def startup(self, current_time, persistent):
         self.persist = persistent
@@ -119,8 +124,14 @@ class CreditsScreen(tools._State):
             self.done = True
         elif event.type == pg.KEYUP and event.key == pg.K_ESCAPE:
             self.done = True
+        elif event.type == pg.MOUSEBUTTONDOWN:
+            pos = tools.scaled_mouse_pos(scale, event.pos)
+            if self.done_button.rect.collidepoint(pos):
+                self.done = True
 
     def update(self, surface, keys, current_time, dt, scale):
+        mouse_pos = tools.scaled_mouse_pos(scale)
+        self.done_button.update(mouse_pos)
         if self.zipper_block:
             self.zipper_block.update()
             if self.zipper_block.done:
@@ -158,3 +169,4 @@ class CreditsScreen(tools._State):
                 spinner.draw(surface)
         if self.chip_curtain:
             self.chip_curtain.draw(surface)
+        self.done_button.draw(surface)

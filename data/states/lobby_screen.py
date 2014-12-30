@@ -3,7 +3,7 @@ import json
 import pygame as pg
 
 from .. import tools, prepare
-from ..components.labels import Label, Button, PayloadButton, ImageButton, NeonButton
+from ..components.labels import Label, Button, ImageButton, NeonButton
 from ..components.flair_pieces import ChipCurtain
 from ..components.music_handler import MusicHandler
 
@@ -92,7 +92,8 @@ class LobbyScreen(tools._State):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
         self.persist["music_handler"].update(scale)
-        for button in [self.stats_button, self.done_button, self.credits_button]:
+        buttons = [self.stats_button, self.done_button, self.credits_button]
+        for button in buttons:
             button.update(mouse_pos)
         self.draw(surface)
 
