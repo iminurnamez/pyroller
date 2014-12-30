@@ -98,7 +98,7 @@ class TitleScreen(tools._State):
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
-        surface.fill(pg.Color("gray1"))
+        surface.fill(prepare.BACKGROUND_BASE)
         self.title.draw(surface, dt)
         self.title2.draw(surface, dt)
         for marquee in self.marquees:
