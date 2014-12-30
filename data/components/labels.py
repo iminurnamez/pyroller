@@ -218,26 +218,26 @@ class Button(object):
             pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)
         self.label.draw(surface)
 
-        
+
 class NeonButton(object):
     """Neon sign style button that glows on mouseover."""
-    def __init__(self, lefttop, text):
+    def __init__(self, lefttop, text, payload=None):
         on = "neon_button_on_{}".format(text.lower())
         off = "neon_button_off_{}".format(text.lower())
+        self.payload = payload or text
         self.on_image = prepare.GFX[on]
         self.off_image = prepare.GFX[off]
         self.on = False
+        self.active = True
         self.rect = self.on_image.get_rect(topleft=lefttop)
-        
+
     def update(self, mouse_pos):
-        self.on = False
-        if self.rect.collidepoint(mouse_pos):
-            self.on = True
-            
+        self.on = self.rect.collidepoint(mouse_pos)
+
     def draw(self, surface):
         img = self.on_image if self.on else self.off_image
         surface.blit(img, self.rect)
-        
+
 
 class ImageButton(object):
     def __init__(self, image, rect_attributes, label):
@@ -249,6 +249,7 @@ class ImageButton(object):
     def draw(self, surface):
         surface.blit(self.image, self.rect)
         self.label.draw(surface)
+
 
 class PayloadButton(Button):
     """A button that holds a "payload" value."""
