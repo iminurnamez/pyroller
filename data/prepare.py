@@ -32,7 +32,7 @@ pg.init()
 if ARGS['center']:
     os.environ['SDL_VIDEO_CENTERED'] = "True"
 else:
-    os.environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(ARGS['winpos'][0], ARGS['winpos'][1])
+    os.environ['SDL_VIDEO_WINDOW_POS'] = '{},{}'.format(*ARGS['winpos'])
 pg.display.set_caption(CAPTION)
 if ARGS['fullscreen']:
     pg.display.set_mode(START_SIZE, pg.FULLSCREEN)
@@ -65,8 +65,9 @@ def _get_graphics_and_cards():
     b_width = 318
     b_height = 101
     b_sheet = gfx["button_sheet"]
-    b_texts = ["Bingo", "Blackjack", "Craps", "Keno", "Credits",
-               "Exit", "Stats", "Lobby", "New", "Load"]
+    b_texts = ["Bingo", "Blackjack", "Craps", "Keno", "Credits", "Exit",
+               "Stats", "Lobby", "New", "Load", "Again", "Deal", "Hit",
+               "Stand", "Split", "Double", "Roll", "Back"]
     b_top = 0
     for text in b_texts:
         off_rect = pg.Rect(0, b_top, b_width, b_height)
