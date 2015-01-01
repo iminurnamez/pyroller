@@ -183,7 +183,7 @@ class MarqueeFrame(object):
 
     def update(self, dt):
         self.elapsed += dt
-        if self.elapsed > self.frequency:
+        while self.elapsed > self.frequency:
             self.elapsed -= self.frequency
             for bulb in self.bulbs:
                 bulb.on = not bulb.on
