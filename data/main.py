@@ -14,6 +14,7 @@ from .states import credits_screen, snake_splash
 def main():
     args = (prepare.CAPTION, prepare.RENDER_SIZE, prepare.RESOLUTIONS)
     run_it = tools.Control(*args)
+    run_it.show_fps = prepare.ARGS["FPS"]
     state_dict = {"SNAKESPLASH": snake_splash.SnakeSplash(),
                   "TITLESCREEN" : title_screen.TitleScreen(),
                   "LOBBYSCREEN" : lobby_screen.LobbyScreen(),
