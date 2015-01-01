@@ -1,6 +1,7 @@
 """Represents the machine that picks numbers"""
 
 import random
+import pygame as pg
 
 from ...components import common
 from . import loggable
@@ -60,7 +61,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
         components.append(self.conveyor)
         #
         # The display of all the balls that have been called
-        self.called_balls_ui = CalledBallTray(S['called-balls-position'])
+        self.called_balls_ui = CalledBallTray(S['called-balls-position'], self)
         components.append(self.called_balls_ui)
         #
         # Buttons that show the speed
@@ -78,6 +79,9 @@ class BallMachine(common.Drawable, loggable.Loggable):
         components.extend(self.speed_buttons)
         self.buttons.extend(self.speed_buttons)
         #
+        self.cog = CogWheel(self)
+        components.append(self.cog)
+        #
         return components
 
     def change_speed(self, obj,  arg):
@@ -94,6 +98,9 @@ class BallMachine(common.Drawable, loggable.Loggable):
         # Set button visibility
         for idx, button in enumerate(self.speed_buttons):
             button.state = idx == selected_idx
+        #
+        # Set cog
+        self.cog.set_speed(selected_idx)
         #
         # Set speed of the machine
         self.reset_timer(interval * 1000)
@@ -155,7 +162,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
         #
         self.current_ball = ball
         self.conveyor.append(
-            SingleBallDisplay('ball', S['machine-ball-position'], ball)
+            SingleBallDisplay('ball', S['machine-ball-position'], ball, self)
         )
         self.state.ball_picked(ball)
         self.called_balls_ui.call_ball(ball)
@@ -163,7 +170,8 @@ class BallMachine(common.Drawable, loggable.Loggable):
     def draw(self, surface):
         """Draw the machine"""
         self.ui.draw(surface)
-        self.called_balls_ui.update(S['conveyor-speed'] / self.interval)
+        self.called_balls_ui.update(self.state.dt * S['conveyor-speed'] / self.interval)
+        self.cog.update(self.state.dt * S['machine-cog-speed'] / self.interval)
 
     def call_next_ball(self):
         """Immediately call the next ball"""
@@ -173,9 +181,11 @@ class BallMachine(common.Drawable, loggable.Loggable):
 class CalledBallTray(common.Drawable, loggable.Loggable):
     """A display of the balls that have been called"""
 
-    def __init__(self, position):
+    def __init__(self, position, state):
         """Initialise the display"""
         self.addLogger()
+        self.state = state
+        #
         self.x, self.y = position
         self.called_balls = []
         #
@@ -209,11 +219,12 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
 class SingleBallDisplay(common.Drawable, loggable.Loggable):
     """A ball displayed on the screen"""
 
-    def __init__(self, name, position, ball):
+    def __init__(self, name, position, ball, state):
         """Initialise the ball"""
         self.addLogger()
         #
         self.name = name
+        self.state = state
         #
         # Create the background chip
         self.background = common.NamedSprite.from_sprite_sheet(
@@ -239,3 +250,40 @@ class SingleBallDisplay(common.Drawable, loggable.Loggable):
     def draw(self, surface):
         """Draw the ball"""
         self.background.draw(surface)
+
+
+class CogWheel(common.Drawable):
+    """Visual display of the cog"""
+
+    def __init__(self, state):
+        """Initialise the cog"""
+        self.state = state
+        #
+        self.sprites = [
+            common.NamedSprite(
+                'bingo-cog-{0}'.format(i),
+                S['machine-cog-position'],
+            ) for i in range(len(S['machine-speeds']) + 1)
+        ]
+        self.speed = 0
+        self.angle = 0
+        self.set_speed(0)
+        self.current_sprite = self.sprites[0].sprite
+        self.x, self.y = S['machine-cog-position']
+
+    def set_speed(self, speed):
+        """Set the current speed"""
+        self.speed = speed
+
+    def draw(self, surface):
+        """Draw the cog"""
+        w, h = self.current_sprite.get_size()
+        rect = pg.Rect(self.x - w / 2, self.y - h / 2, w, h)
+        surface.blit(self.current_sprite, rect)
+
+    def update(self, increment):
+        """Update the display of the cog"""
+        self.angle = (self.angle + increment) % 360
+        # TODO: refactor the rotation logic - should be built into sprite
+        surface = self.sprites[self.speed + 1].sprite.copy()
+        self.current_sprite = pg.transform.rotozoom(surface, self.angle, 1.0)

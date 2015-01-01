@@ -75,6 +75,7 @@ class StateMachine(tools._State, loggable.Loggable):
         #
         self.add_generator(initial_state, getattr(self, initial_state)())
         self.initUI()
+        self.dt = 0
 
     def initUI(self):
         """Initialise the user interface"""
@@ -86,6 +87,7 @@ class StateMachine(tools._State, loggable.Loggable):
 
     def update(self, surface, keys, now, dt, scale):
         """Update the game state"""
+        self.dt = dt
         self.state_clock.tick(dt)
         self.delay -= self.state_clock.get_time() * self.speed_factor
         #
