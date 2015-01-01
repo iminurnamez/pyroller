@@ -154,7 +154,7 @@ SETTINGS = {
     #
     # Conveyor
     'conveyor-position': (-50, 200),
-    'conveyor-speed': 600,
+    'conveyor-speed': 450,
     'conveyor-repeat': 43,
     'conveyor-ball-position': 50,
     'conveyor-ball-drop-off': 1400,
@@ -162,7 +162,7 @@ SETTINGS = {
     #
     # Cog wheel
     'machine-cog-position': (1360, 130),
-    'machine-cog-speed': 500,
+    'machine-cog-speed': 450 / 600 * 500,
     'machine-speeds': [
         # Text, interval (s), balls to increase
         ('1', 10, 5),
@@ -172,7 +172,7 @@ SETTINGS = {
         ('5', 6, 25),
         ('6', 5, 30),
         ('7', 4, 35),
-        ('8', 2, 40),
+        ('8', 3, 40),
     ],
 
     # Player picking
