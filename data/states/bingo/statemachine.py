@@ -56,6 +56,10 @@ class StateExecutor(loggable.Loggable):
         """Stop this executor"""
         self.done = True
 
+    def get_fraction_to_go(self):
+        """Return the fraction of our time to go"""
+        return min(0, max(1, self.delay / self.last_delay))
+
 
 class StateMachine(tools._State, loggable.Loggable):
     """A state machine to use for handling the screen"""

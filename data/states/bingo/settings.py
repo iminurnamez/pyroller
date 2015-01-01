@@ -122,6 +122,7 @@ SETTINGS = {
     # Ball machine settings
     'machine-balls': range(1, 76),
 
+    'machine-background-position': (780, 80),
     'machine-ball-position': (75, -50),
     'machine-ball-font': prepare.FONTS["Saniretro"],
     'machine-ball-font-size': 76,
@@ -130,6 +131,9 @@ SETTINGS = {
     'machine-ball-angle-range': (-20, 20),
     'machine-ball-drop-initial-speed': 30,
     'machine-ball-drop-acceleration': 1,
+
+    'spout-position': (30, 140),
+    'spout-number': 6,
 
     'called-balls-position': (180, 40),
     'called-ball-number-font': prepare.FONTS["Saniretro"],

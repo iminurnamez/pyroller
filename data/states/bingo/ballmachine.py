@@ -78,6 +78,11 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.cog = CogWheel(self)
         components.append(self.cog)
         #
+        # The spout showing progress towards a new ball
+        self.spout_sprites = [
+            common.NamedSprite('bingo-spout-{0}'.format(i), S['spout-position']) for i in range(S['spout-number'])
+        ]
+        #
         return components
 
     def change_speed(self, obj,  arg):
@@ -164,6 +169,13 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.ui.draw(surface)
         self.called_balls_ui.update(self.state.dt * S['conveyor-speed'] / self.interval)
         self.cog.update(self.state.dt * S['machine-cog-speed'] / self.interval)
+        #
+        # Calculate how close we are to choosing a new ball
+        fraction = 1.0 - self.timer.get_fraction_to_go()
+        if fraction > 0.95:
+            self.spout_sprites[-1].draw(surface)
+        else:
+            self.spout_sprites[int(fraction * (S['spout-number'] - 1))].draw(surface)
 
     def call_next_ball(self):
         """Immediately call the next ball"""
@@ -188,6 +200,7 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
         self.initial_x = S['conveyor-position'][0]
         self.current_x = 0
         #
+        self.background = common.NamedSprite('bingo-grill', S['machine-background-position'])
         self.dropping_balls = common.DrawableGroup()
         self.moving_balls = common.DrawableGroup()
 
@@ -200,6 +213,7 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
 
     def draw(self, surface):
         """Draw the tray"""
+        self.background.draw(surface)
         self.moving_balls.draw(surface)
         self.dropping_balls.draw(surface)
         self.conveyor.draw(surface)
