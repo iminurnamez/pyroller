@@ -67,7 +67,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
         for idx, (name, interval, number_balls) in enumerate(S['machine-speeds']):
             self.speed_buttons.append(common.ImageOnOffButton(
                 name,
-                (150 + idx * 65, 200),
+                (150 + idx * 65, 300),
                 'bingo-blue-button', 'bingo-blue-off-button', 'tiny-button',
                 name,
                 interval == self.initial_interval / 1000,
@@ -163,6 +163,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
     def draw(self, surface):
         """Draw the machine"""
         self.ui.draw(surface)
+        self.called_balls_ui.update(S['conveyor-speed'] / self.interval)
 
     def call_next_ball(self):
         """Immediately call the next ball"""
@@ -176,8 +177,14 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
         """Initialise the display"""
         self.addLogger()
         self.x, self.y = position
-        self.balls = common.KeyedDrawableGroup()
         self.called_balls = []
+        #
+        self.conveyor = common.NamedSprite(
+            'bingo-conveyor',
+            S['conveyor-position'],
+        )
+        self.initial_x = S['conveyor-position'][0]
+        self.current_x = 0
 
     def call_ball(self, ball):
         """Call a particular ball"""
@@ -185,10 +192,18 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
 
     def draw(self, surface):
         """Draw the tray"""
+        self.conveyor.draw(surface)
 
     def reset_display(self):
         """Reset the display of the balls"""
         self.called_balls = []
+
+    def update(self, increment):
+        """Update the display of the tray"""
+        self.current_x += increment
+        if self.current_x > S['conveyor-repeat']:
+            self.current_x -= S['conveyor-repeat']
+        self.conveyor.rect.x = self.initial_x + self.current_x
 
 
 class SingleBallDisplay(common.Drawable, loggable.Loggable):

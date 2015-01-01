@@ -149,6 +149,12 @@ SETTINGS = {
         2: 'black',
     },
 
+    #
+    # Conveyor
+    'conveyor-position': (-50, 200),
+    'conveyor-speed': 5000,
+    'conveyor-repeat': 43,
+
     'machine-speeds': [
         # Text, interval (s), balls to increase
         ('1', 10, 5),
