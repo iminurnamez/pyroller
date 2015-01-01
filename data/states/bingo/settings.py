@@ -122,12 +122,14 @@ SETTINGS = {
     # Ball machine settings
     'machine-balls': range(1, 76),
 
-    'machine-ball-position': (75, 75),
+    'machine-ball-position': (75, -50),
     'machine-ball-font': prepare.FONTS["Saniretro"],
     'machine-ball-font-size': 76,
     'machine-ball-font-color': 'white',
     'machine-ball-sprite-scale': 2.0,
     'machine-ball-angle-range': (-20, 20),
+    'machine-ball-drop-initial-speed': 30,
+    'machine-ball-drop-acceleration': 1,
 
     'called-balls-position': (180, 40),
     'called-ball-number-font': prepare.FONTS["Saniretro"],
@@ -154,6 +156,8 @@ SETTINGS = {
     'conveyor-position': (-50, 200),
     'conveyor-speed': 600,
     'conveyor-repeat': 43,
+    'conveyor-ball-position': 50,
+    'conveyor-ball-drop-off': 1400,
 
     #
     # Cog wheel

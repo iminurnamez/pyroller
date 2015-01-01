@@ -56,12 +56,8 @@ class BallMachine(common.Drawable, loggable.Loggable):
         """Create the UI components"""
         components = common.DrawableGroup()
         #
-        # The display of the current ball
-        self.conveyor = common.DrawableGroup()
-        components.append(self.conveyor)
-        #
         # The display of all the balls that have been called
-        self.called_balls_ui = CalledBallTray(S['called-balls-position'], self)
+        self.called_balls_ui = CalledBallTray(S['called-balls-position'], self.state)
         components.append(self.called_balls_ui)
         #
         # Buttons that show the speed
@@ -128,7 +124,6 @@ class BallMachine(common.Drawable, loggable.Loggable):
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
         self.interval = interval if interval else self.initial_interval
-        self.conveyor.clear()
         self.start_machine()
 
     def pick_balls(self):
@@ -161,9 +156,6 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.log.info('Current ball is {0}'.format(ball.full_name))
         #
         self.current_ball = ball
-        self.conveyor.append(
-            SingleBallDisplay('ball', S['machine-ball-position'], ball, self)
-        )
         self.state.ball_picked(ball)
         self.called_balls_ui.call_ball(ball)
 
@@ -195,18 +187,28 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
         )
         self.initial_x = S['conveyor-position'][0]
         self.current_x = 0
+        #
+        self.dropping_balls = common.DrawableGroup()
+        self.moving_balls = common.DrawableGroup()
 
     def call_ball(self, ball):
         """Call a particular ball"""
         self.called_balls.append(ball)
+        ball_ui = SingleBallDisplay('ball', S['machine-ball-position'], ball, self)
+        self.dropping_balls.append(ball_ui)
+        self.state.add_generator('ball-falling', self.ball_falling(ball_ui))
 
     def draw(self, surface):
         """Draw the tray"""
+        self.moving_balls.draw(surface)
+        self.dropping_balls.draw(surface)
         self.conveyor.draw(surface)
 
     def reset_display(self):
         """Reset the display of the balls"""
         self.called_balls = []
+        self.dropping_balls.clear()
+        self.moving_balls.clear()
 
     def update(self, increment):
         """Update the display of the tray"""
@@ -214,6 +216,24 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
         if self.current_x > S['conveyor-repeat']:
             self.current_x -= S['conveyor-repeat']
         self.conveyor.rect.x = self.initial_x + self.current_x
+        self.move_balls(increment)
+
+    def ball_falling(self, ball):
+        """Cause a ball to fall down to the conveyor"""
+        drop_speed = S['machine-ball-drop-initial-speed']
+        while ball.y < S['conveyor-ball-position']:
+            ball.y += drop_speed
+            drop_speed += S['machine-ball-drop-acceleration']
+            yield 10
+        self.moving_balls.append(ball)
+        self.dropping_balls.remove(ball)
+
+    def move_balls(self, increment):
+        """Move the balls"""
+        for ball in reversed(self.moving_balls):
+            ball.x += increment
+            if ball.x >= S['conveyor-ball-drop-off']:
+                self.moving_balls.remove(ball)
 
 
 class SingleBallDisplay(common.Drawable, loggable.Loggable):
@@ -246,6 +266,26 @@ class SingleBallDisplay(common.Drawable, loggable.Loggable):
         #
         # And rotate a bit
         self.background.rotate_to(random.uniform(*S['machine-ball-angle-range']))
+        #
+        self._x, self._y = self.background.rect.x, self.background.rect.y
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        self._y = value
+        self.background.rect.y = value
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, value):
+        self._x = value
+        self.background.rect.x = value
 
     def draw(self, surface):
         """Draw the ball"""
