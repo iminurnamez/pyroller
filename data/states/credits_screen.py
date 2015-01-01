@@ -1,14 +1,12 @@
 from random import shuffle, choice
 from itertools import cycle
-
 import pygame as pg
 from .. import tools, prepare
-from ..components.labels import Label, NeonButton
+from ..components.labels import Label
 from ..components.flair_pieces import Spinner, Roller, Fadeout, ChipCurtain
 
-
-DEVELOPERS = ("camarce1 Mekire iminurnamez macaframa metulburr jellyberg "
-              "PaulPaterson trijazzguy menatwrk bar777foo").split()
+DEVELOPERS = "camarce1 Mekire iminurnamez macaframa metulburr jellyberg \
+PaulPaterson trijazzguy menatwrk bar777foo".split()
 
 
 class ZipperBlock(object):
@@ -44,9 +42,9 @@ class ZipperBlock(object):
             self.labels.append(label)
             #offscreen_distance += stagger
             y += vert_space
-        top = self.labels[0].rect.top
+        top = self.labels[0].rect.top        
         fade_rect = pg.Rect(300, top, 800, prepare.RENDER_SIZE[1] - top)
-        self.fader = Fadeout(fade_rect, prepare.BACKGROUND_BASE)
+        self.fader = Fadeout(fade_rect)
 
     def update(self):
         for roller in self.rollers:
@@ -88,11 +86,6 @@ class CreditsScreen(tools._State):
         self.zipper_blocks =[]
         self.zipper_block = None
         self.chip_curtain = None
-        b_width = 318
-        b_height = 101
-        self.done_button = NeonButton((self.screen.centerx-(b_width//2),
-                                      self.screen.bottom - (b_height + 10)),
-                                      "Lobby")
 
     def startup(self, current_time, persistent):
         self.persist = persistent
@@ -102,36 +95,29 @@ class CreditsScreen(tools._State):
         names = self.names[:]
         shuffle(names)
         title = Label(self.font, 112, "Development Team", "darkred",
-                      {"center": (self.screen.centerx, 100)})
+                                        {"center": (self.screen.centerx, 100)})
         title.moving = False
         grouped = [names[i: i + 5] for i in range(0, len(names), 5)]
         for group in grouped:
-            block = ZipperBlock(self.font, group, (700,title.rect.bottom+100))
-            self.zipper_blocks.append(block)
+            self.zipper_blocks.append(ZipperBlock(self.font, group, (700, title.rect.bottom + 100)))
         self.zipper_blocks = iter(self.zipper_blocks)
         self.zipper_block = next(self.zipper_blocks)
         self.titles = [title] * len(grouped)
         self.titles = iter(self.titles)
         self.title = next(self.titles)
-        spinner_spots = [(self.title.rect.left-100, self.title.rect.centery),
-                         (self.title.rect.right+100, self.title.rect.centery)]
+        spinner_spots = [(self.title.rect.left - 100, self.title.rect.centery),
+                                  (self.title.rect.right + 100, self.title.rect.centery)]
         self.spinners = [Spinner(spinner_spots[0], "black"),
-                        Spinner(spinner_spots[1], "black", reverse=True)]
+                                Spinner(spinner_spots[1], "black", reverse=True)]
         self.chip_curtain = None
-
+        
     def get_event(self, event, scale=(1, 1)):
         if event.type == pg.QUIT:
             self.done = True
         elif event.type == pg.KEYUP and event.key == pg.K_ESCAPE:
             self.done = True
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(scale, event.pos)
-            if self.done_button.rect.collidepoint(pos):
-                self.done = True
 
     def update(self, surface, keys, current_time, dt, scale):
-        mouse_pos = tools.scaled_mouse_pos(scale)
-        self.done_button.update(mouse_pos)
         if self.zipper_block:
             self.zipper_block.update()
             if self.zipper_block.done:
@@ -155,11 +141,11 @@ class CreditsScreen(tools._State):
                 self.done = True
         if self.spinners:
             for spinner in self.spinners:
-                spinner.update(dt)
+                spinner.update(dt)            
         self.draw(surface)
 
     def draw(self, surface):
-        surface.fill(prepare.BACKGROUND_BASE)
+        surface.fill(pg.Color("gray1"))
         if self.title:
             self.title.draw(surface)
         if self.zipper_block:
@@ -169,4 +155,3 @@ class CreditsScreen(tools._State):
                 spinner.draw(surface)
         if self.chip_curtain:
             self.chip_curtain.draw(surface)
-        self.done_button.draw(surface)

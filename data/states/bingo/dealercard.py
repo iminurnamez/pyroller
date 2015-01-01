@@ -6,6 +6,7 @@ These work like the player cards but show less detail.
 
 from . import bingocard
 from .settings import SETTINGS as S
+from . import utils
 
 
 class DealerSquare(bingocard.BingoSquare):

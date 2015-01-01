@@ -20,7 +20,7 @@ class SnakeSplash(tools._State):
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
-        surface.fill(prepare.BACKGROUND_BASE)
+        surface.fill(pg.Color("black"))
         if self.on:
             surface.blit(self.image, (175, 0))
 
@@ -33,6 +33,7 @@ class SnakeSplash(tools._State):
         since pygame was initialized. dt is the number of milliseconds since
         the last frame.
         """
+
         self.duration -= dt
         if self.duration <= 0:
             self.done = True
