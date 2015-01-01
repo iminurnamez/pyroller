@@ -239,10 +239,6 @@ class SingleBallDisplay(common.Drawable, loggable.Loggable):
         # And rotate a bit
         self.background.rotate_to(random.uniform(*S['machine-ball-angle-range']))
 
-    def set_text(self, text):
-        """For compatibility"""
-        # TODO: remove this
-
     def draw(self, surface):
         """Draw the ball"""
         self.background.draw(surface)
