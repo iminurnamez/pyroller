@@ -240,7 +240,11 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
             drop_speed += S['machine-ball-drop-acceleration']
             yield 10
         self.moving_balls.append(ball)
-        self.dropping_balls.remove(ball)
+        #
+        # Remove from the list - note that we have to check the ball is still there
+        # because the machine may have been reset between the 'yield' and here
+        if ball in self.dropping_balls:
+            self.dropping_balls.remove(ball)
 
     def move_balls(self, increment):
         """Move the balls"""

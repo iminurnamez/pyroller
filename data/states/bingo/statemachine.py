@@ -58,7 +58,7 @@ class StateExecutor(loggable.Loggable):
 
     def get_fraction_to_go(self):
         """Return the fraction of our time to go"""
-        return min(0, max(1, self.delay / self.last_delay))
+        return max(0, min(1, self.delay / self.last_delay))
 
 
 class StateMachine(tools._State, loggable.Loggable):
