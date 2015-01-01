@@ -178,34 +178,16 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
         self.x, self.y = position
         self.balls = common.KeyedDrawableGroup()
         self.called_balls = []
-        #
-        w, h = S['called-balls-size']
-        dx, dy = S['called-balls-offsets']
-        #
-        for number in S['machine-balls']:
-            xi = (number - 1) % w
-            yi = (number - 1) // w
-            self.balls[number] = common.getLabel(
-                'called-ball-number', (self.x + xi * dx, self.y + yi * dy), number, S
-            )
 
     def call_ball(self, ball):
         """Call a particular ball"""
         self.called_balls.append(ball)
-        ball_colours = S['called-ball-font-colors']
-        for colour, ball in zip(ball_colours, reversed(self.called_balls[-len(ball_colours):])):
-            self.balls[ball.number].text_color = colour
-            self.balls[ball.number].update_text()
 
     def draw(self, surface):
         """Draw the tray"""
-        self.balls.draw(surface)
 
     def reset_display(self):
         """Reset the display of the balls"""
-        for ball in self.balls.values():
-            ball.text_color = S['called-ball-number-font-color']
-            ball.update_text()
         self.called_balls = []
 
 

@@ -130,8 +130,6 @@ SETTINGS = {
     'machine-ball-angle-range': (-20, 20),
 
     'called-balls-position': (180, 40),
-    'called-balls-offsets': (20, 20),
-    'called-balls-size': (15, 5),
     'called-ball-number-font': prepare.FONTS["Saniretro"],
     'called-ball-number-font-size': 16,
     'called-ball-number-font-color': 'black',
