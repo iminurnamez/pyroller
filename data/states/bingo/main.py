@@ -2,6 +2,7 @@
 
 import time
 import sys
+import random
 import pygame as pg
 from collections import OrderedDict
 
@@ -44,7 +45,7 @@ class Bingo(statemachine.StateMachine):
         self.ui = common.ClickableGroup()
         #
         lobby_label = common.getLabel('button', (0, 0), 'Lobby', S)
-        self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
+        self.lobby_button = Button(1020, self.screen_rect.bottom - (b_height + 15),
                                    b_width, b_height, lobby_label)
         #
         # The controls to allow selection of different numbers of cards
@@ -152,7 +153,7 @@ class Bingo(statemachine.StateMachine):
         # Buttons that show the winning patterns
         for idx, pattern in enumerate(patterns.PATTERNS):
             self.pattern_buttons.append(common.ImageOnOffButton(
-                pattern.name, (200 + idx * 240, 400),
+                pattern.name, (200 + idx * 240, 800),
                 'bingo-red-button', 'bingo-red-off-button', 'button',
                 pattern.name,
                 pattern == self.winning_pattern, S
@@ -256,14 +257,15 @@ class Bingo(statemachine.StateMachine):
 
     def create_card_collection(self):
         """Return a new card collection"""
+        number = self.card_selector.number_of_cards if self.card_selector.number_of_cards else random.randrange(1, 6)
         self.cards = playercard.PlayerCardCollection(
             'player-card',
             S['player-cards-position'],
-            S['player-card-offsets'][self.card_selector.number_of_cards],
+            S['player-card-offsets'][number],
             self
         )
         dx, dy = S['dealer-card-offset']
-        dealer_offsets = [(dx + x, dy +y) for x, y in S['player-card-offsets'][self.card_selector.number_of_cards]]
+        dealer_offsets = [(dx + x, dy +y) for x, y in S['player-card-offsets'][number]]
         self.dealer_cards = dealercard.DealerCardCollection(
             'dealer-card',
             S['player-cards-position'],

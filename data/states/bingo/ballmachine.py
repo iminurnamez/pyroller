@@ -75,16 +75,17 @@ class BallMachine(common.Drawable, loggable.Loggable):
         #
         return components
 
-    def change_speed(self, obj,  arg):
+    def change_speed(self, obj,  arg, silent=False):
         """Change the speed of the ball machine"""
         selected_idx, interval = arg
         self.log.info('Changing machine speed to index {0}, {1}s'.format(selected_idx, interval))
         #
         # Play appropriate sound
-        if interval < self.interval / 1000:
-            self.state.play_sound('bingo-speed-up')
-        else:
-            self.state.play_sound('bingo-slow-down')
+        if not silent:
+            if interval < self.interval / 1000:
+                self.state.play_sound('bingo-speed-up')
+            else:
+                self.state.play_sound('bingo-slow-down')
         #
         # Set cog
         self.cog.set_speed(selected_idx)
@@ -120,7 +121,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.called_balls = []
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
-        self.change_speed(None, (0, S['machine-speeds'][0][1]))
+        self.change_speed(None, (0, S['machine-speeds'][0][1]), silent=True)
         self.start_machine()
 
     def pick_balls(self):

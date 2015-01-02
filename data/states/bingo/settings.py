@@ -101,7 +101,7 @@ SETTINGS = {
 
     #
     # Player settings
-    'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 400),
+    'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 650),
     'player-card-offsets': {
         1: [(0, 0)],
         2: [(-150, 0), (150, 0)],
@@ -190,14 +190,20 @@ SETTINGS = {
     # Card selection
     'card-selection-default': 2,
     'card-selection': [
-        ('One', 1),
-        ('Two', 2),
-        ('Three', 3),
-        ('Four', 4),
-        ('Five', 5),
+        ('One', 1, (-110, -110)),
+        ('Two', 2, (+110, -110)),
+        ('Three', 3, (-110, 0)),
+        ('Four', 4, (+110, 0)),
+        ('Five', 5, (-110, 110)),
+        ('Random', None, (+110, 110)),
     ],
-    'card-selection-position': (1320, 600),
+    'card-selection-position': (220, 880),
     'card-selection-offsets': (0, 40),
+    'card-selection-font': prepare.FONTS["Saniretro"],
+    'card-selection-font-size': 62,
+    'card-selection-font-color': 'white',
+    'card-selection-size': (30, 45),
+    'card-selection-scale': 1.0,
 
     #
     # Money display
