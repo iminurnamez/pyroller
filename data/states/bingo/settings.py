@@ -227,7 +227,7 @@ SETTINGS = {
 
     #
     # Debug settings
-    'debug-auto-pick': True,
+    'debug-auto-pick': False,
     'debug-restart-position': (1250, 120),
     'debug-next-ball-position': (1250, 200),
     'debug-new-cards-position': (1250, 280),
