@@ -136,6 +136,7 @@ class BingoCard(common.Clickable):
     square_class = BingoSquare
     label_class = BingoLabel
     style_name = 'card-square'
+    card_success_sound = 'unknown'
 
     def __init__(self, name, position, state, index):
         """Initialise the bingo card"""
@@ -259,7 +260,7 @@ class BingoCard(common.Clickable):
                 missing_squares = self.state.get_missing_squares(squares)
                 if not missing_squares:
                     self.state.add_generator('flash-squares', self.flash_squares(squares, S_GOOD, S_GOOD))
-                    self.state.play_sound('bingo-card-success')
+                    self.state.play_sound(self.card_success_sound )
                     self.set_card_state(S_WON)
                 else:
                     self.state.add_generator('flash-squares', self.flash_squares(missing_squares, S_BAD, S_BAD))

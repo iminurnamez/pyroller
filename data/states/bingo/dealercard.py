@@ -23,6 +23,7 @@ class DealerCard(bingocard.BingoCard):
     square_class = DealerSquare
     label_class = None
     style_name = 'dealer-card-square'
+    card_success_sound = 'bingo-card-lost'
 
 
 class DealerCardCollection(bingocard.CardCollection):
