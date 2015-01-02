@@ -77,6 +77,7 @@ class Bingo(statemachine.StateMachine):
         #
         B.linkEvent(events.E_PLAYER_PICKED, self.player_picked)
         B.linkEvent(events.E_PLAYER_UNPICKED, self.player_unpicked)
+        B.linkEvent(events.E_CARD_COMPLETE, self.card_completed)
         #
         self.current_pick_sound = 0
         self.last_pick_time = 0
@@ -388,3 +389,12 @@ class Bingo(statemachine.StateMachine):
     def get_missing_squares(self, squares):
         """Return a list of the numbers that have not been called"""
         return [square for square in squares if square.text not in self.ball_machine.called_balls]
+
+    def card_completed(self, card, arg):
+        """A card was completed"""
+        self.log.info('Card {0} owned by {1} was completed'.format(card.index, card.card_owner))
+        #
+        # Find the matching card from the dealer or player and deactivate it
+        other_card = self.cards[card.index] if card.card_owner == bingocard.T_DEALER else self.dealer_cards[card.index]
+        other_card.active = False
+        other_card.set_card_state(bingocard.S_LOST)

@@ -37,14 +37,15 @@ class PlayerSquare(bingocard.BingoSquare):
 class PlayerCard(bingocard.BingoCard):
     """The player card"""
 
+    card_owner = bingocard.T_PLAYER
     square_class = PlayerSquare
     label_class = PlayerLabel
     style_name = 'player-card-square'
     state_names = ['bingo-value-off', 'bingo-value-win', 'bingo-value-lose']
 
-    def __init__(self, name, position, state):
+    def __init__(self, name, position, state, index):
         """Initialise the card"""
-        super(PlayerCard, self).__init__(name, position, state)
+        super(PlayerCard, self).__init__(name, position, state, index)
         #
         self.initial_value = self.value = S['card-initial-value']
         #
@@ -103,6 +104,7 @@ class PlayerCard(bingocard.BingoCard):
         """Reset the card"""
         super(PlayerCard, self).reset()
         self.update_value(self.initial_value)
+        self.double_down_button.state = True
 
     def draw(self, surface):
         """Draw the square"""
@@ -112,12 +114,14 @@ class PlayerCard(bingocard.BingoCard):
     def set_card_state(self, state):
         """Set the card state and flash it a bit"""
         self.state.add_generator('flash-card-state', self.flash_card_state(self.card_state, state))
+        self.double_down_button.state = False
 
     def flash_card_state(self, old_state, new_state):
         """Flash the card state"""
         for state, delay in S['card-winning-flash-timing']:
             self.card_state = new_state if state else old_state
             yield delay * 1000
+        #
         super(PlayerCard, self).set_card_state(new_state)
         #
         # Win money if we won

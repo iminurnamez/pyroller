@@ -17,6 +17,11 @@ S_OFF = 0
 S_WON = 1
 S_LOST = 2
 
+# Types of card
+T_UNKNOWN = 'unknown'
+T_PLAYER = 'player'
+T_DEALER = 'dealer'
+
 
 class BingoLabel(common.Clickable):
     """A label on a bingo card"""
@@ -127,16 +132,19 @@ class BingoSquare(BingoLabel):
 class BingoCard(common.Clickable):
     """A bingo card comprising a number of squares"""
 
+    card_owner = T_UNKNOWN
     square_class = BingoSquare
     label_class = BingoLabel
     style_name = 'card-square'
 
-    def __init__(self, name, position, state):
+    def __init__(self, name, position, state, index):
         """Initialise the bingo card"""
         super(BingoCard, self).__init__(name)
         #
         self.state = state
         self.x, self.y = position
+        self.index = index
+        #
         self.squares = common.KeyedDrawableGroup()
         square_offset = S['{0}-offset'.format(self.style_name)]
         chosen_numbers = set()
@@ -257,12 +265,13 @@ class BingoCard(common.Clickable):
                     self.state.add_generator('flash-squares', self.flash_squares(missing_squares, S_BAD, S_BAD))
                     self.state.play_sound('bingo-card-failure')
                     self.set_card_state(S_LOST)
+                B.processEvent((events.E_CARD_COMPLETE, self))
             #
             self.active = False
 
     def highlight_column(self, column):
         """Highlight a particular column"""
-        if self.label_class:
+        if self.label_class and (self.active or column is None):
             for letter, label in self.labels.items():
                 label.highlighted_state = S_NONE if letter != column else S_GOOD
 
@@ -302,6 +311,7 @@ class BingoCard(common.Clickable):
     def set_card_state(self, state):
         """Set the card state"""
         self.card_state = state
+        self.highlight_column(None)
 
 
 class CardCollection(common.ClickableGroup, common.DrawableGroup):
@@ -319,7 +329,7 @@ class CardCollection(common.ClickableGroup, common.DrawableGroup):
         common.DrawableGroup.__init__(self, [self.card_class(
             '%s(%d)' % (self.name, i + 1),
             (self.x + x, self.y + y),
-            state) for i, (x, y) in enumerate(offsets)]
+            state, i) for i, (x, y) in enumerate(offsets)]
         )
 
     def reset(self):
