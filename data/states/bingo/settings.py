@@ -41,7 +41,7 @@ SETTINGS = {
     'dealer-square-label-font': prepare.FONTS["Saniretro"],
     'dealer-square-label-font-size': 32,
     'dealer-square-label-font-color': 'black',
-    'dealer-square-label-scale': 0.5,
+    'dealer-square-label-scale': 0.4,
 
     'card-square-rows': SQUARE_ROWS,
     'card-square-cols': SQUARE_COLS,
@@ -109,11 +109,7 @@ SETTINGS = {
         4: [(-450, 0), (-150, 0), (150, 0), (450, 0)],
         5: [(-560, 0), (-280, 0), (0, 0), (280, 0), (560, 0)],
     },
-    'dealer-cards-position': (prepare.RENDER_SIZE[0] / 2 + 200, prepare.RENDER_SIZE[1] - 900),
-    'dealer-card-offsets': [
-        (-190, 0), (-70, 0), (70, 0), (190, 0),
-        # (-150, 0), (150, 0)
-    ],
+    'dealer-card-offset': (-58, 240),
 
     #
     # Table settings

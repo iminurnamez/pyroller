@@ -52,14 +52,8 @@ class Bingo(statemachine.StateMachine):
         self.card_selector.linkEvent(events.E_NUM_CARDS_CHANGED, self.change_number_of_cards)
         self.ui.append(self.card_selector.ui)
         #
-        self.cards = self.get_card_collection()
+        self.create_card_collection()
         self.ui.extend(self.cards)
-        self.dealer_cards = dealercard.DealerCardCollection(
-            'dealer-card',
-            S['dealer-cards-position'],
-            S['dealer-card-offsets'],
-            self
-        )
         #
         self.winning_pattern = patterns.PATTERNS[0]
         #
@@ -259,12 +253,20 @@ class Bingo(statemachine.StateMachine):
         self.cards.draw_new_numbers()
         self.cards.reset()
 
-    def get_card_collection(self):
+    def create_card_collection(self):
         """Return a new card collection"""
-        return playercard.PlayerCardCollection(
+        self.cards = playercard.PlayerCardCollection(
             'player-card',
             S['player-cards-position'],
             S['player-card-offsets'][self.card_selector.number_of_cards],
+            self
+        )
+        dx, dy = S['dealer-card-offset']
+        dealer_offsets = [(dx + x, dy +y) for x, y in S['player-card-offsets'][self.card_selector.number_of_cards]]
+        self.dealer_cards = dealercard.DealerCardCollection(
+            'dealer-card',
+            S['player-cards-position'],
+            dealer_offsets,
             self
         )
 
@@ -279,12 +281,15 @@ class Bingo(statemachine.StateMachine):
         for card in self.cards:
             self.all_cards.remove(card)
             self.ui.remove(card)
+        for card in self.dealer_cards:
+            self.all_cards.remove(card)
         #
         # Create new cards
-        self.cards = self.get_card_collection()
+        self.create_card_collection()
         self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
         #
         self.all_cards.extend(self.cards)
+        self.all_cards.extend(self.dealer_cards)
         self.ui.extend(self.cards)
         self.restart_game(None, None)
 
