@@ -124,11 +124,11 @@ class Blackjack(tools._State):
             c2 = hand.card_values[hand.cards[1].value]
             if c1 == c2:
                 hand.slots = hand.slots[:-1]
-                self.player.move_hands(((self.screen_rect.left + 20) - hand.slots[0].left, 0))
+                self.player.move_hands(((self.screen_rect.left + 50) - hand.slots[0].left, 0))
                 p_slot = player.hands[-1].slots[0]
-                hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 2.5), 0)
+                hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 3.5), 0)
                 card = hand.cards.pop()
-                new_hand = Hand((hand_slot.topleft[0], hand_slot.topleft[1] - 20), [card],
+                new_hand = Hand((hand_slot.topleft[0], hand_slot.topleft[1]), [card],
                                             self.player.chip_pile.withdraw_chips(bet))
                 new_hand.slots = [hand_slot]
                 card.rect.topleft = hand_slot.topleft
@@ -226,7 +226,7 @@ class Blackjack(tools._State):
                 if not self.moving_stacks:
                     if event.button == 1:
                         if self.deal_button.rect.collidepoint(pos):
-                            if any(x.bet for x in self.player.hands):
+                            if any(x.bet.chips for x in self.player.hands):
                                 self.state = "Dealing"
                                 self.casino_player.stats["Blackjack"]["games played"] += 1
                         new_movers = self.player.chip_pile.grab_chips(pos)
@@ -400,7 +400,7 @@ class Blackjack(tools._State):
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
-        surface.fill(pg.Color("darkgreen"))
+        surface.fill(prepare.FELT_GREEN)
         self.dealer.draw_hand(surface)
         self.deck.draw(surface)
         self.chip_rack.draw(surface)
