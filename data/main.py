@@ -6,6 +6,9 @@ the tools.Control class.  All modifications should occur in this module
 and in the prepare module.
 """
 
+import cProfile
+import pstats
+
 from . import prepare, tools
 from .states import title_screen, lobby_screen, stats_menu
 from .states import stats_screen, blackjack, craps, bingo, keno
@@ -30,4 +33,14 @@ def main():
         run_it.setup_states(state_dict, "TITLESCREEN")
     else:
         run_it.setup_states(state_dict, "SNAKESPLASH")
-    run_it.main()
+    #
+    # Start the main state
+    if not prepare.ARGS['profile']:
+        run_it.main()
+    else:
+        #
+        # Run with profiling turned on - produces a 'profile' file
+        # with stats and then dumps this to the screen
+        cProfile.runctx('run_it.main()', globals(), locals(), 'profile')
+        p = pstats.Stats('profile')
+        print(p.sort_stats('cumulative').print_stats(100))
