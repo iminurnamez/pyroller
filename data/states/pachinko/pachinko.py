@@ -1,12 +1,7 @@
-import pymunk
 import pygame as pg
-from ... import tools, prepare
-from ...components.angles import get_distance, get_angle, project
-from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel
-from ...components.cards import Deck
-from ...components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
-
+from ... import tools
 from .playfield import Playfield
+
 
 class Pachinko(tools._State):
     """Pachinko game."""

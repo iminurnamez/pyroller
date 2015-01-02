@@ -118,15 +118,15 @@ class PhysicsSprite(pygame.sprite.DirtySprite):
     def update(self, dt):
         if hasattr(self.shape, "needs_remove"):
             self.kill()
-            return
-
-        angle = degrees(self.shape.body.angle)
-        if not angle == self._old_angle or self.dirty:
-            self.image = rotozoom(self.original_image, angle, 1)
-            self.rect = self.image.get_rect()
-            self._old_angle = angle
-            self.dirty = False
-        self.rect.center = self.shape.body.position
+        else:
+            angle = degrees(self.shape.body.angle)
+            if not angle == self._old_angle or self.dirty:
+                self.image = rotozoom(self.original_image, angle, 1)
+                self.rect = self.image.get_rect()
+                self._old_angle = angle
+                self.dirty = False
+            self.rect.center = self.shape.body.position
+            self.dirty = 1
 
     def kill(self):
         for shape in self.shapes:
@@ -144,15 +144,12 @@ class Pocket(PhysicsSprite):
         color = (220, 100, 0)
         inside = rect.inflate(-3, -3)
         cover = Poly.create_box(playfield, inside.size, rect.center)
-
+        self.shapes = [cover]
         if walls:
             s0 = Segment(playfield, rect.topleft, rect.bottomleft, 1)
             s1 = Segment(playfield, rect.bottomleft, rect.bottomright, 1)
             s2 = Segment(playfield, rect.bottomright, rect.topright, 1)
-            self.shapes = [cover, s0, s1, s2]
-        else:
-            self.shapes = [cover]
-
+            self.shapes.extend((s0, s1, s2))
         self.rect = pygame.Rect(rect)
         self.original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
         pygame.draw.rect(self.original_image, color, rect)
@@ -180,13 +177,13 @@ class Ball(PhysicsSprite):
         pygame.draw.circle(self.original_image, color, self.rect.center, radius)
         self.update(None)
 
+
 class Spinner(PhysicsSprite):
     def __init__(self, space, rect, playfield=None):
         super(Spinner, self).__init__()
         color = (220, 220, 220)
-        mass = .1
         radius = rect.width / 2
-        body = pymunk.Body(mass, moment_for_circle(mass, 0, radius))
+        body = pymunk.Body(.1, moment_for_circle(.1, 0, radius))
         body.position = rect.center
         top = Circle(body, radius)
         top.layers = 2
@@ -208,15 +205,14 @@ class PlungerAssembly(PhysicsSprite):
 
         plunger_rect = pygame.Rect(0, 0, rect.width * .2, ball_radius / 2)
         spring_strength = 100 * plunger_mass
-        spring_dampening = 1
         spring_length = rect.width * .8
-
         assembly_body_position = playfield.position + rect.center
         chute_opening = assembly_body_position - (rect.width / 2 -ball_radius * 4, 0)
+        anchor0 = chute_opening - playfield.position - (ball_radius * 3, 0)
+        anchor1 = anchor0 + (spring_length, 0)
+        anchor2 = -plunger_rect.width / 2, 0
 
-        assembly_shape = Poly.create_box(playfield,
-                                         rect.size,
-                                         rect.center)
+        assembly_shape = Poly.create_box(playfield, rect.size, rect.center)
         assembly_shape.layers = 0
         space.add(assembly_shape)
 
@@ -228,16 +224,8 @@ class PlungerAssembly(PhysicsSprite):
         plunger_shape.collision_type = plunger_type
         plunger_body.position = chute_opening + (plunger_rect.width / 2, 0)
 
-        anchor0 = chute_opening - playfield.position - (ball_radius * 3, 0)
-        anchor1 = anchor0 + (spring_length, 0)
-        anchor2 = -plunger_rect.width / 2, 0
-
-        joint = GrooveJoint(playfield, plunger_body, anchor0, anchor1, anchor2)
-        space.add(joint)
-
-        spring = DampedSpring(playfield, plunger_body, anchor0, anchor2,
-                                     0, spring_strength, 1)
-        space.add(spring)
+        space.add(GrooveJoint(playfield, plunger_body, anchor0, anchor1, anchor2))
+        space.add(DampedSpring(playfield, plunger_body, anchor0, anchor2, 0, spring_strength, 1))
 
         sensor = Circle(space.static_body, ball_radius / 2)
         sensor.layers = 1
@@ -324,29 +312,24 @@ class Playfield(pygame.sprite.Group):
                 self._space.add(item)
 
     def update(self, surface, dt):
+        steps = 10
         dt = 1 / 30. / 10.
         if self.depress:
             self.plunger_body.apply_force((8000, 0))
 
         step = self._space.step
-        step(dt)
-        step(dt)
-        step(dt)
-        step(dt)
-        step(dt)
-        step(dt)
-        step(dt)
-        step(dt)
-        step(dt)
-        step(dt)
+        for i in xrange(steps):
+            step(dt)
 
         if self.background is None:
             self.background = pygame.Surface(surface.get_size())
             pymunk.pygame_util.draw(self.background, self._space)
+            surface.blit(self.background, (0, 0))
 
-        surface.blit(self.background, (0, 0))
-        super(Playfield, self).update(dt)
-        super(Playfield, self).draw(surface)
+        sup = super(Playfield, self)
+        sup.update(dt)
+        sup.clear(surface, self.background)
+        sup.draw(surface)
 
     def depress_plunger(self):
         self.depress = True
