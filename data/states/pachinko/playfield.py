@@ -1,12 +1,9 @@
-import math
 import json
 import os
-import functools
 from operator import itemgetter
-from itertools import chain
 import pymunk
 from pymunk import Body, Poly, Segment, Circle
-from pymunk import moment_for_box, moment_for_circle
+from pymunk import moment_for_circle
 import pymunk.pygame_util
 import pygame
 
@@ -16,7 +13,7 @@ ball_radius = 10
 
 def load_json(space, filename):
     scale = 1
-    ooy = 000
+    ooy = 150
 
 
     def get_handler(name):
@@ -24,7 +21,7 @@ def load_json(space, filename):
 
     def get_rect(data):
         x, y, w, h = itemgetter('x', 'y', 'width', 'height')(data)
-        return pygame.Rect(x, height - y - h, w, h)
+        return pygame.Rect(x, height - y - h -ooy, w, h)
 
     def handle_polyline(data, body=None):
         if body is None:
@@ -32,7 +29,7 @@ def load_json(space, filename):
 
         def get_point(i):
             pt = [i * scale for i in get_xy(i)]
-            return pt[0] + ox, height - (oy + pt[1])
+            return pt[0] + ox, height - (oy + pt[1]) - ooy
 
         get_xy = itemgetter('x', 'y')
         ox, oy = [i * scale for i in get_xy(data)]
@@ -49,6 +46,16 @@ def load_json(space, filename):
         plunger.build(space, body, assembly_rect)
         yield plunger
 
+    def handle_object_type_spinner(data, body):
+        spinner = Spinner()
+        spinner.build(space, body, get_rect(data))
+        yield spinner
+
+    def handle_object_type_pin(data, body):
+        pin = Circle(body, 1, get_rect(data).center)
+        pin.elasticity = 1.0
+        yield pin
+
     def handle_objectgroup(layer):
         # if true, then this is playfield geometry and will need a body
         if layer['name'].startswith('geometry'):
@@ -56,7 +63,7 @@ def load_json(space, filename):
             #body = pymunk.Body(mass, pymunk.inf)
             #yield body
             body = pymunk.Body()
-            body.position += (200, -150)
+            #body.position += (200, -150)
         else:
             body = None
 
@@ -107,7 +114,7 @@ class Ball(pygame.sprite.DirtySprite):
         radius = 20
         moment = moment_for_circle(mass, 0, radius)
         body = pymunk.Body(mass, moment)
-        shape = pymunk.Circle(body, 10)
+        shape = Circle(body, 10)
         shape.friction = 1.0
         shape.layers = 0
         self.shape = shape
@@ -119,19 +126,19 @@ class Spinner(pygame.sprite.DirtySprite):
         super(Spinner, self).__init__()
         self.shape = None
 
-    def build(self, space, rect):
+    def build(self, space, playfield_body, rect):
         assert (self.shape is None)
         mass = .1
         radius = rect.width / 2
-        moment = pymunk.moment_for_circle(mass, 0, radius)
+        moment = moment_for_circle(mass, 0, radius)
         body = pymunk.Body(mass, moment)
         body.position = rect.center
-        top = pymunk.Circle(body, radius)
+        top = Circle(body, radius)
         top.layers = 2
         rect = pygame.Rect((-rect.width / 2, -rect.height / 2), rect.size)
         cross0 = pymunk.Segment(body, rect.midleft, rect.midright, 1)
         cross1 = pymunk.Segment(body, rect.midtop, rect.midbottom, 1)
-        joint = pymunk.PivotJoint(space.static_body, body, body.position)
+        joint = pymunk.PivotJoint(playfield_body, body, body.position)
         space.add(body, top, cross0, cross1, joint)
 
 
@@ -144,6 +151,7 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
         self._ball_chute_sensor = None
         self._chute_counter = 0
         self._chute_latch = True
+        self._active = None
 
     def add_ball(self, space, arbiter):
         sensor, plunger = arbiter.shapes
@@ -151,11 +159,13 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
         if not self._chute_latch:
             mass = 1
             body = pymunk.Body(mass, moment_for_circle(mass, 0, 1))
-            shape = pymunk.Circle(body, 10)
+            shape = Circle(body, 10)
             shape.friction = 1.0
             shape.layers = 1
             body.position = self.chute_opening
             space.add(body, shape)
+            self._active.add(body)
+            self._active.add(shape)
 
     def build(self, space, assembly_body, assembly_rect):
         plunger_mass = 5
@@ -204,7 +214,7 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
         space.add(spring)
 
         body = Body()
-        sensor = pymunk.Circle(body, ball_radius / 2)
+        sensor = Circle(body, ball_radius / 2)
         sensor.layers = 1
         sensor.sensor = True
         sensor.collision_type = sensor0_type
@@ -223,7 +233,7 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
             self._chute_latch = bool(self._chute_counter)
 
         body = Body()
-        sensor = pymunk.Circle(body, ball_radius * 3)
+        sensor = Circle(body, ball_radius * 3)
         sensor.layers = 1
         sensor.sensor = True
         sensor.collision_type = sensor1_type
@@ -235,11 +245,10 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
 
         self._ball_chute_sensor = sensor
         self.plunger_body = plunger_body
+        self.plunger_shape = plunger_shape
         self.sensor = sensor
         self.chute_opening = chute_opening
         self.spring_strength = spring_strength
-
-        return plunger_body
 
 
 class Playfield(pygame.sprite.RenderUpdates):
@@ -247,19 +256,23 @@ class Playfield(pygame.sprite.RenderUpdates):
         super(Playfield, self).__init__(*args, **kwargs)
         self._dirty = False
         self._space = None
-        self._members = list()
+        self._active = set()
         self.depress = False
         self.plunger_body = None
+        self.background = None
 
     def load(self, filename):
         for i in load_json(self._space, 'default.json'):
             if isinstance(i, PlungerAssembly):
                 self.plunger_body = i.plunger_body
+                i._active = self._active
+                self._active.add(i.plunger_shape)
+            elif isinstance(i, Spinner):
+                pass
             else:
                 self._space.add(i)
 
     def build(self):
-        assert (not self._members)
         size = pygame.Rect(0, 0, 100, 1000)
         self._space = pymunk.Space()
         self._space.gravity = (0, -1000)
@@ -270,20 +283,23 @@ class Playfield(pygame.sprite.RenderUpdates):
         if self.depress:
             self.plunger_body.apply_force((8000, 0))
 
-        self._space.step(dt)
-        self._space.step(dt)
-        self._space.step(dt)
-        self._space.step(dt)
-        self._space.step(dt)
-        self._space.step(dt)
-        self._space.step(dt)
-        self._space.step(dt)
-        self._space.step(dt)
-        self._space.step(dt)
+        step = self._space.step
+        step(dt)
+        step(dt)
+        step(dt)
+        step(dt)
+        step(dt)
+        step(dt)
+        step(dt)
+        step(dt)
+        step(dt)
+        step(dt)
 
-        # super(Playfield, self).draw(surface)
-        surface.fill((0, 0, 0))
-        pymunk.pygame_util.draw(surface, self._space)
+        if self.background is None:
+            self.background = pygame.Surface(surface.get_size())
+            pymunk.pygame_util.draw(self.background, self._space)
+        surface.blit(self.background, (0, 0))
+        pymunk.pygame_util.draw(surface, self._active)
 
     def depress_plunger(self):
         self.depress = True
