@@ -40,6 +40,7 @@ class PlayerCard(bingocard.BingoCard):
     square_class = PlayerSquare
     label_class = PlayerLabel
     style_name = 'player-card-square'
+    state_names = ['bingo-value-off', 'bingo-value-win', 'bingo-value-lose']
 
     def __init__(self, name, position, state):
         """Initialise the card"""
@@ -61,22 +62,26 @@ class PlayerCard(bingocard.BingoCard):
         #
         # The label for display of the card value
         label_offset = S['card-value-label-offset']
+        label_position = (self.x + label_offset[0], self.y + label_offset[1])
         self.value_label = common.getLabel(
             'card-value-label',
-            (self.x + label_offset[0], self.y + label_offset[1]),
+            label_position,
             '*PLACEHOLDER*', S
         )
         self.update_value(self.initial_value)
         #
+        # Button states
+        self.states = [common.NamedSprite(state_name, label_position) for state_name in self.state_names]
+        #
         self.drawables.extend([
-            self.double_down_button, self.value_label
+            self.double_down_button, self.value_label,
         ])
         self.clickables.append(self.double_down_button)
 
     def update_value(self, value):
         """Update the value of the card"""
         self.value = value
-        self.value_label.set_text('Card value ${0}'.format(value))
+        self.value_label.set_text('${0}'.format(value))
 
     def double_down(self, obj, arg):
         """Double down the card"""
@@ -98,6 +103,26 @@ class PlayerCard(bingocard.BingoCard):
         """Reset the card"""
         super(PlayerCard, self).reset()
         self.update_value(self.initial_value)
+
+    def draw(self, surface):
+        """Draw the square"""
+        self.states[self.card_state].draw(surface)
+        super(PlayerCard, self).draw(surface)
+
+    def set_card_state(self, state):
+        """Set the card state and flash it a bit"""
+        self.state.add_generator('flash-card-state', self.flash_card_state(self.card_state, state))
+
+    def flash_card_state(self, old_state, new_state):
+        """Flash the card state"""
+        for state, delay in S['card-winning-flash-timing']:
+            self.card_state = new_state if state else old_state
+            yield delay * 1000
+        super(PlayerCard, self).set_card_state(new_state)
+        #
+        # Win money if we won
+        if new_state == bingocard.S_WON:
+            prepare.BROADCASTER.processEvent((events.E_SPEND_MONEY, self.value))
 
 
 class PlayerCardCollection(bingocard.CardCollection):

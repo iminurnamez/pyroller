@@ -70,9 +70,9 @@ SETTINGS = {
     'dealer-card-square-max-chars': 20,
 
     'card-value-label-font': prepare.FONTS["Saniretro"],
-    'card-value-label-font-size': 22,
-    'card-value-label-font-color': 'yellow',
-    'card-value-label-offset': (0, -160),
+    'card-value-label-font-size': 72,
+    'card-value-label-font-color': 'white',
+    'card-value-label-offset': (60, 240),
     'card-initial-value': 5,
 
     'card-double-down-button-font': prepare.FONTS["Saniretro"],

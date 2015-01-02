@@ -12,6 +12,11 @@ S_NONE = 0
 S_GOOD = 1
 S_BAD = 2
 
+# States for the card itself
+S_OFF = 0
+S_WON = 1
+S_LOST = 2
+
 
 class BingoLabel(common.Clickable):
     """A label on a bingo card"""
@@ -161,6 +166,8 @@ class BingoCard(common.Clickable):
             self.squares, self.labels,
         ])
         #
+        self.card_state = S_NONE
+        #
         self.potential_winning_squares = []
         self.is_active = True
 
@@ -232,6 +239,7 @@ class BingoCard(common.Clickable):
         self.called_squares = []
         self.update_squares_to_go()
         self.active = True
+        self.card_state = S_NONE
 
     def update_squares_to_go(self):
         """Update a card with the number of squares to go"""
@@ -244,9 +252,11 @@ class BingoCard(common.Clickable):
                 if not missing_squares:
                     self.state.add_generator('flash-squares', self.flash_squares(squares, S_GOOD, S_GOOD))
                     self.state.play_sound('bingo-card-success')
+                    self.set_card_state(S_WON)
                 else:
                     self.state.add_generator('flash-squares', self.flash_squares(missing_squares, S_BAD, S_BAD))
                     self.state.play_sound('bingo-card-failure')
+                    self.set_card_state(S_LOST)
             #
             self.active = False
 
@@ -288,6 +298,10 @@ class BingoCard(common.Clickable):
             for letter in 'BINGO':
                 self.labels[letter].highlighted_state = letter in letters
             yield on_time
+
+    def set_card_state(self, state):
+        """Set the card state"""
+        self.card_state = state
 
 
 class CardCollection(common.ClickableGroup, common.DrawableGroup):
