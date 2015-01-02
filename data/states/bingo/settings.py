@@ -76,9 +76,9 @@ SETTINGS = {
     'card-initial-value': 5,
 
     'card-double-down-button-font': prepare.FONTS["Saniretro"],
-    'card-double-down-button-font-size': 18,
-    'card-double-down-button-font-color': 'black',
-    'card-double-down-button-offset': (0, 160),
+    'card-double-down-button-font-size': 42,
+    'card-double-down-button-font-color': 'white',
+    'card-double-down-button-offset': (0, 150),
     'card-double-down-delay': 2,
 
     'card-focus-flash-timing': [

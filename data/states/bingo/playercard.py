@@ -52,10 +52,10 @@ class PlayerCard(bingocard.BingoCard):
         self.double_down_button = common.ImageOnOffButton(
             'double-down',
             (self.x + label_offset[0], self.y + label_offset[1]),
-            'bingo-red-button', 'bingo-red-off-button',
+            'bingo-double-on', 'bingo-double-off',
             'card-double-down-button',
             'Double', True,
-            S, S['small-button-scale'],
+            S,
         )
         self.double_down_button.linkEvent(common.E_MOUSE_CLICK, self.double_down)
         #
