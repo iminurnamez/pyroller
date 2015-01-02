@@ -156,17 +156,9 @@ class BingoCard(common.Clickable):
                     self, (square_offset * x, square_offset * y_offset + S['card-square-header-offset'][1]), letter
                 )
         #
-        # The label for display of the remaining squares on the card
-        label_offset = S['{0}-remaining-label-offset'.format(self.style_name)]
-        self.remaining_label = common.getLabel(
-            'card-remaining-label',
-            (self.x + label_offset[0], self.y + label_offset[1]),
-            'Player card', S
-        )
-        #
         self.clickables = common.ClickableGroup(self.squares.values())
         self.drawables = common.DrawableGroup([
-            self.squares, self.labels, self.remaining_label,
+            self.squares, self.labels,
         ])
         #
         self.potential_winning_squares = []
@@ -211,10 +203,6 @@ class BingoCard(common.Clickable):
         """Process clicking events"""
         self.clickables.process_events(event, scale)
 
-    def set_label(self, text):
-        """Set the card label text"""
-        self.remaining_label.set_text(str(text))
-
     def call_square(self, number):
         """Call a particular square"""
         if not self.active:
@@ -248,9 +236,6 @@ class BingoCard(common.Clickable):
     def update_squares_to_go(self):
         """Update a card with the number of squares to go"""
         number_to_go, self.potential_winning_squares = self.state.winning_pattern.get_number_to_go_and_winners(self, self.called_squares)
-        #
-        self.set_label(
-            '{0} to go'.format(number_to_go))
         #
         # Check if a line completed
         if self.active and number_to_go == 0:
