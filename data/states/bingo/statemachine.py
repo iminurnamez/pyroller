@@ -8,6 +8,10 @@ import pygame
 from . import loggable
 
 
+class NotFound(Exception):
+    """Generator was not found"""
+
+
 class StateExecutor(loggable.Loggable):
     """Executes a generator through a sequence with delays"""
 
@@ -123,4 +127,4 @@ class StateMachine(tools._State, loggable.Loggable):
                 self.log.debug('Removing executor {0}, {1}'.format(name, id(generator)))
                 break
         else:
-            raise ValueError('A generator named {0} was not found'.format(name))
+            raise NotFound('A generator named {0} was not found'.format(name))

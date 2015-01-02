@@ -6,6 +6,7 @@ import pygame as pg
 from ...components import common
 from . import loggable
 from .settings import SETTINGS as S
+from . import statemachine
 
 
 class Ball(object):
@@ -110,7 +111,12 @@ class BallMachine(common.Drawable, loggable.Loggable):
         """Start the machine"""
         self.running = True
         if self.timer:
-            self.state.stop_generator('ball-machine')
+            try:
+                self.state.stop_generator('ball-machine')
+            except statemachine.NotFound:
+                # OK, must have already completed
+                pass
+
         self.timer = self.state.add_generator('ball-machine', self.pick_balls())
 
     def stop_machine(self):
