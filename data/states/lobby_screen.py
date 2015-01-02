@@ -3,7 +3,7 @@ import json
 import pygame as pg
 
 from .. import tools, prepare
-from ..components.labels import Label, Button, PayloadButton, ImageButton, NeonButton
+from ..components.labels import Label, Button, ImageButton, NeonButton
 from ..components.flair_pieces import ChipCurtain
 from ..components.music_handler import MusicHandler
 
@@ -42,30 +42,16 @@ class LobbyScreen(tools._State):
             if left > screen_rect.width - 100:
                 left = screen_rect.width // (num_columns + 1)
                 top += label.rect.height + icon_rect.height + 50
-
-        #b_width = 300
-        #b_height = 80
-        #credits_label = Label(self.font, 48, "Credits", "gold3", {"center": (0, 0)})
-        #self.credits_button = Button(9, screen_rect.bottom - (b_height + 11), b_width,
-        #                                          b_height, credits_label)
-        #stats_label = Label(self.font, 48, "Stats", "gold3", {"center": (0, 0)})
-        #self.stats_button = Button(screen_rect.right - (b_width + 10),
-        #                                        screen_rect.bottom - (b_height + 11),
-        #                                        b_width, b_height, stats_label)
-        #done_label = Label(self.font, 48, "EXIT", "gold3", {"center": (0, 0)})
-        #self.done_button = Button(screen_rect.centerx - (b_width//2),
-        #                                        screen_rect.bottom - (b_height + 11),
-        #                                        b_width, b_height, done_label)
-        
         b_width = 318
         b_height = 101
-        self.credits_button = NeonButton((9, screen_rect.bottom - (b_height + 11)), "Credits")
+        self.credits_button = NeonButton((9,screen_rect.bottom-(b_height+11)),
+                                         "Credits")
         self.stats_button = NeonButton((screen_rect.right - (b_width + 10),
-                                                       screen_rect.bottom - (b_height + 11)),
-                                                       "Stats")
+                                        screen_rect.bottom - (b_height + 11)),
+                                        "Stats")
         self.done_button = NeonButton((screen_rect.centerx - (b_width//2),
-                                                screen_rect.bottom - (b_height + 11)),
-                                                "Exit") 
+                                       screen_rect.bottom - (b_height + 11)),
+                                       "Exit")
 
     def startup(self, current_time, persistent):
         self.persist = persistent
@@ -101,32 +87,18 @@ class LobbyScreen(tools._State):
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.exit_game()
-            #TEMPORARY TO MAKE BUTTON IMAGES
-            elif event.key == pg.K_SPACE:
-                font = prepare.FONTS["Saniretro"]
-                button_img = prepare.GFX["button_neon_off"]
-                w, h  = button_img.get_size()
-                texts = ["Bingo", "Blackjack", "Craps", "Keno", "Credits", "Exit", "Stats"]
-                surf = pg.Surface((w, h * len(texts))).convert_alpha()
-                surf.fill((0,0,0,0))
-                top = 0
-                for text in texts:
-                    label = Label(font, 48, text, "gold3", {"center": (w // 2, top + (h//2))})
-                    surf.blit(button_img, (0, top))
-                    label.draw(surf)
-                    top += h
-                pg.image.save(surf, "button_sheet.png")        
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
         self.persist["music_handler"].update(scale)
-        for button in [self.stats_button, self.done_button, self.credits_button]:
+        buttons = [self.stats_button, self.done_button, self.credits_button]
+        for button in buttons:
             button.update(mouse_pos)
         self.draw(surface)
 
     def draw(self, surface):
-        surface.fill(pg.Color("black"))
+        surface.fill(prepare.BACKGROUND_BASE)
         self.chip_curtain.draw(surface)
         for button in self.game_buttons:
             pg.draw.rect(surface, pg.Color("gray10"), button.frame_rect)
