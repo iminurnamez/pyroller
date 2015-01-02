@@ -94,6 +94,8 @@ class PlayerCard(bingocard.BingoCard):
             self.state.add_generator('re-enable-double-down', self.enable_double_down_button(
                 S['card-double-down-delay'] * 1000
             ))
+            self.state.play_sound('bingo-double-up')
+            self.state.add_generator('flash-card-state', self.flash_card_state(bingocard.S_WON, bingocard.S_NONE))
 
     def enable_double_down_button(self, delay):
         """Re-enable the double down button"""
