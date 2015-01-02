@@ -31,6 +31,7 @@ class PlayerSquare(bingocard.BingoSquare):
     """A square on a player card"""
 
     style_name = 'player-square-label'
+    highlight_names = ['bingo-highlight-grid', 'bingo-highlight', 'bingo-bad-highlight']
 
 
 class PlayerCard(bingocard.BingoCard):

@@ -89,9 +89,9 @@ class BingoSquare(BingoLabel):
 
     def draw(self, surface):
         """Draw the square"""
-        super(BingoSquare, self).draw(surface)
         if self.is_called:
             self.marker.draw(surface)
+        super(BingoSquare, self).draw(surface)
         if self.is_active and self.is_focused:
             self.focus_marker.draw(surface)
 
@@ -99,7 +99,6 @@ class BingoSquare(BingoLabel):
         """The number was clicked on"""
         if not self.is_active:
             return
-        self.marker.rotate_to(random.randrange(0, 360))
         self.is_called = not self.is_called
         if self.is_called:
             self.card.call_square(self.text)
@@ -154,7 +153,7 @@ class BingoCard(common.Clickable):
             for x, letter in zip(S['card-square-cols'], 'BINGO'):
                 self.labels[letter] = self.label_class(
                     '{0} {1} label'.format(self.name, letter),
-                    self, (square_offset * x, square_offset * y_offset), letter
+                    self, (square_offset * x, square_offset * y_offset + S['card-square-header-offset'][1]), letter
                 )
         #
         # The label for display of the remaining squares on the card

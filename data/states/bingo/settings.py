@@ -48,8 +48,9 @@ SETTINGS = {
     'card-square-scaled-offsets': [
         (x, y) for x in SQUARE_COLS for y in SQUARE_ROWS
     ],
-    'player-card-square-offset': 40,
+    'player-card-square-offset': 48,
     'dealer-card-square-offset': 20,
+    'card-square-header-offset': (0, -6),
 
     'card-numbers': {
         -2: range(1, 16),
