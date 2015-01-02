@@ -88,7 +88,6 @@ class PlayerCard(bingocard.BingoCard):
         """Double down the card"""
         if self.double_down_button.state:
             self.log.info('Doubling down on the card')
-            prepare.BROADCASTER.processEvent((events.E_SPEND_MONEY, -self.value))
             self.update_value(self.value * 2)
             self.double_down_button.state = False
             self.state.add_generator('re-enable-double-down', self.enable_double_down_button(
@@ -125,8 +124,8 @@ class PlayerCard(bingocard.BingoCard):
         super(PlayerCard, self).set_card_state(new_state)
         #
         # Win money if we won
-        if new_state == bingocard.S_WON:
-            prepare.BROADCASTER.processEvent((events.E_SPEND_MONEY, self.value))
+        multiplier = [0, 1, -1][new_state]
+        prepare.BROADCASTER.processEvent((events.E_SPEND_MONEY, multiplier * self.value))
 
 
 class PlayerCardCollection(bingocard.CardCollection):
