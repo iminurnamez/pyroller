@@ -1,27 +1,39 @@
 import json
 import os
+from math import degrees
 from operator import itemgetter
 import pymunk
 from pymunk import Body, Poly, Segment, Circle
 from pymunk import moment_for_circle
 import pymunk.pygame_util
 import pygame
+import pygame.draw
+import pygame.gfxdraw
+from pygame.transform import rotozoom
+
+pymunk.pygame_util.flip_y = False
 
 supported_shapes = frozenset(('polyline', ))
+ball_mass = 1
 ball_radius = 10
+ball_type = 100
+sensor0_type = 101
+sensor1_type = 102
+plunger_type = 103
+pocket_win_type = 104
+pocket_fail_type = 105
 
 
 def load_json(space, filename):
     scale = 1
     ooy = 150
 
-
     def get_handler(name):
         return handlers.get(name, None)
 
     def get_rect(data):
         x, y, w, h = itemgetter('x', 'y', 'width', 'height')(data)
-        return pygame.Rect(x, height - y - h -ooy, w, h)
+        return pygame.Rect(x, y -ooy, w, h)
 
     def handle_polyline(data, body=None):
         if body is None:
@@ -29,7 +41,7 @@ def load_json(space, filename):
 
         def get_point(i):
             pt = [i * scale for i in get_xy(i)]
-            return pt[0] + ox, height - (oy + pt[1]) - ooy
+            return pt[0] + ox, (oy + pt[1]) - ooy
 
         get_xy = itemgetter('x', 'y')
         ox, oy = [i * scale for i in get_xy(data)]
@@ -51,21 +63,23 @@ def load_json(space, filename):
         spinner.build(space, body, get_rect(data))
         yield spinner
 
+    def handle_object_type_pocket(data, body):
+        pocket = Pocket(win=True, walls=True)
+        pocket.build(space, body, get_rect(data))
+        yield pocket
+
+    def handle_object_type_fail(data, body):
+        pocket = Pocket()
+        pocket.build(space, body, get_rect(data))
+        yield pocket
+
     def handle_object_type_pin(data, body):
         pin = Circle(body, 1, get_rect(data).center)
         pin.elasticity = 1.0
         yield pin
 
     def handle_objectgroup(layer):
-        # if true, then this is playfield geometry and will need a body
-        if layer['name'].startswith('geometry'):
-            #mass = 999999
-            #body = pymunk.Body(mass, pymunk.inf)
-            #yield body
-            body = pymunk.Body()
-            #body.position += (200, -150)
-        else:
-            body = None
+        body = pymunk.Body()
 
         for thing in layer['objects']:
             for kind in supported_shapes.intersection(thing.keys()):
@@ -83,9 +97,6 @@ def load_json(space, filename):
     with open(os.path.join(files, "default.json")) as fp:
         all_data = json.load(fp)
 
-    height = all_data['tileheight'] * all_data['height']
-    print(height)
-
     for layer in all_data['layers']:
         f = get_handler('handle_{}'.format(layer['type']))
         if f:
@@ -99,87 +110,138 @@ def rect_to_poly(rect):
     return rect.topleft, rect.topright, rect.bottomright, rect.bottomleft
 
 
-class Pocket(pygame.sprite.DirtySprite):
-    pass
-
-
-class Ball(pygame.sprite.DirtySprite):
+class PhysicsSprite(pygame.sprite.DirtySprite):
     def __init__(self):
+        super(PhysicsSprite, self).__init__()
+        self.original_image = None
+        self.rect = None
+        self.image = None
+        self.shapes = None
+        self._old_angle = None
+
+    @property
+    def shape(self):
+        return self.shapes[0]
+
+    @shape.setter
+    def shape(self, value):
+        if self.shapes is None:
+            self.shapes = [value]
+        else:
+            self.shapes[0] = value
+
+    def update(self, dt):
+        if hasattr(self.shape, "needs_remove"):
+            self.kill()
+            return
+
+        angle = degrees(self.shape.body.angle)
+        if not angle == self._old_angle or self.dirty:
+            self.image = rotozoom(self.original_image, angle, 1)
+            self.rect = self.image.get_rect()
+            self._old_angle = angle
+            self.dirty = False
+        self.rect.center = self.shape.body.position
+
+    def kill(self):
+        for shape in self.shapes:
+            space = shape.body._space
+            if not shape.body.is_static:
+                space.remove(shape.body)
+            space.remove(shape)
+        self.shapes = None
+        super(PhysicsSprite, self).kill()
+
+
+class Pocket(PhysicsSprite):
+    def __init__(self, win=False, walls=False):
+        super(Pocket, self).__init__()
+        self.win = win
+        self.walls = walls
+
+    def build(self, space, body, rect):
+        color = (220, 100, 0)
+        inside = rect.inflate(-3, -3)
+        cover = Poly.create_box(body, inside.size, rect.center)
+
+        if self.walls:
+            s0 = Segment(body, rect.topleft, rect.bottomleft, 1)
+            s1 = Segment(body, rect.bottomleft, rect.bottomright, 1)
+            s2 = Segment(body, rect.bottomright, rect.topright, 1)
+            self.shapes = [cover, s0, s1, s2]
+        else:
+            self.shapes = [cover]
+
+        self.rect = pygame.Rect(rect)
+        self.original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(self.original_image, color, rect)
+        self.update(None)
+
+        if self.win:
+            self.shape.collision_type = pocket_win_type
+        else:
+            self.shape.collision_type = pocket_fail_type
+
+
+class Ball(PhysicsSprite):
+    def __init__(self, space, position=None):
         super(Ball, self).__init__()
-        self.shape = None
+        color = (192, 192, 220)
+        body = Body(ball_mass, moment_for_circle(ball_mass, 0, ball_radius))
+        body.position = position
+        self.shape = Circle(body, ball_radius)
+        self.shape.friction = .5
+        self.shape.layers = 1
+        self.shape.collision_type = ball_type
+        self.rect = pygame.Rect(0, 0, ball_radius * 2, ball_radius * 2)
+        self.original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        pygame.draw.circle(self.original_image, color,
+                           self.rect.center, ball_radius)
+        self.update(None)
 
-    def build(self, space):
-        assert (self.shape is None)
-        mass = .01
-        radius = 20
-        moment = moment_for_circle(mass, 0, radius)
-        body = pymunk.Body(mass, moment)
-        shape = Circle(body, 10)
-        shape.friction = 1.0
-        shape.layers = 0
-        self.shape = shape
-        space.add(body, shape)
-
-
-class Spinner(pygame.sprite.DirtySprite):
+class Spinner(PhysicsSprite):
     def __init__(self):
         super(Spinner, self).__init__()
-        self.shape = None
 
     def build(self, space, playfield_body, rect):
-        assert (self.shape is None)
+        color = (220, 220, 220)
         mass = .1
         radius = rect.width / 2
-        moment = moment_for_circle(mass, 0, radius)
-        body = pymunk.Body(mass, moment)
+        body = pymunk.Body(mass, moment_for_circle(mass, 0, radius))
         body.position = rect.center
         top = Circle(body, radius)
         top.layers = 2
-        rect = pygame.Rect((-rect.width / 2, -rect.height / 2), rect.size)
-        cross0 = pymunk.Segment(body, rect.midleft, rect.midright, 1)
-        cross1 = pymunk.Segment(body, rect.midtop, rect.midbottom, 1)
+        rect2 = pygame.Rect((-rect.width / 2, -rect.height / 2), rect.size)
+        cross0 = pymunk.Segment(body, rect2.midleft, rect2.midright, 1)
+        cross1 = pymunk.Segment(body, rect2.midtop, rect2.midbottom, 1)
         joint = pymunk.PivotJoint(playfield_body, body, body.position)
-        space.add(body, top, cross0, cross1, joint)
+        self.shapes = [top, cross0, cross1, joint]
+        self.rect = pygame.Rect(rect)
+        self.original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        pygame.draw.circle(self.original_image, color, (radius, radius), radius)
+        self.update(None)
 
 
-class PlungerAssembly(pygame.sprite.DirtySprite):
+class PlungerAssembly(PhysicsSprite):
     def __init__(self):
         super(PlungerAssembly, self).__init__()
         self.plunger_body = None
         self.chute_opening = None
         self.spring_strength = None
-        self._ball_chute_sensor = None
         self._chute_counter = 0
         self._chute_latch = True
-        self._active = None
 
     def add_ball(self, space, arbiter):
-        sensor, plunger = arbiter.shapes
-
         if not self._chute_latch:
-            mass = 1
-            body = pymunk.Body(mass, moment_for_circle(mass, 0, 1))
-            shape = Circle(body, 10)
-            shape.friction = 1.0
-            shape.layers = 1
-            body.position = self.chute_opening
-            space.add(body, shape)
-            self._active.add(body)
-            self._active.add(shape)
+            self._parent.add(Ball(space, position=self.chute_opening))
 
     def build(self, space, assembly_body, assembly_rect):
         plunger_mass = 5
         plunger_elasticity = 1.0
-        plunger_rect = pygame.Rect(0, 0,
-                                  ball_radius * 10,
-                                  ball_radius / 2)
+        plunger_rect = pygame.Rect(0, 0, ball_radius * 10, ball_radius / 2)
         spring_strength = 100 * plunger_mass
         spring_dampening = 1
         spring_length = assembly_rect.width * .8
-
-        sensor0_type = 100
-        sensor1_type = 101
-        plunger_type = 102
 
         assembly_body_position = assembly_body.position + assembly_rect.center
         chute_opening = assembly_body_position - (assembly_rect.width / 2 -ball_radius * 4, 0)
@@ -197,7 +259,6 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
         plunger_shape.elasticity = plunger_elasticity
         plunger_shape.collision_type = plunger_type
         plunger_body.position = chute_opening + (plunger_rect.width / 2, 0)
-        space.add(plunger_body, plunger_shape)
 
         anchor0 = chute_opening - assembly_body.position - (ball_radius * 3, 0)
         anchor1 = anchor0 + (spring_length, 0)
@@ -213,8 +274,7 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
                                      spring_dampening)
         space.add(spring)
 
-        body = Body()
-        sensor = Circle(body, ball_radius / 2)
+        sensor = Circle(space.static_body, ball_radius / 2)
         sensor.layers = 1
         sensor.sensor = True
         sensor.collision_type = sensor0_type
@@ -223,17 +283,15 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
         space.add_collision_handler(sensor0_type, plunger_type,
                                     separate=self.add_ball)
 
-        def inc_chute_counter(space, arbiter):
-            a, b, = arbiter.shapes
+        def inc_chute_counter(*args):
             self._chute_counter += 1
             return True
 
-        def dec_chute_counter(*args, **kwargs):
+        def dec_chute_counter(*args):
             self._chute_counter -= 1
             self._chute_latch = bool(self._chute_counter)
 
-        body = Body()
-        sensor = Circle(body, ball_radius * 3)
+        sensor = Circle(space.static_body, ball_radius * 3)
         sensor.layers = 1
         sensor.sensor = True
         sensor.collision_type = sensor1_type
@@ -243,40 +301,62 @@ class PlungerAssembly(pygame.sprite.DirtySprite):
                                     begin=inc_chute_counter,
                                     separate=dec_chute_counter)
 
-        self._ball_chute_sensor = sensor
+        self.original_image = pygame.Surface(plunger_rect.size)
+        self.original_image.fill((128, 128, 128))
+
         self.plunger_body = plunger_body
-        self.plunger_shape = plunger_shape
-        self.sensor = sensor
         self.chute_opening = chute_opening
         self.spring_strength = spring_strength
 
+        self.shapes = [plunger_shape]
+        self.update(None)
 
-class Playfield(pygame.sprite.RenderUpdates):
+
+class Playfield(pygame.sprite.Group):
     def __init__(self, *args, **kwargs):
         super(Playfield, self).__init__(*args, **kwargs)
-        self._dirty = False
         self._space = None
-        self._active = set()
         self.depress = False
         self.plunger_body = None
         self.background = None
 
-    def load(self, filename):
-        for i in load_json(self._space, 'default.json'):
-            if isinstance(i, PlungerAssembly):
-                self.plunger_body = i.plunger_body
-                i._active = self._active
-                self._active.add(i.plunger_shape)
-            elif isinstance(i, Spinner):
-                pass
+    def add(self, *items):
+        for item in items:
+            if isinstance(item, PhysicsSprite):
+                if not item.shape.body.is_static:
+                    self._space.add(item.shape.body)
+                for shape in item.shapes:
+                    self._space.add(shape)
+
+            if isinstance(item, PlungerAssembly):
+                self.plunger_body = item.plunger_body
+                item._parent = self
+
+            if isinstance(item, pygame.sprite.Sprite):
+                super(Playfield, self).add(item)
+
             else:
-                self._space.add(i)
+                self._space.add(item)
 
     def build(self):
-        size = pygame.Rect(0, 0, 100, 1000)
         self._space = pymunk.Space()
-        self._space.gravity = (0, -1000)
-        self.load(None)
+        self._space.gravity = (0, 1000)
+        for item in load_json(self._space, 'default.json'):
+            self.add(item)
+
+        f = self._space.add_collision_handler
+        f(ball_type, pocket_win_type, begin=self.on_jackpot)
+        f(ball_type, pocket_fail_type, begin=self.on_ball_fail)
+
+    def on_jackpot(self, space, arbiter):
+        ball, pocket = arbiter.shapes
+        ball.needs_remove = True
+        return True
+
+    def on_ball_fail(self, space, arbiter):
+        ball, pocket = arbiter.shapes
+        ball.needs_remove = True
+        return True
 
     def update(self, surface, dt):
         dt = 1 / 30. / 10.
@@ -299,7 +379,8 @@ class Playfield(pygame.sprite.RenderUpdates):
             self.background = pygame.Surface(surface.get_size())
             pymunk.pygame_util.draw(self.background, self._space)
         surface.blit(self.background, (0, 0))
-        pymunk.pygame_util.draw(surface, self._active)
+        super(Playfield, self).update(dt)
+        super(Playfield, self).draw(surface)
 
     def depress_plunger(self):
         self.depress = True
