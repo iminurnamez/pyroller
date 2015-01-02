@@ -60,7 +60,7 @@ class _KwargMixin(object):
 class Fadeout(object):
     def __init__(self, rect, color="gray1", fade_increment=1.5):
         self.rect = rect
-        self.surf = pg.Surface(rect.size)
+        self.surf = pg.Surface(rect.size).convert()
         try:
             self.surf.fill(pg.Color(color))
         except ValueError:
@@ -71,8 +71,8 @@ class Fadeout(object):
         self.done = False
 
     def update(self):
-        self.alpha += self.increment
-        if self.alpha >= 255:
+        self.alpha = min(self.alpha+self.increment, 255)
+        if self.alpha == 255:
             self.done = True
         self.surf.set_alpha(int(self.alpha))
 
@@ -132,7 +132,7 @@ class ChipCurtain(_KwargMixin):
         if self.cycle_colors:
             self.bg_color = next(self.color_cycle)
         if self.single_color:
-            rows = ["X" * 18 for _ in range(20)]
+            rows = ["X"*18 for _ in range(20)]
             self.single_color = self.bg_color
         else:
             rows = make_char_map(image_name)
@@ -140,8 +140,8 @@ class ChipCurtain(_KwargMixin):
         start_left = -20
         vert_space = 80
         horiz_space = 80
-        top = self.start_y - (len(rows) * vert_space)
-        self.wrap_y = top + (prepare.RENDER_SIZE[1] - self.start_y)
+        top = self.start_y-(len(rows)*vert_space)
+        self.wrap_y = top+(prepare.RENDER_SIZE[1] - self.start_y)
         for row in rows:
             left = start_left
             new_row = []
@@ -151,7 +151,7 @@ class ChipCurtain(_KwargMixin):
                 else:
                     bg = self.bg_color
                 color = bg if char=="X" else self.text_color
-                new_row.append([[left, top], color])
+                new_row.append([[left,top], color])
                 left += horiz_space
             self.chips.extend(new_row)
             top += vert_space
@@ -177,52 +177,44 @@ class ChipCurtain(_KwargMixin):
                 chip[0][1] = self.wrap_y
 
     def draw(self, surface):
-        for chip in self.chips:
-            color = self.single_color or chip[1]
-            surface.blit(self.spinners[color].image, chip[0])
+        for position,chip_color in self.chips:
+            color = self.single_color or chip_color
+            surface.blit(self.spinners[color].image, position)
 
 
 class Roller(object):
     def __init__(self, center, color, direction, speed):
-        self.image = Chip.flat_images[(32,19)][color]
-        self.rect = self.image.get_rect(center=center)
-        self.pos = center
-        self.rot_image = self.image
+        self.raw_image = Chip.flat_images[(32,19)][color]
+        self.rect = self.raw_image.get_rect(center=center)
+        self.pos = list(center)
+        self.image = self.raw_image.copy()
         self.angle = 0
         self.direction = direction
         self.multiplier = -1 if direction == "left" else 1
-        self.rotation = .05 * self.multiplier * -1
+        self.rotation = -0.05*self.multiplier
         self.speed = speed
         self.done = False
 
     def update(self):
-        self.pos = (self.pos[0]+(self.speed*self.multiplier), self.pos[1])
+        self.pos[0] += self.speed*self.multiplier
         self.angle += self.rotation
-        self.rot_image = pg.transform.rotate(self.image, degrees(self.angle))
-        self.rect = self.rot_image.get_rect(center=self.pos)
+        self.image = pg.transform.rotate(self.raw_image, degrees(self.angle))
+        self.rect = self.image.get_rect(center=self.pos)
         if self.direction == "left":
             if self.pos[0] < -self.rect.width:
                 self.done = True
-        else:
-            if self.pos[0] > prepare.RENDER_SIZE[0] + self.rect.width:
-                self.done = True
+        elif self.pos[0] > prepare.RENDER_SIZE[0]+self.rect.width:
+            self.done = True
 
     def draw(self, surface):
-        surface.blit(self.rot_image, self.rect)
+        surface.blit(self.image, self.rect)
 
 
-def make_char_map(img_name):
-    chipmap = prepare.GFX[img_name]
-    size = chipmap.get_size()
-    rows = []
-
-    for y in range(size[1]):
-        rows.append([[[x, y], chipmap.get_at((x, y))] for x in range(size[0])])
+def make_char_map(image_name, empty=(0,0,0,255)):
+    chipmap = prepare.GFX[image_name]
+    width, height = chipmap.get_size()
     converted = []
-    for row in rows:
-        converted_row = []
-        for cell in row:
-            char = "O" if cell[1] == (0,0,0,255) else "X"
-            converted_row.append(char)
-        converted.append("".join(converted_row))
+    for y in range(height):
+        row = [chipmap.get_at((x,y)) for x in range(width)]
+        converted.append("".join("O" if cell==empty else "X" for cell in row))
     return converted
