@@ -120,6 +120,7 @@ class Control(object):
 
     def main(self):
         """Main loop for entire program."""
+        self.state.startup(0, dict())
         while not self.done:
             time_delta = self.clock.tick(self.fps)
             self.event_loop()

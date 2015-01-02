@@ -11,13 +11,8 @@ from .playfield import Playfield
 class Pachinko(tools._State):
     """Pachinko game."""
 
-    def __init__(self):
-        super(Pachinko, self).__init__()
+    def startup(self, now, persistent):
         self.playfield = Playfield()
-        self.build()
-
-    def build(self):
-        self.playfield.build()
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.KEYDOWN:
