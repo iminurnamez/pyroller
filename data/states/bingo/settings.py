@@ -166,6 +166,7 @@ SETTINGS = {
     'machine-cog-speed': 450 / 600 * 500,
     'machine-speeds': [
         # Text, interval (s), balls to increase
+        ('0', 11, 0),
         ('1', 10, 5),
         ('2', 9, 10),
         ('3', 8, 15),

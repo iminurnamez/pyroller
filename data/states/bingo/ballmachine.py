@@ -61,20 +61,9 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.called_balls_ui = CalledBallTray(S['called-balls-position'], self.state)
         components.append(self.called_balls_ui)
         #
-        # Buttons that show the speed
+        # Speed increases based on the number of balls called
         for idx, (name, interval, number_balls) in enumerate(S['machine-speeds']):
-            self.speed_buttons.append(common.ImageOnOffButton(
-                name,
-                (150 + idx * 65, 300),
-                'bingo-blue-button', 'bingo-blue-off-button', 'tiny-button',
-                name,
-                interval == self.initial_interval / 1000,
-                S, scale=S['tiny-button-scale']
-            ))
-            self.speed_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.change_speed, (idx, interval))
             self.speed_transitions[number_balls] = (idx, interval)
-        components.extend(self.speed_buttons)
-        self.buttons.extend(self.speed_buttons)
         #
         self.cog = CogWheel(self)
         components.append(self.cog)
@@ -89,17 +78,13 @@ class BallMachine(common.Drawable, loggable.Loggable):
     def change_speed(self, obj,  arg):
         """Change the speed of the ball machine"""
         selected_idx, interval = arg
-        self.log.info('Changing machine speed to {0}'.format(interval))
+        self.log.info('Changing machine speed to index {0}, {1}s'.format(selected_idx, interval))
         #
         # Play appropriate sound
         if interval < self.interval / 1000:
             self.state.play_sound('bingo-speed-up')
         else:
             self.state.play_sound('bingo-slow-down')
-        #
-        # Set button visibility
-        for idx, button in enumerate(self.speed_buttons):
-            button.state = idx == selected_idx
         #
         # Set cog
         self.cog.set_speed(selected_idx)
@@ -328,7 +313,7 @@ class CogWheel(common.Drawable):
             common.NamedSprite(
                 'bingo-cog-{0}'.format(i),
                 S['machine-cog-position'],
-            ) for i in range(len(S['machine-speeds']) + 1)
+            ) for i in range(len(S['machine-speeds']))
         ]
         self.speed = 0
         self.angle = 0
@@ -350,5 +335,5 @@ class CogWheel(common.Drawable):
         """Update the display of the cog"""
         self.angle = (self.angle + increment) % 360
         # TODO: refactor the rotation logic - should be built into sprite
-        surface = self.sprites[self.speed + 1].sprite.copy()
+        surface = self.sprites[self.speed].sprite.copy()
         self.current_sprite = pg.transform.rotozoom(surface, self.angle, 1.0)
