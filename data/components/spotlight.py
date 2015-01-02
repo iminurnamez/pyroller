@@ -40,9 +40,7 @@ class SpotLight(object):
     def make_image(self):
         if not self.caching:
             angle = self.angle
-            new_center = self.rotator(angle, self.origin)
             self.image = pg.transform.rotozoom(self.raw_image, angle, 1)
-            self.rect = self.image.get_rect(center=new_center)
         else:
             angle = int(self.angle)
             if angle in SpotLight.cache:
