@@ -120,7 +120,8 @@ class BallMachine(common.Drawable, loggable.Loggable):
     def reset_timer(self, interval):
         """Reset the timer on the machine"""
         self.interval = interval
-        self.timer.update_interval(interval)
+        if self.timer:
+            self.timer.update_interval(interval)
 
     def reset_machine(self, interval=None):
         """Reset the machine"""
@@ -128,7 +129,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.called_balls = []
         random.shuffle(self.balls)
         self.called_balls_ui.reset_display()
-        self.interval = interval if interval else self.initial_interval
+        self.change_speed(None, (0, S['machine-speeds'][0][1]))
         self.start_machine()
 
     def pick_balls(self):
