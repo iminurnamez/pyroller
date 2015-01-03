@@ -11,6 +11,27 @@ def pick_numbers(spot):
             numbers.append(number)
     return numbers
 
+class Play(object):
+    '''plays a game of keno'''
+    def __init__(self, card):
+        self.rect = pg.Rect(0, 80, 150, 75)
+        self.font = prepare.FONTS["Saniretro"]
+        self.label = Label(self.font, 32, 'PLAY', 'gold3', {'center':(0,0)})
+        self.label.rect.center = self.rect.center
+        self.color = '#181818'
+        self.card = card
+        
+    def update(self):
+        numbers = pick_numbers(20)
+        
+        self.card.ready_play()
+        for number in numbers:
+            self.card.toggle_hit(number)
+        
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+        self.label.draw(surface)
+
 class QuickPick(object):
     '''random picks max(10) numbers for play'''
     def __init__(self, card):
@@ -138,6 +159,14 @@ class KenoCard(object):
     def toggle_owned(self, number):
         self.spots[number].toggle_owned()
         
+    def toggle_hit(self, number):
+        self.spots[number].toggle_hit()
+    
+    def ready_play(self):
+        for spot in self.spots:
+            spot.hit = False
+            spot.update_color()
+    
     def reset(self):
         for spot in self.spots:
             spot.reset()
@@ -175,6 +204,7 @@ class Keno(tools._State):
         #self.keno_card.mock() #creates a pretend card setup for testing
         
         self.quick_pick = QuickPick(self.keno_card)
+        self.play = Play(self.keno_card)
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -204,6 +234,9 @@ class Keno(tools._State):
             
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
+                
+            if self.play.rect.collidepoint(event_pos):
+                self.play.update()
             
             self.keno_card.update(event_pos)
 
@@ -219,6 +252,7 @@ class Keno(tools._State):
         self.keno_card.draw(surface)
         
         self.quick_pick.draw(surface)
+        self.play.draw(surface)
             
         self.persist["music_handler"].draw(surface)
 
