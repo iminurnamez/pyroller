@@ -49,7 +49,7 @@ class Keno(tools._State):
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
-        surface.fill(pg.Color("darkgreen"))
+        surface.fill(prepare.FELT_GREEN)
         
         for button in self.buttons:
             button.draw(surface)
