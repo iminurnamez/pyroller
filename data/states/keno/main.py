@@ -2,6 +2,46 @@ import pygame as pg
 from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel, NeonButton
 from ... import tools, prepare
 
+class KenoSpot(object):
+    COLORS = {
+        'open': '#181818',
+        'owned': '#9c8013',
+        'hit': '#eedb1e',
+        'miss': '#690808',
+    }
+    
+    """A spot on a Keno card."""
+    def __init__(self, left, top, width, height, label):
+        self.rect = pg.Rect(left, top, width, height)
+        label.rect.center = self.rect.center
+        self.label = label
+        self.color = self.COLORS['open']
+        
+        self.owned = False
+        self.hit   = False
+
+    def toggle_owned(self):
+        self.owned = not self.owned
+        self.update_color()
+        
+    def toggle_hit(self):
+        self.hit = not self.hit
+        self.update_color()
+        
+    def update_color(self):
+        if self.owned:
+            self.color = self.COLORS['owned']
+        else:
+            self.color = self.COLORS['open']
+            
+        if self.hit and self.owned:
+            self.color = self.COLORS['hit']
+        elif self.hit:
+            self.color = self.COLORS['miss']
+
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+        self.label.draw(surface)
 
 class Keno(tools._State):
     """Class to represent a casino game."""
@@ -10,6 +50,8 @@ class Keno(tools._State):
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.game_started = False
         self.font = prepare.FONTS["Saniretro"]
+
+        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(640,40)})
 
         b_width = 360
         b_height = 90
@@ -20,6 +62,55 @@ class Keno(tools._State):
         
         self.buttons = []
         self.buttons.extend([self.lobby_button])
+        
+        self.spots = []
+        font_size = 48
+        text = "0"
+        text_color = "white"
+        rect_attrib = {'center':(0,0)}
+        
+        x_origin = 300
+        x = x_origin
+        y = 100
+        for row in range(0,8):
+            for col in range(1,11):
+                text = str(col+(10*row))
+                label = Label(self.font, font_size, text, text_color, rect_attrib)
+                spot = KenoSpot(x, y, 64, 64, label)
+                self.spots.extend([spot])
+                x += 70
+            y += 70
+            x = x_origin
+            
+        #pretend picks
+        self.spots[15].toggle_owned()
+        self.spots[22].toggle_owned()
+        self.spots[44].toggle_owned()
+        self.spots[52].toggle_owned()
+        self.spots[74].toggle_owned()
+        self.spots[79].toggle_owned()
+        
+        #pretend draw
+        self.spots[55].toggle_hit()
+        self.spots[53].toggle_hit()
+        self.spots[73].toggle_hit()
+        self.spots[2].toggle_hit()
+        self.spots[67].toggle_hit()
+        self.spots[3].toggle_hit()
+        self.spots[16].toggle_hit()
+        self.spots[19].toggle_hit()
+        self.spots[23].toggle_hit()
+        self.spots[79].toggle_hit()
+        self.spots[22].toggle_hit()
+        self.spots[51].toggle_hit()
+        self.spots[44].toggle_hit()
+        self.spots[11].toggle_hit()
+        self.spots[10].toggle_hit()
+        self.spots[7].toggle_hit()
+        self.spots[8].toggle_hit()
+        self.spots[33].toggle_hit()
+        self.spots[77].toggle_hit()
+        self.spots[65].toggle_hit()
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -46,13 +137,22 @@ class Keno(tools._State):
                 self.game_started = False
                 self.done = True
                 self.next = "LOBBYSCREEN"
+            else:
+                for spot in self.spots:
+                    if spot.rect.collidepoint(event_pos):
+                        spot.toggle_owned()
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(prepare.FELT_GREEN)
         
+        self.mock_label.draw(surface)
+        
         for button in self.buttons:
             button.draw(surface)
+        
+        for spot in self.spots:
+            spot.draw(surface)
             
         self.persist["music_handler"].draw(surface)
 
