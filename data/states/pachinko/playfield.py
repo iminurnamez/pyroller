@@ -316,7 +316,7 @@ class Playfield(pygame.sprite.Group):
             step(dt)
 
         if self.background is None:
-            self.background = pygame.Surface(surface.get_size())
+            #self.background = pygame.Surface(surface.get_size())
             self.background = pygame.image.load("resources/pachinko/playfield.jpg")
             self.background.scroll(0, -150)
             pymunk.pygame_util.draw(self.background, self._space)
