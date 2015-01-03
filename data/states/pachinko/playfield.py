@@ -3,9 +3,9 @@ import os
 from math import degrees
 from operator import itemgetter
 import pymunk
+import pymunk.pygame_util
 from pymunk import Body, Poly, Segment, Circle, GrooveJoint, DampedSpring
 from pymunk import moment_for_circle
-import pymunk.pygame_util
 import pygame
 import pygame.draw
 import pygame.gfxdraw
@@ -118,7 +118,7 @@ class PhysicsSprite(pygame.sprite.DirtySprite):
         else:
             angle = round(degrees(self.shape.body.angle), 0)
             if not angle == self._old_angle or self.dirty:
-                self.image = rotozoom(self._original_image, angle, 1)
+                self.image = rotozoom(self._original_image, -angle, 1)
                 self.rect = self.image.get_rect()
                 self._old_angle = angle
             self.rect.center = self.shape.body.position
@@ -182,11 +182,15 @@ class Spinner(PhysicsSprite):
         rect2 = pygame.Rect((-rect.width / 2, -rect.height / 2), rect.size)
         cross0 = pymunk.Segment(body, rect2.midleft, rect2.midright, 1)
         cross1 = pymunk.Segment(body, rect2.midtop, rect2.midbottom, 1)
-        joint = pymunk.PivotJoint(playfield, body, body.position)
-        self.shapes = [top, cross0, cross1, joint]
+        j0 = pymunk.PivotJoint(playfield, body, body.position)
+        j1 = pymunk.SimpleMotor(playfield, body, 0)
+        j1.max_force = 100
+        self.shapes = [top, cross0, cross1, j0, j1]
         self.rect = pygame.Rect(rect)
         self._original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
         pygame.draw.circle(self._original_image, color, (radius, radius), radius)
+        pygame.draw.line(self._original_image, (255, 0, 0),
+                         (0, rect.height/2), (rect.width, rect.height / 2))
 
 
 class PlungerAssembly(PhysicsSprite):
@@ -310,7 +314,7 @@ class Playfield(pygame.sprite.Group):
             #self.background = pygame.Surface(surface.get_size())
             self.background = pygame.image.load("resources/pachinko/playfield.jpg")
             self.background.scroll(0, -150)
-            pymunk.pygame_util.draw(self.background, self._space)
+            #pymunk.pygame_util.draw(self.background, self._space)
             surface.blit(self.background, (0, 0))
 
         sup = super(Playfield, self)
