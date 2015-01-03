@@ -1,5 +1,5 @@
 import pygame as pg
-from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel
+from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel, NeonButton
 from ... import tools, prepare
 
 
@@ -14,15 +14,12 @@ class Keno(tools._State):
         b_width = 360
         b_height = 90
         side_margin = 10
-        vert_space = 20
-        left = self.screen_rect.right - (b_width + side_margin)
-        top = self.screen_rect.bottom - ((b_height * 5) + vert_space * 4)
-
-        font_size = 64
-
-        lobby_label = Label(self.font, font_size, "Lobby", "gold3", {"center": (0, 0)})
-        self.lobby_button = Button(self.screen_rect.right - (b_width + side_margin), self.screen_rect.bottom - (b_height + 15),
-                                                 b_width, b_height, lobby_label)
+        w = self.screen_rect.right - (b_width + side_margin)
+        h = self.screen_rect.bottom - (b_height+15)
+        self.lobby_button = NeonButton((w, h), "Lobby")
+        
+        self.buttons = []
+        self.buttons.extend([self.lobby_button])
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -53,7 +50,10 @@ class Keno(tools._State):
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(pg.Color("darkgreen"))
-        self.lobby_button.draw(surface)
+        
+        for button in self.buttons:
+            button.draw(surface)
+            
         self.persist["music_handler"].draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
@@ -66,6 +66,9 @@ class Keno(tools._State):
         the last frame.
         """
         mouse_pos = tools.scaled_mouse_pos(scale)
+        for button in self.buttons:
+            button.update(mouse_pos)
+        
         self.persist["music_handler"].update(scale)
         self.draw(surface)
 
