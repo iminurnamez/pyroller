@@ -71,7 +71,7 @@ class Deck(object):
         deck will replenish itself with a new deck upon exhaustion. Reusing
         discards supersedes infinite replenishment."""
 
-    def __init__(self, topleft, card_size=prepare.CARD_SIZE, card_speed=20.0,
+    def __init__(self, topleft, card_size=prepare.CARD_SIZE, card_speed=16.0,
                         default_shuffle=True, reuse_discards=True, infinite=False):
         self.topleft = topleft
         self.card_size = card_size

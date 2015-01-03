@@ -25,7 +25,8 @@ class Blackjack(tools._State):
         self.chip_size = (48, 30)
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.game_started = False
-
+        self.elapsed = 0.0
+        
         b_width = 318
         b_height = 101
         side_margin = 10
@@ -76,7 +77,8 @@ class Blackjack(tools._State):
         self.casino_player = self.persist["casino_player"]
         if not self.game_started:
             self.new_game(self.casino_player.stats["cash"])
-
+        self.elapsed = 0.0
+        
     def hit(self, player, hand):
         """Draw a card from deck and add to hand."""
         choice(self.deal_sounds).play()
@@ -253,7 +255,7 @@ class Blackjack(tools._State):
                 test_text = "This is a test string to simulate the advice that a blackjack advisor would give. The string should be broken up into shorter lines aligned to the left."
                 self.advisor_window = AdvisorWindow((700, 500), test_text)
 
-    def update(self, surface, keys, current_time, dt, scale):
+    def update_game(self, surface, keys, current_time, dt, scale):
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
         screen = self.screen_rect
         self.chip_total_label = Label(self.font, 48, total_text, "gold3",
@@ -265,10 +267,7 @@ class Blackjack(tools._State):
         self.persist["music_handler"].update(scale)
         if self.advisor_window:
             if self.advisor_window.done:
-                self.advisor_window = None
-        
-        
-        
+                self.advisor_window = None        
         
         if self.state == "Betting":
             if not self.moving_stacks:
@@ -396,6 +395,12 @@ class Blackjack(tools._State):
                             self.player.add_slot(hand)
         self.moving_cards = [x for x in self.moving_cards if x not in arrived]
         self.chip_rack.update()
+        
+    def update(self, surface, keys, current_time, dt, scale):    
+        self.elapsed += dt
+        while self.elapsed >= 17.0:
+            self.elapsed -= 17.0
+            self.update_game(surface, keys, current_time, dt, scale)
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
