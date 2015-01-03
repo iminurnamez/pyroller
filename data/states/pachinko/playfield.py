@@ -8,7 +8,6 @@ from pymunk import Body, Poly, Segment, Circle, GrooveJoint, DampedSpring
 from pymunk import moment_for_circle
 import pygame
 import pygame.draw
-import pygame.gfxdraw
 from pygame.transform import rotozoom
 
 pymunk.pygame_util.flip_y = False
@@ -162,7 +161,7 @@ class Ball(PhysicsSprite):
         body = Body(ball_mass, moment_for_circle(ball_mass, 0, radius))
         body.position = rect.center
         self.shape = Circle(body, radius)
-        self.shape.friction = .5
+        self.shape.friction = .9
         self.shape.layers = 1
         self.shape.collision_type = ball_type
         self.rect = pygame.Rect(0, 0, rect.width, rect.width)
@@ -189,7 +188,7 @@ class Spinner(PhysicsSprite):
         self.rect = pygame.Rect(rect)
         self._original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
         pygame.draw.circle(self._original_image, color, (radius, radius), radius)
-        pygame.draw.line(self._original_image, (255, 0, 0),
+        pygame.draw.line(self._original_image, (0, 64, 255),
                          (0, rect.height/2), (rect.width, rect.height / 2))
 
 
