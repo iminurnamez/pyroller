@@ -216,12 +216,13 @@ class Spinner(PhysicsSprite):
     def __init__(self, space, rect, playfield=None):
         super(Spinner, self).__init__()
         color = (220, 220, 220)
-        radius = rect.width / 2
-        body = Body(.1, moment_for_circle(.1, 0, radius))
+        r, cy = rect.width / 2, rect.height / 2
+        assert(r==cy)
+        body = Body(.1, moment_for_circle(.1, 0, r))
         body.position = rect.center
-        top = Circle(body, radius)
+        top = Circle(body, r)
         top.layers = 2
-        rect2 = pygame.Rect((-rect.width / 2, -rect.height / 2), rect.size)
+        rect2 = pygame.Rect((-r, -cy), rect.size)
         cross0 = Segment(body, rect2.midleft, rect2.midright, 1)
         cross1 = Segment(body, rect2.midtop, rect2.midbottom, 1)
         j0 = PivotJoint(playfield, body, body.position)
@@ -230,10 +231,8 @@ class Spinner(PhysicsSprite):
         self.shapes = [top, cross0, cross1, j0, j1]
         self.rect = pygame.Rect(rect)
         self._original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-        pygame.draw.circle(self._original_image, color, (radius, radius),
-                           radius)
-        pygame.draw.line(self._original_image, (0, 64, 255),
-                         (0, rect.height / 2), (rect.width, rect.height / 2))
+        pygame.draw.circle(self._original_image, color, (r, cy), r)
+        pygame.draw.line(self._original_image, (0, 64, 255), (0, cy), (rect.width, cy))
 
 
 class PlungerAssembly(PhysicsSprite):
@@ -340,10 +339,10 @@ class Playfield(pygame.sprite.RenderUpdates):
         f(ball_type, pocket_fail_type, begin=on_ball_fail)
         f(sensor0_type, plunger_type, separate=self.new_ball)
 
-        self.timers.add(Task(self.auto_push_plunger, 400, -1))
+        self.timers.add(Task(self.auto_push_plunger, 500, -1))
 
     def auto_push_plunger(self):
-        self._plunger.plunger_body.apply_impulse((10000, 0))
+        self._plunger.plunger_body.apply_impulse((9700, 0))
 
     def new_ball(self, space, arbiter):
         if not self._plunger.chute_counter and self.ball_tray:
