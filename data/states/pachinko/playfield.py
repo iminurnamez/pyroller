@@ -99,8 +99,6 @@ class PhysicsSprite(pygame.sprite.DirtySprite):
     def __init__(self):
         super(PhysicsSprite, self).__init__()
         self.original_image = None
-        self.rect = None
-        self.image = None
         self.shapes = None
         self._old_angle = None
 
@@ -150,15 +148,11 @@ class Pocket(PhysicsSprite):
             s1 = Segment(playfield, rect.bottomleft, rect.bottomright, 1)
             s2 = Segment(playfield, rect.bottomright, rect.topright, 1)
             self.shapes.extend((s0, s1, s2))
-        self.rect = pygame.Rect(rect)
-        self.original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        self.original_image = pygame.Surface(rect.size, pygame.SRCALPHA)
         pygame.draw.rect(self.original_image, color, rect)
+        self.rect = pygame.Rect(rect)
+        self.shape.collision_type = pocket_win_type if win else pocket_fail_type
         self.update(None)
-
-        if win:
-            self.shape.collision_type = pocket_win_type
-        else:
-            self.shape.collision_type = pocket_fail_type
 
 
 class Ball(PhysicsSprite):
@@ -172,7 +166,7 @@ class Ball(PhysicsSprite):
         self.shape.friction = .5
         self.shape.layers = 1
         self.shape.collision_type = ball_type
-        self.rect = pygame.Rect(0, 0, radius * 2, radius * 2)
+        self.rect = pygame.Rect(0, 0, rect.width, rect.width)
         self.original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
         pygame.draw.circle(self.original_image, color, self.rect.center, radius)
         self.update(None)
@@ -323,6 +317,8 @@ class Playfield(pygame.sprite.Group):
 
         if self.background is None:
             self.background = pygame.Surface(surface.get_size())
+            self.background = pygame.image.load("resources/pachinko/playfield.jpg")
+            self.background.scroll(0, -150)
             pymunk.pygame_util.draw(self.background, self._space)
             surface.blit(self.background, (0, 0))
 
