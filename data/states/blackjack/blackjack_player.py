@@ -30,11 +30,15 @@ class Player(object):
     def move_hand(self, hand, offset):
         for slot in hand.slots:
             slot.move_ip(offset)
+        for stack in hand.bet.stacks:
+            stack.bottomleft = (stack.bottomleft[0] + offset[0],
+                                         stack.bottomleft[1] + offset[1])
         for card in hand.cards:
             card.rect.move_ip(offset)
             card.pos = card.rect.center
         hand.tl = (hand.tl[0] + offset[0],
                         hand.tl[1] + offset[1])
+        
             
             
     def draw(self, surface):

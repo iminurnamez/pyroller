@@ -3,9 +3,17 @@ import json
 import pygame as pg
 
 from .. import tools, prepare
-from ..components.labels import Label, Button, PayloadButton, ImageButton
+from ..components.labels import Label, Button, ImageButton, NeonButton
 from ..components.flair_pieces import ChipCurtain
 from ..components.music_handler import MusicHandler
+
+
+CURTAIN_SETTINGS = {"single_color" : True,
+                    "start_y" : prepare.RENDER_SIZE[1]-5,
+                    "scroll_speed" : 0.8,
+                    "cycle_colors" : True,
+                    "spinner_settings" : {"variable" : False,
+                                          "frequency" : 120}}
 
 
 class LobbyScreen(tools._State):
@@ -21,15 +29,18 @@ class LobbyScreen(tools._State):
         self.font = prepare.FONTS["Saniretro"]
         self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
                       ("Craps", "CRAPS"), ("Keno", "KENO")]
+        self.game_buttons = self.make_game_buttons(screen_rect)
+        self.make_navigation_buttons(screen_rect)
+        self.chip_curtain = None #Created on startup.
+
+    def make_game_buttons(self, screen_rect):
         num_columns = 3
         left = screen_rect.width // (num_columns + 1)
         top = screen_rect.top + 80
-        self.game_buttons = []
-
+        game_buttons = []
         for game in self.games:
             icon_raw = prepare.GFX["screenshot_{}".format(game[0].lower())]
-            icon = pg.transform.scale(icon_raw, (280, 210))
-            icon.set_colorkey(pg.Color("purple"))
+            icon = pg.transform.scale(icon_raw, (280, 210)).convert_alpha()
             icon_rect = icon.get_rect(midtop=(left, top))
             label = Label(self.font, 48, game[0], "gold3", {"center": (0, 0)})
             button = ImageButton(icon, {"midtop": (left, top)}, label)
@@ -37,32 +48,29 @@ class LobbyScreen(tools._State):
             b = button.rect
             button.frame_rect = pg.Rect(b.topleft,
                                        (b.width,b.height+label.rect.height))
-            self.game_buttons.append(button)
+            game_buttons.append(button)
             left += screen_rect.width // (num_columns + 1)
             if left > screen_rect.width - 100:
                 left = screen_rect.width // (num_columns + 1)
                 top += label.rect.height + icon_rect.height + 50
+        return game_buttons
 
-        b_width = 300
-        b_height = 80
-        credits_label = Label(self.font, 48, "Credits", "gold3", {"center": (0, 0)})
-        self.credits_button = Button(9, screen_rect.bottom - (b_height + 11), b_width,
-                                                  b_height, credits_label)
-        stats_label = Label(self.font, 48, "Stats", "gold3", {"center": (0, 0)})
-        self.stats_button = Button(screen_rect.right - (b_width + 10),
-                                                screen_rect.bottom - (b_height + 11),
-                                                b_width, b_height, stats_label)
-        done_label = Label(self.font, 48, "EXIT", "gold3", {"center": (0, 0)})
-        self.done_button = Button(screen_rect.centerx - (b_width//2),
-                                                screen_rect.bottom - (b_height + 11),
-                                                b_width, b_height, done_label)
+    def make_navigation_buttons(self, screen_rect):
+        b_width = 318
+        b_height = 101
+        self.credits_button = NeonButton((9,screen_rect.bottom-(b_height+11)),
+                                         "Credits")
+        self.stats_button = NeonButton((screen_rect.right - (b_width + 10),
+                                        screen_rect.bottom - (b_height + 11)),
+                                        "Stats")
+        self.done_button = NeonButton((screen_rect.centerx - (b_width//2),
+                                       screen_rect.bottom - (b_height + 11)),
+                                       "Exit")
 
     def startup(self, current_time, persistent):
         self.persist = persistent
-        self.chip_curtain = ChipCurtain(None, single_color=True,
-                                        start_y=prepare.RENDER_SIZE[1]-5,
-                                        variable_spin=False,spin_frequency=120,
-                                        scroll_speed=.8, cycle_colors=True)
+        if not self.chip_curtain:
+            self.chip_curtain = ChipCurtain(None, **CURTAIN_SETTINGS)
 
     def exit_game(self):
         with open(os.path.join("resources", "save_game.json"), "w") as f:
@@ -93,12 +101,16 @@ class LobbyScreen(tools._State):
                 self.exit_game()
 
     def update(self, surface, keys, current_time, dt, scale):
+        mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
         self.persist["music_handler"].update(scale)
+        buttons = [self.stats_button, self.done_button, self.credits_button]
+        for button in buttons:
+            button.update(mouse_pos)
         self.draw(surface)
 
     def draw(self, surface):
-        surface.fill(pg.Color("black"))
+        surface.fill(prepare.BACKGROUND_BASE)
         self.chip_curtain.draw(surface)
         for button in self.game_buttons:
             pg.draw.rect(surface, pg.Color("gray10"), button.frame_rect)

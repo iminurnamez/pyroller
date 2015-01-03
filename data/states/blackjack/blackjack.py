@@ -2,7 +2,7 @@ from random import choice
 import pygame as pg
 from ... import tools, prepare
 from ...components.angles import get_distance, get_angle, project
-from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel
+from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel, NeonButton
 from ...components.cards import Deck
 from ...components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
 from .blackjack_dealer import Dealer
@@ -25,42 +25,35 @@ class Blackjack(tools._State):
         self.chip_size = (48, 30)
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.game_started = False
-
-        b_width = 360
-        b_height = 90
+        self.elapsed = 0.0
+        
+        b_width = 318
+        b_height = 101
         side_margin = 10
         vert_space = 20
         left = self.screen_rect.right - (b_width + side_margin)
         top = self.screen_rect.bottom - ((b_height * 5) + vert_space * 4)
 
-        font_size = 64
-        action_texts = ("Hit", "Stand", "Double Down", "Split")
-        labels = iter([Label(self.font, font_size, text, "gold3", {"center": (0, 0)})
-                            for text in action_texts])
-        self.hit_button = PayloadButton(left, top, b_width, b_height,
-                                                       next(labels), self.hit)
-        deal_label = Label(self.font, font_size, "Deal", "gold3", {"center": (0, 0)})
-        self.deal_button = Button(left, top, b_width, b_height, deal_label)
+        self.hit_button = NeonButton((left, top), "Hit", self.hit)
+        self.deal_button = NeonButton((left, top), "Deal")
         top += b_height + vert_space
-        self.stand_button = PayloadButton(left, top, b_width, b_height,
-                                                            next(labels), self.stand)
+        self.stand_button = NeonButton((left, top), "Stand", self.stand)
         top += b_height + vert_space
-        self.double_down_button = PayloadButton(left, top, b_width, b_height,
-                                                                       next(labels), self.double_down)
+        self.double_down_button = NeonButton((left, top), "Double", 
+                                                                    self.double_down) 
         top += b_height + vert_space
-        self.split_button = PayloadButton(left, top, b_width, b_height,
-                                                          next(labels), self.split_hand)
-
+        self.split_button = NeonButton((left, top), "Split", self.split_hand)
         self.player_buttons = [self.hit_button, self.stand_button,
                                          self.double_down_button, self.split_button]
-        ng_label = Label(self.font, font_size, "New Game", "gold3", {"center": (0, 0)})
-        self.new_game_button = Button(self.deal_button.rect.left - (b_width + 15),
-                                                        self.screen_rect.bottom - (b_height + 15),
-                                                        b_width, b_height, ng_label)
-        lobby_label = Label(self.font, font_size, "Lobby", "gold3", {"center": (0, 0)})
-        self.lobby_button = Button(self.screen_rect.right - (b_width + side_margin), self.screen_rect.bottom - (b_height + 15),
-                                                 b_width, b_height, lobby_label)
-
+        self.new_game_button = NeonButton((self.deal_button.rect.left - (b_width + 15),
+                                                                self.screen_rect.bottom - (b_height + 15)),
+                                                                "Again")
+        self.lobby_button = NeonButton((self.screen_rect.right - (b_width + side_margin),
+                                                        self.screen_rect.bottom - (b_height + 15)),
+                                                        "Lobby")
+        self.buttons = self.player_buttons[:]
+        self.buttons.extend([self.deal_button, self.new_game_button, self.lobby_button])
+        
     def new_game(self, player_cash, chips=None):
         """Start a new round of blackjack."""
         self.deck = Deck((20, 20), prepare.CARD_SIZE, 20)
@@ -84,7 +77,8 @@ class Blackjack(tools._State):
         self.casino_player = self.persist["casino_player"]
         if not self.game_started:
             self.new_game(self.casino_player.stats["cash"])
-
+        self.elapsed = 0.0
+        
     def hit(self, player, hand):
         """Draw a card from deck and add to hand."""
         choice(self.deal_sounds).play()
@@ -124,11 +118,11 @@ class Blackjack(tools._State):
             c2 = hand.card_values[hand.cards[1].value]
             if c1 == c2:
                 hand.slots = hand.slots[:-1]
-                self.player.move_hands(((self.screen_rect.left + 20) - hand.slots[0].left, 0))
+                self.player.move_hands(((self.screen_rect.left + 50) - hand.slots[0].left, 0))
                 p_slot = player.hands[-1].slots[0]
-                hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 2.5), 0)
+                hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 3.5), 0)
                 card = hand.cards.pop()
-                new_hand = Hand((hand_slot.topleft[0], hand_slot.topleft[1] - 20), [card],
+                new_hand = Hand((hand_slot.topleft[0], hand_slot.topleft[1]), [card],
                                             self.player.chip_pile.withdraw_chips(bet))
                 new_hand.slots = [hand_slot]
                 card.rect.topleft = hand_slot.topleft
@@ -226,7 +220,7 @@ class Blackjack(tools._State):
                 if not self.moving_stacks:
                     if event.button == 1:
                         if self.deal_button.rect.collidepoint(pos):
-                            if any(x.bet for x in self.player.hands):
+                            if any(x.bet.chips for x in self.player.hands):
                                 self.state = "Dealing"
                                 self.casino_player.stats["Blackjack"]["games played"] += 1
                         new_movers = self.player.chip_pile.grab_chips(pos)
@@ -261,16 +255,20 @@ class Blackjack(tools._State):
                 test_text = "This is a test string to simulate the advice that a blackjack advisor would give. The string should be broken up into shorter lines aligned to the left."
                 self.advisor_window = AdvisorWindow((700, 500), test_text)
 
-    def update(self, surface, keys, current_time, dt, scale):
+    def update_game(self, surface, keys, current_time, dt, scale):
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
         screen = self.screen_rect
         self.chip_total_label = Label(self.font, 48, total_text, "gold3",
                                {"bottomleft": (screen.left + 3, screen.bottom - 3)})
-
+        mouse_pos = tools.scaled_mouse_pos(scale)
+        for button in self.buttons:
+            button.update(mouse_pos)
+        
         self.persist["music_handler"].update(scale)
         if self.advisor_window:
             if self.advisor_window.done:
-                self.advisor_window = None
+                self.advisor_window = None        
+        
         if self.state == "Betting":
             if not self.moving_stacks:
                 pass
@@ -397,10 +395,16 @@ class Blackjack(tools._State):
                             self.player.add_slot(hand)
         self.moving_cards = [x for x in self.moving_cards if x not in arrived]
         self.chip_rack.update()
+        
+    def update(self, surface, keys, current_time, dt, scale):    
+        self.elapsed += dt
+        while self.elapsed >= 17.0:
+            self.elapsed -= 17.0
+            self.update_game(surface, keys, current_time, dt, scale)
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
-        surface.fill(pg.Color("darkgreen"))
+        surface.fill(prepare.FELT_GREEN)
         self.dealer.draw_hand(surface)
         self.deck.draw(surface)
         self.chip_rack.draw(surface)
