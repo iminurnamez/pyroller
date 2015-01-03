@@ -42,28 +42,14 @@ class KenoSpot(object):
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
-
-class Keno(tools._State):
-    """Class to represent a casino game."""
+        
+class KenoCard(object):
     def __init__(self):
-        super(Keno, self).__init__()
-        self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.game_started = False
         self.font = prepare.FONTS["Saniretro"]
-
-        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(640,40)})
-
-        b_width = 360
-        b_height = 90
-        side_margin = 10
-        w = self.screen_rect.right - (b_width + side_margin)
-        h = self.screen_rect.bottom - (b_height+15)
-        self.lobby_button = NeonButton((w, h), "Lobby")
-        
-        self.buttons = []
-        self.buttons.extend([self.lobby_button])
-        
         self.spots = []
+        self.build()
+        
+    def build(self):
         font_size = 48
         text = "0"
         text_color = "white"
@@ -81,7 +67,8 @@ class Keno(tools._State):
                 x += 70
             y += 70
             x = x_origin
-            
+    
+    def mock(self):
         #pretend picks
         self.spots[15].toggle_owned()
         self.spots[22].toggle_owned()
@@ -111,6 +98,38 @@ class Keno(tools._State):
         self.spots[33].toggle_hit()
         self.spots[77].toggle_hit()
         self.spots[65].toggle_hit()
+        
+    def update(self, mouse_pos):
+        for spot in self.spots:
+            if spot.rect.collidepoint(mouse_pos):
+                spot.toggle_owned()
+    
+    def draw(self, surface):
+        for spot in self.spots:
+            spot.draw(surface)
+
+class Keno(tools._State):
+    """Class to represent a casino game."""
+    def __init__(self):
+        super(Keno, self).__init__()
+        self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
+        self.game_started = False
+        self.font = prepare.FONTS["Saniretro"]
+
+        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(640,40)})
+
+        b_width = 360
+        b_height = 90
+        side_margin = 10
+        w = self.screen_rect.right - (b_width + side_margin)
+        h = self.screen_rect.bottom - (b_height+15)
+        self.lobby_button = NeonButton((w, h), "Lobby")
+        
+        self.buttons = []
+        self.buttons.extend([self.lobby_button])
+        
+        self.keno_card = KenoCard()
+        self.keno_card.mock() #creates a pretend card setup for testing
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -137,10 +156,8 @@ class Keno(tools._State):
                 self.game_started = False
                 self.done = True
                 self.next = "LOBBYSCREEN"
-            else:
-                for spot in self.spots:
-                    if spot.rect.collidepoint(event_pos):
-                        spot.toggle_owned()
+            
+            self.keno_card.update(event_pos)
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
@@ -151,8 +168,7 @@ class Keno(tools._State):
         for button in self.buttons:
             button.draw(surface)
         
-        for spot in self.spots:
-            spot.draw(surface)
+        self.keno_card.draw(surface)
             
         self.persist["music_handler"].draw(surface)
 
