@@ -1,6 +1,37 @@
+import random
 import pygame as pg
 from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel, NeonButton
 from ... import tools, prepare
+
+def pick_numbers(spot):
+    numbers = []
+    while len(numbers) < spot:
+        number = random.randint(0, 79)
+        if number not in numbers:
+            numbers.append(number)
+    return numbers
+
+class QuickPick(object):
+    '''random picks max(10) numbers for play'''
+    def __init__(self, card):
+        self.rect = pg.Rect(0, 0, 150, 75)
+        self.font = prepare.FONTS["Saniretro"]
+        self.label = Label(self.font, 32, 'QUICK PICK', 'gold3', {'center':(0,0)})
+        self.label.rect.center = self.rect.center
+        self.color = '#181818'
+        self.card = card
+
+    def update(self):
+        self.card.reset()
+        numbers = pick_numbers(10)
+        
+        for number in numbers:
+            self.card.toggle_owned(number)
+
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+        self.label.draw(surface)
+
 
 class KenoSpot(object):
     COLORS = {
@@ -19,6 +50,11 @@ class KenoSpot(object):
         
         self.owned = False
         self.hit   = False
+
+    def reset(self):
+        self.owned = False
+        self.hit   = False
+        self.update_color()
 
     def toggle_owned(self):
         self.owned = not self.owned
@@ -99,6 +135,13 @@ class KenoCard(object):
         self.spots[77].toggle_hit()
         self.spots[65].toggle_hit()
         
+    def toggle_owned(self, number):
+        self.spots[number].toggle_owned()
+        
+    def reset(self):
+        for spot in self.spots:
+            spot.reset()
+        
     def update(self, mouse_pos):
         for spot in self.spots:
             if spot.rect.collidepoint(mouse_pos):
@@ -129,7 +172,9 @@ class Keno(tools._State):
         self.buttons.extend([self.lobby_button])
         
         self.keno_card = KenoCard()
-        self.keno_card.mock() #creates a pretend card setup for testing
+        #self.keno_card.mock() #creates a pretend card setup for testing
+        
+        self.quick_pick = QuickPick(self.keno_card)
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -157,6 +202,9 @@ class Keno(tools._State):
                 self.done = True
                 self.next = "LOBBYSCREEN"
             
+            if self.quick_pick.rect.collidepoint(event_pos):
+                self.quick_pick.update()
+            
             self.keno_card.update(event_pos)
 
     def draw(self, surface):
@@ -169,6 +217,8 @@ class Keno(tools._State):
             button.draw(surface)
         
         self.keno_card.draw(surface)
+        
+        self.quick_pick.draw(surface)
             
         self.persist["music_handler"].draw(surface)
 
