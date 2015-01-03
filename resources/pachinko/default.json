@@ -2778,8 +2778,8 @@
                  "type":"pin",
                  "visible":true,
                  "width":0,
-                 "x":838.33762272424,
-                 "y":423.219902773806
+                 "x":838.905224041075,
+                 "y":424.071304749059
                 }, 
                 {
                  "height":0,
@@ -2793,8 +2793,8 @@
                  "type":"pin",
                  "visible":true,
                  "width":0,
-                 "x":849.775998474883,
-                 "y":420.360308836145
+                 "x":850.0597991333,
+                 "y":417.806102910387
                 }, 
                 {
                  "height":0,
@@ -4482,7 +4482,7 @@
 
                     },
                  "rotation":0,
-                 "type":"fail",
+                 "type":"mulligan",
                  "visible":true,
                  "width":64,
                  "x":413.799930289299,
@@ -4497,14 +4497,14 @@
 
                     },
                  "rotation":0,
-                 "type":"fail",
+                 "type":"mulligan",
                  "visible":true,
                  "width":384,
                  "x":752,
                  "y":1120
                 }, 
                 {
-                 "height":32,
+                 "height":448,
                  "id":296,
                  "name":"",
                  "properties":
@@ -4512,11 +4512,11 @@
 
                     },
                  "rotation":0,
-                 "type":"fail",
+                 "type":"mulligan",
                  "visible":true,
                  "width":240,
                  "x":896,
-                 "y":1040
+                 "y":624
                 }, 
                 {
                  "height":112,
@@ -4527,7 +4527,7 @@
 
                     },
                  "rotation":0,
-                 "type":"fail",
+                 "type":"mulligan",
                  "visible":true,
                  "width":32,
                  "x":1136,
