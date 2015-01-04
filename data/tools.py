@@ -4,8 +4,9 @@ for States.  Also contained here are resource loading functions.
 """
 
 import os
-import pygame as pg
+import copy
 import argparse
+import pygame as pg
 
 
 class Control(object):
@@ -89,8 +90,8 @@ class Control(object):
 
     def on_resize(self, size):
         """
-        If the user resized the window change to the next available
-        resolution depending on scale up or scale down.
+        If the user resized the window, change to the next available
+        resolution depending on if scaled up or scaled down.
         """
         res_index = self.resolutions.index(self.screen_rect.size)
         adjust = 1 if size > self.screen_rect.size else -1
@@ -179,6 +180,30 @@ class _State(object):
         msg = font.render(msg, 1, color)
         rect = msg.get_rect(center=center)
         return msg, rect
+
+
+class _KwargMixin(object):
+    """
+    Useful for classes that require a lot of keyword arguments for
+    customization.
+    """
+    def process_kwargs(self, name, defaults, kwargs):
+        """
+        Arguments are a name string (displayed in case of invalid keyword);
+        a dictionary of default values for all valid keywords;
+        and the kwarg dict.
+        """
+        settings = copy.deepcopy(defaults)
+        for kwarg in kwargs:
+            if kwarg in settings:
+                if isinstance(kwargs[kwarg], dict):
+                    settings[kwarg].update(kwargs[kwarg])
+                else:
+                    settings[kwarg] = kwargs[kwarg]
+            else:
+                message = "{} has no keyword: {}"
+                raise AttributeError(message.format(name, kwarg))
+        self.__dict__.update(settings)
 
 
 ### Mouse position functions

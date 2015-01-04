@@ -10,7 +10,7 @@ from ..components.music_handler import MusicHandler
 
 CURTAIN_SETTINGS = {"single_color" : True,
                     "start_y" : prepare.RENDER_SIZE[1]-5,
-                    "scroll_speed" : 0.8,
+                    "scroll_speed" : 0.05,
                     "cycle_colors" : True,
                     "spinner_settings" : {"variable" : False,
                                           "frequency" : 120}}
