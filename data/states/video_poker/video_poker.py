@@ -1,5 +1,7 @@
 import pygame as pg
 from ... import tools, prepare
+from ...components.labels import Label
+from .video_poker_machine import Machine
 
 
 class VideoPoker(tools._State):
@@ -7,6 +9,8 @@ class VideoPoker(tools._State):
     def __init__(self):
         super(VideoPoker, self).__init__()
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
+        self.font = prepare.FONTS["Saniretro"]
+        self.machine = Machine((0,0), prepare.RENDER_SIZE)
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -27,10 +31,6 @@ class VideoPoker(tools._State):
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
             self.persist["music_handler"].get_event(event, scale)
 
-    def draw(self, surface):
-        """This method handles drawing/blitting the state each frame."""
-        surface.fill(prepare.FELT_GREEN)
-
 
     def update(self, surface, keys, current_time, dt, scale):
         """
@@ -43,5 +43,10 @@ class VideoPoker(tools._State):
         """
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.persist["music_handler"].update(scale)
-        self.draw(surface)
+        self.draw(surface, dt)
 
+
+    def draw(self, surface, dt):
+        """This method handles drawing/blitting the state each frame."""
+        surface.fill(prepare.FELT_GREEN)
+        self.machine.draw(surface)
