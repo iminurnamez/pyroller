@@ -64,7 +64,7 @@ class Control(object):
         When a State changes to done necessary startup and cleanup functions
         are called and the current State is changed.
         """
-        previous,self.state_name = self.state_name, self.state.next
+        previous, self.state_name = self.state_name, self.state.next
         persist = self.state.cleanup()
         self.state = self.state_dict[self.state_name]
         self.state.startup(self.now, persist)
@@ -119,7 +119,8 @@ class Control(object):
 
     def main(self):
         """Main loop for entire program."""
-        self.state.startup(self.now, persist)
+        self.state.startup(self.now, dict())
+
         while not self.done:
             time_delta = self.clock.tick(self.fps)
             self.event_loop()

@@ -1,5 +1,6 @@
 import json
 import os
+import random
 from math import degrees
 from operator import itemgetter
 import pymunk
@@ -8,8 +9,9 @@ from pymunk import Body, Poly, Segment, Circle, GrooveJoint, DampedSpring
 from pymunk import moment_for_circle, PivotJoint, SimpleMotor
 import pygame
 import pygame.draw
-from pygame.transform import rotozoom
+from pygame.transform import rotozoom, smoothscale
 from ...prepare import BROADCASTER as B
+from ...prepare import GFX
 
 __all__ = ['Playfield']
 
@@ -131,6 +133,8 @@ class PhysicsSprite(pygame.sprite.DirtySprite):
         self.shapes = None
         self.dirty = 0
         self.visible = 1
+        self.image = None
+        self.rect = None
 
     @property
     def shape(self):
@@ -144,8 +148,8 @@ class PhysicsSprite(pygame.sprite.DirtySprite):
             self.shapes[0] = value
 
     def update(self, dt):
-        # if not self.visible:
-        # return
+        if not self.visible:
+            return
 
         if hasattr(self.shape, "needs_remove"):
             self.kill()
@@ -203,13 +207,15 @@ class Ball(PhysicsSprite):
         body = Body(ball_mass, moment_for_circle(ball_mass, 0, radius))
         body.position = rect.center
         self.shape = Circle(body, radius)
-        self.shape.friction = .9
+        self.shape.elasticity = .5
+        self.shape.friction = 0
         self.shape.layers = 1
         self.shape.collision_type = ball_type
         self.rect = pygame.Rect(0, 0, rect.width, rect.width)
-        self._original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-        pygame.draw.circle(self._original_image, color, self.rect.center,
-                           radius)
+        image = smoothscale(GFX.get('ball-bearing'), self.rect.size)
+        self._original_image = image.convert_alpha()
+        #pygame.draw.circle(self._original_image, color, self.rect.center,
+        #                   radius)
 
 
 class Spinner(PhysicsSprite):
@@ -227,7 +233,7 @@ class Spinner(PhysicsSprite):
         cross1 = Segment(body, rect2.midtop, rect2.midbottom, 1)
         j0 = PivotJoint(playfield, body, body.position)
         j1 = SimpleMotor(playfield, body, 0)
-        j1.max_force = 100
+        j1.max_force = 200
         self.shapes = [top, cross0, cross1, j0, j1]
         self.rect = pygame.Rect(rect)
         self._original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
@@ -342,7 +348,9 @@ class Playfield(pygame.sprite.RenderUpdates):
         self.timers.add(Task(self.auto_push_plunger, 500, -1))
 
     def auto_push_plunger(self):
-        self._plunger.plunger_body.apply_impulse((9700, 0))
+        desired_force = 6800
+        force = random.randint(desired_force - 200, desired_force + 200)
+        self._plunger.plunger_body.apply_impulse((force, 0))
 
     def new_ball(self, space, arbiter):
         if not self._plunger.chute_counter and self.ball_tray:
