@@ -3,13 +3,12 @@ This module includes graphical flairs to spice up menus and screens.
 """
 
 import os
-import copy
 import random
 import itertools
 from math import degrees
 
 import pygame as pg
-from ..tools import strip_from_sheet
+from .. import tools
 from .chips import Chip
 from .. import prepare
 
@@ -50,28 +49,6 @@ CURTAIN_DEFAULTS = {"start_y"              : 0,
                     "spinner_settings"     : CURTAIN_SPINNER_DEFAULTS}
 
 
-class _KwargMixin(object):
-    """
-    Useful for classes that require a lot of keyword arguments for
-    customization.
-    """
-    def process_kwargs(self, name, defaults, kwargs):
-        """
-        Arguments are a name string (displayed in case of invalid keyword);
-        a dictionary of default values for all valid keywords;
-        and the kwarg dict.
-        """
-        settings = copy.deepcopy(defaults)
-        for kwarg in kwargs:
-            if kwarg in settings:
-                if isinstance(kwargs[kwarg], dict):
-                    settings[kwarg].update(kwargs[kwarg])
-                else:
-                    settings[kwarg] = kwargs[kwarg]
-            else:
-                message = "{} has no keyword: {}"
-                raise AttributeError(message.format(name, kwarg))
-        self.__dict__.update(settings)
 
 
 class Fadeout(object):
@@ -112,11 +89,11 @@ class Fadeout(object):
         surface.blit(self.image, self.rect)
 
 
-class Spinner(_KwargMixin):
+class Spinner(pg.sprite.Sprite, tools._KwargMixin):
     """
     Class for the spinning chip sprites.
     """
-    def __init__(self, center, color, **kwargs):
+    def __init__(self, center, color, *groups, **kwargs):
         """
         Arguments are the center of the sprite (x,y) and a color (must be a
         member of COLORS constant declared at the top of the module).
@@ -124,6 +101,7 @@ class Spinner(_KwargMixin):
         customization.  Please see the SPINNER_DEFAULTS constant for all
         accepted keywords.
         """
+        super(Spinner, self).__init__(*groups)
         self.process_kwargs("Spinner", SPINNER_DEFAULTS, kwargs)
         self.elapsed = 0.0
         self.image, self.switch_image = self.prepare_images(color)
@@ -138,7 +116,7 @@ class Spinner(_KwargMixin):
         """
         sheet = prepare.GFX["spinners"]
         y = SPINNER_Y[color]
-        images = strip_from_sheet(sheet, (0, y), (80, 80), 10)
+        images = tools.strip_from_sheet(sheet, (0, y), (80, 80), 10)
         switch_image = images[-1]
         images.extend([pg.transform.flip(img,1,1) for img in images[-2:0:-1]])
         if self.reverse:
@@ -170,7 +148,7 @@ class Spinner(_KwargMixin):
         surface.blit(self.image, self.rect)
 
 
-class ChipCurtain(_KwargMixin):
+class ChipCurtain(tools._KwargMixin):
     """
     A descending curtain of Spinner chips.
     """
@@ -261,17 +239,18 @@ class ChipCurtain(_KwargMixin):
             surface.blit(self.spinners[color].image, position)
 
 
-class Roller(object):
+class Roller(pg.sprite.Sprite):
     """
     A class for rolling chip sprites; notably used in the credits menu.
     """
-    def __init__(self, center, color, direction, speed):
+    def __init__(self, center, color, direction, speed, *groups):
         """
         The argument center is the position of the center of the chip (x,y);
         color indicates the desired chip color (must be a member of COLORS);
         direction indicates which way the chip will roll ("left" or "right");
         speed is a float indicating how fast the chip rolls.
         """
+        super(Roller, self).__init__(*groups)
         self.raw_image = Chip.flat_images[(32,19)][color]
         self.rect = self.raw_image.get_rect(center=center)
         self.pos = list(center)
@@ -294,9 +273,9 @@ class Roller(object):
         self.rect = self.image.get_rect(center=self.pos)
         if self.direction == "left":
             if self.pos[0] < -self.rect.width:
-                self.done = True
+                self.kill()
         elif self.pos[0] > prepare.RENDER_SIZE[0]+self.rect.width:
-            self.done = True
+            self.kill()
 
     def draw(self, surface):
         """Blit the image to the target surface."""
