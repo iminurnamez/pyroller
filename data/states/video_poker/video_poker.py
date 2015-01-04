@@ -1,6 +1,6 @@
 import pygame as pg
 from ... import tools, prepare
-from ...components.labels import Label
+from ...components.labels import NeonButton
 from .video_poker_machine import Machine
 
 
@@ -11,6 +11,8 @@ class VideoPoker(tools._State):
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
         self.machine = Machine((0,0), prepare.RENDER_SIZE)
+
+        # self.loby_button = NeonButton('lobby')
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""

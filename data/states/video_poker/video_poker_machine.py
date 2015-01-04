@@ -14,23 +14,26 @@ class PayBoard:
     def __init__(self, topleft, size):
         self.rect = pg.Rect(topleft, size)
         self.table = []
+        self.lines = []
+
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 30
         self.line_height = 35
         self.text_color = "yellow"
+
         self.border_size = 3
-        self.col_space = int(self.rect.w / 6) # the first col is colspan 2
+        self. border_color =pg.Color('gold')
+        self.bg_color = pg.Color('blue')
+
+        self.col_space = int(self.rect.w / 6)
         self.padding = 10
 
         self.build()
-
-        print self.rect.w
-        print self.col_space
         
     def build(self):
         info_col = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
         'FLUSH','STRAIGHT', 'THREE OF A KIND', 'TWO PAIR', 'JACKS OR BETTER')
-        x = self.rect.left + self.padding
+        x = x_initial = self.rect.left + self.padding
         y = y_initial = self.rect.top + self.padding
         for row in info_col:
             label = Label(self.font, self.text_size, row, self.text_color,
@@ -38,6 +41,7 @@ class PayBoard:
             self.table.append(label)
             y += self.line_height
 
+        
         x += self.col_space*2 - self.padding*2
         y = y_initial
         for col in PAYTABLE:
@@ -50,13 +54,26 @@ class PayBoard:
             x += self.col_space
             y = y_initial
 
+        # borders between cols
+        x = x_initial + self.col_space
+        y0 = self.rect.top
+        y1 = self.rect.bottom
+        for i in range(5):
+            line = [(x, y0), (x, y1)]
+            self.lines.append(line)
+            x += self.col_space
+
+
 
 
     def draw(self, surface):
-        pg.draw.rect(surface, pg.Color('blue'), self.rect)
-        pg.draw.rect(surface, pg.Color('gold'), self.rect, self.border_size)
+        pg.draw.rect(surface, self.bg_color, self.rect)
+        pg.draw.rect(surface, self.border_color, self.rect, self.border_size)
         for label in self.table:
             label.draw(surface)
+        
+        for line in self.lines:
+            pg.draw.line(surface, self.border_color, line[0], line[1], self.border_size)
 
 class Machine:
     def __init__(self, topleft, size):
