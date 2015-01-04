@@ -151,12 +151,15 @@ class Bingo(statemachine.StateMachine):
         """Initialise the UI display"""
         #
         # Buttons that show the winning patterns
+        x, y = S['winning-pattern-position']
         for idx, pattern in enumerate(patterns.PATTERNS):
+            dx, dy = S['winning-pattern-buttons'][pattern.name]
             self.pattern_buttons.append(common.ImageOnOffButton(
-                pattern.name, (200 + idx * 240, 800),
-                'bingo-red-button', 'bingo-red-off-button', 'button',
-                pattern.name,
-                pattern == self.winning_pattern, S
+                pattern.name, (x + dx, y + dy),
+                'bingo-red-button', 'bingo-red-off-button', 'winning-pattern',
+                '    ' + pattern.name,
+                pattern == self.winning_pattern, S,
+                scale=S['winning-pattern-scale']
             ))
             self.pattern_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
             self.pattern_buttons[-1].pattern = pattern

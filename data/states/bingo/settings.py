@@ -206,6 +206,23 @@ SETTINGS = {
     'card-selection-scale': 0.6,
 
     #
+    # Winning pattern display
+    'winning-pattern-position': (490, 920),
+    'winning-pattern-buttons': {
+        'Lines': (-70, -70),
+        'Stamp': (+70, -70),
+        'Corners': (-70, 0),
+        'Center': (+70, 0),
+        'Coverall': (-70, 70),
+        'Random': (+70, 70),
+    },
+    'winning-pattern-font': prepare.FONTS["Saniretro"],
+    'winning-pattern-font-size': 32,
+    'winning-pattern-font-color': 'white',
+    'winning-pattern-scale': 0.6,
+    'winning-pattern-label-width': 20,
+
+    #
     # Money display
     'money-num-digits': 5,
     'money-digit-font': prepare.FONTS["Saniretro"],
