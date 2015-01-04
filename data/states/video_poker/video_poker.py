@@ -12,7 +12,8 @@ class VideoPoker(tools._State):
         self.font = prepare.FONTS["Saniretro"]
         self.machine = Machine((0,0), prepare.RENDER_SIZE)
 
-        # self.loby_button = NeonButton('lobby')
+        self.lobby_button = NeonButton((self.screen_rect.left, 
+                                    self.screen_rect.bottom - 100), "lobby")
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -21,17 +22,17 @@ class VideoPoker(tools._State):
         self.casino_player = self.persist["casino_player"]
 
     def get_event(self, event, scale=(1,1)):
-        """This method will be called for each event in the event queue
-        while the state is active.
-        """
         if event.type == pg.QUIT:
             self.done = True
             self.next = "LOBBYSCREEN"
+
         elif event.type == pg.MOUSEBUTTONDOWN:
-            #Use tools.scaled_mouse_pos(scale, event.pos) for correct mouse
-            #position relative to the pygame window size.
+            pos = tools.scaled_mouse_pos(scale, event.pos)
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
             self.persist["music_handler"].get_event(event, scale)
+            if self.lobby_button.rect.collidepoint(pos):
+                self.done = True
+                self.next = "LOBBYSCREEN"
 
 
     def update(self, surface, keys, current_time, dt, scale):
@@ -44,6 +45,7 @@ class VideoPoker(tools._State):
         the last frame.
         """
         mouse_pos = tools.scaled_mouse_pos(scale)
+        self.lobby_button.update(mouse_pos)
         self.persist["music_handler"].update(scale)
         self.draw(surface, dt)
 
@@ -52,3 +54,4 @@ class VideoPoker(tools._State):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(prepare.FELT_GREEN)
         self.machine.draw(surface)
+        self.lobby_button.draw(surface)
