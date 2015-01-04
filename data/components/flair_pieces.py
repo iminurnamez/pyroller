@@ -49,8 +49,6 @@ CURTAIN_DEFAULTS = {"start_y"              : 0,
                     "spinner_settings"     : CURTAIN_SPINNER_DEFAULTS}
 
 
-
-
 class Fadeout(object):
     """
     Used for gradually fading a graphical element off the screen.
