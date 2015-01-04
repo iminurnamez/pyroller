@@ -125,37 +125,13 @@ class KenoCard(object):
             y += 70
             x = x_origin
     
-    def mock(self):
-        #pretend picks
-        self.spots[15].toggle_owned()
-        self.spots[22].toggle_owned()
-        self.spots[44].toggle_owned()
-        self.spots[52].toggle_owned()
-        self.spots[74].toggle_owned()
-        self.spots[79].toggle_owned()
-        
-        #pretend draw
-        self.spots[55].toggle_hit()
-        self.spots[53].toggle_hit()
-        self.spots[73].toggle_hit()
-        self.spots[2].toggle_hit()
-        self.spots[67].toggle_hit()
-        self.spots[3].toggle_hit()
-        self.spots[16].toggle_hit()
-        self.spots[19].toggle_hit()
-        self.spots[23].toggle_hit()
-        self.spots[79].toggle_hit()
-        self.spots[22].toggle_hit()
-        self.spots[51].toggle_hit()
-        self.spots[44].toggle_hit()
-        self.spots[11].toggle_hit()
-        self.spots[10].toggle_hit()
-        self.spots[7].toggle_hit()
-        self.spots[8].toggle_hit()
-        self.spots[33].toggle_hit()
-        self.spots[77].toggle_hit()
-        self.spots[65].toggle_hit()
-        
+    def get_spot_count(self):
+        count = 0
+        for spot in self.spots:
+            if spot.owned:
+                count+=1
+        return count
+    
     def toggle_owned(self, number):
         self.spots[number].toggle_owned()
         
@@ -174,7 +150,9 @@ class KenoCard(object):
     def update(self, mouse_pos):
         for spot in self.spots:
             if spot.rect.collidepoint(mouse_pos):
-                spot.toggle_owned()
+                if (self.get_spot_count() < 10 and not spot.owned) or spot.owned:
+                    spot.toggle_owned()
+                    
     
     def draw(self, surface):
         for spot in self.spots:
@@ -201,10 +179,11 @@ class Keno(tools._State):
         self.buttons.extend([self.lobby_button])
         
         self.keno_card = KenoCard()
-        #self.keno_card.mock() #creates a pretend card setup for testing
         
         self.quick_pick = QuickPick(self.keno_card)
         self.play = Play(self.keno_card)
+        
+        self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: 0', 'gold3', {'center':(640,700)})
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -239,6 +218,8 @@ class Keno(tools._State):
                 self.play.update()
             
             self.keno_card.update(event_pos)
+            spot_count = self.keno_card.get_spot_count()
+            self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
@@ -253,6 +234,8 @@ class Keno(tools._State):
         
         self.quick_pick.draw(surface)
         self.play.draw(surface)
+        
+        self.spot_count_label.draw(surface)
             
         self.persist["music_handler"].draw(surface)
 
