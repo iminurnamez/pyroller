@@ -26,6 +26,22 @@ def pick_numbers(spot):
             numbers.append(number)
     return numbers
 
+class Clear(object):
+    def __init__(self, card):
+        self.rect = pg.Rect(0, 160, 150, 75)
+        self.font = prepare.FONTS["Saniretro"]
+        self.label = Label(self.font, 32, 'CLEAR', 'gold3', {'center':(0,0)})
+        self.label.rect.center = self.rect.center
+        self.color = '#181818'
+        self.card = card
+        
+    def update(self):
+        self.card.ready_play(clear_all=True)
+        
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+        self.label.draw(surface)
+
 class PayTable(object):
     '''Paytable readout for desired spot count'''
     def __init__(self, card):
@@ -189,10 +205,15 @@ class KenoCard(object):
     def toggle_hit(self, number):
         self.spots[number].toggle_hit()
     
-    def ready_play(self):
+    def ready_play(self, clear_all=False):
         for spot in self.spots:
             spot.hit = False
             spot.update_color()
+            
+        if clear_all:
+            for spot in self.spots:
+                spot.owned = False
+                spot.update_color()
     
     def reset(self):
         for spot in self.spots:
@@ -239,6 +260,8 @@ class Keno(tools._State):
         
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
+        
+        self.clear_action = Clear(self.keno_card)
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -259,7 +282,7 @@ class Keno(tools._State):
             #Use tools.scaled_mouse_pos(scale, event.pos) for correct mouse
             #position relative to the pygame window size.
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
-            #print(event_pos) [for debugging positional items]
+            #print(event_pos) #[for debugging positional items]
             self.persist["music_handler"].get_event(event, scale)
 
             if self.lobby_button.rect.collidepoint(event_pos):
@@ -272,6 +295,9 @@ class Keno(tools._State):
                 
             if self.play.rect.collidepoint(event_pos):
                 self.play.update()
+                
+            if self.clear_action.rect.collidepoint(event_pos):
+                self.clear_action.update()
             
             self.keno_card.update(event_pos)
             spot_count = self.keno_card.get_spot_count()
@@ -298,6 +324,8 @@ class Keno(tools._State):
         self.spot_count_label.draw(surface)
         
         self.pay_table.draw(surface)
+        
+        self.clear_action.draw(surface)
             
         self.persist["music_handler"].draw(surface)
 
