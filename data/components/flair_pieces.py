@@ -3,13 +3,12 @@ This module includes graphical flairs to spice up menus and screens.
 """
 
 import os
-import copy
 import random
 import itertools
 from math import degrees
 
 import pygame as pg
-from ..tools import strip_from_sheet
+from .. import tools
 from .chips import Chip
 from .. import prepare
 
@@ -27,7 +26,7 @@ SPINNER_Y = {"blue"  : 0,
 SPINNER_DEFAULTS = {"frequency" : 17,
                     "reverse"   : False,
                     "variable"  : True,
-                    "accel"     : 0.1,
+                    "accel"     : 0.006,
                     "min_spin"  : 3,
                     "max_spin"  : 31}
 
@@ -35,9 +34,9 @@ SPINNER_DEFAULTS = {"frequency" : 17,
 CURTAIN_SPINNER_DEFAULTS = {"frequency" : 20,
                             "reverse"   : False,
                             "variable"  : True,
-                            "accel"     : 0.5,
+                            "accel"     : 0.03,
                             "min_spin"  : 15,
-                            "max_spin"  : 25}
+                            "max_spin"  : 40}
 
 #Default keyword arguments for ChipCurtain.
 CURTAIN_DEFAULTS = {"start_y"              : 0,
@@ -46,32 +45,8 @@ CURTAIN_DEFAULTS = {"start_y"              : 0,
                     "single_color"         : False,
                     "cycle_colors"         : False,
                     "color_flip_frequency" : 3,
-                    "scroll_speed"         : 4,
+                    "scroll_speed"         : 0.25,
                     "spinner_settings"     : CURTAIN_SPINNER_DEFAULTS}
-
-
-class _KwargMixin(object):
-    """
-    Useful for classes that require a lot of keyword arguments for
-    customization.
-    """
-    def process_kwargs(self, name, defaults, kwargs):
-        """
-        Arguments are a name string (displayed in case of invalid keyword);
-        a dictionary of default values for all valid keywords;
-        and the kwarg dict.
-        """
-        settings = copy.deepcopy(defaults)
-        for kwarg in kwargs:
-            if kwarg in settings:
-                if isinstance(kwargs[kwarg], dict):
-                    settings[kwarg].update(kwargs[kwarg])
-                else:
-                    settings[kwarg] = kwargs[kwarg]
-            else:
-                message = "{} has no keyword: {}"
-                raise AttributeError(message.format(name, kwarg))
-        self.__dict__.update(settings)
 
 
 class Fadeout(object):
@@ -80,7 +55,7 @@ class Fadeout(object):
     Currently fades to a solid color but could be modified to optionally
     fade to a background image.
     """
-    def __init__(self, rect, color="gray1", fade_increment=1.5):
+    def __init__(self, rect, color="gray1", fade_increment=0.1):
         """
         Arguments are the rect of the target area; the color (either as a valid
         color string name or an rgb tuple); and a fade_increment giving the
@@ -97,12 +72,12 @@ class Fadeout(object):
         self.increment = fade_increment
         self.done = False
 
-    def update(self):
+    def update(self, dt):
         """
         Increment and change the alpha value of the surface.
         If alpha reaches 255 set self.done to True.
         """
-        self.alpha = min(self.alpha+self.increment, 255)
+        self.alpha = min(self.alpha+self.increment*dt, 255)
         if self.alpha == 255:
             self.done = True
         self.image.set_alpha(int(self.alpha))
@@ -112,11 +87,11 @@ class Fadeout(object):
         surface.blit(self.image, self.rect)
 
 
-class Spinner(_KwargMixin):
+class Spinner(pg.sprite.Sprite, tools._KwargMixin):
     """
     Class for the spinning chip sprites.
     """
-    def __init__(self, center, color, **kwargs):
+    def __init__(self, center, color, *groups, **kwargs):
         """
         Arguments are the center of the sprite (x,y) and a color (must be a
         member of COLORS constant declared at the top of the module).
@@ -124,6 +99,7 @@ class Spinner(_KwargMixin):
         customization.  Please see the SPINNER_DEFAULTS constant for all
         accepted keywords.
         """
+        super(Spinner, self).__init__(*groups)
         self.process_kwargs("Spinner", SPINNER_DEFAULTS, kwargs)
         self.elapsed = 0.0
         self.image, self.switch_image = self.prepare_images(color)
@@ -138,7 +114,7 @@ class Spinner(_KwargMixin):
         """
         sheet = prepare.GFX["spinners"]
         y = SPINNER_Y[color]
-        images = strip_from_sheet(sheet, (0, y), (80, 80), 10)
+        images = tools.strip_from_sheet(sheet, (0, y), (80, 80), 10)
         switch_image = images[-1]
         images.extend([pg.transform.flip(img,1,1) for img in images[-2:0:-1]])
         if self.reverse:
@@ -159,7 +135,7 @@ class Spinner(_KwargMixin):
             self.elapsed -= self.frequency
             self.image = next(self.images)
         if self.variable:
-            self.frequency += self.accel
+            self.frequency += self.accel*dt
             slow = self.accel > 0 and self.frequency > self.max_spin
             fast = self.accel < 0 and self.frequency < self.min_spin
             if slow or fast:
@@ -170,7 +146,7 @@ class Spinner(_KwargMixin):
         surface.blit(self.image, self.rect)
 
 
-class ChipCurtain(_KwargMixin):
+class ChipCurtain(tools._KwargMixin):
     """
     A descending curtain of Spinner chips.
     """
@@ -246,7 +222,7 @@ class ChipCurtain(_KwargMixin):
         for color in self.spinners:
             self.spinners[color].update(dt)
         for chip in self.chips:
-            chip[0][1] += self.scroll_speed
+            chip[0][1] += self.scroll_speed*dt
             if chip[0][1] > self.bottom:
                 chip[0][1] = self.wrap_y
 
@@ -261,17 +237,18 @@ class ChipCurtain(_KwargMixin):
             surface.blit(self.spinners[color].image, position)
 
 
-class Roller(object):
+class Roller(pg.sprite.Sprite):
     """
     A class for rolling chip sprites; notably used in the credits menu.
     """
-    def __init__(self, center, color, direction, speed):
+    def __init__(self, center, color, direction, speed, *groups):
         """
         The argument center is the position of the center of the chip (x,y);
         color indicates the desired chip color (must be a member of COLORS);
         direction indicates which way the chip will roll ("left" or "right");
         speed is a float indicating how fast the chip rolls.
         """
+        super(Roller, self).__init__(*groups)
         self.raw_image = Chip.flat_images[(32,19)][color]
         self.rect = self.raw_image.get_rect(center=center)
         self.pos = list(center)
@@ -279,24 +256,24 @@ class Roller(object):
         self.angle = 0
         self.direction = direction
         self.multiplier = -1 if direction == "left" else 1
-        self.rotation = -0.05*self.multiplier
+        self.rotation = -0.003*self.multiplier
         self.speed = speed
         self.done = False
 
-    def update(self):
+    def update(self, dt):
         """
         Update position and rotation of chip.  If the chip has rolled off the
         screen, set self.done to True.
         """
-        self.pos[0] += self.speed*self.multiplier
-        self.angle += self.rotation
+        self.pos[0] += self.speed*self.multiplier*dt
+        self.angle += self.rotation*dt
         self.image = pg.transform.rotate(self.raw_image, degrees(self.angle))
         self.rect = self.image.get_rect(center=self.pos)
         if self.direction == "left":
             if self.pos[0] < -self.rect.width:
-                self.done = True
+                self.kill()
         elif self.pos[0] > prepare.RENDER_SIZE[0]+self.rect.width:
-            self.done = True
+            self.kill()
 
     def draw(self, surface):
         """Blit the image to the target surface."""
