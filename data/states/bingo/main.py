@@ -224,7 +224,15 @@ class Bingo(statemachine.StateMachine):
         #
         # Account for the random factor
         if pattern.name == "Random":
-            pattern = random.choice(patterns.PATTERNS[:-1])
+            self.add_generator(
+                'randomize-buttons',
+                self.randomly_highlight_buttons(
+                    self.pattern_buttons[:-1],
+                    S['randomize-button-number'], S['randomize-button-delay'],
+                    lambda b: self.change_pattern(None, b.pattern)
+                )
+            )
+            return
         #
         self.winning_pattern = pattern
         self.highlight_patterns(self.winning_pattern, one_shot=True)
@@ -266,7 +274,7 @@ class Bingo(statemachine.StateMachine):
 
     def create_card_collection(self):
         """Return a new card collection"""
-        number = self.card_selector.number_of_cards if self.card_selector.number_of_cards else random.randrange(1, 6)
+        number = self.card_selector.number_of_cards
         self.cards = playercard.PlayerCardCollection(
             'player-card',
             S['player-cards-position'],
@@ -409,3 +417,32 @@ class Bingo(statemachine.StateMachine):
         other_card = self.cards[card.index] if card.card_owner == bingocard.T_DEALER else self.dealer_cards[card.index]
         other_card.active = False
         other_card.set_card_state(bingocard.S_LOST)
+
+    def randomly_highlight_buttons(self, buttons, number_of_times, delay, final_callback):
+        """Randomly highlight buttons in a group and then call the callback when complete"""
+        last_chosen = None
+        #
+        # Turn all buttons off
+        for button in buttons:
+            button.state = False
+        #
+        for i in range(number_of_times):
+            #
+            # Choose one to highlight, but not the last one
+            while True:
+                chosen = random.choice(buttons)
+                if chosen != last_chosen:
+                    break
+            #
+            # Highlight it
+            self.log.debug('Setting to button {0}, {1}'.format(buttons.index(chosen), chosen.name))
+            chosen.state = True
+            if last_chosen:
+                last_chosen.state = False
+            last_chosen = chosen
+            #
+            if i != number_of_times - 1:
+                yield delay
+        #
+        final_callback(chosen)
+

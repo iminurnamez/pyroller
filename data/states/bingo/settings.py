@@ -249,6 +249,11 @@ SETTINGS = {
     ],
 
     #
+    # Randomized button display
+    'randomize-button-number': 15,
+    'randomize-button-delay': 50,
+
+    #
     # Debug settings
     'debug-auto-pick': False,
     'debug-restart-position': (1250, 120),

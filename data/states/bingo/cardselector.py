@@ -45,6 +45,15 @@ class CardSelector(common.DrawableGroup, loggable.Loggable, EventAware):
     def select_card_number(self, obj, arg):
         """A card selection button was pressed"""
         clicked_idx, number = arg
+        #
+        if number is None:
+            self.state.add_generator('random-button-flash', self.state.randomly_highlight_buttons(
+                self[:-1],
+                S['randomize-button-number'], S['randomize-button-delay'],
+                lambda b: self.select_card_number(None, (self.index(b), self.index(b) + 1))
+            ))
+            return
+        #
         self.number_of_cards = number
         self.log.info('Pressed card selection button {0}, number cards {1}'.format(clicked_idx, number))
         for idx, button in enumerate(self):
