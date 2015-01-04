@@ -25,7 +25,7 @@ class Blackjack(tools._State):
         self.chip_size = (48, 30)
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.game_started = False
-        self.elapsed = 0.0
+        self.elapsed = 17.0
         
         b_width = 318
         b_height = 101
@@ -77,7 +77,7 @@ class Blackjack(tools._State):
         self.casino_player = self.persist["casino_player"]
         if not self.game_started:
             self.new_game(self.casino_player.stats["cash"])
-        self.elapsed = 0.0
+        self.elapsed = 17.0
         
     def hit(self, player, hand):
         """Draw a card from deck and add to hand."""
