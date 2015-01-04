@@ -4,6 +4,7 @@ from ... import prepare
 from ...components.chips import Chip, ChipStack, ChipPile
 from .blackjack_hand import Hand
 
+
 class Player(object):
     def __init__(self, chip_size, cash=0, chips=None):
         self.chip_pile = ChipPile((5, 1000), chip_size, cash=cash, chips=chips)
@@ -39,14 +40,6 @@ class Player(object):
         hand.tl = (hand.tl[0] + offset[0],
                         hand.tl[1] + offset[1])
         
-            
-            
     def draw(self, surface):
         self.draw_hands(surface)
         self.chip_pile.draw_stacks(surface)
-    
-            
-    
-                
-        
-            
