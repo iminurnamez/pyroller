@@ -190,20 +190,20 @@ SETTINGS = {
     # Card selection
     'card-selection-default': 2,
     'card-selection': [
-        ('One', 1, (-110, -110)),
-        ('Two', 2, (+110, -110)),
-        ('Three', 3, (-110, 0)),
-        ('Four', 4, (+110, 0)),
-        ('Five', 5, (-110, 110)),
-        ('Random', None, (+110, 110)),
+        ('One', 1, (-70, -70)),
+        ('Two', 2, (+70, -70)),
+        ('Three', 3, (-70, 0)),
+        ('Four', 4, (+70, 0)),
+        ('Five', 5, (-70, 70)),
+        ('Random', None, (+70, 70)),
     ],
-    'card-selection-position': (220, 880),
+    'card-selection-position': (170, 920),
     'card-selection-offsets': (0, 40),
     'card-selection-font': prepare.FONTS["Saniretro"],
-    'card-selection-font-size': 62,
+    'card-selection-font-size': 32,
     'card-selection-font-color': 'white',
     'card-selection-size': (30, 45),
-    'card-selection-scale': 1.0,
+    'card-selection-scale': 0.6,
 
     #
     # Money display
