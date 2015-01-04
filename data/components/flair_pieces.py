@@ -26,7 +26,7 @@ SPINNER_Y = {"blue"  : 0,
 SPINNER_DEFAULTS = {"frequency" : 17,
                     "reverse"   : False,
                     "variable"  : True,
-                    "accel"     : 0.1,
+                    "accel"     : 0.006,
                     "min_spin"  : 3,
                     "max_spin"  : 31}
 
@@ -34,9 +34,9 @@ SPINNER_DEFAULTS = {"frequency" : 17,
 CURTAIN_SPINNER_DEFAULTS = {"frequency" : 20,
                             "reverse"   : False,
                             "variable"  : True,
-                            "accel"     : 0.5,
+                            "accel"     : 0.03,
                             "min_spin"  : 15,
-                            "max_spin"  : 25}
+                            "max_spin"  : 40}
 
 #Default keyword arguments for ChipCurtain.
 CURTAIN_DEFAULTS = {"start_y"              : 0,
@@ -45,7 +45,7 @@ CURTAIN_DEFAULTS = {"start_y"              : 0,
                     "single_color"         : False,
                     "cycle_colors"         : False,
                     "color_flip_frequency" : 3,
-                    "scroll_speed"         : 4,
+                    "scroll_speed"         : 0.25,
                     "spinner_settings"     : CURTAIN_SPINNER_DEFAULTS}
 
 
@@ -57,7 +57,7 @@ class Fadeout(object):
     Currently fades to a solid color but could be modified to optionally
     fade to a background image.
     """
-    def __init__(self, rect, color="gray1", fade_increment=1.5):
+    def __init__(self, rect, color="gray1", fade_increment=0.1):
         """
         Arguments are the rect of the target area; the color (either as a valid
         color string name or an rgb tuple); and a fade_increment giving the
@@ -74,12 +74,12 @@ class Fadeout(object):
         self.increment = fade_increment
         self.done = False
 
-    def update(self):
+    def update(self, dt):
         """
         Increment and change the alpha value of the surface.
         If alpha reaches 255 set self.done to True.
         """
-        self.alpha = min(self.alpha+self.increment, 255)
+        self.alpha = min(self.alpha+self.increment*dt, 255)
         if self.alpha == 255:
             self.done = True
         self.image.set_alpha(int(self.alpha))
@@ -137,7 +137,7 @@ class Spinner(pg.sprite.Sprite, tools._KwargMixin):
             self.elapsed -= self.frequency
             self.image = next(self.images)
         if self.variable:
-            self.frequency += self.accel
+            self.frequency += self.accel*dt
             slow = self.accel > 0 and self.frequency > self.max_spin
             fast = self.accel < 0 and self.frequency < self.min_spin
             if slow or fast:
@@ -224,7 +224,7 @@ class ChipCurtain(tools._KwargMixin):
         for color in self.spinners:
             self.spinners[color].update(dt)
         for chip in self.chips:
-            chip[0][1] += self.scroll_speed
+            chip[0][1] += self.scroll_speed*dt
             if chip[0][1] > self.bottom:
                 chip[0][1] = self.wrap_y
 
@@ -258,17 +258,17 @@ class Roller(pg.sprite.Sprite):
         self.angle = 0
         self.direction = direction
         self.multiplier = -1 if direction == "left" else 1
-        self.rotation = -0.05*self.multiplier
+        self.rotation = -0.003*self.multiplier
         self.speed = speed
         self.done = False
 
-    def update(self):
+    def update(self, dt):
         """
         Update position and rotation of chip.  If the chip has rolled off the
         screen, set self.done to True.
         """
-        self.pos[0] += self.speed*self.multiplier
-        self.angle += self.rotation
+        self.pos[0] += self.speed*self.multiplier*dt
+        self.angle += self.rotation*dt
         self.image = pg.transform.rotate(self.raw_image, degrees(self.angle))
         self.rect = self.image.get_rect(center=self.pos)
         if self.direction == "left":

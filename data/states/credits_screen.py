@@ -17,7 +17,7 @@ COLORS = ["black", "blue", "green", "red", "white"]
 
 ZIPPER_DEFAULTS = {"off"        : 100,
                    "stagger"    : 100,
-                   "speed"      : 5,
+                   "speed"      : 0.3,
                    "vert_space" : 150,
                    "chip_space" : 25,
                    "font_size"  : 80}
@@ -52,27 +52,30 @@ class ZipperBlock(tools._KwargMixin):
                 label = Label(font, self.font_size, text, "goldenrod3",
                               {"midleft": (r.right+self.chip_space,r.centery)})
                 label.speed = -self.speed
+            label.true_centerx = label.rect.centerx
             label.moving = True
             labels.append(label)
             rollers.add(roll)
             y += self.vert_space
         return labels, rollers
 
-    def update(self):
-        self.rollers.update()
+    def update(self, dt):
+        self.rollers.update(dt)
         if self.state == "Zipping":
             for label in self.labels:
                 centerx = label.rect.centerx
+                frame_speed = self.speed*dt
                 if label.moving:
-                    label.rect.centerx += label.speed
-                if self.stop_x-self.speed < centerx < self.stop_x+self.speed:
+                    label.true_centerx += label.speed*dt
+                    label.rect.centerx = label.true_centerx
+                if self.stop_x-frame_speed < centerx < self.stop_x+frame_speed:
                     if label.moving:
                         label.rect.centerx = self.stop_x
                         label.moving = False
             if not any(label.moving for label in self.labels):
                 self.state = "Fading"
         elif self.state == "Fading":
-            self.fader.update()
+            self.fader.update(dt)
             if self.fader.done:
                 self.done = True
 
@@ -91,8 +94,6 @@ class CreditsScreen(tools._State):
         self.next = "LOBBYSCREEN"
         self.font = prepare.FONTS["Saniretro"]
         self.names = DEVELOPERS
-        self.labels = []
-        self.rollers = []
         self.zipper_blocks =[]
         self.zipper_block = None
         self.chip_curtain = None
@@ -150,13 +151,15 @@ class CreditsScreen(tools._State):
             self.zipper_block = None
             self.title = None
             self.spinners.empty()
-            self.chip_curtain = ChipCurtain("chipcurtain_python")
+            self.chip_curtain = ChipCurtain("chipcurtain_python",
+                                    spinner_settings={"frequency" : 45,
+                                                      "variable"  : False})
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.done_button.update(mouse_pos)
         if self.zipper_block:
-            self.zipper_block.update()
+            self.zipper_block.update(dt)
             if self.zipper_block.done:
                 self.switch_blocks()
         if self.chip_curtain:
