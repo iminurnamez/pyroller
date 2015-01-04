@@ -154,15 +154,16 @@ class Bingo(statemachine.StateMachine):
         x, y = S['winning-pattern-position']
         for idx, pattern in enumerate(patterns.PATTERNS):
             dx, dy = S['winning-pattern-buttons'][pattern.name]
-            self.pattern_buttons.append(common.ImageOnOffButton(
-                pattern.name, (x + dx, y + dy),
-                'bingo-red-button', 'bingo-red-off-button', 'winning-pattern',
-                '    ' + pattern.name,
+            new_button = patterns.PatternButton(
+                idx, (x + dx, y + dy),
+                'bingo-wide-red-button', 'bingo-wide-red-button-off', 'winning-pattern',
+                pattern.name,
                 pattern == self.winning_pattern, S,
                 scale=S['winning-pattern-scale']
-            ))
-            self.pattern_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
-            self.pattern_buttons[-1].pattern = pattern
+            )
+            new_button.linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
+            new_button.pattern = pattern
+            self.pattern_buttons.append(new_button)
         self.ui.extend(self.pattern_buttons)
         #
         # Simple generator to flash the potentially winning squares
@@ -220,6 +221,11 @@ class Bingo(statemachine.StateMachine):
     def change_pattern(self, obj, pattern):
         """Change the winning pattern"""
         self.log.info('Changing pattern to {0}'.format(pattern.name))
+        #
+        # Account for the random factor
+        if pattern.name == "Random":
+            pattern = random.choice(patterns.PATTERNS[:-1])
+        #
         self.winning_pattern = pattern
         self.highlight_patterns(self.winning_pattern, one_shot=True)
         #

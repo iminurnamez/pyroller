@@ -207,20 +207,22 @@ SETTINGS = {
 
     #
     # Winning pattern display
-    'winning-pattern-position': (490, 920),
+    'winning-pattern-position': (520, 920),
     'winning-pattern-buttons': {
-        'Lines': (-70, -70),
-        'Stamp': (+70, -70),
-        'Corners': (-70, 0),
-        'Center': (+70, 0),
-        'Coverall': (-70, 70),
-        'Random': (+70, 70),
+        'Lines': (-85, -70),
+        'Stamp': (+85, -70),
+        'Corners': (-85, 0),
+        'Center': (+85, 0),
+        'Coverall': (-85, 70),
+        'Random': (+85, 70),
     },
     'winning-pattern-font': prepare.FONTS["Saniretro"],
     'winning-pattern-font-size': 32,
     'winning-pattern-font-color': 'white',
-    'winning-pattern-scale': 0.6,
-    'winning-pattern-label-width': 20,
+    'winning-pattern-scale': 1,
+    'winning-pattern-logo-scale': 0.4,
+    'winning-pattern-logo-offset': 55,
+    'winning-pattern-label-width': 30,
 
     #
     # Money display
