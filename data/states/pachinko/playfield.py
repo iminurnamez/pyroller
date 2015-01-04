@@ -217,7 +217,7 @@ class Spinner(PhysicsSprite):
         super(Spinner, self).__init__()
         color = (220, 220, 220)
         r, cy = rect.width / 2, rect.height / 2
-        assert(r==cy)
+        assert(r == cy)
         body = Body(.1, moment_for_circle(.1, 0, r))
         body.position = rect.center
         top = Circle(body, r)

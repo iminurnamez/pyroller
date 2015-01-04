@@ -28,12 +28,12 @@ def main():
                   "CRAPS"       : craps.Craps(),
                   "BINGO"       : bingo.Bingo(),
                   "KENO"        : keno.Keno(),
-                  "PACHINKO"    : pachinko.Pachinko(),
+                  "PACHINKO"    : pachinko.Pachinko()
     }
     if prepare.ARGS['straight']:
         run_it.setup_states(state_dict, "TITLESCREEN")
     else:
-        run_it.setup_states(state_dict, "SNAKESPLASH")
+        run_it.setup_states(state_dict, "PACHINKO")
     #
     # Start the main state
     if not prepare.ARGS['profile']:
@@ -45,6 +45,3 @@ def main():
         cProfile.runctx('run_it.main()', globals(), locals(), 'profile')
         p = pstats.Stats('profile')
         print(p.sort_stats('cumulative').print_stats(100))
-        run_it.setup_states(state_dict, "PACHINKO")
-    run_it.main()
-

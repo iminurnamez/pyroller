@@ -61,7 +61,10 @@ class Fadeout(object):
     def __init__(self, rect, color="gray1", fade_increment=1.5):
         self.rect = rect
         self.surf = pg.Surface(rect.size)
-        self.surf.fill(pg.Color(color))
+        try:
+            self.surf.fill(pg.Color(color))
+        except ValueError:
+            self.surf.fill(color)
         self.surf.convert_alpha()
         self.alpha = 0
         self.increment = fade_increment

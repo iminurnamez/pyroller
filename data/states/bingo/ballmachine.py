@@ -2,7 +2,7 @@
 
 import random
 
-from . import utils
+from ...components import common
 from . import loggable
 from .settings import SETTINGS as S
 
@@ -28,7 +28,7 @@ class Ball(object):
         self.full_name = '{0}{1}'.format(self.letter, self.number)
 
 
-class BallMachine(utils.Drawable, loggable.Loggable):
+class BallMachine(common.Drawable, loggable.Loggable):
     """A machine to pick balls at random"""
 
     def __init__(self, name, state):
@@ -40,8 +40,8 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.all_balls = [Ball(n) for n in S['machine-balls']]
         self.balls = []
         self.called_balls = []
-        self.speed_buttons = utils.DrawableGroup()
-        self.buttons = utils.ClickableGroup()
+        self.speed_buttons = common.DrawableGroup()
+        self.buttons = common.ClickableGroup()
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-speeds'][0][1] * 1000
         self.running = False
@@ -53,13 +53,14 @@ class BallMachine(utils.Drawable, loggable.Loggable):
 
     def create_ui(self):
         """Create the UI components"""
-        components = utils.DrawableGroup()
+        components = common.DrawableGroup()
         #
         # The display of the current ball
-        self.current_ball_ui = utils.getLabel(
+        self.current_ball_ui = common.getLabel(
             'machine-ball',
             S['machine-ball-position'],
-            '0'
+            '0',
+            S
         )
         components.append(self.current_ball_ui)
         #
@@ -69,22 +70,22 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         #
         # Buttons that show the speed
         for idx, (name, interval, number_balls) in enumerate(S['machine-speeds']):
-            self.speed_buttons.append(utils.ImageOnOffButton(
+            self.speed_buttons.append(common.ImageOnOffButton(
                 name,
                 (150 + idx * 65, 200),
                 'bingo-blue-button', 'bingo-blue-off-button', 'tiny-button',
                 name,
                 interval == self.initial_interval / 1000,
-                self.change_speed, (idx, interval),
-                scale=S['tiny-button-scale']
+                S, scale=S['tiny-button-scale']
             ))
+            self.speed_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.change_speed, (idx, interval))
             self.speed_transitions[number_balls] = (idx, interval)
         components.extend(self.speed_buttons)
         self.buttons.extend(self.speed_buttons)
         #
         return components
 
-    def change_speed(self, arg):
+    def change_speed(self, obj,  arg):
         """Change the speed of the ball machine"""
         selected_idx, interval = arg
         self.log.info('Changing machine speed to {0}'.format(interval))
@@ -148,7 +149,7 @@ class BallMachine(utils.Drawable, loggable.Loggable):
                 # No transition
                 pass
             else:
-                self.change_speed((button_idx, new_interval))
+                self.change_speed(None, (button_idx, new_interval))
             #
             # Wait for next ball
             yield self.interval
@@ -171,14 +172,14 @@ class BallMachine(utils.Drawable, loggable.Loggable):
         self.timer.next_step()
 
 
-class CalledBallTray(utils.Drawable, loggable.Loggable):
+class CalledBallTray(common.Drawable, loggable.Loggable):
     """A display of the balls that have been called"""
 
     def __init__(self, position):
         """Initialise the display"""
         self.addLogger()
         self.x, self.y = position
-        self.balls = utils.KeyedDrawableGroup()
+        self.balls = common.KeyedDrawableGroup()
         self.called_balls = []
         #
         w, h = S['called-balls-size']
@@ -187,8 +188,8 @@ class CalledBallTray(utils.Drawable, loggable.Loggable):
         for number in S['machine-balls']:
             xi = (number - 1) % w
             yi = (number - 1) // w
-            self.balls[number] = utils.getLabel(
-                'called-ball-number', (self.x + xi * dx, self.y + yi * dy), number
+            self.balls[number] = common.getLabel(
+                'called-ball-number', (self.x + xi * dx, self.y + yi * dy), number, S
             )
 
     def call_ball(self, ball):

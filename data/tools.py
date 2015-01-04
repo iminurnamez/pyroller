@@ -54,9 +54,8 @@ class Control(object):
             self.flip_state()
         self.state.update(self.render_surf,self.keys,self.now,dt,self.scale)
         if self.render_size != self.screen_rect.size:
-            scale_args = (self.render_surf, self.screen_rect.size)
-            scaled_surf = pg.transform.smoothscale(*scale_args)
-            self.screen.blit(scaled_surf, (0, 0))
+            scale_args = (self.render_surf, self.screen_rect.size, self.screen)
+            pg.transform.smoothscale(*scale_args)
         else:
             self.screen.blit(self.render_surf, (0, 0))
 
@@ -120,7 +119,7 @@ class Control(object):
 
     def main(self):
         """Main loop for entire program."""
-        self.state.startup(0, dict())
+        self.state.startup(self.now, persist)
         while not self.done:
             time_delta = self.clock.tick(self.fps)
             self.event_loop()

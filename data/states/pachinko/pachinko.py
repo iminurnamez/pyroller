@@ -34,6 +34,9 @@ class Pachinko(tools._State):
         t.rect.topleft = 960, 70
         self.hud.add(t)
 
+        b = Button("Test", (1000, 140, 200, 100), None)
+        self.hud.add(b)
+
         B.linkEvent('pachinko_jackpot', self.on_jackpot)
         B.linkEvent('pachinko_gutter', self.on_gutter)
         B.linkEvent('pachinko_tray', self.on_tray)
@@ -73,6 +76,7 @@ class Pachinko(tools._State):
     def cleanup(self):
         B.unlinkEvent('pachinko_jackpot', self.on_jackpot)
         B.unlinkEvent('pachinko_gutter', self.on_gutter)
+        B.unlinkEvent('pachinko_tray', self.on_tray)
         self.cash_out()
 
     def get_event(self, event, scale=(1, 1)):

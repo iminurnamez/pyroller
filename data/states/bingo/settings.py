@@ -172,10 +172,21 @@ SETTINGS = {
     'card-selection-offsets': (0, 40),
 
     #
+    # Money display
+    'money-num-digits': 5,
+    'money-digit-font': prepare.FONTS["Saniretro"],
+    'money-digit-font-size': 60,
+    'money-digit-font-color': 'black',
+    'money-position': (650, 20),
+    'money-offsets': (50, 0),
+    'money-hide-offsets': (0, -16),
+    'money-hide-repeats': 5,
+
+    #
     # Debug settings
     'debug-auto-pick': True,
-    'debug-auto-pick-position': (1250, 40),
     'debug-restart-position': (1250, 120),
     'debug-next-ball-position': (1250, 200),
     'debug-new-cards-position': (1250, 280),
+    'debug-auto-pick-position': (1250, 360),
 }

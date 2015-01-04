@@ -28,7 +28,8 @@ class LobbyScreen(tools._State):
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
         self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
-                      ("Craps", "CRAPS"), ("Keno", "KENO")]
+                      ("Craps", "CRAPS"), ("Keno", "KENO"),
+                      ("Pachinko", "PACHINKO")]
         self.game_buttons = self.make_game_buttons(screen_rect)
         self.make_navigation_buttons(screen_rect)
         self.chip_curtain = None #Created on startup.
