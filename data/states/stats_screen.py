@@ -10,7 +10,6 @@ class StatsScreen(tools._State):
         super(StatsScreen, self).__init__()
         self.font = prepare.FONTS["Saniretro"]
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-
         self.buttons = self.make_buttons(screen_rect)
         self.labels = []
 
