@@ -22,12 +22,16 @@ class PayBoard:
         self.line_height = 35
         self.text_color = "yellow"
 
-        self.border_size = 3
+        self.border_size = 5
         self. border_color =pg.Color('gold')
         self.bg_color = pg.Color('darkblue')
 
         self.col_space = int(self.rect.w / 6)
         self.padding = 10
+
+        self.bet_rect = pg.Rect(( self.rect.left + self.col_space, self.rect.top),
+                                 (self.col_space, self.rect.h))
+        self.bet_rect_color = pg.Color("red")
 
         self.build()
         
@@ -56,7 +60,7 @@ class PayBoard:
             y = y_initial
 
         # borders between cols
-        x = x_initial + self.col_space
+        x = self.rect.left + self.col_space
         y0 = self.rect.top
         y1 = self.rect.bottom
         for i in range(5):
@@ -69,6 +73,7 @@ class PayBoard:
 
     def draw(self, surface):
         pg.draw.rect(surface, self.bg_color, self.rect)
+        pg.draw.rect(surface, self.bet_rect_color, self.bet_rect)
         pg.draw.rect(surface, self.border_color, self.rect, self.border_size)
         for label in self.table:
             label.draw(surface)
@@ -106,6 +111,7 @@ class CardsTable:
         for card in self.hand:
             card.rect.left = x
             card.rect.top = y
+            # card.face_up = True
             x += self.card_spacing + card.rect.w
 
     def draw(self, surface, dt):
@@ -119,8 +125,12 @@ class Machine:
         self.rect = pg.Rect(topleft, size)
         self.font = prepare.FONTS["Saniretro"]
         self.padding = 25
-        x, y = topleft
-        w, h = size
+        self.build()
+
+
+    def build(self):
+        x, y = self.rect.topleft
+        w, h = self.rect.size
 
         x += self.padding
         y += self.padding
