@@ -5,14 +5,14 @@ from .video_poker_machine import Machine
 
 
 class VideoPoker(tools._State):
-    """Class to represent a casino game."""
+    """Class to represent a Video poker game."""
     def __init__(self):
         super(VideoPoker, self).__init__()
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
         self.machine = Machine((0,0), prepare.RENDER_SIZE)
 
-        self.lobby_button = NeonButton((self.screen_rect.left, 
+        self.lobby_button = NeonButton((self.screen_rect.right - 318, 
                                     self.screen_rect.bottom - 100), "lobby")
 
     def startup(self, current_time, persistent):
@@ -36,14 +36,6 @@ class VideoPoker(tools._State):
 
 
     def update(self, surface, keys, current_time, dt, scale):
-        """
-        This method will be called once each frame while the state is active.
-        Surface is a reference to the rendering surface which will be scaled
-        to pygame's display surface, keys is the return value of the last call
-        to pygame.key.get_pressed. current_time is the number of milliseconds
-        since pygame was initialized. dt is the number of milliseconds since
-        the last frame.
-        """
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.lobby_button.update(mouse_pos)
         self.persist["music_handler"].update(scale)
@@ -53,5 +45,5 @@ class VideoPoker(tools._State):
     def draw(self, surface, dt):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(prepare.FELT_GREEN)
-        self.machine.draw(surface)
+        self.machine.draw(surface, dt)
         self.lobby_button.draw(surface)
