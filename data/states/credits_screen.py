@@ -15,7 +15,7 @@ SCREEN_WIDTH = prepare.RENDER_SIZE[0]
 #Names of all developers to include in the credits.
 DEVELOPERS = ["camarce1", "Mekire", "iminurnamez", "macaframa", "metulburr",
               "jellyberg", "PaulPaterson", "trijazzguy", "menatwrk",
-              "bar777foo", "bitcraft", "net_nomad"]
+              "bar777foo", "bitcraft", "net_nomad", "andarms"]
 
 COLORS = ["black", "blue", "green", "red", "white"]
 
