@@ -261,7 +261,8 @@ class Blackjack(tools._State):
             elif self.state == "Show Results":
                 if event.button == 1:
                     if self.new_game_button.rect.collidepoint(pos):
-                        self.new_game(self.player.chip_pile.get_chip_total())
+                        player_chips = self.player.chip_pile.all_chips()
+                        self.new_game(0, chips=player_chips)
 
         elif event.type == pg.MOUSEBUTTONUP:
             pos = tools.scaled_mouse_pos(scale, event.pos)
