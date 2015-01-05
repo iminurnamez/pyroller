@@ -37,6 +37,7 @@ class VideoPoker(tools._State):
 
 
     def update(self, surface, keys, current_time, dt, scale):
+        self.machine.update()
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.lobby_button.update(mouse_pos)
         self.persist["music_handler"].update(scale)

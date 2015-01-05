@@ -29,11 +29,16 @@ class PayBoard:
         self.col_space = int(self.rect.w / 6)
         self.padding = 10
 
-        self.bet_rect = pg.Rect(( self.rect.left + self.col_space, self.rect.top),
+        self.bet_rect = pg.Rect(( self.rect.left, self.rect.top),
                                  (self.col_space, self.rect.h))
         self.bet_rect_color = pg.Color("red")
+        self.show_bet_rect = False
 
         self.build()
+
+    def update_bet_rect(self, bet):
+        self.bet_rect.left = self.rect.left + self.col_space * bet
+        self.show_bet_rect = True
         
     def build(self):
         info_col = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
@@ -73,7 +78,8 @@ class PayBoard:
 
     def draw(self, surface):
         pg.draw.rect(surface, self.bg_color, self.rect)
-        pg.draw.rect(surface, self.bet_rect_color, self.bet_rect)
+        if self.show_bet_rect:
+            pg.draw.rect(surface, self.bet_rect_color, self.bet_rect)
         pg.draw.rect(surface, self.border_color, self.rect, self.border_size)
         for label in self.table:
             label.draw(surface)
@@ -134,16 +140,34 @@ class Machine:
         self.btn_padding = 40
         self.info_labels = []
 
+        self.max_bet = 5
         self.credits = 20
-        self.coins = 1
+        self.coins = 0
 
         self.build()
 
 
 
+    def bet(self):
+        if self.coins < self.max_bet:
+            self.coins += 1
+            self.credits -= 1
+        else:
+            self.coins = 1
+            self.credits += 4
+        self.pay_board.update_bet_rect(self.coins)
+
+    def bet_max(self):
+        aux = self.max_bet - self.coins
+        self.coins += aux
+        self.credits -= aux
+        self.pay_board.update_bet_rect(self.coins)
+
+
+
+
     def test(self):
         print("Hello world")
-
 
 
     def build(self):
@@ -157,28 +181,24 @@ class Machine:
         h = 330
         self.pay_board = PayBoard((x,y), (w,h))
 
+        # use in info labels
+        self.label_x1 = x 
+        self.label_x2 = w
+
         # calculate cards table position position
         y += self.padding + self.pay_board.rect.h
         h = 300
         self.cards_table = CardsTable((x,y), (w,h))
 
-        # game info
-        y += self.padding + self.cards_table.rect.h
-        credit_text = 'Credit {}'.format(self.credits)
-        label = Label(self.font, self.text_size, credit_text, self.text_color, 
-                        {"topright": (w, y)})
-        self.info_labels.append(label)
-        coins_text = "Coins in {}".format(self.coins)
-        label = Label(self.font, self.text_size, coins_text, self.text_color, 
-                        {"topleft": (x, y)})
-        self.info_labels.append(label)
+        y = self.cards_table.rect.bottom + self.padding
+        self.label_y = y # use in info labels
 
         # buttons
         y += self.padding + self.btn_padding
-        button_list = [('bet', self.test, None), ('held', self.test, None), 
+        button_list = [('bet', self.bet, None), ('held', self.test, None), 
                         ('held', self.test, None), ('held', self.test, None),
                         ('held', self.test, None), ('held', self.test, None), 
-                        ('bet max', self.test, None), ('draw', self.test, None)]
+                        ('bet max', self.bet_max, None), ('draw', self.test, None)]
         for text, func, args in button_list:
             label = Label(self.font, self.text_size, text, self.text_color, {})
             button = FunctionButton(x, y, self.btn_width, self.btn_height, label, func, args)
@@ -190,6 +210,19 @@ class Machine:
     def get_event(self, mouse_pos):
         for button in self.buttons:
             button.get_event(mouse_pos)
+
+    def update(self):
+        # game info labels
+        self.info_labels = []
+        credit_text = 'Credit {}'.format(self.credits)
+        label = Label(self.font, self.text_size, credit_text, self.text_color, 
+                        {"topright": (self.label_x2, self.label_y)})
+        self.info_labels.append(label)
+        coins_text = "Coins in {}".format(self.coins)
+        label = Label(self.font, self.text_size, coins_text, self.text_color, 
+                        {"topleft": (self.label_x1, self.label_y)})
+        self.info_labels.append(label)
+
 
     def draw(self, surface, dt):
         self.pay_board.draw(surface)
