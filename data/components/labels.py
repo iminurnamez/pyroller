@@ -265,11 +265,18 @@ class FunctionButton(Button):
         self.function = function
         self.function_args = function_args
 
+    def get_event(self, mouse_pos):
+        if self.rect.collidepoint(mouse_pos):
+            self.click()
+
     def click(self, dynamic_args=None):
         """If the button's function requires arguments that need to be
         calculated at the time the button is clicked they can be passed
         as this method's dynamic_args."""
-        function_args = list(self.function_args)
-        if dynamic_args:
-            function_args.extend(list(dynamic_args))
-        self.function(*function_args)
+        if self.function_args:
+            function_args = list(self.function_args)
+            if dynamic_args:
+                function_args.extend(list(dynamic_args))
+            self.function(*function_args)
+        else:
+            self.function()

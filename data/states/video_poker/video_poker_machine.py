@@ -1,6 +1,6 @@
 import pygame as pg
 from ... import tools, prepare
-from ...components.labels import Blinker, Label, Button
+from ...components.labels import Blinker, Label, FunctionButton
 from ...components.cards import Deck
 
 PAYTABLE = [
@@ -175,17 +175,21 @@ class Machine:
 
         # buttons
         y += self.padding + self.btn_padding
-        button_list = ['bet', 'held', 'held', 'held', 'held',
-                        'held', 'bet max', 'draw']
-        for text in button_list:
+        button_list = [('bet', self.test, None), ('held', self.test, None), 
+                        ('held', self.test, None), ('held', self.test, None),
+                        ('held', self.test, None), ('held', self.test, None), 
+                        ('bet max', self.test, None), ('draw', self.test, None)]
+        for text, func, args in button_list:
             label = Label(self.font, self.text_size, text, self.text_color, {})
-            button = Button(x, y, self.btn_width, self.btn_height, label)
+            button = FunctionButton(x, y, self.btn_width, self.btn_height, label, func, args)
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
 
 
 
-
+    def get_event(self, mouse_pos):
+        for button in self.buttons:
+            button.get_event(mouse_pos)
 
     def draw(self, surface, dt):
         self.pay_board.draw(surface)

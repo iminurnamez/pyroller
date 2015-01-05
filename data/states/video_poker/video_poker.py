@@ -12,8 +12,8 @@ class VideoPoker(tools._State):
         self.font = prepare.FONTS["Saniretro"]
         self.machine = Machine((0,0), prepare.RENDER_SIZE)
 
-        self.lobby_button = NeonButton((self.screen_rect.right - 318, 
-                                    self.screen_rect.bottom - 100), "lobby")
+        self.lobby_button = NeonButton((self.screen_rect.right - 330, 
+                                    self.screen_rect.bottom - 120), "lobby")
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -30,6 +30,7 @@ class VideoPoker(tools._State):
             pos = tools.scaled_mouse_pos(scale, event.pos)
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
             self.persist["music_handler"].get_event(event, scale)
+            self.machine.get_event(pos)
             if self.lobby_button.rect.collidepoint(pos):
                 self.done = True
                 self.next = "LOBBYSCREEN"
