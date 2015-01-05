@@ -193,7 +193,13 @@ class ChipPile(object):
         for chip in chips:
             self.chips[chip.color].append(chip)
         self.stacks = self.make_stacks()
-
+        
+    def all_chips(self):
+        all_chips = []
+        for color in self.chips:
+            all_chips.extend(self.chips[color])
+        return all_chips
+        
     def draw_stacks(self, surface):
         """Draw stacks to surface."""
         for stack in self.stacks:
@@ -288,9 +294,15 @@ class ChipRack(object):
         """Returns a list of Chips equal to the value of chip."""
         if chip.value == 1:
             return [chip]
-        cash = chip.value - 1
-        chips = cash_to_chips(cash, self.chip_size)
-        chips.extend(cash_to_chips(1, self.chip_size))
+        cash = chip.value
+        values = Chip.chip_values
+        chips = []
+        for color in values:
+            if cash >= values[color] and color != chip.color:
+                num, rem = divmod(cash, values[color])
+                for _ in range(num):
+                    chips.append(Chip(color, self.chip_size))
+                cash = rem
         self.add_chip(chip)
         for chip in chips:
             try:
