@@ -280,3 +280,4 @@ class FunctionButton(Button):
             self.function(*function_args)
         else:
             self.function()
+           

@@ -171,6 +171,7 @@ class Machine:
         self.info_labels = []
 
         self.max_bet = 5
+        self.bet = 0
         self.credits = 20
         self.coins = 0
 
@@ -179,24 +180,51 @@ class Machine:
     def startup(self):
         self.cards_table.startup()
 
-    def bet(self):
-        if self.coins < self.max_bet:
-            self.coins += 1
-            self.credits -= 1
-        else:
-            self.coins = 1
-            self.credits += 4
+    def bet_one(self):
+        if self.credits > 0:
+            if self.bet < self.max_bet:
+                self.bet += 1
+                if self.coins < self.max_bet:
+                    self.coins += 1
+                else:
+                    self.coins = 1
+                self.credits -= 1
+            else:
+                self.bet = 1
+                self.coins = 1
+                self.credits += 4
         self.pay_board.update_bet_rect(self.coins)
 
     def bet_max(self):
-        aux = self.max_bet - self.coins
-        self.coins += aux
-        self.credits -= aux
+        if self.credits > 0:
+            aux = self.max_bet - self.bet
+            self.bet += aux
+            self.coins += aux
+            self.credits -= aux
         self.pay_board.update_bet_rect(self.coins)
 
+    def make_last_bet(self):
+        """ """
+        if self.credits >= self.coins:
+            self.bet = self.coins
+            self.credits -= self.bet            
+            self.bet = 0
+        else:
+            self.bet = self.credits
+            self.coins = self.credits
+            self.credits = 0
+        self.pay_board.update_bet_rect(self.coins)        
+
     def draw_cards(self):
-        if self.coins > 0:
+        if self.bet > 0:
             self.cards_table.draw_cards()
+            self.bet = 0
+        else:
+            self.make_last_bet()
+            self.cards_table.draw_cards()
+            self.bet = 0
+
+            
 
 
 
@@ -230,7 +258,7 @@ class Machine:
 
         # buttons
         y += self.padding + self.btn_padding
-        button_list = [('bet', self.bet, None), ('held', self.test, None), 
+        button_list = [('bet', self.bet_one, None), ('held', self.test, None), 
                         ('held', self.test, None), ('held', self.test, None),
                         ('held', self.test, None), ('held', self.test, None), 
                         ('bet max', self.bet_max, None), ('draw', self.draw_cards, None)]
