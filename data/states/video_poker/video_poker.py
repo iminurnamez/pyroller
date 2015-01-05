@@ -49,4 +49,5 @@ class VideoPoker(tools._State):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(prepare.FELT_GREEN)
         self.machine.draw(surface, dt)
+        self.persist["music_handler"].draw(surface)
         self.lobby_button.draw(surface)
