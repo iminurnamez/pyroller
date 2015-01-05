@@ -14,27 +14,29 @@ class Pachinko(tools._State):
     """Pachinko game."""
 
     def startup(self, now, persistent):
+        screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
+        self._needs_clear = True
+
         self.persist = persistent
-
-        # TODO: next two lines must be removed before merge
-        from ...components.casino_player import CasinoPlayer
-        self.persist['casino_player'] = CasinoPlayer()
-
         self.casino_player = self.persist['casino_player']
         self.playfield = Playfield()
         self.hud = pg.sprite.RenderUpdates()
 
         font = pg.font.Font(prepare.FONTS["Saniretro"], font_size)
         self.tray_count = TextSprite('', font)
-        self.tray_count.rect.topleft = 960, 0
+        self.tray_count.rect.topleft = 960, 100
         self.on_tray()
         self.hud.add(self.tray_count)
 
         t = TextSprite("Press F to add 25", font)
-        t.rect.topleft = 960, 70
+        t.rect.topleft = 960, 170
         self.hud.add(t)
 
         b = Button("Test", (1000, 140, 200, 100), None)
+        self.hud.add(b)
+
+        b = NeonButton('lobby', (960, 250, 0, 0),
+                       self.goto_lobby)
         self.hud.add(b)
 
         B.linkEvent('pachinko_jackpot', self.on_jackpot)
@@ -51,6 +53,11 @@ class Pachinko(tools._State):
                 ])
 
         self.casino_player.stats['Pachinko']['games played'] += 1
+
+    def goto_lobby(self):
+        self.cash_out()
+        self.done = True
+        self.next = 'LOBBYSCREEN'
 
     def on_jackpot(self, *args):
         self.casino_player.stats["Pachinko"]["jackpots"] += 1
@@ -77,9 +84,12 @@ class Pachinko(tools._State):
         B.unlinkEvent('pachinko_jackpot', self.on_jackpot)
         B.unlinkEvent('pachinko_gutter', self.on_gutter)
         B.unlinkEvent('pachinko_tray', self.on_tray)
-        self.cash_out()
+        return self.persist
 
     def get_event(self, event, scale=(1, 1)):
+        # this music stuff really needs to be moved to the core
+        self.persist["music_handler"].get_event(event, scale)
+
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_SPACE:
                 self.playfield.depress_plunger()
@@ -91,10 +101,36 @@ class Pachinko(tools._State):
             if event.key == pg.K_SPACE:
                 self.playfield.release_plunger()
 
+        if event.type == pg.MOUSEMOTION:
+            pos = tools.scaled_mouse_pos(scale)
+            for sprite in self.hud.sprites():
+                if hasattr(sprite, 'on_mouse_enter'):
+                    if sprite.rect.collidepoint(pos):
+                        sprite.on_mouse_enter(pos)
+
+                elif hasattr(sprite, 'on_mouse_leave'):
+                    if not sprite.rect.collidepoint(pos):
+                        sprite.on_mouse_leave(pos)
+
+        elif event.type == pg.MOUSEBUTTONUP:
+            pos = tools.scaled_mouse_pos(scale)
+            for sprite in self.hud.sprites():
+                if hasattr(sprite, 'on_mouse_click'):
+                    if sprite.rect.collidepoint(pos):
+                        sprite.on_mouse_click(pos)
+
     def update(self, surface, keys, current_time, dt, scale):
+        if self._needs_clear:
+            surface.fill(prepare.BACKGROUND_BASE)
+            self._needs_clear = False
+
         self.playfield.update(surface, dt)
         self.hud.clear(surface, self._clear_surface)
         self.hud.draw(surface)
+
+        # this music stuff really needs to be moved to the core
+        self.persist["music_handler"].update(scale)
+        self.persist["music_handler"].draw(surface)
 
     @staticmethod
     def _clear_surface(surface, rect):

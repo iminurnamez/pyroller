@@ -33,7 +33,7 @@ def main():
     if prepare.ARGS['straight']:
         run_it.setup_states(state_dict, "TITLESCREEN")
     else:
-        run_it.setup_states(state_dict, "PACHINKO")
+        run_it.setup_states(state_dict, "SNAKESPLASH")
     #
     # Start the main state
     if not prepare.ARGS['profile']:

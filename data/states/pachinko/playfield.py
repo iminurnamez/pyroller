@@ -28,6 +28,12 @@ pocket_fail_type = 105
 pocket_return_type = 106
 
 
+def get_timers(group, callback):
+    for sprite in group.sprites():
+        if sprite.callback is callback:
+            yield sprite
+
+
 def rect_to_poly(rect):
     return rect.topleft, rect.topright, rect.bottomright, rect.bottomleft
 
@@ -58,7 +64,9 @@ def load_json(space, filename):
         yield PlungerAssembly(space, get_rect(data), body)
 
     def handle_object_type_spinner(data, body):
-        yield Spinner(space, get_rect(data), body)
+        s = Spinner(space, get_rect(data), body)
+        s._layer = 2
+        yield s
 
     def handle_object_type_pocket(data, body):
         yield Pocket(space, get_rect(data), body, win=True)
@@ -214,7 +222,7 @@ class Ball(PhysicsSprite):
         self.rect = pygame.Rect(0, 0, rect.width, rect.width)
         image = smoothscale(GFX.get('ball-bearing'), self.rect.size)
         self._original_image = image.convert_alpha()
-        #pygame.draw.circle(self._original_image, color, self.rect.center,
+        # pygame.draw.circle(self._original_image, color, self.rect.center,
         #                   radius)
 
 
@@ -223,7 +231,7 @@ class Spinner(PhysicsSprite):
         super(Spinner, self).__init__()
         color = (220, 220, 220)
         r, cy = rect.width / 2, rect.height / 2
-        assert(r == cy)
+        assert (r == cy)
         body = Body(.1, moment_for_circle(.1, 0, r))
         body.position = rect.center
         top = Circle(body, r)
@@ -236,9 +244,7 @@ class Spinner(PhysicsSprite):
         j1.max_force = 200
         self.shapes = [top, cross0, cross1, j0, j1]
         self.rect = pygame.Rect(rect)
-        self._original_image = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-        pygame.draw.circle(self._original_image, color, (r, cy), r)
-        pygame.draw.line(self._original_image, (0, 64, 255), (0, cy), (rect.width, cy))
+        self._original_image = GFX['pachinko-spinner']
 
 
 class PlungerAssembly(PhysicsSprite):
@@ -246,11 +252,9 @@ class PlungerAssembly(PhysicsSprite):
         super(PlungerAssembly, self).__init__()
         self.chute_counter = 0
 
-        plunger_rect = pygame.Rect(0, 0, rect.width * .2, ball_radius / 2)
         spring_strength = 100 * plunger_mass
-        assembly_body_position = playfield.position + rect.center
-        chute_opening = assembly_body_position - (
-        rect.width / 2 - ball_radius * 4, 0)
+        chute_opening = playfield.position + rect.center - (rect.width / 2 - ball_radius * 4, 0)
+        plunger_rect = pygame.Rect(0, 0, rect.width * .2, ball_radius / 2)
         anchor0 = chute_opening - playfield.position - (ball_radius * 3, 0)
         anchor1 = anchor0 + (rect.width * .8, 0)
         anchor2 = -plunger_rect.width / 2, 0
@@ -264,8 +268,7 @@ class PlungerAssembly(PhysicsSprite):
         plunger_body.position = chute_opening + (plunger_rect.width / 2, 0)
 
         j0 = GrooveJoint(playfield, plunger_body, anchor0, anchor1, anchor2)
-        j1 = DampedSpring(playfield, plunger_body, anchor0, anchor2, 0,
-                          spring_strength, 1)
+        j1 = DampedSpring(playfield, plunger_body, anchor0, anchor2, 0, spring_strength, 1)
 
         s0 = Circle(Body(), ball_radius / 2)
         s0.layers = 1
@@ -299,7 +302,7 @@ class PlungerAssembly(PhysicsSprite):
         self.visible = 0
 
 
-class Playfield(pygame.sprite.RenderUpdates):
+class Playfield(pygame.sprite.LayeredUpdates):
     def __init__(self, *args, **kwargs):
         super(Playfield, self).__init__(*args, **kwargs)
         self._depress = False
@@ -344,8 +347,6 @@ class Playfield(pygame.sprite.RenderUpdates):
         f(ball_type, pocket_return_type, begin=on_ball_return)
         f(ball_type, pocket_fail_type, begin=on_ball_fail)
         f(sensor0_type, plunger_type, separate=self.new_ball)
-
-        self.timers.add(Task(self.auto_push_plunger, 500, -1))
 
     def auto_push_plunger(self):
         desired_force = 6800
@@ -411,9 +412,8 @@ class Playfield(pygame.sprite.RenderUpdates):
 
         if self.background is None:
             self.background = pygame.image.load(
-                "resources/pachinko/playfield.jpg")
+                os.path.join('resources', 'pachinko', 'playfield.jpg'))
             self.background.scroll(0, -150)
-            # pymunk.pygame_util.draw(self.background, self._space)
             surface.blit(self.background, (0, 0))
 
         super(Playfield, self).update(dt)
@@ -426,3 +426,17 @@ class Playfield(pygame.sprite.RenderUpdates):
     def release_plunger(self):
         self._depress = False
         self._plunger.plunger_body.reset_forces()
+
+    @property
+    def auto_play(self):
+        return bool([get_timers(self.timers, self.auto_push_plunger)])
+
+    @auto_play.setter
+    def auto_play(self, value):
+        if bool(value):
+            for sprite in get_timers(self.timers, self.auto_push_plunger):
+                sprite.kill()
+            self.timers.add(Task(self.auto_push_plunger, 500, -1))
+        else:
+            for sprite in get_timers(self.timers, self.auto_push_plunger):
+                sprite.kill()
