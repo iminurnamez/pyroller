@@ -11,9 +11,12 @@ class VideoPoker(tools._State):
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
         self.machine = Machine((0,0), prepare.RENDER_SIZE)
+        pos = (self.screen_rect.right-330, self.screen_rect.bottom-120)
+        self.lobby_button = NeonButton(pos, "lobby", self.back_to_lobby)
 
-        self.lobby_button = NeonButton((self.screen_rect.right - 330, 
-                                    self.screen_rect.bottom - 120), "lobby")
+    def back_to_lobby(self, *args):
+        self.done = True
+        self.next = "LOBBYSCREEN"
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -24,17 +27,13 @@ class VideoPoker(tools._State):
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
-            self.done = True
-            self.next = "LOBBYSCREEN"
+            self.back_to_lobby(None)
 
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            event_pos = tools.scaled_mouse_pos(scale, event.pos)
             self.persist["music_handler"].get_event(event, scale)
             self.machine.get_event(pos)
-            if self.lobby_button.rect.collidepoint(pos):
-                self.done = True
-                self.next = "LOBBYSCREEN"
+        self.lobby_button.get_event(event)
 
 
     def update(self, surface, keys, current_time, dt, scale):
