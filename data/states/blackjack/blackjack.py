@@ -5,7 +5,7 @@ from ...components.angles import get_distance, get_angle, project
 from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel, NeonButton
 from ...components.cards import Deck
 from ...components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
-from ...components.warning_window import WarningWindow
+from ...components.warning_window import NoticeWindow, WarningWindow
 from .blackjack_dealer import Dealer
 from .blackjack_player import Player
 from .blackjack_hand import Hand
@@ -108,6 +108,9 @@ class Blackjack(tools._State):
             card.destination = hand.slots[-1]
             self.moving_cards.append(card)
             hand.final = True
+        else:
+            text = "You don't have enough cover that bet!"
+            self.warning_window = NoticeWindow(self.screen_rect.center, text)        
 
     def split_hand(self, player, hand):
         """Split player's hand into two hands, adjust hand locations
@@ -115,6 +118,8 @@ class Blackjack(tools._State):
         chip_total = player.chip_pile.get_chip_total()
         bet = hand.bet.get_chip_total()
         if chip_total < bet:
+            text = "You don't have enough cover that bet!"
+            self.warning_window = NoticeWindow(self.screen_rect.center, text)
             return
         if len(hand.cards) == 2:
             c1 = hand.card_values[hand.cards[0].value]
@@ -240,6 +245,9 @@ class Blackjack(tools._State):
                             if any(x.bet.chips for x in self.player.hands):
                                 self.state = "Dealing"
                                 self.casino_player.stats["Blackjack"]["games played"] += 1
+                            else:
+                                text = "You need to make a bet first!"
+                                self.warning_window = NoticeWindow(self.screen_rect.center, text)                                
                         new_movers = self.player.chip_pile.grab_chips(pos)
                         if new_movers:
                             choice(self.chip_sounds).play()
@@ -253,7 +261,8 @@ class Blackjack(tools._State):
             elif self.state == "Show Results":
                 if event.button == 1:
                     if self.new_game_button.rect.collidepoint(pos):
-                        self.new_game(self.player.chip_pile.get_chip_total())
+                        player_chips = self.player.chip_pile.all_chips()
+                        self.new_game(0, chips=player_chips)
 
         elif event.type == pg.MOUSEBUTTONUP:
             pos = tools.scaled_mouse_pos(scale, event.pos)
