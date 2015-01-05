@@ -279,12 +279,12 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
 
     def get_event(self, event):
         if self.active and self.visible:
-            if event.type == pg.MOUSEBUTTONUP:
+            if event.type == pg.MOUSEBUTTONUP and event.button == 1:
                 if self.clicked and self.call_on_up:
                     self.click_sound and self.click_sound.play()
                     self.call and self.call(self.args or self.text)
                 self.clicked = False
-            elif event.type == pg.MOUSEBUTTONDOWN:
+            elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 if self.hover:
                     self.clicked = True
                     if not self.call_on_up:
