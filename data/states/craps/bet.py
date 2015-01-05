@@ -28,7 +28,7 @@ class Bet:
         font_size = 30
         spacer = 5
         text += '{}Payoff: {}'.format(' '*spacer, mult_dict)
-        self.label_name = Label(self.font, font_size, text, "white", {"center": (560,22)})
+        self.label_name = Label(self.font, font_size, text, "white", {"bottomleft": (20, 918)})
         
     def setup_highlighter(self, size, topleft):
         self.highlighter = pg.Surface(size).convert()

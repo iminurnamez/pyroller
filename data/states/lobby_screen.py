@@ -10,7 +10,7 @@ from ..components.music_handler import MusicHandler
 
 CURTAIN_SETTINGS = {"single_color" : True,
                     "start_y" : prepare.RENDER_SIZE[1]-5,
-                    "scroll_speed" : 0.8,
+                    "scroll_speed" : 0.05,
                     "cycle_colors" : True,
                     "spinner_settings" : {"variable" : False,
                                           "frequency" : 120}}
@@ -29,7 +29,7 @@ class LobbyScreen(tools._State):
         self.font = prepare.FONTS["Saniretro"]
         self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
-                      ("Pachinko", "PACHINKO")]
+                      ("video_poker", "VIDEOPOKER")]
         self.game_buttons = self.make_game_buttons(screen_rect)
         self.make_navigation_buttons(screen_rect)
         self.chip_curtain = None #Created on startup.

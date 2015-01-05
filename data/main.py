@@ -11,8 +11,8 @@ import pstats
 
 from . import prepare, tools
 from .states import title_screen, lobby_screen, stats_menu
-from .states import stats_screen, blackjack, craps, bingo, keno
-from .states import credits_screen, snake_splash, pachinko
+from .states import stats_screen, blackjack, craps, bingo, keno, video_poker
+from .states import credits_screen, snake_splash
 
 def main():
     args = (prepare.CAPTION, prepare.RENDER_SIZE, prepare.RESOLUTIONS)
@@ -28,7 +28,7 @@ def main():
                   "CRAPS"       : craps.Craps(),
                   "BINGO"       : bingo.Bingo(),
                   "KENO"        : keno.Keno(),
-                  "PACHINKO"    : pachinko.Pachinko()
+                  "VIDEOPOKER"        : video_poker.VideoPoker(),
     }
     if prepare.ARGS['straight']:
         run_it.setup_states(state_dict, "TITLESCREEN")
