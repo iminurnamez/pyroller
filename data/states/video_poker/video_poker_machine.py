@@ -108,16 +108,22 @@ class CardsTable:
 
         self.card_spacing = 50
 
+        self.elapsed = 150.0
+
 
     def startup(self):
         self.hand = self.deck.make_hand()
         self.build()
         self.standby = True
+        self.card_index = 0
+        self.max_cards = len(self.hand)
+        self.animate = False
 
     def draw_cards(self):
         self.hand = self.hand = self.deck.make_hand()
         self.build()
-        self.face_up_cards()
+        # self.face_up_cards()
+        self.animate = True
         self.standby = False
 
     def build(self):
@@ -131,6 +137,17 @@ class CardsTable:
     def face_up_cards(self):
         for card in self.hand:
             card.face_up = True
+
+    def update(self, dt):
+        if self.animate:
+            self.elapsed += dt
+            while self.elapsed >= 150.0:
+                self.elapsed -= 150.0
+                self.hand[self.card_index].face_up = True
+                self.card_index += 1
+                if self.card_index >= self.max_cards:
+                    self.card_index = 0
+                    self.animate = False
 
     def draw(self, surface, dt):
         for card in self.hand:
@@ -229,7 +246,7 @@ class Machine:
         for button in self.buttons:
             button.get_event(mouse_pos)
 
-    def update(self):
+    def update(self, dt):
         # game info labels
         self.info_labels = []
         credit_text = 'Credit {}'.format(self.credits)
@@ -240,6 +257,8 @@ class Machine:
         label = Label(self.font, self.text_size, coins_text, self.text_color, 
                         {"topleft": (self.label_x1, self.label_y)})
         self.info_labels.append(label)
+
+        self.cards_table.update(dt)
 
 
     def draw(self, surface, dt):
