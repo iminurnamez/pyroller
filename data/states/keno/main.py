@@ -26,6 +26,23 @@ def pick_numbers(spot):
             numbers.append(number)
     return numbers
 
+class Bet(object):
+    def __init__(self, casino_player):
+        self.rect = pg.Rect(0, 240, 150, 75)
+        self.font = prepare.FONTS["Saniretro"]
+        self.label = Label(self.font, 32, 'BET 1', 'gold3', {'center':(0,0)})
+        self.label.rect.center = self.rect.center
+        self.color = '#181818'
+        self.casino_player = casino_player
+
+    def update(self, amount):
+        #unsafe - can end up withdrawing beyond zero...
+        self.casino_player.stats["cash"] -= amount
+
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+        self.label.draw(surface)
+
 class Clear(object):
     def __init__(self, card):
         self.rect = pg.Rect(0, 160, 150, 75)
@@ -270,6 +287,9 @@ class Keno(tools._State):
 
         self.clear_action = Clear(self.keno_card)
 
+        #creation of this cannot be done here as casino_player is not created yet.
+        #self.bet_action = Bet(self.casino_player)
+
     def back_to_lobby(self, *args):
         self.game_started = False
         self.done = True
@@ -280,7 +300,7 @@ class Keno(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
-
+        self.bet_action = Bet(self.casino_player)
         self.casino_player.stats["Keno"]["games played"] += 1
 
     def get_event(self, event, scale=(1,1)):
@@ -296,6 +316,9 @@ class Keno(tools._State):
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
             #print(event_pos) #[for debugging positional items]
             self.persist["music_handler"].get_event(event, scale)
+
+            if self.bet_action.rect.collidepoint(event_pos):
+                self.bet_action.update(1)
 
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
@@ -340,6 +363,10 @@ class Keno(tools._State):
 
         self.clear_action.draw(surface)
 
+        self.bet_action.draw(surface)
+
+        self.balance_label.draw(surface)
+
         self.persist["music_handler"].draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
@@ -351,6 +378,11 @@ class Keno(tools._State):
         since pygame was initialized. dt is the number of milliseconds since
         the last frame.
         """
+        total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
+        screen = self.screen_rect
+        self.balance_label = Label(self.font, 48, total_text, "gold3",
+                               {"bottomleft": (screen.left + 3, screen.bottom - 3)})
+
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
 
