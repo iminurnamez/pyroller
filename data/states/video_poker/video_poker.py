@@ -30,7 +30,6 @@ class VideoPoker(tools._State):
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
-            self.persist["music_handler"].get_event(event, scale)
             self.machine.get_event(pos)
             if self.lobby_button.rect.collidepoint(pos):
                 self.done = True

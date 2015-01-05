@@ -101,6 +101,9 @@ class CardsTable:
         self.big_text_color = "red"
         self.text_bg_color = "darkblue"
 
+        self.held_labels = []
+        
+
         
         self.text = "Play 1 to 5 coins"
         self.standby_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
@@ -117,29 +120,41 @@ class CardsTable:
         self.standby = True
         self.card_index = 0
         self.max_cards = len(self.hand)
-        self.animate = False
+        self.revealing = False
+        self.held_cards = []
 
     def draw_cards(self):
         self.hand = self.hand = self.deck.make_hand()
         self.build()
         # self.face_up_cards()
-        self.animate = True
+        self.revealing = True
         self.standby = False
 
     def build(self):
         x = self.rect.left
-        y = self.rect.top
+        y = self.rect.top  + self.line_height
         for card in self.hand:
             card.rect.left = x
             card.rect.top = y
+            label = Label(self.font, self.text_size, 'held', self.text_color,
+                                      {"bottom":card.rect.top, "centerx":card.rect.centerx})
+            self.held_labels.append(label)
             x += self.card_spacing + card.rect.w
+
+
 
     def face_up_cards(self):
         for card in self.hand:
             card.face_up = True
 
+    def toogle_held(self, index):
+        if index in self.held_cards:
+            self.held_cards.remove(index)
+        else:
+            self.held_cards.append(index)
+
     def update(self, dt):
-        if self.animate:
+        if self.revealing:
             self.elapsed += dt
             while self.elapsed >= 150.0:
                 self.elapsed -= 150.0
@@ -147,11 +162,13 @@ class CardsTable:
                 self.card_index += 1
                 if self.card_index >= self.max_cards:
                     self.card_index = 0
-                    self.animate = False
+                    self.revealing = False
 
     def draw(self, surface, dt):
         for card in self.hand:
             card.draw(surface)
+        for index in self.held_cards:
+            self.held_labels[index].draw(surface)
         if self.standby:
             self.standby_label.draw(surface, dt)
 
@@ -180,58 +197,6 @@ class Machine:
     def startup(self):
         self.cards_table.startup()
 
-    def bet_one(self):
-        if self.credits > 0:
-            if self.bet < self.max_bet:
-                self.bet += 1
-                if self.coins < self.max_bet:
-                    self.coins += 1
-                else:
-                    self.coins = 1
-                self.credits -= 1
-            else:
-                self.bet = 1
-                self.coins = 1
-                self.credits += 4
-        self.pay_board.update_bet_rect(self.coins)
-
-    def bet_max(self):
-        if self.credits > 0:
-            aux = self.max_bet - self.bet
-            self.bet += aux
-            self.coins += aux
-            self.credits -= aux
-        self.pay_board.update_bet_rect(self.coins)
-
-    def make_last_bet(self):
-        """ """
-        if self.credits >= self.coins:
-            self.bet = self.coins
-            self.credits -= self.bet            
-            self.bet = 0
-        else:
-            self.bet = self.credits
-            self.coins = self.credits
-            self.credits = 0
-        self.pay_board.update_bet_rect(self.coins)        
-
-    def draw_cards(self):
-        if self.bet > 0:
-            self.cards_table.draw_cards()
-            self.bet = 0
-        else:
-            self.make_last_bet()
-            self.cards_table.draw_cards()
-            self.bet = 0
-
-            
-
-
-
-
-    def test(self):
-        print("Hello world")
-
 
     def build(self):
         x, y = self.rect.topleft
@@ -253,20 +218,78 @@ class Machine:
         h = 300
         self.cards_table = CardsTable((x,y), (w,h))
 
-        y = self.cards_table.rect.bottom + self.padding
+        y = self.cards_table.rect.bottom + self.padding*2
         self.label_y = y # use in info labels
 
         # buttons
         y += self.padding + self.btn_padding
-        button_list = [('bet', self.bet_one, None), ('held', self.test, None), 
-                        ('held', self.test, None), ('held', self.test, None),
-                        ('held', self.test, None), ('held', self.test, None), 
+        button_list = [('bet', self.bet_one, None), ('held', self.make_held, (0,)), 
+                        ('held', self.make_held, (1,)), ('held', self.make_held, (2,)),
+                        ('held', self.make_held, (3,)), ('held', self.make_held, (4,)), 
                         ('bet max', self.bet_max, None), ('draw', self.draw_cards, None)]
         for text, func, args in button_list:
             label = Label(self.font, self.text_size, text, self.text_color, {})
             button = FunctionButton(x, y, self.btn_width, self.btn_height, label, func, args)
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
+
+
+    def bet_one(self):
+        if self.credits > 0:
+            if self.bet < self.max_bet:
+                self.bet += 1
+                if self.coins < self.max_bet:
+                    self.coins += 1
+                else:
+                    self.coins = 1
+                self.credits -= 1
+            else:
+                self.bet = 1
+                self.coins = 1
+                self.credits += 4
+        self.pay_board.update_bet_rect(self.coins)
+
+    
+    def bet_max(self):
+        if self.credits > 0:
+            aux = self.max_bet - self.bet
+            self.bet += aux
+            self.coins += aux
+            self.credits -= aux
+        self.pay_board.update_bet_rect(self.coins)
+
+    
+    def make_last_bet(self):
+        """ """
+        if self.credits > 0 and self.coins > 0:
+            if self.credits >= self.coins:
+                self.bet = self.coins
+                self.credits -= self.bet            
+                self.bet = 0
+            else:
+                self.bet = self.credits
+                self.coins = self.credits
+                self.credits = 0
+            self.pay_board.update_bet_rect(self.coins)
+
+    
+    def draw_cards(self):
+        if self.bet > 0:
+            self.cards_table.draw_cards()
+            self.bet = 0
+        else:
+            self.make_last_bet()
+            self.cards_table.draw_cards()
+            self.bet = 0
+
+            
+
+    def test(self):
+        print("Hello world")
+
+    def make_held(self, index):
+        self.cards_table.toogle_held(index)
+    
 
 
 
