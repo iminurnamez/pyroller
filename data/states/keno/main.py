@@ -26,6 +26,21 @@ def pick_numbers(spot):
             numbers.append(number)
     return numbers
 
+class Bet(object):
+    def __init__(self):
+        self.rect = pg.Rect(0, 240, 150, 75)
+        self.font = prepare.FONTS["Saniretro"]
+        self.label = Label(self.font, 32, 'BET 1', 'gold3', {'center':(0,0)})
+        self.label.rect.center = self.rect.center
+        self.color = '#181818'
+        
+    def update(self):
+        pass
+        
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+        self.label.draw(surface)
+
 class Clear(object):
     def __init__(self, card):
         self.rect = pg.Rect(0, 160, 150, 75)
@@ -271,6 +286,8 @@ class Keno(tools._State):
         self.pay_table.update(0)
         
         self.clear_action = Clear(self.keno_card)
+        
+        self.bet_action = Bet()
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -298,6 +315,9 @@ class Keno(tools._State):
                 self.game_started = False
                 self.done = True
                 self.next = "LOBBYSCREEN"
+            
+            if self.bet_action.rect.collidepoint(event_pos):
+                print("would bet 1 dollar")
             
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
@@ -341,6 +361,7 @@ class Keno(tools._State):
         self.pay_table.draw(surface)
         
         self.clear_action.draw(surface)
+        self.bet_action.draw(surface)
             
         self.persist["music_handler"].draw(surface)
 
