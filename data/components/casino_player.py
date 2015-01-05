@@ -36,7 +36,6 @@ class CasinoPlayer(object):
                                             ])
 
         if stats is not None:
-            print("oi")
             self.stats["cash"] = stats["cash"]
             for game in self.stats:
                 if game != "cash":
