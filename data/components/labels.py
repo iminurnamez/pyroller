@@ -318,7 +318,7 @@ class NeonButton(_Button):
         settings = {"hover_image" : on_image,
                     "idle_image"  : off_image,
                     "call"        : call,
-                    "args"     : args or text}
+                    "args"     : args}
         settings.update(kwargs)
         super(NeonButton, self).__init__(rect, *groups, **settings)
 

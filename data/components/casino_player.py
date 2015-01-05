@@ -2,7 +2,7 @@ from collections import OrderedDict
 from .. import prepare
 
 class CasinoPlayer(object):
-    """Class to represent the player/user. A new 
+    """Class to represent the player/user. A new
     CasinoPlayer will be instantiated each time the
     program launches. Passing a stats dict to __init__
     allows persistence of player statistics between
@@ -34,14 +34,15 @@ class CasinoPlayer(object):
                                              ("Keno", OrderedDict(
                                                     [("games played", 0)])),
                                             ])
-                    
+
         if stats is not None:
+            print("oi")
             self.stats["cash"] = stats["cash"]
             for game in self.stats:
                 if game != "cash":
-                  
+
                     for stat in self.stats[game]:
                         self.stats[game][stat] = stats[game][stat]
-                    
-                
-        
+
+
+

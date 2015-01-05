@@ -81,7 +81,7 @@ class LobbyScreen(tools._State):
 
     def change_state(self, next_state):
         self.done = True
-        self.next = "STATSMENU"
+        self.next = next_state
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
