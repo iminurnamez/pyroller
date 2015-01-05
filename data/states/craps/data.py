@@ -1,5 +1,15 @@
 
-from .craps_bet import Bet
+from .bet import Bet
+
+POINT_CHIP_LOC = {
+    '0':(100,25),
+    '4':(320,25),
+    '5':(430,25),
+    '6':(540,25),
+    '8':(650,25),
+    '9':(760,25),
+    '10':(870,25),
+}
 
 all_rolls = list(range(2,13))
 BETS = {
