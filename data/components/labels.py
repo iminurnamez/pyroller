@@ -248,7 +248,6 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
     def __init__(self, rect_style, *groups, **kwargs):
         super(_Button, self).__init__(*groups)
         self.process_kwargs("Button", BUTTON_DEFAULTS, kwargs)
-        self.visible = kwargs.get("visible", BUTTON_DEFAULTS["visible"])
         self.rect = pg.Rect(rect_style)
         rendered = self.render_text()
         self.idle_image = self.make_image(self.fill_color, self.idle_image,
@@ -307,6 +306,9 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
 
 class NeonButton(_Button):
     """Neon sign style button that glows on mouseover."""
+    width = 318
+    height = 101
+
     def __init__(self, pos, text, call=None, args=None, *groups, **kwargs):
         on = "neon_button_on_{}".format(text.lower())
         off = "neon_button_off_{}".format(text.lower())

@@ -21,19 +21,20 @@ class TitleScreen(tools._State):
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.marquees = []
         self.make_titles()
-        self.buttons = self.make_buttons()
+        self.buttons = ButtonGroup()
+        self.new_game, self.load_game = self.make_buttons()
         self.prepare_stats()
-        self.make_spotlights()
+        self.lights = self.make_spotlights()
         self.check_straight_arg()
 
     def make_spotlights(self):
-        self.lights = []
-        y = self.screen_rect.bottom+30
-        fourths = [i*self.screen_rect.w/5 for i in range(1,5)]
-        self.lights.append(spotlight.SpotLight((fourths[0],y), 4, 140))
-        self.lights.append(spotlight.SpotLight((fourths[1],y), 4, 140, 0.5))
-        self.lights.append(spotlight.SpotLight((fourths[2],y), 4, 140))
-        self.lights.append(spotlight.SpotLight((fourths[3],y), 4, 140, 0.5))
+        lights = pg.sprite.LayeredDirty()
+        y = self.screen_rect.bottom+20
+        for i in range(1,5):
+            start = 0 if i%2 else 0.5
+            pos = (i*self.screen_rect.w/5, y)
+            spotlight.SpotLight(pos, 4, 140, start, lights)
+        return lights
 
     def check_straight_arg(self):
         """
@@ -76,16 +77,14 @@ class TitleScreen(tools._State):
         self.title2.on = True
 
     def make_buttons(self):
-        b_width = 318
-        x = self.screen_rect.centerx-(b_width//2)
+        x = self.screen_rect.centerx-(NeonButton.width//2)
         y = self.title2.rect.bottom+150
-        buttons = ButtonGroup()
-        self.new_game_button = NeonButton((x,y), "New", self.load_or_new,
-                                          None, buttons, visible=False)
-        y = self.new_game_button.rect.bottom+50
-        self.load_game_button = NeonButton((x,y), "Load", self.load_or_new,
-                                           True, buttons, visible=False)
-        return buttons
+        new_game = NeonButton((x,y), "New", self.load_or_new,
+                              None, self.buttons, visible=False)
+        y = new_game.rect.bottom+50
+        load_game = NeonButton((x,y), "Load", self.load_or_new,
+                               True, self.buttons, visible=False)
+        return new_game, load_game
 
     def load_or_new(self, payload):
         stats = self.stats if payload else None
@@ -123,13 +122,12 @@ class TitleScreen(tools._State):
                 for title in (self.title, self.title2):
                     self.marquees.append(MarqueeFrame(title))
                     title.blinking = True
-                self.new_game_button.visible = True
+                self.new_game.visible = True
                 if self.stats is not None:
-                    self.load_game_button.visible = True
+                    self.load_game.visible = True
         for marquee in self.marquees:
             marquee.update(dt)
-        for light in self.lights:
-            light.update(dt)
+        self.lights.update(dt)
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
@@ -138,6 +136,5 @@ class TitleScreen(tools._State):
         self.title2.draw(surface, dt)
         for marquee in self.marquees:
             marquee.draw(surface)
-        for light in self.lights:
-            light.draw(surface)
+        self.lights.draw(surface)
         self.buttons.draw(surface)

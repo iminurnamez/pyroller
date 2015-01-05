@@ -3,7 +3,7 @@ import json
 import pygame as pg
 
 from .. import tools, prepare
-from ..components.labels import Label, Button, ImageButton, NeonButton
+from ..components.labels import Label, ImageButton, NeonButton, ButtonGroup
 from ..components.flair_pieces import ChipCurtain
 from ..components.music_handler import MusicHandler
 
@@ -31,7 +31,7 @@ class LobbyScreen(tools._State):
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
                       ("video_poker", "VIDEOPOKER")]
         self.game_buttons = self.make_game_buttons(screen_rect)
-        self.make_navigation_buttons(screen_rect)
+        self.navigation_buttons = self.make_navigation_buttons(screen_rect)
         self.chip_curtain = None #Created on startup.
 
     def make_game_buttons(self, screen_rect):
@@ -57,27 +57,31 @@ class LobbyScreen(tools._State):
         return game_buttons
 
     def make_navigation_buttons(self, screen_rect):
-        b_width = 318
-        b_height = 101
-        self.credits_button = NeonButton((9,screen_rect.bottom-(b_height+11)),
-                                         "Credits")
-        self.stats_button = NeonButton((screen_rect.right - (b_width + 10),
-                                        screen_rect.bottom - (b_height + 11)),
-                                        "Stats")
-        self.done_button = NeonButton((screen_rect.centerx - (b_width//2),
-                                       screen_rect.bottom - (b_height + 11)),
-                                       "Exit")
+        buttons = ButtonGroup()
+        pos = (9, screen_rect.bottom-(NeonButton.height+11))
+        NeonButton(pos, "Credits", self.change_state, "CREDITSSCREEN", buttons)
+        pos = (screen_rect.right-(NeonButton.width+10),
+               screen_rect.bottom-(NeonButton.height+11))
+        NeonButton(pos, "Stats", self.change_state, "STATSMENU", buttons)
+        pos = (screen_rect.centerx-(NeonButton.width//2),
+               screen_rect.bottom-(NeonButton.height+11))
+        NeonButton(pos, "Exit", self.exit_game, None, buttons)
+        return buttons
 
     def startup(self, current_time, persistent):
         self.persist = persistent
         if not self.chip_curtain:
             self.chip_curtain = ChipCurtain(None, **CURTAIN_SETTINGS)
 
-    def exit_game(self):
+    def exit_game(self, *args):
         with open(os.path.join("resources", "save_game.json"), "w") as f:
             json.dump(self.persist["casino_player"].stats, f)
         self.done = True
         self.quit = True
+
+    def change_state(self, next_state):
+        self.done = True
+        self.next = "STATSMENU"
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
@@ -85,14 +89,6 @@ class LobbyScreen(tools._State):
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
             self.persist["music_handler"].get_event(event, scale)
-            if self.done_button.rect.collidepoint(pos):
-                self.exit_game()
-            elif self.stats_button.rect.collidepoint(pos):
-                self.done = True
-                self.next = "STATSMENU"
-            elif self.credits_button.rect.collidepoint(pos):
-                self.done = True
-                self.next = "CREDITSSCREEN"
             for button in self.game_buttons:
                 if button.frame_rect.collidepoint(pos):
                     self.done = True
@@ -100,14 +96,13 @@ class LobbyScreen(tools._State):
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.exit_game()
+        self.navigation_buttons.get_event(event)
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
         self.persist["music_handler"].update(scale)
-        buttons = [self.stats_button, self.done_button, self.credits_button]
-        for button in buttons:
-            button.update(mouse_pos)
+        self.navigation_buttons.update(mouse_pos)
         self.draw(surface)
 
     def draw(self, surface):
@@ -118,7 +113,5 @@ class LobbyScreen(tools._State):
             button.draw(surface)
             pg.draw.rect(surface, pg.Color("gold3"), button.rect, 4)
             pg.draw.rect(surface, pg.Color("gold3"), button.frame_rect, 4)
-        self.stats_button.draw(surface)
-        self.done_button.draw(surface)
-        self.credits_button.draw(surface)
+        self.navigation_buttons.draw(surface)
         self.persist["music_handler"].draw(surface)
