@@ -92,7 +92,6 @@ class CardsTable:
         self.rect = pg.Rect(topleft, size)
 
         self.deck = Deck((20, 20), card_size=(200,300), infinite=True)
-        self.hand = self.deck.make_hand()
 
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 30
@@ -109,7 +108,17 @@ class CardsTable:
 
         self.card_spacing = 50
 
+
+    def startup(self):
+        self.hand = self.deck.make_hand()
         self.build()
+        self.standby = True
+
+    def draw_cards(self):
+        self.hand = self.hand = self.deck.make_hand()
+        self.build()
+        self.face_up_cards()
+        self.standby = False
 
     def build(self):
         x = self.rect.left
@@ -117,13 +126,17 @@ class CardsTable:
         for card in self.hand:
             card.rect.left = x
             card.rect.top = y
-            # card.face_up = True
             x += self.card_spacing + card.rect.w
+
+    def face_up_cards(self):
+        for card in self.hand:
+            card.face_up = True
 
     def draw(self, surface, dt):
         for card in self.hand:
             card.draw(surface)
-        self.standby_label.draw(surface, dt)
+        if self.standby:
+            self.standby_label.draw(surface, dt)
 
 
 class Machine:
@@ -146,7 +159,8 @@ class Machine:
 
         self.build()
 
-
+    def startup(self):
+        self.cards_table.startup()
 
     def bet(self):
         if self.coins < self.max_bet:
@@ -162,6 +176,10 @@ class Machine:
         self.coins += aux
         self.credits -= aux
         self.pay_board.update_bet_rect(self.coins)
+
+    def draw_cards(self):
+        if self.coins > 0:
+            self.cards_table.draw_cards()
 
 
 
@@ -198,7 +216,7 @@ class Machine:
         button_list = [('bet', self.bet, None), ('held', self.test, None), 
                         ('held', self.test, None), ('held', self.test, None),
                         ('held', self.test, None), ('held', self.test, None), 
-                        ('bet max', self.bet_max, None), ('draw', self.test, None)]
+                        ('bet max', self.bet_max, None), ('draw', self.draw_cards, None)]
         for text, func, args in button_list:
             label = Label(self.font, self.text_size, text, self.text_color, {})
             button = FunctionButton(x, y, self.btn_width, self.btn_height, label, func, args)

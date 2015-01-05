@@ -20,6 +20,7 @@ class VideoPoker(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
+        self.machine.startup()
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
