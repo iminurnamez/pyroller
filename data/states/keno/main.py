@@ -198,6 +198,13 @@ class KenoCard(object):
             if spot.owned:
                 count+=1
         return count
+        
+    def get_hit_count(self):
+        count = 0
+        for spot in self.spots:
+            if spot.hit and spot.owned:
+                count+=1
+        return count
     
     def toggle_owned(self, number):
         self.spots[number].toggle_owned()
@@ -258,6 +265,8 @@ class Keno(tools._State):
         self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: 0', 'gold3', {'center':(640,700)})
         self.prev_spot_count = 0
         
+        self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
+        
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
         
@@ -292,14 +301,19 @@ class Keno(tools._State):
             
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
+                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
                 
             if self.play.rect.collidepoint(event_pos):
                 self.play.update()
+                hit_count = self.keno_card.get_hit_count()
+                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: {0}'.format(hit_count), 'gold3', {'center':(640,764)})
                 
             if self.clear_action.rect.collidepoint(event_pos):
                 self.clear_action.update()
+                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
             
             self.keno_card.update(event_pos)
+            
             spot_count = self.keno_card.get_spot_count()
             if spot_count != self.prev_spot_count:
                 self.pay_table.update(spot_count)
@@ -322,6 +336,7 @@ class Keno(tools._State):
         self.play.draw(surface)
         
         self.spot_count_label.draw(surface)
+        self.hit_count_label.draw(surface)
         
         self.pay_table.draw(surface)
         
