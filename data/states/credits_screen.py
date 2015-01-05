@@ -135,9 +135,8 @@ class CreditsScreen(tools._State):
         self.zipper_blocks =[]
         self.zipper_block = None
         self.chip_curtain = None
-        b_width = 318
-        b_height = 101
-        pos = self.screen.centerx-(b_width//2), self.screen.bottom-b_height-10
+        pos = (self.screen.centerx-(NeonButton.width//2),
+               self.screen.bottom-NeonButton.height-10)
         self.done_button = NeonButton(pos, "Lobby", self.back_to_lobby)
 
     def back_to_lobby(self, *args):
@@ -180,7 +179,6 @@ class CreditsScreen(tools._State):
         elif event.type == pg.KEYUP and event.key == pg.K_ESCAPE:
             self.done = True
         self.done_button.get_event(event)
-
 
     def switch_blocks(self):
         """
