@@ -91,7 +91,7 @@ class CardsTable:
     def __init__(self, topleft, size):
         self.rect = pg.Rect(topleft, size)
 
-        self.deck = Deck((20, 20), card_size=(200,300), infinite=True)
+        self.deck = Deck((20, 20), card_size=(187, 255), infinite=True)
 
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 30
@@ -109,13 +109,14 @@ class CardsTable:
         self.standby_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
                                       {"center":self.rect.center}, 700, self.text_bg_color)
 
-        self.card_spacing = 50
+        self.card_spacing = 30
 
         self.elapsed = 150.0
 
 
     def startup(self):
         self.hand = self.deck.make_hand()
+        self.hand_len = len(self.hand)
         self.build()
         self.standby = True
         self.card_index = 0
@@ -124,9 +125,11 @@ class CardsTable:
         self.held_cards = []
 
     def draw_cards(self):
-        self.hand = self.hand = self.deck.make_hand()
+        # self.hand = self.deck.make_hand()
+        for index in range(self.hand_len):
+            if index not in self.held_cards:
+                self.hand[index] = self.deck.draw_card()
         self.build()
-        # self.face_up_cards()
         self.revealing = True
         self.standby = False
 
@@ -205,7 +208,7 @@ class Machine:
         # calculate pay board position
         x += self.padding
         y += self.padding
-        w -= self.padding*2 + 150
+        w -= self.padding*2
         h = 330
         self.pay_board = PayBoard((x,y), (w,h))
 

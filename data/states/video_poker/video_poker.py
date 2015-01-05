@@ -8,9 +8,10 @@ class VideoPoker(tools._State):
     """Class to represent a Video poker game."""
     def __init__(self):
         super(VideoPoker, self).__init__()
-        self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
+        w, h = prepare.RENDER_SIZE
+        self.screen_rect = pg.Rect((0, 0), (w, h))
         self.font = prepare.FONTS["Saniretro"]
-        self.machine = Machine((0,0), prepare.RENDER_SIZE)
+        self.machine = Machine((0,0), (w - 300, h))
 
         self.lobby_button = NeonButton((self.screen_rect.right - 330, 
                                     self.screen_rect.bottom - 120), "lobby")
