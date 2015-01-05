@@ -16,7 +16,7 @@ from collections import OrderedDict
 import pygame as pg
 from ... import tools, prepare
 from ...components.labels import Button, Label, FunctionButton
-from . import craps_bet_types, craps_dice
+from . import data, dice, point_chip
 import random
 
 class Craps(tools._State):
@@ -40,9 +40,9 @@ class Craps(tools._State):
         self.table_orig = prepare.GFX['craps_table']
         self.table_color = (0, 153, 51)
         self.set_table()
-        self.bets = craps_bet_types.BETS
+        self.bets = data.BETS
 
-        self.dice = [craps_dice.Die(self.screen_rect), craps_dice.Die(self.screen_rect, 50)]
+        self.dice = [dice.Die(self.screen_rect), dice.Die(self.screen_rect, 50)]
         self.dice_total = 0
         self.update_total_label()
         self.history = [] #[(1,1),(5,4)]
@@ -52,6 +52,10 @@ class Craps(tools._State):
             prepare.SFX['dice_sound3'],
             prepare.SFX['dice_sound4'],
         ]
+        
+        self.pointchip = point_chip.PointChip()
+        self.points = [4,5,6,8,9,10]
+        self.point = 0 #off position
 
     def roll(self):
         if not self.dice[0].rolling:
@@ -102,8 +106,31 @@ class Craps(tools._State):
         self.casino_player.stats["cash"] = self.player.get_chip_total()
 
     def update_total_label(self):
-        self.dice_total_label = Label(self.font, self.font_size, str(self.dice_total), "gold3", {"center": (1165, 50)})
-
+        self.dice_total_label = Label(self.font, self.font_size, str(self.dice_total), "gold3", {"center": (1165, 245)})
+    
+    def update_history(self):
+        dice = []
+        for die in self.dice:
+            dice.append(die.value())
+        if dice[0]:
+            self.history.append(dice)
+        if len(self.history) > 10:
+            self.history.pop(0)
+            
+    def set_point(self):
+        if self.dice_total in self.points:
+            self.point = self.dice_total
+        elif self.dice_total == 7:
+            self.point = 0
+            
+    def get_dice_total(self, current_time):
+        self.dice_total = 0
+        for die in self.dice:
+            die.update(current_time)
+            v = die.value()
+            if v:
+                self.dice_total += v
+ 
     def draw(self, surface):
         surface.fill(self.table_color)
         surface.blit(self.table, self.table_rect)
@@ -118,27 +145,17 @@ class Craps(tools._State):
             die.draw(surface)
         if not self.dice[0].rolling and self.dice[0].draw_dice:
             self.dice_total_label.draw(surface)
-
-    def update_history(self):
-        dice = []
-        for die in self.dice:
-            dice.append(die.value())
-        if dice[0]:
-            self.history.append(dice)
-        if len(self.history) > 10:
-            self.history.pop(0)
+        self.pointchip.draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
         self.persist["music_handler"].update(scale)
-        self.dice_total = 0
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.draw(surface)
         for h in self.bets.keys():
             self.bets[h].update(mouse_pos)
-        for die in self.dice:
-            die.update(current_time)
-            v = die.value()
-            if v:
-                self.dice_total += v
+        self.get_dice_total(current_time)
+        self.set_point()
+        print(self.point)
+        self.pointchip.update(current_time, self.dice_total, self.dice[0].draw_dice)
         self.update_total_label()
         #print(mouse_pos)
