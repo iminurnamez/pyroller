@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import random
 from math import degrees, pi
 from operator import itemgetter
@@ -14,6 +15,10 @@ from ... import prepare
 from ...prepare import BROADCASTER as B
 
 __all__ = ['Playfield']
+
+if sys.version_info[0] == 3:
+    xrange = range
+
 
 supported_shapes = frozenset(('polyline', ))
 plunger_mass = 5
@@ -194,7 +199,7 @@ class Handle(PhysicsSprite):
         shape = Circle(body, radius)
         rect2 = pygame.Rect(0, 0, rect.width, rect.width)
         image = pygame.Surface(rect2.size, pygame.SRCALPHA)
-        pygame.draw.circle(image, color, rect2.center, radius // 4)
+        pygame.draw.circle(image, color, rect2.center, int(radius//4))
         pygame.draw.line(image, (0, 0, 255), rect2.center, rect2.midtop, 8)
         self.shapes = [shape]
         self.rect = rect
