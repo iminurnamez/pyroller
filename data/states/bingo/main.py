@@ -45,7 +45,7 @@ class Bingo(statemachine.StateMachine):
         self.ui = common.ClickableGroup()
         #
         lobby_label = common.getLabel('button', (0, 0), 'Lobby', S)
-        self.lobby_button = Button(1020, self.screen_rect.bottom - 450,
+        self.lobby_button = Button(740, self.screen_rect.bottom - 150,
                                    b_width, b_height, lobby_label)
         #
         # The controls to allow selection of different numbers of cards
@@ -186,6 +186,12 @@ class Bingo(statemachine.StateMachine):
         self.ui.append(self.next_chip_button)
         self.buttons.append(self.next_chip_button)
         #
+        # Menu bar
+        self.menu_bar = common.NamedSprite(
+            'bingo-menu-bar', S['menu-bar-position'], scale=S['menu-bar-scale']
+        )
+        self.buttons.append(self.menu_bar)
+        #
         # Debugging buttons
         if prepare.DEBUG:
             self.debug_buttons.append(common.ImageOnOffButton(
@@ -284,8 +290,9 @@ class Bingo(statemachine.StateMachine):
 
     def next_chip(self, obj, arg):
         """Move on to the next ball"""
-        self.ball_machine.call_next_ball()
-        self.add_generator('next-chip-animation', self.animate_next_chip())
+        if self.next_chip_button.state:
+            self.ball_machine.call_next_ball()
+            self.add_generator('next-chip-animation', self.animate_next_chip())
 
     def animate_next_chip(self):
         """Animate the button after choosing another chip"""
@@ -444,6 +451,14 @@ class Bingo(statemachine.StateMachine):
         other_card = self.cards[card.index] if card.card_owner == bingocard.T_DEALER else self.dealer_cards[card.index]
         other_card.active = False
         other_card.set_card_state(bingocard.S_LOST)
+        #
+        # Check for all cards done
+        for item in self.cards:
+            if item.active and item != card:
+                return
+        else:
+            for item in self.cards:
+                self.add_generator('flash-labels', item.flash_labels())
 
     def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback):
         """Randomly highlight buttons in a group and then call the callback when complete"""

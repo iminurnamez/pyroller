@@ -101,7 +101,7 @@ SETTINGS = {
 
     #
     # Player settings
-    'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 650),
+    'player-cards-position': (prepare.RENDER_SIZE[0] / 2, prepare.RENDER_SIZE[1] - 600),
     'player-card-offsets': {
         1: [(0, 0)],
         2: [(-150, 0), (150, 0)],
@@ -119,7 +119,7 @@ SETTINGS = {
     # Ball machine settings
     'machine-balls': range(1, 76),
 
-    'machine-background-position': (780, 80),
+    'machine-background-position': (780, 120),
     'machine-ball-position': (75, -50),
     'machine-ball-font': prepare.FONTS["Saniretro"],
     'machine-ball-font-size': 76,
@@ -129,10 +129,10 @@ SETTINGS = {
     'machine-ball-drop-initial-speed': 30,
     'machine-ball-drop-acceleration': 1,
 
-    'spout-position': (30, 140),
+    'spout-position': (30, 180),
     'spout-number': 6,
 
-    'called-balls-position': (180, 40),
+    'called-balls-position': (180, 80),
     'called-ball-number-font': prepare.FONTS["Saniretro"],
     'called-ball-number-font-size': 16,
     'called-ball-number-font-color': 'black',
@@ -154,15 +154,15 @@ SETTINGS = {
 
     #
     # Conveyor
-    'conveyor-position': (-50, 200),
+    'conveyor-position': (-50, 240),
     'conveyor-speed': 450,
     'conveyor-repeat': 43,
-    'conveyor-ball-position': 50,
+    'conveyor-ball-position': 90,
     'conveyor-ball-drop-off': 1400,
 
     #
     # Cog wheel
-    'machine-cog-position': (1360, 130),
+    'machine-cog-position': (1360, 170),
     'machine-cog-speed': 450 / 600 * 500,
     'machine-speeds': [
         # Text, interval (s), balls to increase
@@ -230,7 +230,7 @@ SETTINGS = {
     'money-digit-font': prepare.FONTS["Saniretro"],
     'money-digit-font-size': 60,
     'money-digit-font-color': 'black',
-    'money-position': (650, 20),
+    'money-position': (580, 20),
     'money-offsets': (50, 0),
     'money-hide-offsets': (0, -16),
     'money-hide-repeats': 5,
@@ -263,6 +263,11 @@ SETTINGS = {
     'next-chip-scale': 1.7,
     'next-chip-position': (1260, 930),
     'next-chip-delay': 1,
+
+    #
+    # Menu bar
+    'menu-bar-position': (1400 / 2, 50),
+    'menu-bar-scale': 1.55,
 
     #
     # Debug settings
