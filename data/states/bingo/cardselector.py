@@ -48,7 +48,7 @@ class CardSelector(common.DrawableGroup, loggable.Loggable, EventAware):
         #
         if number is None:
             self.state.add_generator('random-button-flash', self.state.randomly_highlight_buttons(
-                self[:-1],
+                self[-1], self[:-1],
                 S['randomize-button-number'], S['randomize-button-delay'],
                 lambda b: self.select_card_number(None, (self.index(b), self.index(b) + 1))
             ))

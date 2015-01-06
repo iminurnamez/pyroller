@@ -250,8 +250,9 @@ SETTINGS = {
 
     #
     # Randomized button display
-    'randomize-button-number': 15,
-    'randomize-button-delay': 50,
+    'randomize-button-number': 20,
+    'randomize-button-delay': 25,
+    'randomize-button-speed-up': 1.1,
 
     #
     # Next chip

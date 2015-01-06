@@ -238,6 +238,7 @@ class Bingo(statemachine.StateMachine):
             self.add_generator(
                 'randomize-buttons',
                 self.randomly_highlight_buttons(
+                    self.pattern_buttons[-1],
                     self.pattern_buttons[:-1],
                     S['randomize-button-number'], S['randomize-button-delay'],
                     lambda b: self.change_pattern(None, b.pattern)
@@ -444,9 +445,10 @@ class Bingo(statemachine.StateMachine):
         other_card.active = False
         other_card.set_card_state(bingocard.S_LOST)
 
-    def randomly_highlight_buttons(self, buttons, number_of_times, delay, final_callback):
+    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback):
         """Randomly highlight buttons in a group and then call the callback when complete"""
         last_chosen = None
+        source_button.state = True
         #
         # Turn all buttons off
         for button in buttons:
@@ -467,8 +469,15 @@ class Bingo(statemachine.StateMachine):
                 last_chosen.state = False
             last_chosen = chosen
             #
+            self.play_sound('bingo-beep')
+            #
             if i != number_of_times - 1:
                 yield delay
+            #
+            # Shortern delay
+            delay *= S['randomize-button-speed-up']
+        #
+        source_button.state = False
         #
         final_callback(chosen)
 
