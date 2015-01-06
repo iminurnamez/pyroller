@@ -19,11 +19,9 @@ class DealerSquare(bingocard.BingoSquare):
 class DealerCard(bingocard.BingoCard):
     """The dealer card"""
 
-    card_owner = bingocard.T_DEALER
     square_class = DealerSquare
-    label_class = None
+    show_col_labels = False
     style_name = 'dealer-card-square'
-    card_success_sound = 'bingo-card-lost'
 
 
 class DealerCardCollection(bingocard.CardCollection):
