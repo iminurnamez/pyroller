@@ -34,26 +34,58 @@ class Bet(object):
         self.label.rect.center = self.rect.center
         self.color = '#181818'
         self.casino_player = casino_player
+        self.bet = 0
+        self.is_paid = False
 
     def update(self, amount):
         #unsafe - can end up withdrawing beyond zero...
         self.casino_player.stats["cash"] -= amount
+        self.bet += amount
+        self.is_paid = True
+        
+    def clear(self):
+        self.is_paid = False
+        self.bet = 0
+        
+    def result(self, spot, hit):
+        if not self.is_paid:
+            bet = self.bet
+            self.bet = 0
+            self.update(bet)
+            
+        paytable = PAYTABLE[spot]
+        payment = 0.0
+        for entry in paytable:
+            if entry[0] == hit:
+                payment = entry[1]
+                
+            if payment > 0.0:
+                break
+                
+        winnings = payment * self.bet
+        self.casino_player.stats["cash"] += winnings
+        #self.bet = 0
+        print("Won: {0}".format(winnings))
+        
+        self.is_paid = False
 
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
 
 class Clear(object):
-    def __init__(self, card):
+    def __init__(self, card, bet_action):
         self.rect = pg.Rect(0, 160, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'CLEAR', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
         self.color = '#181818'
         self.card = card
+        self.bet_action = bet_action
 
     def update(self):
         self.card.ready_play(clear_all=True)
+        self.bet_action.clear()
 
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
@@ -285,11 +317,6 @@ class Keno(tools._State):
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
 
-        self.clear_action = Clear(self.keno_card)
-
-        #creation of this cannot be done here as casino_player is not created yet.
-        #self.bet_action = Bet(self.casino_player)
-
     def back_to_lobby(self, *args):
         self.game_started = False
         self.done = True
@@ -301,6 +328,8 @@ class Keno(tools._State):
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
         self.bet_action = Bet(self.casino_player)
+        self.clear_action = Clear(self.keno_card, self.bet_action)
+        
         self.casino_player.stats["Keno"]["games played"] += 1
 
     def get_event(self, event, scale=(1,1)):
@@ -325,8 +354,19 @@ class Keno(tools._State):
                 self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
 
             if self.play.rect.collidepoint(event_pos):
+                if self.bet_action.bet <= 0:
+                    print("Place a bet first.")
+                    return
+                    
+                spot_count = self.keno_card.get_spot_count()
+                if spot_count <= 0:
+                    print("Pick your spots first.")
+                    return
+                
                 self.play.update()
                 hit_count = self.keno_card.get_hit_count()
+                #spot_count = self.keno_card.get_spot_count()
+                self.bet_action.result(spot_count, hit_count)
                 self.hit_count_label = Label(self.font, 64, 'HIT COUNT: {0}'.format(hit_count), 'gold3', {'center':(640,764)})
 
             if self.clear_action.rect.collidepoint(event_pos):
@@ -366,6 +406,7 @@ class Keno(tools._State):
         self.bet_action.draw(surface)
 
         self.balance_label.draw(surface)
+        self.bet_label.draw(surface)
 
         self.persist["music_handler"].draw(surface)
 
@@ -382,6 +423,10 @@ class Keno(tools._State):
         screen = self.screen_rect
         self.balance_label = Label(self.font, 48, total_text, "gold3",
                                {"bottomleft": (screen.left + 3, screen.bottom - 3)})
+                               
+        bet_text = "Bet: ${}".format(self.bet_action.bet)
+        self.bet_label = Label(self.font, 48, bet_text, "gold3",
+                               {"bottomleft": (screen.left + 3, screen.bottom - 51)})
 
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
