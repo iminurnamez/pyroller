@@ -15,6 +15,8 @@ class Rotator(object):
     """
     A helper class for rotating objects about origins other than their centers.
     """
+    cache = {}
+
     def __init__(self, center, origin, image_angle=0):
         """
         Arguments are the center of the object being rotated (x,y);
@@ -26,19 +28,24 @@ class Rotator(object):
         self.radius = math.hypot(x_mag,y_mag)
         self.start_angle = math.atan2(-y_mag,x_mag)-math.radians(image_angle)
 
-    def __call__(self, angle, origin):
+    def __call__(self, ang, origin):
         """
         Returns the new center of the object.
         Arguments are the angle to rotate by (in degrees);
         and the origin of rotation (x,y).
         """
-        new_angle = math.radians(angle)+self.start_angle
+        return self.cache.get((ang,origin)) or self.get_new_center(ang, origin)
+
+    def get_new_center(self, ang, origin):
+        """Calculate and cache result."""
+        new_angle = math.radians(ang)+self.start_angle
         new_x = origin[0] + self.radius*math.cos(new_angle)
         new_y = origin[1] - self.radius*math.sin(new_angle)
+        self.cache[ang, origin] = (new_x, new_y)
         return (new_x, new_y)
 
 
-class SpotLight(object):
+class SpotLight(pg.sprite.DirtySprite):
     """An oscillating spotlight."""
     cache = {}
 
@@ -51,7 +58,7 @@ class SpotLight(object):
         """
         cls.cache = {}
 
-    def __init__(self, pos, period, arc, start=0):
+    def __init__(self, pos, period, arc, start=0, *groups):
         """
         Argument pos is the midbottom point of the spotlight image (the axis
         of rotation); period is the time needed to osciallate a full cycle
@@ -61,12 +68,15 @@ class SpotLight(object):
         opposite direction as start=0 being exactly half way through the
         cycle).
         """
+        super(SpotLight, self).__init__(*groups)
+        self.blendmode = pg.BLEND_RGB_ADD
         self.angle = 0
         self.raw_image = prepare.GFX["spotlight"]
         self.rect = self.raw_image.get_rect(midbottom=pos)
         self.origin = self.rect.midbottom
         self.rotator = Rotator(self.rect.center, self.origin, self.angle)
         self.period = period*1000
+        self.two_pi_over_period = 2*math.pi/self.period
         self.elapsed = self.period*start
         self.arc = arc//2
         self.make_image()
@@ -74,18 +84,19 @@ class SpotLight(object):
     def make_image(self):
         """
         Check to see if image has already been cached at given angle.
-        If not, perform rotation and cache it.
+        If not, call the rotate method.
         The position of the new rectangle of the rotated image is found
         using the Rotator helper class.
         """
-        angle = int(self.angle)
-        if angle in SpotLight.cache:
-            self.image = SpotLight.cache[angle]
-        else:
-            self.image = pg.transform.rotozoom(self.raw_image, angle, 1)
-            SpotLight.cache[angle] = self.image
-        new_center = self.rotator(angle, self.origin)
+        self.image = SpotLight.cache.get(self.angle) or self.rotate()
+        new_center = self.rotator(self.angle, self.origin)
         self.rect = self.image.get_rect(center=new_center)
+
+    def rotate(self):
+        """Perform rotation and cache the new image."""
+        image = pg.transform.rotozoom(self.raw_image, self.angle, 1)
+        SpotLight.cache[self.angle] = image
+        return image
 
     def update(self, dt):
         """
@@ -93,10 +104,13 @@ class SpotLight(object):
         After finding the new angle set the image appropriately.
         """
         self.elapsed += dt
-        interp = math.sin(2*math.pi*(self.elapsed/float(self.period)))
+        interp = math.sin(self.elapsed*self.two_pi_over_period)
         self.elapsed %= self.period
-        self.angle = self.arc*interp
-        self.make_image()
+        angle = int(self.arc*interp)
+        if angle != self.angle:
+            self.angle = angle
+            self.make_image()
+            self.dirty = 1
 
     def draw(self, surface):
         """
@@ -104,5 +118,4 @@ class SpotLight(object):
         performance hit, but as performance is not critical in the title
         screen it should be a non-issue.
         """
-        flags = pg.BLEND_RGB_ADD
-        surface.blit(self.image, self.rect, special_flags=flags)
+        surface.blit(self.image, self.rect, special_flags=self.blendmode)

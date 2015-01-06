@@ -1,6 +1,6 @@
-+# project config files
-+resources/*.json
-+
+# project config files
+resources/*.json
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
