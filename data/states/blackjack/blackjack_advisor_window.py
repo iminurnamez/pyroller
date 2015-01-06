@@ -12,9 +12,12 @@ class AdvisorWindow(object):
         self.label = MultiLineLabel(self.font, 32, text, "gray20",
                                               {"center": self.window.center},
                                               char_limit=42)
-        done = Label(self.font, 64, "Close", "goldenrod3", {"center": (0, 0)})
-        self.done_button = Button(self.window.centerx - 140, self.window.bottom - 80, 280, 60, done)
+        self.done_button = NeonButton((self.window.centerx - 159,
+                                                        self.window.bottom - 80), "Done")
         self.done = False
+        
+    def update(self, mouse_pos):
+        self.done_button.update(mouse_pos)
         
     def get_event(self, pos):
         if self.done_button.rect.collidepoint(pos):
@@ -25,3 +28,4 @@ class AdvisorWindow(object):
         pg.draw.rect(surface, pg.Color("gray40"), self.window, 3)
         self.label.draw(surface)
         self.done_button.draw(surface)
+
