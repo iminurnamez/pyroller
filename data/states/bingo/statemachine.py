@@ -8,6 +8,10 @@ import pygame
 from . import loggable
 
 
+class NotFound(Exception):
+    """Generator was not found"""
+
+
 class StateExecutor(loggable.Loggable):
     """Executes a generator through a sequence with delays"""
 
@@ -56,6 +60,13 @@ class StateExecutor(loggable.Loggable):
         """Stop this executor"""
         self.done = True
 
+    def get_fraction_to_go(self):
+        """Return the fraction of our time to go"""
+        if self.last_delay == 0:
+            return 1
+        else:
+            return max(0, min(1, self.delay / self.last_delay))
+
 
 class StateMachine(tools._State, loggable.Loggable):
     """A state machine to use for handling the screen"""
@@ -75,6 +86,7 @@ class StateMachine(tools._State, loggable.Loggable):
         #
         self.add_generator(initial_state, getattr(self, initial_state)())
         self.initUI()
+        self.dt = 0
 
     def initUI(self):
         """Initialise the user interface"""
@@ -86,6 +98,7 @@ class StateMachine(tools._State, loggable.Loggable):
 
     def update(self, surface, keys, now, dt, scale):
         """Update the game state"""
+        self.dt = dt
         self.state_clock.tick(dt)
         self.delay -= self.state_clock.get_time() * self.speed_factor
         #
@@ -117,4 +130,4 @@ class StateMachine(tools._State, loggable.Loggable):
                 self.log.debug('Removing executor {0}, {1}'.format(name, id(generator)))
                 break
         else:
-            raise ValueError('A generator named {0} was not found'.format(name))
+            raise NotFound('A generator named {0} was not found'.format(name))

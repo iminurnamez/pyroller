@@ -1,5 +1,6 @@
 """Classes to help with matching patterns of squares on the cards"""
 
+from ...components import common
 from . import loggable
 from .settings import SETTINGS as S
 
@@ -125,10 +126,49 @@ class StampPattern(Pattern):
         ]
 
 
+class PatternButton(common.ImageOnOffButton):
+    """A button to show the pattern"""
+
+    def __init__(self, idx, position, on_filename, off_filename, text_properties, text, state,
+                 settings, scale=1.0):
+        super(PatternButton, self).__init__(PATTERNS[idx].name, position, on_filename, off_filename,
+                                            text_properties,  text, state,  settings, scale)
+        #
+        # Label needs to be moved over because of the image
+        self.label.rect.x += self.label.rect.w / 2 - settings['winning-pattern-label-width']
+        #
+        # Put the right logo image on there
+        x, y = position
+        self.logo_on_image = common.NamedSprite.from_sprite_sheet(
+            'patterns', (6, 2), (idx, 0),
+            (x - settings['winning-pattern-logo-offset'], y),
+            scale=settings['winning-pattern-logo-scale']
+        )
+        self.logo_off_image = common.NamedSprite.from_sprite_sheet(
+            'patterns', (6, 2), (idx, 1),
+            (x - settings['winning-pattern-logo-offset'], y),
+            scale=settings['winning-pattern-logo-scale']
+        )
+
+    def draw(self, surface):
+        """Draw the button"""
+        super(PatternButton, self).draw(surface)
+        if self.state:
+            self.logo_on_image.draw(surface)
+        else:
+            self.logo_off_image.draw(surface)
+
+class RandomPattern(object):
+    """Special pattern to indicate random pattern should be used"""
+
+    name = "Random"
+
+
 PATTERNS = [
     LinesPattern(),
     StampPattern(),
     CornersPattern(),
     CenterPattern(),
     CoverallPattern(),
+    RandomPattern(),
 ]
