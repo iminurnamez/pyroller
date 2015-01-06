@@ -5,21 +5,31 @@ __all__ = ['TextSprite', 'Button', 'NeonButton']
 
 
 class TextSprite(pygame.sprite.DirtySprite):
-    def __init__(self, text, font=None, fg=None, bg=None):
+    def __init__(self, text, font=None, fg=None, bg=None, cache=True):
         super(TextSprite, self).__init__()
         self.rect = pygame.Rect(0, 0, 0, 0)
         self.image = None
         self._fg = fg if fg is not None else (255, 255, 255)
-        self._bg = bg if bg is not None else (0, 0, 0)
+        self._bg = bg
         self._text = text
         self._font = font
         self.dirty = 0
-        self.update_image()
+        if cache:
+            self.update_image()
+
+    def draw(self, surface=None, rect=None):
+        if self._bg is None:
+            image = self._font.render(self._text, True, self._fg)
+        else:
+            image = self._font.render(self._text, True, self._fg, self._bg)
+        if surface is not None and rect is not None:
+            surface.blit(image, rect)
+        return image
 
     def update_image(self):
-        image = self._font.render(self._text, True, self._fg, self._bg)
-        self.rect.size = image.get_size()
+        image = self.draw()
         self.image = image.convert_alpha()
+        self.rect = image.get_rect(topleft=self.rect.topleft)
         self.dirty = 1
 
     @property
@@ -35,6 +45,7 @@ class TextSprite(pygame.sprite.DirtySprite):
 class EventButton(pygame.sprite.DirtySprite):
     def __init__(self, callback, args=None, kwargs=None):
         super(EventButton, self).__init__()
+        assert(callable(callback))
         kwargs = kwargs if kwargs is not None else dict()
         args = args if args is not None else list()
         self._callback = callback, args, kwargs
@@ -77,24 +88,48 @@ class NeonButton(EventButton):
 class Button(EventButton):
     """Button class that responds to mouse events"""
 
-    def __init__(self, text, rect, callback, args=None, kwargs=None):
+    _fg0 = pygame.Color('gold2')
+    _bg0 = pygame.Color('gray10')
+    _bg1 = pygame.Color(48, 48, 48)
+
+    def __init__(self, sprite, rect, callback, args=None, kwargs=None):
         super(Button, self).__init__(callback, args, kwargs)
-        self.image = None
+        self.sprite = sprite
         self.rect = pygame.Rect(rect)
+        self.image = None
         self.dirty = 1
+        self._pressed = False
         self.update_image()
+
+    @property
+    def pressed(self):
+        return self._pressed
+
+    @pressed.setter
+    def pressed(self, value):
+        pressed = bool(value)
+        if not self._pressed == pressed:
+            self._pressed = pressed
+            self.update_image()
 
     def update_image(self):
         """This is functional equivalent to components.labels.Button.draw"""
-        border_color = pygame.Color('gray10')
-        other_color = pygame.Color('gold3')
-        surface = pygame.Surface(self.rect.size)
+        surface = pygame.Surface(self.rect.size, pygame.SRCALPHA)
         border = pygame.Rect((0, 0), self.rect.size)
-        rect = border.inflate(-16, -18).move(0, -3)
+        rect = border.inflate(-16, -18)
+        other_color = self._fg0
+        if self._pressed:
+            border_color = self._bg1
+            rect = rect.move(0, 3)
+        else:
+            border_color = self._bg0
+            rect = rect.move(0, -3)
         pygame.draw.rect(surface, border_color, rect)
         pygame.draw.rect(surface, border_color, border)
         pygame.draw.rect(surface, other_color, rect, 3)
         pygame.draw.rect(surface, other_color, border, 4)
+        image = self.sprite.draw()
+        surface.blit(image, image.get_rect(center=rect.center))
         points = [(rect.topleft, border.topleft),
                   (rect.topright, border.topright),
                   (rect.bottomleft, border.bottomleft),
@@ -103,4 +138,3 @@ class Button(EventButton):
             pygame.draw.line(surface, other_color, pair[0], pair[1], 2)
         self.image = surface
         self.dirty = 1
-

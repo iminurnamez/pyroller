@@ -13,35 +13,81 @@ font_size = 64
 class Pachinko(tools._State):
     """Pachinko game."""
 
-    def startup(self, now, persistent):
-        screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self._needs_clear = True
+    # hack related to game states that do not finish
+    did_startup = False
 
+    def startup(self, now, persistent):
+        self.now = now
         self.persist = persistent
+
+        # stuff that might get moved to a gui layer sometime?
+        self._needs_clear = True
+        self._clicked_sprite = None
+
+        self._power = .5
+        self._should_autoplay = False
+
+        B.linkEvent('pachinko_jackpot', self.on_jackpot)
+        B.linkEvent('pachinko_gutter', self.on_gutter)
+        B.linkEvent('pachinko_tray', self.on_tray)
+
+        # hack related to game states that do not finish
+        try:
+            self.on_tray()
+        except:
+            pass
+        self.done = False
+        try:
+            self.playfield.background = None
+        except AttributeError:
+            pass
+
+        # hack related to game states that do not finish
+        if self.did_startup:
+            return
+
+        self.did_startup = True
+
         self.casino_player = self.persist['casino_player']
+
         self.playfield = Playfield()
         self.hud = pg.sprite.RenderUpdates()
 
         font = pg.font.Font(prepare.FONTS["Saniretro"], font_size)
         self.tray_count = TextSprite('', font)
         self.tray_count.rect.topleft = 960, 100
-        self.on_tray()
         self.hud.add(self.tray_count)
+        self.on_tray()
 
         t = TextSprite("Press F to add 25", font)
         t.rect.topleft = 960, 170
         self.hud.add(t)
 
-        b = Button("Test", (1000, 140, 200, 100), None)
-        self.hud.add(b)
+        t = TextSprite("Spacebar Shoots", font)
+        t.rect.topleft = 960, 250
+        self.hud.add(t)
 
-        b = NeonButton('lobby', (960, 250, 0, 0),
-                       self.goto_lobby)
-        self.hud.add(b)
+        def lower_power():
+            self.playfield.auto_power -= .01
 
-        B.linkEvent('pachinko_jackpot', self.on_jackpot)
-        B.linkEvent('pachinko_gutter', self.on_gutter)
-        B.linkEvent('pachinko_tray', self.on_tray)
+        def raise_power():
+            self.playfield.auto_power += .01
+
+        font = pg.font.Font(prepare.FONTS["Saniretro"], 50)
+        fg = pg.Color('gold2')
+        text = TextSprite("- POWER", font, fg=fg)
+        self.hud.add(Button(text, (1000, 370, 350, 80), lower_power))
+
+        text = TextSprite("AUTO", font, fg=fg)
+        self.auto_button = Button(text, (1000, 460, 350, 80),
+                                  self.toggle_autoplay)
+        self.hud.add(self.auto_button)
+
+        text = TextSprite("+ POWER", font, fg=fg)
+        self.hud.add(Button(text, (1000, 550, 350, 80), raise_power))
+
+        b = NeonButton('lobby', (1000, 920, 0, 0), self.goto_lobby)
+        self.hud.add(b)
 
         if 'Pachinko' not in self.casino_player.stats:
             self.casino_player.stats['Pachinko'] = OrderedDict([
@@ -75,10 +121,15 @@ class Pachinko(tools._State):
             self.playfield.ball_tray += cost
             self.on_tray()
 
+    def toggle_autoplay(self):
+        self._should_autoplay = not self._should_autoplay
+        self.playfield.auto_play = self._should_autoplay
+        self.auto_button.pressed = self._should_autoplay
+
     def cash_out(self):
         winnings = self.playfield.ball_tray
         self.playfield.ball_tray = 0
-        self.casino_player.stats['Pachinko']['total winnings'] += winnings
+        self.casino_player.stats['cash'] += winnings
 
     def cleanup(self):
         B.unlinkEvent('pachinko_jackpot', self.on_jackpot)
@@ -91,11 +142,18 @@ class Pachinko(tools._State):
         self.persist["music_handler"].get_event(event, scale)
 
         if event.type == pg.KEYDOWN:
+            if event.key == pg.K_ESCAPE:
+                self.goto_lobby()
+                return
+
             if event.key == pg.K_SPACE:
                 self.playfield.depress_plunger()
 
             elif event.key == pg.K_f:
                 self.fill_tray()
+
+            elif event.key == pg.K_a:
+                self.toggle_autoplay()
 
         elif event.type == pg.KEYUP:
             if event.key == pg.K_SPACE:
@@ -103,6 +161,10 @@ class Pachinko(tools._State):
 
         if event.type == pg.MOUSEMOTION:
             pos = tools.scaled_mouse_pos(scale)
+            sprite = self._clicked_sprite
+            if sprite is not None:
+                sprite.pressed = sprite.rect.collidepoint(pos)
+
             for sprite in self.hud.sprites():
                 if hasattr(sprite, 'on_mouse_enter'):
                     if sprite.rect.collidepoint(pos):
@@ -112,12 +174,22 @@ class Pachinko(tools._State):
                     if not sprite.rect.collidepoint(pos):
                         sprite.on_mouse_leave(pos)
 
-        elif event.type == pg.MOUSEBUTTONUP:
+        elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale)
             for sprite in self.hud.sprites():
                 if hasattr(sprite, 'on_mouse_click'):
                     if sprite.rect.collidepoint(pos):
-                        sprite.on_mouse_click(pos)
+                        sprite.pressed = True
+                        self._clicked_sprite = sprite
+
+        elif event.type == pg.MOUSEBUTTONUP:
+            pos = tools.scaled_mouse_pos(scale)
+            sprite = self._clicked_sprite
+            if sprite is not None:
+                if sprite.rect.collidepoint(pos):
+                    sprite.pressed = False
+                    sprite.on_mouse_click(pos)
+                self._clicked_sprite = None
 
     def update(self, surface, keys, current_time, dt, scale):
         if self._needs_clear:
