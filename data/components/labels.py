@@ -1,9 +1,28 @@
 from itertools import cycle
 import pygame as pg
-from .. import prepare
+from .. import prepare, tools
 
 
 LOADED_FONTS = {}
+
+BUTTON_DEFAULTS = {"call"             : None,
+                   "args"             : None,
+                   "call_on_up"       : True,
+                   "font"             : None,
+                   "font_size"        : 36,
+                   "text"             : None,
+                   "hover_text"       : None,
+                   "text_color"       : pg.Color("white"),
+                   "hover_text_color" : None,
+                   "fill_color"       : None,
+                   "hover_fill_color" : None,
+                   "idle_image"       : None,
+                   "hover_image"      : None,
+                   "hover_sound"      : None,
+                   "click_sound"      : None,
+                   "visible"          : True,
+                   "active"           : True}
+
 
 #Helper function for MultiLineLabel class
 def wrap_text(text, char_limit, separator=" "):
@@ -27,9 +46,9 @@ def wrap_text(text, char_limit, separator=" "):
 
 
 class _Label(object):
-    '''Parent class all labels inherit from. Color arguments can use color names
+    """Parent class all labels inherit from. Color arguments can use color names
        or an RGB tuple. rect_attributes should be a dict with keys of
-       pygame.Rect attribute names (strings) and the relevant position(s) as values.'''
+       pygame.Rect attribute names (strings) and the relevant position(s) as values."""
     def __init__(self, font_path, font_size, text, text_color, rect_attributes,
                          bground_color=None):
         if (font_path, font_size) not in LOADED_FONTS:
@@ -41,12 +60,12 @@ class _Label(object):
         self.set_text(text)
 
     def set_text(self, text):
-        '''Set the text to display'''
+        """Set the text to display"""
         self.displayed_text = text
         self.update_text()
 
     def update_text(self):
-        '''Update the surface using the current properties and text'''
+        """Update the surface using the current properties and text"""
         if self.background_color is not None:
             self.text = self.f.render(self.displayed_text, True, pg.Color(self.text_color),
                                          pg.Color(self.background_color))
@@ -59,9 +78,9 @@ class _Label(object):
 
 
 class Label(_Label):
-    '''Creates a surface with text blitted to it (self.text) and an associated
+    """Creates a surface with text blitted to it (self.text) and an associated
        rectangle (self.rect). Label will have a transparent background if
-       bground_color is not passed to __init__.'''
+       bground_color is not passed to __init__."""
     def __init__(self, font_path, font_size, text, text_color, rect_attributes,
                          bground_color=None):
         super(Label, self).__init__(font_path, font_size, text, text_color,
@@ -69,7 +88,7 @@ class Label(_Label):
 
 
 class GroupLabel(Label):
-    '''Creates a Label object which is then appended to group.'''
+    """Creates a Label object which is then appended to group."""
     def __init__(self, group, font_path, font_size, text, text_color,
                          rect_attributes, bground_color=None):
         super(GroupLabel, self).__init__(font_path, font_size, text, text_color,
@@ -219,24 +238,89 @@ class Button(object):
         self.label.draw(surface)
 
 
-class NeonButton(object):
-    """Neon sign style button that glows on mouseover."""
-    def __init__(self, lefttop, text, payload=None):
-        on = "neon_button_on_{}".format(text.lower())
-        off = "neon_button_off_{}".format(text.lower())
-        self.payload = payload or text
-        self.on_image = prepare.GFX[on]
-        self.off_image = prepare.GFX[off]
-        self.on = False
-        self.active = True
-        self.rect = self.on_image.get_rect(topleft=lefttop)
+class ButtonGroup(pg.sprite.LayeredDirty):
+    def get_event(self, event, *args, **kwargs):
+        for s in self.sprites():
+            s.get_event(event, *args, **kwargs)
 
-    def update(self, mouse_pos):
-        self.on = self.rect.collidepoint(mouse_pos)
+
+class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
+    def __init__(self, rect_style, *groups, **kwargs):
+        super(_Button, self).__init__(*groups)
+        self.process_kwargs("Button", BUTTON_DEFAULTS, kwargs)
+        self.rect = pg.Rect(rect_style)
+        rendered = self.render_text()
+        self.idle_image = self.make_image(self.fill_color, self.idle_image,
+                                          rendered["text"])
+        self.hover_image = self.make_image(self.hover_fill_color,
+                                           self.hover_image, rendered["hover"])
+        self.image = self.idle_image
+        self.clicked = False
+        self.hover = False
+
+    def render_text(self):
+        font, size = self.font, self.font_size
+        if (self.font,self.font_size) not in LOADED_FONTS:
+            LOADED_FONTS[font, size] = pg.font.Font(font, size)
+        self.font = LOADED_FONTS[font, size]
+        text = self.text and self.font.render(self.text, 1, self.text_color)
+        hover = self.hover_text and self.font.render(self.hover_text, 1,
+                                                     self.hover_text_color)
+        return {"text" : text, "hover" : hover}
+
+    def make_image(self, fill, image, text):
+        final_image = pg.Surface(self.rect.size).convert_alpha()
+        final_image.fill((0,0,0,0))
+        rect = final_image.get_rect()
+        fill and final_image.fill(fill, rect)
+        image and final_image.blit(image, rect)
+        text and final_image.blit(text, text.get_rect(center=rect.center))
+        return final_image
+
+    def get_event(self, event):
+        if self.active and self.visible:
+            if event.type == pg.MOUSEBUTTONUP and event.button == 1:
+                if self.clicked and self.call_on_up:
+                    self.click_sound and self.click_sound.play()
+                    self.call and self.call(self.args or self.text)
+                self.clicked = False
+            elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                if self.hover:
+                    self.clicked = True
+                    if not self.call_on_up:
+                        self.click_sound and self.click_sound.play()
+                        self.call and self.call(self.args or self.text)
+
+    def update(self, prescaled_mouse_pos):
+        hover = self.rect.collidepoint(prescaled_mouse_pos)
+        self.image = self.hover_image if hover else self.idle_image
+        if not self.hover and hover:
+            self.hover_sound and self.hover_sound.play()
+        self.hover = hover
+        self.dirty = 1 if self.visible else 0
 
     def draw(self, surface):
-        img = self.on_image if self.on else self.off_image
-        surface.blit(img, self.rect)
+        if self.visible:
+            surface.blit(self.image, self.rect)
+
+
+class NeonButton(_Button):
+    """Neon sign style button that glows on mouseover."""
+    width = 318
+    height = 101
+
+    def __init__(self, pos, text, call=None, args=None, *groups, **kwargs):
+        on = "neon_button_on_{}".format(text.lower())
+        off = "neon_button_off_{}".format(text.lower())
+        on_image = prepare.GFX[on]
+        off_image = prepare.GFX[off]
+        rect = on_image.get_rect(topleft=pos)
+        settings = {"hover_image" : on_image,
+                    "idle_image"  : off_image,
+                    "call"        : call,
+                    "args"     : args}
+        settings.update(kwargs)
+        super(NeonButton, self).__init__(rect, *groups, **settings)
 
 
 class ImageButton(object):
