@@ -270,9 +270,9 @@ class Machine:
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
 
-        y += self.padding
+        
         label = Label(self.font, self.text_size, 'get credits', self.text_color, {})
-        self.play_button = FunctionButton(self.rect.right - 300, self.rect.bottom - 120, 
+        self.play_button = FunctionButton(self.rect.right + self.padding, y, 
                                             200, 60, label, self.new_game, None)
         
         self.credits_sound = prepare.SFX["bingo-pay-money"]
