@@ -55,8 +55,9 @@ class Control(object):
             self.flip_state()
         self.state.update(self.render_surf,self.keys,self.now,dt,self.scale)
         if self.render_size != self.screen_rect.size:
-            scale_args = (self.render_surf, self.screen_rect.size, self.screen)
-            pg.transform.smoothscale(*scale_args)
+            scale_args = (self.render_surf, self.screen_rect.size)
+            scaled_surf = pg.transform.smoothscale(*scale_args)
+            self.screen.blit(scaled_surf, (0, 0))
         else:
             self.screen.blit(self.render_surf, (0, 0))
 
@@ -65,7 +66,7 @@ class Control(object):
         When a State changes to done necessary startup and cleanup functions
         are called and the current State is changed.
         """
-        previous, self.state_name = self.state_name, self.state.next
+        previous,self.state_name = self.state_name, self.state.next
         persist = self.state.cleanup()
         self.state = self.state_dict[self.state_name]
         self.state.startup(self.now, persist)
