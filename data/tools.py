@@ -202,7 +202,8 @@ class _KwargMixin(object):
             else:
                 message = "{} has no keyword: {}"
                 raise AttributeError(message.format(name, kwarg))
-        self.__dict__.update(settings)
+        for setting in settings:
+            setattr(self, setting, settings[setting])
 
 
 ### Mouse position functions

@@ -1,6 +1,6 @@
 import random
 import pygame as pg
-from ...components.labels import Label, Button, PayloadButton, Blinker, MultiLineLabel, NeonButton
+from ...components.labels import Label, MultiLineLabel, NeonButton, ButtonGroup
 from ... import tools, prepare
 
 #http://casinogamblingtips.info/tag/pay-table
@@ -34,11 +34,11 @@ class Bet(object):
         self.label.rect.center = self.rect.center
         self.color = '#181818'
         self.casino_player = casino_player
-        
+
     def update(self, amount):
         #unsafe - can end up withdrawing beyond zero...
         self.casino_player.stats["cash"] -= amount
-        
+
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
@@ -51,10 +51,10 @@ class Clear(object):
         self.label.rect.center = self.rect.center
         self.color = '#181818'
         self.card = card
-        
+
     def update(self):
         self.card.ready_play(clear_all=True)
-        
+
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
@@ -66,32 +66,32 @@ class PayTable(object):
         self.font = prepare.FONTS["Saniretro"]
         self.color = '#181818'
         self.card = card
-        
+
         self.header_labels = []
         self.header_labels.extend([Label(self.font, 32, 'HIT', 'white', {'center':(1024,124)})])
         self.header_labels.extend([Label(self.font, 32, 'WIN', 'white', {'center':(1200,124)})])
-        
+
         self.pay_labels = []
-    
+
     def update(self, spot):
         self.pay_labels = []
         row = PAYTABLE[spot]
         hit_x = 1024
-        win_x = 1200 
+        win_x = 1200
         row_y = 124+32
         for entry in row:
             hit, win = entry
             self.pay_labels.extend([Label(self.font, 32, str(hit), 'white', {'center':(hit_x, row_y)})])
             self.pay_labels.extend([Label(self.font, 32, str(win), 'white', {'center':(win_x, row_y)})])
             row_y+=32
-            
-    
+
+
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
-        
+
         for label in self.header_labels:
             label.draw(surface)
-            
+
         for label in self.pay_labels:
             label.draw(surface)
 
@@ -104,14 +104,14 @@ class Play(object):
         self.label.rect.center = self.rect.center
         self.color = '#181818'
         self.card = card
-        
+
     def update(self):
         numbers = pick_numbers(20)
-        
+
         self.card.ready_play()
         for number in numbers:
             self.card.toggle_hit(number)
-        
+
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
@@ -129,7 +129,7 @@ class QuickPick(object):
     def update(self):
         self.card.reset()
         numbers = pick_numbers(10)
-        
+
         for number in numbers:
             self.card.toggle_owned(number)
 
@@ -145,14 +145,14 @@ class KenoSpot(object):
         'hit': '#eedb1e',
         'miss': '#690808',
     }
-    
+
     """A spot on a Keno card."""
     def __init__(self, left, top, width, height, label):
         self.rect = pg.Rect(left, top, width, height)
         label.rect.center = self.rect.center
         self.label = label
         self.color = self.COLORS['open']
-        
+
         self.owned = False
         self.hit   = False
 
@@ -164,17 +164,17 @@ class KenoSpot(object):
     def toggle_owned(self):
         self.owned = not self.owned
         self.update_color()
-        
+
     def toggle_hit(self):
         self.hit = not self.hit
         self.update_color()
-        
+
     def update_color(self):
         if self.owned:
             self.color = self.COLORS['owned']
         else:
             self.color = self.COLORS['open']
-            
+
         if self.hit and self.owned:
             self.color = self.COLORS['hit']
         elif self.hit:
@@ -183,19 +183,19 @@ class KenoSpot(object):
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
-        
+
 class KenoCard(object):
     def __init__(self):
         self.font = prepare.FONTS["Saniretro"]
         self.spots = []
         self.build()
-        
+
     def build(self):
         font_size = 48
         text = "0"
         text_color = "white"
         rect_attrib = {'center':(0,0)}
-        
+
         x_origin = 300
         x = x_origin
         y = 100
@@ -208,48 +208,48 @@ class KenoCard(object):
                 x += 70
             y += 70
             x = x_origin
-    
+
     def get_spot_count(self):
         count = 0
         for spot in self.spots:
             if spot.owned:
                 count+=1
         return count
-        
+
     def get_hit_count(self):
         count = 0
         for spot in self.spots:
             if spot.hit and spot.owned:
                 count+=1
         return count
-    
+
     def toggle_owned(self, number):
         self.spots[number].toggle_owned()
-        
+
     def toggle_hit(self, number):
         self.spots[number].toggle_hit()
-    
+
     def ready_play(self, clear_all=False):
         for spot in self.spots:
             spot.hit = False
             spot.update_color()
-            
+
         if clear_all:
             for spot in self.spots:
                 spot.owned = False
                 spot.update_color()
-    
+
     def reset(self):
         for spot in self.spots:
             spot.reset()
-        
+
     def update(self, mouse_pos):
         for spot in self.spots:
             if spot.rect.collidepoint(mouse_pos):
                 if (self.get_spot_count() < 10 and not spot.owned) or spot.owned:
                     spot.toggle_owned()
-                    
-    
+
+
     def draw(self, surface):
         for spot in self.spots:
             spot.draw(surface)
@@ -269,28 +269,31 @@ class Keno(tools._State):
         side_margin = 10
         w = self.screen_rect.right - (b_width + side_margin)
         h = self.screen_rect.bottom - (b_height+15)
-        self.lobby_button = NeonButton((w, h), "Lobby")
-        
-        self.buttons = []
-        self.buttons.extend([self.lobby_button])
-        
+        self.buttons = ButtonGroup()
+        NeonButton((w, h), "Lobby", self.back_to_lobby, None, self.buttons)
+
         self.keno_card = KenoCard()
-        
+
         self.quick_pick = QuickPick(self.keno_card)
         self.play = Play(self.keno_card)
-        
+
         self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: 0', 'gold3', {'center':(640,700)})
         self.prev_spot_count = 0
-        
+
         self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
-        
+
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
-        
+
         self.clear_action = Clear(self.keno_card)
-        
+
         #creation of this cannot be done here as casino_player is not created yet.
         #self.bet_action = Bet(self.casino_player)
+
+    def back_to_lobby(self, *args):
+        self.game_started = False
+        self.done = True
+        self.next = "LOBBYSCREEN"
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -314,60 +317,56 @@ class Keno(tools._State):
             #print(event_pos) #[for debugging positional items]
             self.persist["music_handler"].get_event(event, scale)
 
-            if self.lobby_button.rect.collidepoint(event_pos):
-                self.game_started = False
-                self.done = True
-                self.next = "LOBBYSCREEN"
-            
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
-            
+
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
                 self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
-                
+
             if self.play.rect.collidepoint(event_pos):
                 self.play.update()
                 hit_count = self.keno_card.get_hit_count()
                 self.hit_count_label = Label(self.font, 64, 'HIT COUNT: {0}'.format(hit_count), 'gold3', {'center':(640,764)})
-                
+
             if self.clear_action.rect.collidepoint(event_pos):
                 self.clear_action.update()
                 self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
-            
+
             self.keno_card.update(event_pos)
-            
+
             spot_count = self.keno_card.get_spot_count()
             if spot_count != self.prev_spot_count:
                 self.pay_table.update(spot_count)
                 self.prev_spot_count = spot_count
-                
+
             self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
+        self.buttons.get_event(event)
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(prepare.FELT_GREEN)
-        
+
         self.mock_label.draw(surface)
-        
-        for button in self.buttons:
-            button.draw(surface)
-        
+
+        self.buttons.draw(surface)
+
         self.keno_card.draw(surface)
-        
+
         self.quick_pick.draw(surface)
         self.play.draw(surface)
-        
+
         self.spot_count_label.draw(surface)
         self.hit_count_label.draw(surface)
-        
+
         self.pay_table.draw(surface)
-        
+
         self.clear_action.draw(surface)
+
         self.bet_action.draw(surface)
-        
+
         self.balance_label.draw(surface)
-            
+
         self.persist["music_handler"].draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
@@ -383,11 +382,10 @@ class Keno(tools._State):
         screen = self.screen_rect
         self.balance_label = Label(self.font, 48, total_text, "gold3",
                                {"bottomleft": (screen.left + 3, screen.bottom - 3)})
-        
+
         mouse_pos = tools.scaled_mouse_pos(scale)
-        for button in self.buttons:
-            button.update(mouse_pos)
-        
+        self.buttons.update(mouse_pos)
+
         self.persist["music_handler"].update(scale)
         self.draw(surface)
 

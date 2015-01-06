@@ -1,6 +1,6 @@
 import pygame as pg
 from .. import prepare, tools
-from .labels import MultiLineLabel, NeonButton
+from .labels import MultiLineLabel, NeonButton, ButtonGroup
 
 
 class NoticeWindow(object):
@@ -12,27 +12,28 @@ class NoticeWindow(object):
         self.window = prepare.GFX["warning_window"]
         self.rect = self.window.get_rect(center=center)
         self.label = MultiLineLabel(font, 48, text, "gold3",
-                                    {"midtop": (self.rect.centerx, self.rect.top + 50)},
+                                    {"midtop": (self.rect.centerx,
+                                                self.rect.top + 50)},
                                     char_limit=36, align="center")
-        self.ok = NeonButton((self.rect.centerx - 159, self.rect.bottom - 125),
-                            "Exit")
-        self.done = False                    
-                            
+        pos = (self.rect.centerx-159, self.rect.bottom-125)
+        self.ok = NeonButton(pos, "Exit", self.confirm)
+        self.done = False
+
+    def confirm(self, *args):
+        self.done = True
+
     def get_event(self, event, scale):
-        if event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(event.pos, scale)
-            if self.ok.rect.collidepoint(pos):
-                self.done = True
-                                
+        self.ok.get_event(event)
+
     def update(self, mouse_pos):
         self.ok.update(mouse_pos)
 
     def draw(self, surface):
         surface.blit(self.window, self.rect)
         self.label.draw(surface)
-        self.ok.draw(surface)        
-        
-            
+        self.ok.draw(surface)
+
+
 class WarningWindow(NoticeWindow):
     """
     A popup window to confirm a player's action. The callback function
@@ -40,27 +41,25 @@ class WarningWindow(NoticeWindow):
     """
     def __init__(self, center, text, callback):
         super(WarningWindow, self).__init__(center, text)
-        x = 24                          
-        self.ok.rect.topleft = (self.rect.left + x, self.rect.bottom - (101 + x))
-        self.cancel = NeonButton((self.rect.right - (318 + x),
-                                self.rect.bottom - (101 + x)), "Back")
         self.callback = callback
-        
+        x = 24
+        self.buttons = ButtonGroup(self.ok)
+        self.ok.rect.topleft = (self.rect.x+x, self.rect.bottom-(101+x))
+        self.ok.args = True
+        pos = (self.rect.right-(318+x), self.rect.bottom-(101+x))
+        NeonButton(pos, "Back", self.confirm, False, self.buttons)
+
+    def confirm(self, leave):
+        self.done = True
+        leave and self.callback()
+
     def get_event(self, event, scale):
-        if event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(event.pos, scale)
-            if self.ok.rect.collidepoint(pos):
-                self.done = True
-                self.callback()
-            elif self.cancel.rect.collidepoint(pos):
-                self.done = True
-                
+        self.buttons.get_event(event)
+
     def update(self, mouse_pos):
-        self.ok.update(mouse_pos)
-        self.cancel.update(mouse_pos)
-            
+        self.buttons.update(mouse_pos)
+
     def draw(self, surface):
         surface.blit(self.window, self.rect)
         self.label.draw(surface)
-        self.ok.draw(surface)
-        self.cancel.draw(surface)
+        self.buttons.draw(surface)
