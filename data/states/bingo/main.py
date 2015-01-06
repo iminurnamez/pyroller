@@ -45,7 +45,7 @@ class Bingo(statemachine.StateMachine):
         self.ui = common.ClickableGroup()
         #
         lobby_label = common.getLabel('button', (0, 0), 'Lobby', S)
-        self.lobby_button = Button(1020, self.screen_rect.bottom - (b_height + 15),
+        self.lobby_button = Button(1020, self.screen_rect.bottom - 450,
                                    b_width, b_height, lobby_label)
         #
         # The controls to allow selection of different numbers of cards
@@ -126,7 +126,7 @@ class Bingo(statemachine.StateMachine):
                 self.done = True
                 self.next = "LOBBYSCREEN"
             elif event.key == pg.K_SPACE:
-                self.next_ball(None, None)
+                self.next_chip(None, None)
             elif event.key == pg.K_m:
                 #self.persist["music_handler"].mute_unmute_music()
                 self.sound_muted = not self.sound_muted
@@ -174,6 +174,17 @@ class Bingo(statemachine.StateMachine):
             'money-display', S['money-position'], 123, self
         )
         prepare.BROADCASTER.linkEvent(events.E_SPEND_MONEY, self.spend_money)
+        #
+        # Button for next chip
+        self.next_chip_button = common.ImageOnOffButton(
+                'next-chip', S['next-chip-position'],
+                'bingo-next-chip-on', 'bingo-next-chip-off', 'next-chip',
+                'Next Chip (SPC)', True,
+                S, scale=S['next-chip-scale']
+        )
+        self.next_chip_button.linkEvent(common.E_MOUSE_CLICK, self.next_chip)
+        self.ui.append(self.next_chip_button)
+        self.buttons.append(self.next_chip_button)
         #
         # Debugging buttons
         if prepare.DEBUG:
@@ -263,8 +274,23 @@ class Bingo(statemachine.StateMachine):
         self.last_pick_time = 0
 
     def next_ball(self, obj, arg):
+        """Move on to the next ball
+
+        This is a debugging method - no using the normal UI
+
+        """
+        self.ball_machine.call_next_ball()
+
+    def next_chip(self, obj, arg):
         """Move on to the next ball"""
         self.ball_machine.call_next_ball()
+        self.add_generator('next-chip-animation', self.animate_next_chip())
+
+    def animate_next_chip(self):
+        """Animate the button after choosing another chip"""
+        self.next_chip_button.state = False
+        yield S['next-chip-delay'] * 1000
+        self.next_chip_button.state = True
 
     def draw_new_cards(self, obj,  arg):
         """Draw a new set of cards"""

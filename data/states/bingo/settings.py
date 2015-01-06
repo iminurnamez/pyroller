@@ -254,6 +254,16 @@ SETTINGS = {
     'randomize-button-delay': 50,
 
     #
+    # Next chip
+    'next-chip-font': prepare.FONTS["Saniretro"],
+    'next-chip-font-size': 34,
+    'next-chip-font-color': 'black',
+    'next-chip-size': (180, 45),
+    'next-chip-scale': 1.7,
+    'next-chip-position': (1260, 930),
+    'next-chip-delay': 1,
+
+    #
     # Debug settings
     'debug-auto-pick': False,
     'debug-restart-position': (1250, 120),
