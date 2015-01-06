@@ -34,6 +34,7 @@ class PayBoard:
         self.bet_rect_color = pg.Color("red")
         self.show_bet_rect = False
 
+
         self.build()
 
     def update_bet_rect(self, bet):
@@ -85,7 +86,7 @@ class PayBoard:
         for line in self.lines:
             pg.draw.line(surface, self.border_color, line[0], line[1], self.border_size)
 
-class CardsTable:
+class Dealer:
     def __init__(self, topleft, size):
         self.rect = pg.Rect(topleft, size)
 
@@ -107,6 +108,10 @@ class CardsTable:
         self.standby_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
                                       {"center":self.rect.center}, 700, self.text_bg_color)
 
+        self.text = " play 1 to 5 coins "
+        self.help_text = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
+                                      {"center":self.rect.center}, 700, self.text_bg_color)
+
         self.card_spacing = 30
 
         self.animation_speed = 170.0
@@ -126,6 +131,7 @@ class CardsTable:
         self.revealing = False
         self.held_cards = []
         self.changing_cards = list(range(5))
+        self.ready2play = False
 
     def draw_cards(self):
         for index in range(self.hand_len):
@@ -162,13 +168,15 @@ class CardsTable:
         self.changing_cards.sort()
 
 
-    def get_event(self, mouse_pos):
-        for index, card in enumerate(self.hand):
-            if card.rect.collidepoint(mouse_pos):
-                self.toogle_held(index)
-
-    def update(self, playing, dt):
+    def get_event(self, playing, mouse_pos):
         if playing:
+            for index, card in enumerate(self.hand):
+                if card.rect.collidepoint(mouse_pos):
+                    self.toogle_held(index)
+
+    def update(self, playing, ready2play, dt):
+        if playing:
+            self.ready2play = ready2play
             if self.revealing:
                 self.elapsed += dt
                 while self.elapsed >= self.animation_speed:
@@ -192,6 +200,8 @@ class CardsTable:
             self.held_labels[index].draw(surface)
         if self.standby:
             self.standby_label.draw(surface, dt)
+        elif not self.ready2play:
+            self.help_text.draw(surface, dt)
 
 
 class Machine:
@@ -214,11 +224,12 @@ class Machine:
 
     def startup(self):
         self.playing = False
+        self.ready2play = False
         self.bet = 0
         self.credits = 0
         self.coins = 0
         self.build()
-        self.cards_table.startup()
+        self.dealer.startup()
 
 
     def build(self):
@@ -240,9 +251,9 @@ class Machine:
         # calculate cards table position position
         y += self.padding + self.pay_board.rect.h
         h = 300
-        self.cards_table = CardsTable((x,y), (w,h))
+        self.dealer = Dealer((x,y), (w,h))
 
-        y = self.cards_table.rect.bottom + self.padding*2
+        y = self.dealer.rect.bottom + self.padding*2
         self.label_y = y # use in info labels
 
         # buttons
@@ -263,7 +274,9 @@ class Machine:
         label = Label(self.font, self.text_size, 'get credits', self.text_color, {})
         self.play_button = FunctionButton(self.rect.right - 300, self.rect.bottom - 120, 
                                             200, 60, label, self.new_game, None)
+        
         self.credits_sound = prepare.SFX["bingo-pay-money"]
+        self.bet_sound = prepare.SFX["bingo-pick-1"]
         
 
 
@@ -286,6 +299,8 @@ class Machine:
                 self.bet = 1
                 self.coins = 1
                 self.credits += 4
+            self.ready2play = True
+            self.bet_sound.play()
         self.pay_board.update_bet_rect(self.coins)
 
     
@@ -295,6 +310,9 @@ class Machine:
             self.bet += aux
             self.coins += aux
             self.credits -= aux
+            self.ready2play = True
+            self.bet_sound.play()
+            self.draw_cards()
         self.pay_board.update_bet_rect(self.coins)
 
     
@@ -309,27 +327,28 @@ class Machine:
                 self.bet = self.credits
                 self.coins = self.credits
                 self.credits = 0
+            self.ready2play = True
             self.pay_board.update_bet_rect(self.coins)
 
     
     def draw_cards(self):
         if self.bet > 0:
-            self.cards_table.draw_cards()
+            self.dealer.draw_cards()
             self.bet = 0
         else:
             if self.coins > 0:
                 self.make_last_bet()
-                self.cards_table.draw_cards()
+                self.dealer.draw_cards()
                 self.bet = 0
 
     def make_held(self, index):
-        self.cards_table.toogle_held(index)
+        self.dealer.toogle_held(index)
     
 
 
 
     def get_event(self, mouse_pos):
-        self.cards_table.get_event(mouse_pos)
+        self.dealer.get_event(self.playing, mouse_pos)
         if self.credits <= 0:
             self.play_button.get_event(mouse_pos)
         for button in self.buttons:
@@ -351,13 +370,16 @@ class Machine:
 
         if self.credits == 0:
             self.playing = False
+        
+        if self.bet == 0:
+            self.ready2play = False
 
-        self.cards_table.update(self.playing, dt)
+        self.dealer.update(self.playing, self.ready2play, dt)
 
 
     def draw(self, surface, dt):
         self.pay_board.draw(surface)
-        self.cards_table.draw(surface, dt)
+        self.dealer.draw(surface, dt)
         for label in self.info_labels:
             label.draw(surface)
         for button in self.buttons:
