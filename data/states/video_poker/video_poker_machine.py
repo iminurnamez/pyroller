@@ -115,6 +115,7 @@ class CardsTable:
         self.elapsed = self.animation_speed
 
         self.deal_sound = prepare.SFX["cardplace2"]
+        self.held_sound = prepare.SFX["bingo-speed-up"]
 
 
     def startup(self):
@@ -126,6 +127,7 @@ class CardsTable:
         self.max_cards = len(self.hand)
         self.revealing = False
         self.held_cards = []
+        self.changing_cards = list(range(5))
 
     def draw_cards(self):
         for index in range(self.hand_len):
@@ -155,8 +157,12 @@ class CardsTable:
     def toogle_held(self, index):
         if index in self.held_cards:
             self.held_cards.remove(index)
+            self.changing_cards.append(index)
         else:
             self.held_cards.append(index)
+            self.changing_cards.remove(index)
+        self.held_sound.play()
+        self.changing_cards.sort()
 
 
     def get_event(self, mouse_pos):
@@ -169,10 +175,11 @@ class CardsTable:
             self.elapsed += dt
             while self.elapsed >= self.animation_speed:
                 self.elapsed -= self.animation_speed
-                self.hand[self.card_index].face_up = True
+                index = self.changing_cards[self.card_index]
+                self.hand[index].face_up = True
                 self.deal_sound.play()
                 self.card_index += 1
-                if self.card_index >= self.max_cards:
+                if self.card_index >= len(self.changing_cards):
                     self.card_index = 0
                     self.revealing = False
 
@@ -249,9 +256,9 @@ class Machine:
             x += self.btn_width + self.btn_padding
 
         y += self.padding
-        label = Label(self.font, self.text_size, 'deal', self.text_color, {})
+        label = Label(self.font, self.text_size, 'get credits', self.text_color, {})
         self.play_button = FunctionButton(self.rect.right - 300, self.rect.bottom - 120, 
-                                            200, 100, label, self.new_game, None)
+                                            200, 60, label, self.new_game, None)
         self.buttons.append(self.play_button)
 
 
