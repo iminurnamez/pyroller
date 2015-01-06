@@ -74,8 +74,6 @@ class PayBoard:
             x += self.col_space
 
 
-
-
     def draw(self, surface):
         pg.draw.rect(surface, self.bg_color, self.rect)
         if self.show_bet_rect:
@@ -105,7 +103,7 @@ class CardsTable:
         
 
         
-        self.text = " Play 1 to 5 coins "
+        self.text = " insert coins "
         self.standby_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
                                       {"center":self.rect.center}, 700, self.text_bg_color)
 
@@ -135,7 +133,6 @@ class CardsTable:
                 self.hand[index] = self.deck.draw_card()
         self.build()
         self.revealing = True
-        self.standby = False
 
     def build(self):
         x = self.rect.left
@@ -170,18 +167,23 @@ class CardsTable:
             if card.rect.collidepoint(mouse_pos):
                 self.toogle_held(index)
 
-    def update(self, dt):
-        if self.revealing:
-            self.elapsed += dt
-            while self.elapsed >= self.animation_speed:
-                self.elapsed -= self.animation_speed
-                index = self.changing_cards[self.card_index]
-                self.hand[index].face_up = True
-                self.deal_sound.play()
-                self.card_index += 1
-                if self.card_index >= len(self.changing_cards):
-                    self.card_index = 0
-                    self.revealing = False
+    def update(self, playing, dt):
+        if playing:
+            if self.revealing:
+                self.elapsed += dt
+                while self.elapsed >= self.animation_speed:
+                    self.elapsed -= self.animation_speed
+                    index = self.changing_cards[self.card_index]
+                    self.hand[index].face_up = True
+                    self.deal_sound.play()
+                    self.card_index += 1
+                    if self.card_index >= len(self.changing_cards):
+                        self.card_index = 0
+                        self.revealing = False
+            self.standby = False
+        else:
+            self.standby = True
+
 
     def draw(self, surface, dt):
         for card in self.hand:
@@ -207,12 +209,14 @@ class Machine:
         self.info_labels = []
 
         self.max_bet = 5
-        self.bet = 0
-        self.credits = 20
-        self.coins = 0
+        
 
 
     def startup(self):
+        self.playing = False
+        self.bet = 0
+        self.credits = 0
+        self.coins = 0
         self.build()
         self.cards_table.startup()
 
@@ -259,11 +263,14 @@ class Machine:
         label = Label(self.font, self.text_size, 'get credits', self.text_color, {})
         self.play_button = FunctionButton(self.rect.right - 300, self.rect.bottom - 120, 
                                             200, 60, label, self.new_game, None)
-        self.buttons.append(self.play_button)
+        self.credits_sound = prepare.SFX["bingo-pay-money"]
+        
 
 
     def new_game(self):
-        pass
+        self.playing = True
+        self.credits = 20
+        self.credits_sound.play()
 
 
     def bet_one(self):
@@ -293,7 +300,7 @@ class Machine:
     
     def make_last_bet(self):
         """ """
-        if self.credits > 0 and self.coins > 0:
+        if self.credits > 0:
             if self.credits >= self.coins:
                 self.bet = self.coins
                 self.credits -= self.bet            
@@ -310,9 +317,10 @@ class Machine:
             self.cards_table.draw_cards()
             self.bet = 0
         else:
-            self.make_last_bet()
-            self.cards_table.draw_cards()
-            self.bet = 0
+            if self.coins > 0:
+                self.make_last_bet()
+                self.cards_table.draw_cards()
+                self.bet = 0
 
     def make_held(self, index):
         self.cards_table.toogle_held(index)
@@ -322,8 +330,11 @@ class Machine:
 
     def get_event(self, mouse_pos):
         self.cards_table.get_event(mouse_pos)
+        if self.credits <= 0:
+            self.play_button.get_event(mouse_pos)
         for button in self.buttons:
-            button.get_event(mouse_pos)
+            if self.playing:
+                button.get_event(mouse_pos)
 
     def update(self, dt):
         # game info labels
@@ -335,9 +346,13 @@ class Machine:
         coins_text = "Coins in {}".format(self.coins)
         label = Label(self.font, self.text_size, coins_text, self.text_color, 
                         {"topleft": (self.label_x1, self.label_y)})
+
         self.info_labels.append(label)
 
-        self.cards_table.update(dt)
+        if self.credits == 0:
+            self.playing = False
+
+        self.cards_table.update(self.playing, dt)
 
 
     def draw(self, surface, dt):
@@ -347,5 +362,7 @@ class Machine:
             label.draw(surface)
         for button in self.buttons:
             button.draw(surface)
+        if self.credits <= 0:
+            self.play_button.draw(surface)
 
 
