@@ -5,6 +5,8 @@ from ...components import cards
 from ...prepare import BROADCASTER as B
 from .ui import *
 import fysom
+import json
+import os
 
 
 __all__ = ['Baccarat']
@@ -26,6 +28,10 @@ class Baccarat(tools._State):
     def startup(self, now, persistent):
         self.now = now
         self.persist = persistent
+
+        self.variation = "mini"
+
+        self.load_json(os.path.join('resources', 'baccarat.json'))
 
         self.players = list()
 
@@ -57,6 +63,20 @@ class Baccarat(tools._State):
         #         ])
         # self.casino_player.stats['Baccarat']['games played'] += 1
 
+    def load_json(self, filename):
+        with open(filename) as fp:
+            data = json.load(fp)
+
+        config = data['baccarat'][self.variation]
+        self.options = dict(config['options'])
+        self.rules = dict(config['rules'])
+
+        print self.rules
+        self.fsm = fysom.Fysom(**self.rules)
+
+    def bet(self):
+        pass
+
     def begin(self):
         pass
 
@@ -75,7 +95,7 @@ class Baccarat(tools._State):
     def count(self):
         pass
 
-    def clear(self):
+    def clear_table(self):
         pass
 
     def end(self):
