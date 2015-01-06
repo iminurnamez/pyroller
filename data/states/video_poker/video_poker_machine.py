@@ -105,13 +105,16 @@ class CardsTable:
         
 
         
-        self.text = "Play 1 to 5 coins"
+        self.text = " Play 1 to 5 coins "
         self.standby_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
                                       {"center":self.rect.center}, 700, self.text_bg_color)
 
         self.card_spacing = 30
 
-        self.elapsed = 150.0
+        self.animation_speed = 170.0
+        self.elapsed = self.animation_speed
+
+        self.deal_sound = prepare.SFX["cardplace2"]
 
 
     def startup(self):
@@ -139,7 +142,7 @@ class CardsTable:
             card.rect.left = x
             card.rect.top = y
             label = Label(self.font, self.text_size, 'held', self.text_color,
-                                      {"bottom":card.rect.top, "centerx":card.rect.centerx})
+                                {"bottom":card.rect.top, "centerx":card.rect.centerx})
             self.held_labels.append(label)
             x += self.card_spacing + card.rect.w
 
@@ -164,9 +167,10 @@ class CardsTable:
     def update(self, dt):
         if self.revealing:
             self.elapsed += dt
-            while self.elapsed >= 150.0:
-                self.elapsed -= 150.0
+            while self.elapsed >= self.animation_speed:
+                self.elapsed -= self.animation_speed
                 self.hand[self.card_index].face_up = True
+                self.deal_sound.play()
                 self.card_index += 1
                 if self.card_index >= self.max_cards:
                     self.card_index = 0
@@ -200,9 +204,9 @@ class Machine:
         self.credits = 20
         self.coins = 0
 
-        self.build()
 
     def startup(self):
+        self.build()
         self.cards_table.startup()
 
 
@@ -215,6 +219,7 @@ class Machine:
         y += self.padding
         w -= self.padding*2
         h = 330
+
         self.pay_board = PayBoard((x,y), (w,h))
 
         # use in info labels
@@ -231,15 +236,27 @@ class Machine:
 
         # buttons
         y += self.padding + self.btn_padding
-        button_list = [('bet', self.bet_one, None), ('held', self.make_held, (0,)), 
-                        ('held', self.make_held, (1,)), ('held', self.make_held, (2,)),
-                        ('held', self.make_held, (3,)), ('held', self.make_held, (4,)), 
-                        ('bet max', self.bet_max, None), ('draw', self.draw_cards, None)]
+        button_list = [
+            ('bet', self.bet_one, None), ('held', self.make_held, (0,)), 
+            ('held', self.make_held, (1,)), ('held', self.make_held, (2,)),
+            ('held', self.make_held, (3,)), ('held', self.make_held, (4,)),
+            ('bet max', self.bet_max, None), ('draw', self.draw_cards, None)
+        ]
         for text, func, args in button_list:
             label = Label(self.font, self.text_size, text, self.text_color, {})
             button = FunctionButton(x, y, self.btn_width, self.btn_height, label, func, args)
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
+
+        y += self.padding
+        label = Label(self.font, self.text_size, 'deal', self.text_color, {})
+        self.play_button = FunctionButton(self.rect.right - 300, self.rect.bottom - 120, 
+                                            200, 100, label, self.new_game, None)
+        self.buttons.append(self.play_button)
+
+
+    def new_game(self):
+        pass
 
 
     def bet_one(self):
@@ -289,11 +306,6 @@ class Machine:
             self.make_last_bet()
             self.cards_table.draw_cards()
             self.bet = 0
-
-            
-
-    def test(self):
-        print("Hello world")
 
     def make_held(self, index):
         self.cards_table.toogle_held(index)
