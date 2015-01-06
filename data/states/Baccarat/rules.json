@@ -1,0 +1,113 @@
+{"baccarat":{
+  "mini":{
+    "options": {
+      "decks": 4,
+      "max_players": 7,
+      "number_of_croupiers": 1,
+      "tie_payout": [
+        20,
+        1
+      ],
+      "third_card_option": false,
+      "five_option": false,
+      "banker_hands": 1,
+      "player_hands": 1,
+      "dealt_face_up": true,
+      "high_roller_advantage": false,
+      "banker_rotates": false,
+      "croupier_chooses_banker": false,
+      "commission": 0
+    },
+    "rules":{
+      "initial": "begin",
+      "events": [
+        ["change_dealer", "clear", "bet"],
+        ["bet", ["clear", "change_dealer"], "deal"],
+        ["deal", "bet", ["three_option", "five_option", "count"]],
+        ["three_option", "deal", ["five_option", "count"]],
+        ["five_option", ["three_option", "deal"], "count"],
+        ["count", ["three_option", "five_option", "deal"], "clear"],
+        ["clear", "count", ["bet", "change_dealer", "end"]],
+        ["end", "clear", "end"]
+      ]
+  },
+  "punto":{
+    "options": {
+      "decks": 8,
+      "max_players": 14,
+      "number_of_croupiers": 3,
+      "tie_payout": [
+        20,
+        1
+      ],
+      "third_card_option": false,
+      "five_option": false,
+      "banker_hands": 1,
+      "player_hands": 1,
+      "dealt_face_up": true,
+      "high_roller_advantage": false,
+      "banker_rotates": false,
+      "croupier_chooses_banker": false,
+      "commission": 0
+    }
+  },
+  "chemin_de_fer":{
+    "options": {
+      "decks": 6,
+      "max_players": 7,
+      "number_of_croupiers": 1,
+      "tie_payout": [
+        20,
+        1
+      ],
+      "third_card_option": true,
+      "five_option": true,
+      "banker_hands": 1,
+      "player_hands": 1,
+      "dealt_face_up": false,
+      "high_roller_advantage": true,
+      "banker_rotates": true,
+      "croupier_chooses_banker": false,
+      "commission": 5
+    }
+  },
+    "european":{
+      "options": {
+        "decks": 6,
+        "max_players": 7,
+        "number_of_croupiers": 1,
+        "tie_payout": [
+          20,
+          1
+        ],
+        "third_card_option": true,
+        "five_option": true,
+        "banker_hands": 1,
+        "player_hands": 1,
+        "dealt_face_up": false,
+        "high_roller_advantage": true,
+        "banker_rotates": true,
+        "croupier_chooses_banker": false,
+        "commission": 5
+      }
+  },
+  "banque": {
+    "options": {
+      "decks": 4,
+      "max_players": 7,
+      "number_of_croupiers": 1,
+      "tie_payout": [
+        20,
+        1
+      ],
+      "third_card_option": false,
+      "five_option": false,
+      "banker_hands": 1,
+      "player_hands": 2,
+      "dealt_face_up": true,
+      "high_roller_advantage": false,
+      "banker_rotates": false,
+      "croupier_chooses_banker": true,
+      "commission": 0
+    }
+  }}}
