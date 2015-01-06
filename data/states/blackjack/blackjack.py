@@ -1,5 +1,6 @@
 from random import choice
 import pygame as pg
+
 from ... import tools, prepare
 from ...components.angles import get_distance, get_angle, project
 from ...components.labels import NeonButton, ButtonGroup
@@ -11,6 +12,7 @@ from .blackjack_dealer import Dealer
 from .blackjack_player import Player
 from .blackjack_hand import Hand
 from .blackjack_advisor_window import AdvisorWindow
+
 
 class Blackjack(tools._State):
     """State to represent a blackjack game. Player cash
@@ -242,7 +244,7 @@ class Blackjack(tools._State):
     def bet_warning(self):
         warning_text = "You sure? Exiting the game will forfeit your current bets!"
         self.warning_window = WarningWindow(self.screen_rect.center,
-                                                                   warning_text, self.leave_state)
+                                            warning_text, self.leave_state)
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
@@ -255,32 +257,28 @@ class Blackjack(tools._State):
             self.persist["music_handler"].get_event(event, scale)
             if self.advisor_window:
                 self.advisor_window.get_event(pos)
-            if self.warning_window:
-                self.warning_window.get_event(event, scale)
             elif self.state == "Betting":
-                if not self.moving_stacks:
-                    if event.button == 1:
-                        new_movers = self.player.chip_pile.grab_chips(pos)
-                        if new_movers:
+                if not self.moving_stacks and event.button == 1:
+                    new_movers = self.player.chip_pile.grab_chips(pos)
+                    if new_movers:
+                        choice(self.chip_sounds).play()
+                        self.moving_stacks.append(new_movers)
+                    for hand in self.player.hands:
+                        unbet_stack = hand.bet.grab_chips(pos)
+                        if unbet_stack:
                             choice(self.chip_sounds).play()
-                            self.moving_stacks.append(new_movers)
-                        for hand in self.player.hands:
-                            unbet_stack = hand.bet.grab_chips(pos)
-                            if unbet_stack:
-                                choice(self.chip_sounds).play()
-                                self.player.chip_pile.add_chips(unbet_stack.chips)
+                            self.player.chip_pile.add_chips(unbet_stack.chips)
         elif event.type == pg.MOUSEBUTTONUP:
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            if self.moving_stacks:
-                if event.button == 1:
-                    for stack in self.moving_stacks:
-                        stack.bottomleft = pos
-                        if self.chip_rack.rect.collidepoint(pos):
-                            choice(self.chip_sounds).play()
-                            self.player.chip_pile.add_chips(self.chip_rack.break_chips(stack.chips))
-                        else:
-                            self.current_player_hand.bet.add_chips(stack.chips)
-                    self.moving_stacks = []
+            if self.moving_stacks and event.button == 1:
+                for stack in self.moving_stacks:
+                    stack.bottomleft = pos
+                    if self.chip_rack.rect.collidepoint(pos):
+                        choice(self.chip_sounds).play()
+                        self.player.chip_pile.add_chips(self.chip_rack.break_chips(stack.chips))
+                    else:
+                        self.current_player_hand.bet.add_chips(stack.chips)
+                self.moving_stacks = []
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_a and not self.advisor_window:
                 test_text = "This is a test string to simulate the advice that a blackjack advisor would give. The string should be broken up into shorter lines aligned to the left."
@@ -291,6 +289,7 @@ class Blackjack(tools._State):
         elif self.state == "Betting" and not self.moving_stacks:
             self.deal_button.get_event(event)
         self.nav_buttons.get_event(event)
+        self.warning_window and self.warning_window.get_event(event, scale)
 
     def update_game(self, surface, keys, current_time, dt, scale):
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
@@ -304,13 +303,6 @@ class Blackjack(tools._State):
             button.visible = self.state == "Player Turn" and button.active
 
         self.persist["music_handler"].update(scale)
-        if self.advisor_window:
-            if self.advisor_window.done:
-                self.advisor_window = None
-        if self.warning_window:
-            self.warning_window.update(mouse_pos)
-            if self.warning_window.done:
-                self.warning_window = None
 
         if self.state == "Betting":
             if not self.moving_stacks:
@@ -440,12 +432,19 @@ class Blackjack(tools._State):
         self.chip_rack.update()
 
     def update(self, surface, keys, current_time, dt, scale):
-        pos = tools.scaled_mouse_pos(scale, pg.mouse.get_pos())
+        mouse_pos = tools.scaled_mouse_pos(scale, pg.mouse.get_pos())
         self.elapsed += dt
         while self.elapsed >= 17.0:
             self.elapsed -= 17.0
             self.update_game(surface, keys, current_time, dt, scale)
-        self.buttons.update(pos)
+        self.buttons.update(mouse_pos)
+        if self.advisor_window:
+            if self.advisor_window.done:
+                self.advisor_window = None
+        if self.warning_window:
+            self.warning_window.update(mouse_pos)
+            if self.warning_window.done:
+                self.warning_window = None
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
@@ -469,7 +468,5 @@ class Blackjack(tools._State):
         self.persist["music_handler"].draw(surface)
         self.chip_total_label.draw(surface)
         self.buttons.draw(surface)
-        if self.advisor_window:
-            self.advisor_window.draw(surface)
-        if self.warning_window:
-            self.warning_window.draw(surface)
+        self.advisor_window and self.advisor_window.draw(surface)
+        self.warning_window and self.warning_window.draw(surface)
