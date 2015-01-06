@@ -29,6 +29,7 @@ class VideoPoker(tools._State):
             self.next = "LOBBYSCREEN"
 
         elif event.type == pg.MOUSEBUTTONDOWN:
+            self.persist["music_handler"].get_event(event, scale)
             pos = tools.scaled_mouse_pos(scale, event.pos)
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
             self.machine.get_event(pos)

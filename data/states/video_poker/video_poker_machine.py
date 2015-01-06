@@ -91,7 +91,7 @@ class CardsTable:
     def __init__(self, topleft, size):
         self.rect = pg.Rect(topleft, size)
 
-        self.deck = Deck((20, 20), card_size=(187, 255), infinite=True)
+        self.deck = Deck((20, 20), card_size=(187, 271), infinite=True)
 
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 30
@@ -125,7 +125,6 @@ class CardsTable:
         self.held_cards = []
 
     def draw_cards(self):
-        # self.hand = self.deck.make_hand()
         for index in range(self.hand_len):
             if index not in self.held_cards:
                 self.hand[index] = self.deck.draw_card()
@@ -155,6 +154,12 @@ class CardsTable:
             self.held_cards.remove(index)
         else:
             self.held_cards.append(index)
+
+
+    def get_event(self, mouse_pos):
+        for index, card in enumerate(self.hand):
+            if card.rect.collidepoint(mouse_pos):
+                self.toogle_held(index)
 
     def update(self, dt):
         if self.revealing:
@@ -187,7 +192,7 @@ class Machine:
 
         self.buttons = []
         self.btn_width = self.btn_height = 100
-        self.btn_padding = 40
+        self.btn_padding = 35
         self.info_labels = []
 
         self.max_bet = 5
@@ -255,7 +260,7 @@ class Machine:
     
     def bet_max(self):
         if self.credits > 0:
-            aux = self.max_bet - self.bet
+            aux = self.max_bet - self.coins
             self.bet += aux
             self.coins += aux
             self.credits -= aux
@@ -297,6 +302,7 @@ class Machine:
 
 
     def get_event(self, mouse_pos):
+        self.cards_table.get_event(mouse_pos)
         for button in self.buttons:
             button.get_event(mouse_pos)
 
