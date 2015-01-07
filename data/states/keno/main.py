@@ -1,5 +1,6 @@
 import random
 import pygame as pg
+from ...components.warning_window import NoticeWindow
 from ...components.labels import Label, MultiLineLabel, NeonButton, ButtonGroup
 from ... import tools, prepare
 
@@ -35,7 +36,7 @@ def is_winner(spot, hit):
 
 class Bet(object):
     def __init__(self, casino_player):
-        self.rect = pg.Rect(682, 660, 150, 75)
+        self.rect = pg.Rect(682, 760, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'BET 1', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -84,7 +85,7 @@ class Bet(object):
 
 class Clear(object):
     def __init__(self, card, bet_action):
-        self.rect = pg.Rect(526, 660, 150, 75)
+        self.rect = pg.Rect(526, 760, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'CLEAR', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -103,20 +104,20 @@ class Clear(object):
 class RoundHistory(object):
     '''Round history showing hits per round.'''
     def __init__(self, card):
-        self.rect = pg.Rect(24, 100, 340, 554)
+        self.rect = pg.Rect(24, 200, 304, 554)
         self.font = prepare.FONTS["Saniretro"]
         self.color = '#181818'
         self.card = card
 
         self.header_labels = []
-        self.header_labels.extend([Label(self.font, 32, 'ROUND', 'white', {'center':(124,124)})])
-        self.header_labels.extend([Label(self.font, 32, 'HITS', 'white', {'center':(300,124)})])
+        self.header_labels.extend([Label(self.font, 32, 'ROUND', 'white', {'center':(100,224)})])
+        self.header_labels.extend([Label(self.font, 32, 'HITS', 'white', {'center':(280,224)})])
 
         self.result_labels = []
         
-        self.round_x = 124
-        self.hit_x   = 300
-        self.row_y   = 124+32
+        self.round_x = 100
+        self.hit_x   = 280
+        self.row_y   = 224+32
         
         self.rounds  = 1
 
@@ -124,7 +125,7 @@ class RoundHistory(object):
         if self.rounds % 17 == 0:
             self.rounds = 1
             self.result_labels = []
-            self.row_y = 124+32
+            self.row_y = 224+32
         
         color = "white"
         
@@ -148,23 +149,23 @@ class RoundHistory(object):
 class PayTable(object):
     '''Paytable readout for desired spot count'''
     def __init__(self, card):
-        self.rect = pg.Rect(1000, 100, 340, 554)
+        self.rect = pg.Rect(1036, 200, 340, 554)
         self.font = prepare.FONTS["Saniretro"]
         self.color = '#181818'
         self.card = card
 
         self.header_labels = []
-        self.header_labels.extend([Label(self.font, 32, 'HIT', 'white', {'center':(1024,124)})])
-        self.header_labels.extend([Label(self.font, 32, 'WIN', 'white', {'center':(1200,124)})])
+        self.header_labels.extend([Label(self.font, 32, 'HIT', 'white', {'center':(1080,224)})])
+        self.header_labels.extend([Label(self.font, 32, 'WIN', 'white', {'center':(1280,224)})])
 
         self.pay_labels = []
 
     def update(self, spot, bet=1):
         self.pay_labels = []
         row = PAYTABLE[spot]
-        hit_x = 1024
-        win_x = 1200
-        row_y = 124+32
+        hit_x = 1080
+        win_x = 1280
+        row_y = 224+32
         for entry in row:
             hit, win = entry
             win *= bet
@@ -185,7 +186,7 @@ class PayTable(object):
 class Play(object):
     '''plays a game of keno'''
     def __init__(self, card):
-        self.rect = pg.Rect(838, 660, 156, 75)
+        self.rect = pg.Rect(838, 760, 156, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'PLAY', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -206,7 +207,7 @@ class Play(object):
 class QuickPick(object):
     '''random picks max(10) numbers for play'''
     def __init__(self, card):
-        self.rect = pg.Rect(370, 660, 150, 75)
+        self.rect = pg.Rect(370, 760, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'QUICK PICK', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -283,9 +284,9 @@ class KenoCard(object):
         text_color = "white"
         rect_attrib = {'center':(0,0)}
 
-        x_origin = 300
+        x_origin = 336
         x = x_origin
-        y = 100
+        y = 200
         for row in range(0,8):
             for col in range(1,11):
                 text = str(col+(10*row))
@@ -349,7 +350,7 @@ class Keno(tools._State):
         self.game_started = False
         self.font = prepare.FONTS["Saniretro"]
 
-        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(640,40)})
+        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(680,140)})
 
         b_width = 360
         b_height = 90
@@ -373,6 +374,8 @@ class Keno(tools._State):
         self.pay_table.update(0)
         
         self.round_history = RoundHistory(self.keno_card)
+        
+        self.alert = None
 
     def back_to_lobby(self, *args):
         self.game_started = False
@@ -403,6 +406,11 @@ class Keno(tools._State):
             #print(event_pos) #[for debugging positional items]
             self.persist["music_handler"].get_event(event, scale)
 
+            if self.alert:
+                self.alert.update(event_pos)
+                if self.alert.done:
+                    self.alert = None
+
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
                 spot_count = self.keno_card.get_spot_count()
@@ -415,17 +423,16 @@ class Keno(tools._State):
 
             if self.play.rect.collidepoint(event_pos):
                 if self.bet_action.bet <= 0:
-                    print("Place a bet first.")
+                    self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
                     return
                     
                 spot_count = self.keno_card.get_spot_count()
                 if spot_count <= 0:
-                    print("Pick your spots first.")
+                    self.alert = NoticeWindow(self.screen_rect.center, "Please pick your spots.")
                     return
                 
                 self.play.update()
                 hit_count = self.keno_card.get_hit_count()
-                #spot_count = self.keno_card.get_spot_count()
                 self.bet_action.result(spot_count, hit_count)
                 self.round_history.update(spot_count, hit_count)
                 self.hit_count_label = Label(self.font, 64, 'HIT COUNT: {0}'.format(hit_count), 'gold3', {'center':(640,764)})
@@ -444,6 +451,9 @@ class Keno(tools._State):
 
             self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
         self.buttons.get_event(event)
+        
+        if self.alert:
+            self.alert.get_event(event, scale)
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
@@ -472,6 +482,9 @@ class Keno(tools._State):
 
         self.balance_label.draw(surface)
         self.bet_label.draw(surface)
+        
+        if self.alert and not self.alert.done:
+            self.alert.draw(surface)
 
         self.persist["music_handler"].draw(surface)
 
@@ -485,15 +498,14 @@ class Keno(tools._State):
         the last frame.
         """
         total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
-        #screen = self.screen_rect
+
         self.balance_label = Label(self.font, 48, total_text, "gold3",
-                               #{"bottomleft": (screen.left + 3, screen.bottom - 3)})
-                               {"topleft": (1000, 660)})
+                               {"topleft": (1036, 760)})
                                
         bet_text = "Bet: ${}".format(self.bet_action.bet)
         self.bet_label = Label(self.font, 48, bet_text, "gold3",
-                               #{"bottomleft": (screen.left + 3, screen.bottom - 51)})
-                               {"topleft": (24, 660)})
+                               {"topleft": (24, 760)})
+                               
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
 
