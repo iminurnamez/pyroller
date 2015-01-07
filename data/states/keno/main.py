@@ -91,6 +91,42 @@ class Clear(object):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
 
+class RoundHistory(object):
+    '''Round history showing hits per round.'''
+    def __init__(self, card):
+        self.rect = pg.Rect(24, 100, 340, 554)
+        self.font = prepare.FONTS["Saniretro"]
+        self.color = '#181818'
+        self.card = card
+
+        self.header_labels = []
+        self.header_labels.extend([Label(self.font, 32, 'ROUND', 'white', {'center':(124,124)})])
+        self.header_labels.extend([Label(self.font, 32, 'HITS', 'white', {'center':(300,124)})])
+
+        self.result_labels = []
+        self.mock()
+
+    def mock(self):
+        round_x = 124
+        hit_x = 300
+        row_y = 124+32
+        for i in range(1,11):
+            self.result_labels.extend([Label(self.font, 32, str(i), 'white', {'center':(round_x, row_y)})])
+            self.result_labels.extend([Label(self.font, 32, "0", 'white', {'center':(hit_x, row_y)})])
+            row_y+=32
+
+    def update(self, spot):
+        pass
+
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+
+        for label in self.header_labels:
+            label.draw(surface)
+            
+        for label in self.result_labels:
+            label.draw(surface)
+
 class PayTable(object):
     '''Paytable readout for desired spot count'''
     def __init__(self, card):
@@ -316,6 +352,8 @@ class Keno(tools._State):
 
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
+        
+        self.round_history = RoundHistory(self.keno_card)
 
     def back_to_lobby(self, *args):
         self.game_started = False
@@ -393,17 +431,19 @@ class Keno(tools._State):
 
         self.keno_card.draw(surface)
 
-        self.quick_pick.draw(surface)
-        self.play.draw(surface)
+        #self.quick_pick.draw(surface)
+        #self.play.draw(surface)
 
         self.spot_count_label.draw(surface)
         self.hit_count_label.draw(surface)
 
         self.pay_table.draw(surface)
+        
+        self.round_history.draw(surface)
 
-        self.clear_action.draw(surface)
+        #self.clear_action.draw(surface)
 
-        self.bet_action.draw(surface)
+        #self.bet_action.draw(surface)
 
         self.balance_label.draw(surface)
         self.bet_label.draw(surface)
