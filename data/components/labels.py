@@ -10,11 +10,11 @@ BUTTON_DEFAULTS = {"call"               : None,
                    "args"               : None,
                    "call_on_up"         : True,
                    "font"               : None,
-                   "size"               : 36,
+                   "font_size"          : 36,
                    "text"               : None,
                    "hover_text"         : None,
                    "disable_text"       : None,
-                   "color"              : pg.Color("white"),
+                   "text_color"         : pg.Color("white"),
                    "hover_color"        : None,
                    "disable_color"      : None,
                    "fill_color"         : None,
@@ -169,51 +169,65 @@ class Bulb(object):
         surface.blit(self.image, self.rect)
 
 
-class MarqueeFrame(object):
+class MarqueeFrame(pg.sprite.Sprite):
     """A MarqueeFrame draws a ring of blinking lights around a label."""
-    def __init__(self, label, bulb_radius=20, bulb_color="goldenrod3",
-                        frequency=120):
-        diam = bulb_radius * 2
-        width = ((label.rect.width // diam) + 1) * diam
-        height = ((label.rect.height // diam) + 1) * diam
+    def __init__(self, rect_attr, image, bulb_radius, frequency, *groups):
+        super(MarqueeFrame, self).__init__(*groups)
+        self.frequency = frequency
+        diam = bulb_radius*2
+        image_rect = image.get_rect()
+        width = ((image_rect.width//diam) + 1) * diam
+        height = ((image_rect.height//diam) + 1) * diam
         self.rect = pg.Rect((0, 0), (width, height))
-        self.rect.center = label.rect.center
-        self.bulbs = []
+        self.bulbs = self.prepare_bulbs(bulb_radius)
+        self.images = cycle(self.make_images(image))
+        self.image = next(self.images)
+        self.rect = self.image.get_rect(**rect_attr)
+        self.elapsed = 0.0
+
+    def make_images(self, center_image):
+        images = []
+        for frame in range(4):
+            image = pg.Surface(self.rect.size).convert_alpha()
+            image.fill((0,0,0,0))
+            for i,bulb in enumerate(self.bulbs):
+                if (frame+i)%2:
+                    bulb.draw(image)
+            if frame >= 2:
+                pos = center_image.get_rect(center=self.rect.center)
+                image.blit(center_image, pos)
+            images.append(image)
+        return images
+
+    def prepare_bulbs(self, bulb_radius):
+        diam = bulb_radius*2
+        bulbs = []
         bottom_bulbs = []
         left_bulbs = []
         for i in range(-diam, self.rect.width + diam, diam):
-            x = self.rect.left + i + bulb_radius
-            y = self.rect.top - bulb_radius
+            x = self.rect.left + i + bulb_radius+20
+            y = self.rect.top - bulb_radius+20
             y2 = self.rect.bottom + bulb_radius
-            self.bulbs.append(Bulb((x, y)))
+            bulbs.append(Bulb((x, y)))
             bottom_bulbs.append(Bulb((x, y2)))
         for j in range(0, self.rect.height + diam, diam):
             x1 = self.rect.left - bulb_radius
             x2 = self.rect.right + bulb_radius
             y = self.rect.top + j + bulb_radius
             left_bulbs.append(Bulb((x1, y)))
-            self.bulbs.append(Bulb((x2, y)))
-        self.bulbs.extend(bottom_bulbs[1:-1][::-1])
-        self.bulbs.extend(left_bulbs[::-1])
-        self.bulb_cycle = cycle(self.bulbs)
-        self.bulb = next(self.bulb_cycle)
-        self.elapsed = 0.0
-        self.frequency = frequency
-        for i, bulb in enumerate(self.bulbs):
-            if not i % 2:
-                bulb.on = True
+            bulbs.append(Bulb((x2, y)))
+        bulbs.extend(bottom_bulbs[1:-1][::-1])
+        bulbs.extend(left_bulbs[::-1])
+        return bulbs
 
     def update(self, dt):
         self.elapsed += dt
         while self.elapsed > self.frequency:
             self.elapsed -= self.frequency
-            for bulb in self.bulbs:
-                bulb.on = not bulb.on
+            self.image = next(self.images)
 
     def draw(self, surface):
-        for bulb in self.bulbs:
-            if bulb.on:
-                bulb.draw(surface)
+        surface.blit(self.image, self.rect)
 
 
 class ButtonGroup(pg.sprite.LayeredDirty):
@@ -240,8 +254,8 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
         self.hover = False
 
     def render_text(self):
-        font, size = self.font, self.size
-        if (self.font,self.size) not in LOADED_FONTS:
+        font, size = self.font, self.font_size
+        if (font, size) not in LOADED_FONTS:
             LOADED_FONTS[font, size] = pg.font.Font(font, size)
         self.font = LOADED_FONTS[font, size]
         text = self.text and self.font.render(self.text, 1, self.color)
@@ -252,6 +266,8 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
         return {"text" : text, "hover" : hover, "disable": disable}
 
     def make_image(self, fill, image, text):
+        if not any((fill, image, text)):
+            return None
         final_image = pg.Surface(self.rect.size).convert_alpha()
         final_image.fill((0,0,0,0))
         rect = final_image.get_rect()
@@ -277,7 +293,8 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
     def update(self, prescaled_mouse_pos):
         hover = self.rect.collidepoint(prescaled_mouse_pos)
         if self.active:
-            self.image = self.hover_image if hover else self.idle_image
+            if hover:
+                self.image = self.hover_image or self.idle_image
             if not self.hover and hover:
                 self.hover_sound and self.hover_sound.play()
             self.hover = hover
