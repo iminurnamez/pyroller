@@ -264,15 +264,18 @@ class Machine:
             ('held', self.make_held, '2'), ('held', self.make_held, '3'), 
             ('held', self.make_held, '4'), ('draw', self.draw_cards, None)]
         settings = {
-            "fill_color"       : pg.Color("gray50"),
-            "font": self.font,
-            "font_size": 25,
-            "hover_text_color": pg.Color("white"),
-            "hover_fill_color" : pg.Color("gray20"),
-            "active"           : True}
+            "fill_color"         : pg.Color("#222222"),
+            "font"               : self.font,
+            "font_size"          : 25,
+            "hover_text_color"   : pg.Color("white"),
+            "disable_text_color" : pg.Color("#cccccc"),
+            "hover_fill_color"   : pg.Color("#353535"),
+            "disable_fill_color" : pg.Color("#999999"),
+            "active"             : True}
         for text, func, args in button_list:
-            rect_style = (x, y, self.btn_width, self.btn_height)
-            settings.update({'text':text, 'hover_text':text, 'call':func, 'args':args})
+            rect_style = (x, y, self.btn_width, self.btn_height)            
+            settings.update({'text':text, 'hover_text':text, 'disable_text':text, 
+                                                        'call':func, 'args':args})
             button = _Button(rect_style, **settings)
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding

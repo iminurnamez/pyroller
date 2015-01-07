@@ -5,23 +5,27 @@ from .. import prepare, tools
 
 LOADED_FONTS = {}
 
-BUTTON_DEFAULTS = {"call"             : None,
-                   "args"             : None,
-                   "call_on_up"       : True,
-                   "font"             : None,
-                   "font_size"        : 36,
-                   "text"             : None,
-                   "hover_text"       : None,
-                   "text_color"       : pg.Color("white"),
-                   "hover_text_color" : None,
-                   "fill_color"       : None,
-                   "hover_fill_color" : None,
-                   "idle_image"       : None,
-                   "hover_image"      : None,
-                   "hover_sound"      : None,
-                   "click_sound"      : None,
-                   "visible"          : True,
-                   "active"           : True}
+BUTTON_DEFAULTS = {"call"               : None,
+                   "args"               : None,
+                   "call_on_up"         : True,
+                   "font"               : None,
+                   "font_size"          : 36,
+                   "text"               : None,
+                   "hover_text"         : None,
+                   "disable_text"       : None,
+                   "text_color"         : pg.Color("white"),
+                   "hover_text_color"   : None,
+                   "disable_text_color" : None,
+                   "fill_color"         : None,
+                   "hover_fill_color"   : None,
+                   "disable_fill_color"   : None,
+                   "idle_image"         : None,
+                   "hover_image"        : None,
+                   "disable_image"      : None,
+                   "hover_sound"        : None,
+                   "click_sound"        : None,
+                   "visible"            : True,
+                   "active"             : True}
 
 
 #Helper function for MultiLineLabel class
@@ -254,6 +258,8 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
                                           rendered["text"])
         self.hover_image = self.make_image(self.hover_fill_color,
                                            self.hover_image, rendered["hover"])
+        self.disable_image = self.make_image(self.disable_fill_color,
+                                           self.disable_image, rendered["disable"])
         self.image = self.idle_image
         self.clicked = False
         self.hover = False
@@ -266,7 +272,9 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
         text = self.text and self.font.render(self.text, 1, self.text_color)
         hover = self.hover_text and self.font.render(self.hover_text, 1,
                                                      self.hover_text_color)
-        return {"text" : text, "hover" : hover}
+        disable = self.disable_text and self.font.render(self.disable_text, 1,
+                                                     self.disable_text_color)
+        return {"text" : text, "hover" : hover, "disable": disable}
 
     def make_image(self, fill, image, text):
         final_image = pg.Surface(self.rect.size).convert_alpha()
@@ -293,11 +301,15 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
 
     def update(self, prescaled_mouse_pos):
         hover = self.rect.collidepoint(prescaled_mouse_pos)
-        self.image = self.hover_image if hover else self.idle_image
-        if not self.hover and hover:
-            self.hover_sound and self.hover_sound.play()
-        self.hover = hover
-        self.dirty = 1 if self.visible else 0
+        if self.active:
+            self.image = self.hover_image if hover else self.idle_image
+            if not self.hover and hover:
+                self.hover_sound and self.hover_sound.play()
+            self.hover = hover
+            self.dirty = 1 if self.visible else 0
+        else:
+            self.image = self.disable_image
+        
 
     def draw(self, surface):
         if self.visible:
