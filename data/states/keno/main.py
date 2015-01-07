@@ -5,17 +5,17 @@ from ... import tools, prepare
 
 #http://casinogamblingtips.info/tag/pay-table
 PAYTABLE = [
-    [(0, 0.00)], #0
-    [(1, 3.00)], #1
-    [(2, 12.00)], #2
-    [(2, 1.00), (3, 40.00)], #3
-    [(2, 1.00), (3, 2.00), (4, 120.00)], #4
-    [(3, 1.00), (4, 18.00), (5, 800.00)], #5
-    [(3, 1.00), (4, 3.00), (5, 80.00), (6, 1500.00)], #6
-    [(4, 1.00), (5, 18.00), (6, 360.00), (7, 5000.00)], #7
-    [(5, 10.00), (6, 75.00), (7, 1000.00), (8, 15000.00)], #8
-    [(5, 4.00), (6, 35.00), (7, 250.00), (8, 3000.00), (9, 20000.00)], #9
-    [(5, 2.00), (6, 15.00), (7, 100.00), (8, 1500.00), (9, 8000.00), (10, 25000.00)], #10
+    [(0, 0)], #0
+    [(1, 3)], #1
+    [(2, 12)], #2
+    [(2, 1), (3, 40)], #3
+    [(2, 1), (3, 2), (4, 120)], #4
+    [(3, 1), (4, 18), (5, 800)], #5
+    [(3, 1), (4, 3), (5, 80), (6, 1500)], #6
+    [(4, 1), (5, 18), (6, 360), (7, 5000)], #7
+    [(5, 10), (6, 75), (7, 1000), (8, 15000)], #8
+    [(5, 4), (6, 35), (7, 250), (8, 3000), (9, 20000)], #9
+    [(5, 2), (6, 15), (7, 100), (8, 1500), (9, 8000), (10, 25000)], #10
 ]
 
 def pick_numbers(spot):
@@ -46,7 +46,8 @@ class Bet(object):
 
     def update(self, amount):
         #unsafe - can end up withdrawing beyond zero...
-        self.casino_player.stats["cash"] -= amount
+        #issue #75 (must cast to integer):
+        self.casino_player.stats["cash"] -= int(amount)
         self.bet += amount
         self.is_paid = True
         
@@ -70,7 +71,8 @@ class Bet(object):
                 break
                 
         winnings = payment * self.bet
-        self.casino_player.stats["cash"] += winnings
+        #issue #75 (must cast to integer):
+        self.casino_player.stats["cash"] += int(winnings)
         #self.bet = 0
         print("Won: {0}".format(winnings))
         
