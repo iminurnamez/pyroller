@@ -108,7 +108,6 @@ class ClickableGroup(list, EventAware):
             self[:] = []
 
 
-
 class Drawable(object):
     """Simple base class for all screen objects"""
 
