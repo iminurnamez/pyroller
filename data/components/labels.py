@@ -1,4 +1,5 @@
 from itertools import cycle
+
 import pygame as pg
 from .. import prepare, tools
 
@@ -18,7 +19,7 @@ BUTTON_DEFAULTS = {"call"               : None,
                    "disable_text_color" : None,
                    "fill_color"         : None,
                    "hover_fill_color"   : None,
-                   "disable_fill_color"   : None,
+                   "disable_fill_color" : None,
                    "idle_image"         : None,
                    "hover_image"        : None,
                    "disable_image"      : None,
@@ -36,7 +37,6 @@ def wrap_text(text, char_limit, separator=" "):
     current_line = []
     current_length = 0
     for word in words:
-
         if len(word) + current_length <= char_limit:
             current_length += len(word) + len(separator)
             current_line.append(word)
@@ -49,83 +49,87 @@ def wrap_text(text, char_limit, separator=" "):
     return lines
 
 
-class _Label(object):
-    """Parent class all labels inherit from. Color arguments can use color names
-       or an RGB tuple. rect_attributes should be a dict with keys of
-       pygame.Rect attribute names (strings) and the relevant position(s) as values."""
-    def __init__(self, font_path, font_size, text, text_color, rect_attributes,
-                         bground_color=None):
-        if (font_path, font_size) not in LOADED_FONTS:
-            LOADED_FONTS[(font_path, font_size)] = pg.font.Font(font_path, font_size)
-        self.f = LOADED_FONTS[(font_path, font_size)]
-        self.background_color = bground_color
-        self.text_color = text_color
-        self.rect_attributes = rect_attributes
+def _parse_color(color):
+    if color:
+        try:
+            return pg.Color(color)
+        except ValueError:
+            return pg.Color(*color)
+    return None
+
+
+class Label(object):
+    """
+    Parent class all labels inherit from. Color arguments can use color names
+    or an RGB tuple. rect_attr should be a dict with keys of pygame.Rect
+    attribute names (strings) and the relevant position(s) as values.
+
+    Creates a surface with text blitted to it (self.image) and an associated
+    rectangle (self.rect). Label will have a transparent bg if
+    bg is not passed to __init__.
+    """
+    def __init__(self, path, size, text, color, rect_attr, bg=None):
+        self.path, self.size = path, size
+        if (path, size) not in LOADED_FONTS:
+            LOADED_FONTS[(path, size)] = pg.font.Font(path, size)
+        self.font = LOADED_FONTS[(path, size)]
+        self.bg = _parse_color(bg)
+        self.color = _parse_color(color)
+        self.rect_attr = rect_attr
         self.set_text(text)
 
     def set_text(self, text):
-        """Set the text to display"""
-        self.displayed_text = text
+        """Set the text to display."""
+        self.text = text
         self.update_text()
 
     def update_text(self):
-        """Update the surface using the current properties and text"""
-        if self.background_color is not None:
-            self.text = self.f.render(self.displayed_text, True, pg.Color(self.text_color),
-                                         pg.Color(self.background_color))
+        """Update the surface using the current properties and text."""
+        if self.bg:
+            render_args = (self.text, True, self.color, self.bg)
         else:
-            self.text = self.f.render(self.displayed_text, True, pg.Color(self.text_color))
-        self.rect = self.text.get_rect(**self.rect_attributes)
+            render_args = (self.text, True, self.color)
+        self.image = self.font.render(*render_args)
+        self.rect = self.image.get_rect(**self.rect_attr)
 
     def draw(self, surface):
-        surface.blit(self.text, self.rect)
-
-
-class Label(_Label):
-    """Creates a surface with text blitted to it (self.text) and an associated
-       rectangle (self.rect). Label will have a transparent background if
-       bground_color is not passed to __init__."""
-    def __init__(self, font_path, font_size, text, text_color, rect_attributes,
-                         bground_color=None):
-        super(Label, self).__init__(font_path, font_size, text, text_color,
-                                                rect_attributes, bground_color)
+        """Blit self.image to target surface."""
+        surface.blit(self.image, self.rect)
 
 
 class GroupLabel(Label):
     """Creates a Label object which is then appended to group."""
-    def __init__(self, group, font_path, font_size, text, text_color,
-                         rect_attributes, bground_color=None):
-        super(GroupLabel, self).__init__(font_path, font_size, text, text_color,
-                                                        rect_attributes, bground_color)
+    def __init__(self, group, path, size, text, color, rect_attr, bg=None):
+        super(GroupLabel,self).__init__(path, size, text, color, rect_attr, bg)
         group.append(self)
 
 
 class MultiLineLabel(object):
     """Creates a single surface with multiple labels blitted to it."""
-    def __init__(self, font_path, font_size, text, text_color, rect_attributes,
-                         bground_color=None, char_limit=42, align="left", vert_space=0):
+    def __init__(self, path, size, text, color, rect_attr,
+                 bg=None, char_limit=42, align="left", vert_space=0):
+        attr = {"center": (0, 0)}
         lines = wrap_text(text, char_limit)
-        labels = [Label(font_path, font_size, line, text_color, {"center": (0, 0)}, bground_color)
-                      for line in lines]
-        width = max([x.rect.width for x in labels])
-        height = sum([x.rect.height for x in labels]) + (vert_space * (len(lines) - 1))
-        self.surf = pg.Surface((width, height)).convert()
-        self.surf.set_colorkey(pg.Color("black"))
-        self.surf.fill(pg.Color("black"))
-        self.rect = self.surf.get_rect(**rect_attributes)
-        aligns = {"left": {"left": 0},
-                      "center": {"centerx": self.rect.width // 2},
-                      "right": {"right": self.rect.width}
-                      }
+        labels = [Label(path, size, line, color, attr, bg) for line in lines]
+        width = max([label.rect.width for label in labels])
+        spacer = vert_space*(len(lines)-1)
+        height = sum([label.rect.height for label in labels])+spacer
+        self.image = pg.Surface((width, height)).convert()
+        self.image.set_colorkey(pg.Color("black"))
+        self.image.fill(pg.Color("black"))
+        self.rect = self.image.get_rect(**rect_attr)
+        aligns = {"left"  : {"left": 0},
+                  "center": {"centerx": self.rect.width//2},
+                  "right" : {"right": self.rect.width}}
         y = 0
         for label in labels:
             label.rect = label.text.get_rect(**aligns[align])
             label.rect.top = y
-            label.draw(self.surf)
-            y += label.rect.height + vert_space
+            label.draw(self.image)
+            y += label.rect.height+vert_space
 
     def draw(self, surface):
-        surface.blit(self.surf, self.rect)
+        surface.blit(self.image, self.rect)
 
 
 class Blinker(Label):
@@ -148,7 +152,7 @@ class Blinker(Label):
             if self.blinking:
                 self.on = not self.on
         if self.image:
-            #surface.blit(self.text, self.rect)
+            surface.blit(self.text, self.rect)
             if self.on:
                 surface.blit(self.image, self.rect)
         elif self.on:
@@ -259,7 +263,8 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
         self.hover_image = self.make_image(self.hover_fill_color,
                                            self.hover_image, rendered["hover"])
         self.disable_image = self.make_image(self.disable_fill_color,
-                                           self.disable_image, rendered["disable"])
+                                             self.disable_image,
+                                             rendered["disable"])
         self.image = self.idle_image
         self.clicked = False
         self.hover = False
@@ -306,10 +311,9 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
             if not self.hover and hover:
                 self.hover_sound and self.hover_sound.play()
             self.hover = hover
-            self.dirty = 1 if self.visible else 0
         else:
-            self.image = self.disable_image
-        
+            self.image = self.disable_image or self.idle_image
+        self.dirty = 1 if self.visible else 0
 
     def draw(self, surface):
         if self.visible:
@@ -376,4 +380,4 @@ class FunctionButton(Button):
             self.function(*function_args)
         else:
             self.function()
-           
+
