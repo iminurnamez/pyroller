@@ -96,6 +96,17 @@ class ClickableGroup(list, EventAware):
         for item in self:
             item.process_events(event, scale)
 
+    def clear(self):
+        """Remove all the items from the group
+
+        Compatibility method for python2, where lists don't have a clear method
+
+        """
+        try:
+            super(ClickableGroup, self).clear()
+        except AttributeError:
+            self[:] = []
+
 
 class Drawable(object):
     """Simple base class for all screen objects"""
@@ -112,6 +123,17 @@ class DrawableGroup(list, Drawable):
         """Draw all these items onto the given surface"""
         for item in self:
             item.draw(surface)
+
+    def clear(self):
+        """Remove all the items from the group
+
+        Compatibility method for python2, where lists don't have a clear method
+
+        """
+        try:
+            super(DrawableGroup, self).clear()
+        except AttributeError:
+            self[:] = []
 
 
 class KeyedDrawableGroup(collections.OrderedDict, Drawable):
