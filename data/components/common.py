@@ -154,23 +154,6 @@ class NamedSprite(Drawable):
         w, h = self.sprite.get_size()
         self.rect = pg.Rect(x - w / 2, y - h / 2, w, h)
 
-    @classmethod
-    def from_sprite_sheet(cls, name, sheet_size_in_sprites, sprite_cell, position, filename=None, scale=1.0):
-        """Return a sprite from a particular position in a sprite-sheet"""
-        #
-        # Get a sprite
-        new_sprite = cls(name, position, filename, scale)
-        cols, rows = sheet_size_in_sprites
-        w = new_sprite.rect.width / cols
-        h = new_sprite.rect.height / rows
-        #
-        # Now split the sheet and reset the image
-        sheet = tools.strip_from_sheet(new_sprite.sprite, (0, 0), (w, h), cols, rows)
-        new_sprite.sprite = sheet[sprite_cell[0] + sprite_cell[1] * cols]
-        new_sprite.rect = pg.Rect(position[0] - w / 2, position[1] - h / 2, w, h)
-        #
-        return new_sprite
-
 
 class ImageButton(Clickable):
     """A button with an image and text
