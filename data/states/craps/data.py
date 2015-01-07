@@ -2,7 +2,7 @@
 from .bet import Bet
 
 POINT_CHIP_LOC = {
-    '0':(100,25),
+    '0':(100,25), #off position
     '4':(320,25),
     '5':(430,25),
     '6':(540,25),
