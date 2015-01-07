@@ -78,7 +78,7 @@ class TitleScreen(tools._State):
             path = os.path.join("resources", "save_game.json")
             with open(path) as saved_file:
                 stats = json.load(saved_file)
-        except (IOError, ValueError):
+        except IOError:
             stats = None
         self.stats = stats
 
@@ -90,7 +90,7 @@ class TitleScreen(tools._State):
         Scroller(pos, prepare.GFX["pyrollers_shiny"], 0.6, scrollers)
         pos = {"center": (self.screen_rect.centerx, pos["centery"])}
         MarqueeFrame(pos, prepare.GFX["pyrollers_shiny"], 20, 120, marquees)
-        pos = {"left" : self.screen_rect.w, "centery": 250}
+        pos = {"left" : self.screen_rect.w, "centery": 370}
         Scroller(pos, prepare.GFX["casino_shiny"], -0.6, scrollers)
         pos = {"center": (self.screen_rect.centerx, pos["centery"])}
         MarqueeFrame(pos, prepare.GFX["casino_shiny"], 20, 120, marquees)
@@ -98,7 +98,7 @@ class TitleScreen(tools._State):
 
     def make_buttons(self):
         x = self.screen_rect.centerx-(NeonButton.width//2)
-        y = 450
+        y = 600
         new_game = NeonButton((x,y), "New", self.load_or_new,
                               None, self.buttons, visible=False)
         y = new_game.rect.bottom+50

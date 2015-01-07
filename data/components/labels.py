@@ -155,20 +155,6 @@ class Blinker(Label):
             surface.blit(self.image, self.rect)
 
 
-#Label Enhancements
-class Bulb(object):
-    """Class to represent an individual light bulb for
-    MarqueeFrame objects."""
-    def __init__(self, center_point):
-        self.image = prepare.GFX["bulb"]
-        self.rect = self.image.get_rect(center=center_point)
-        self.on = False
-
-    def draw(self, surface):
-        """Draw bulb to surface."""
-        surface.blit(self.image, self.rect)
-
-
 class MarqueeFrame(pg.sprite.Sprite):
     """A MarqueeFrame draws a ring of blinking lights around a label."""
     def __init__(self, rect_attr, image, bulb_radius, frequency, *groups):
@@ -176,8 +162,8 @@ class MarqueeFrame(pg.sprite.Sprite):
         self.frequency = frequency
         diam = bulb_radius*2
         image_rect = image.get_rect()
-        width = ((image_rect.width//diam) + 1) * diam
-        height = ((image_rect.height//diam) + 1) * diam
+        width = ((image_rect.width//diam) + 3) * diam
+        height = ((image_rect.height//diam) + 3) * diam
         self.rect = pg.Rect((0, 0), (width, height))
         self.bulbs = self.prepare_bulbs(bulb_radius)
         self.images = cycle(self.make_images(image))
@@ -192,7 +178,7 @@ class MarqueeFrame(pg.sprite.Sprite):
             image.fill((0,0,0,0))
             for i,bulb in enumerate(self.bulbs):
                 if (frame+i)%2:
-                    bulb.draw(image)
+                    image.blit(prepare.GFX["bulb"], bulb)
             if frame >= 2:
                 pos = center_image.get_rect(center=self.rect.center)
                 image.blit(center_image, pos)
@@ -205,17 +191,17 @@ class MarqueeFrame(pg.sprite.Sprite):
         bottom_bulbs = []
         left_bulbs = []
         for i in range(-diam, self.rect.width + diam, diam):
-            x = self.rect.left + i + bulb_radius+20
-            y = self.rect.top - bulb_radius+20
-            y2 = self.rect.bottom + bulb_radius
-            bulbs.append(Bulb((x, y)))
-            bottom_bulbs.append(Bulb((x, y2)))
+            x = self.rect.left + i
+            y = self.rect.top
+            y2 = self.rect.bottom-diam
+            bulbs.append((x, y))
+            bottom_bulbs.append((x, y2))
         for j in range(0, self.rect.height + diam, diam):
-            x1 = self.rect.left - bulb_radius
-            x2 = self.rect.right + bulb_radius
-            y = self.rect.top + j + bulb_radius
-            left_bulbs.append(Bulb((x1, y)))
-            bulbs.append(Bulb((x2, y)))
+            x1 = self.rect.left
+            x2 = self.rect.right-diam
+            y = self.rect.top + j
+            left_bulbs.append((x1, y))
+            bulbs.append((x2, y))
         bulbs.extend(bottom_bulbs[1:-1][::-1])
         bulbs.extend(left_bulbs[::-1])
         return bulbs
@@ -293,8 +279,7 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
     def update(self, prescaled_mouse_pos):
         hover = self.rect.collidepoint(prescaled_mouse_pos)
         if self.active:
-            if hover:
-                self.image = self.hover_image or self.idle_image
+            self.image = (hover and self.hover_image) or self.idle_image
             if not self.hover and hover:
                 self.hover_sound and self.hover_sound.play()
             self.hover = hover
