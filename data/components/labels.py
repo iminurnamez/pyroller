@@ -15,8 +15,8 @@ BUTTON_DEFAULTS = {"call"               : None,
                    "hover_text"         : None,
                    "disable_text"       : None,
                    "text_color"         : pg.Color("white"),
-                   "hover_color"        : None,
-                   "disable_color"      : None,
+                   "hover_text_color"   : None,
+                   "disable_text_color" : None,
                    "fill_color"         : None,
                    "hover_fill_color"   : None,
                    "disable_fill_color" : None,
@@ -248,9 +248,9 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
         self.font = LOADED_FONTS[font, size]
         text = self.text and self.font.render(self.text, 1, self.color)
         hover = self.hover_text and self.font.render(self.hover_text, 1,
-                                                     self.hover_color)
+                                                     self.hover_text_color)
         disable = self.disable_text and self.font.render(self.disable_text, 1,
-                                                         self.disable_color)
+                                                       self.disable_text_color)
         return {"text" : text, "hover" : hover, "disable": disable}
 
     def make_image(self, fill, image, text):
