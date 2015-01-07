@@ -28,7 +28,7 @@ def pick_numbers(spot):
 
 class Bet(object):
     def __init__(self, casino_player):
-        self.rect = pg.Rect(0, 240, 150, 75)
+        self.rect = pg.Rect(682, 660, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'BET 1', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -75,7 +75,7 @@ class Bet(object):
 
 class Clear(object):
     def __init__(self, card, bet_action):
-        self.rect = pg.Rect(0, 160, 150, 75)
+        self.rect = pg.Rect(526, 660, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'CLEAR', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -90,6 +90,42 @@ class Clear(object):
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
+
+class RoundHistory(object):
+    '''Round history showing hits per round.'''
+    def __init__(self, card):
+        self.rect = pg.Rect(24, 100, 340, 554)
+        self.font = prepare.FONTS["Saniretro"]
+        self.color = '#181818'
+        self.card = card
+
+        self.header_labels = []
+        self.header_labels.extend([Label(self.font, 32, 'ROUND', 'white', {'center':(124,124)})])
+        self.header_labels.extend([Label(self.font, 32, 'HITS', 'white', {'center':(300,124)})])
+
+        self.result_labels = []
+        self.mock()
+
+    def mock(self):
+        round_x = 124
+        hit_x = 300
+        row_y = 124+32
+        for i in range(1,11):
+            self.result_labels.extend([Label(self.font, 32, str(i), 'white', {'center':(round_x, row_y)})])
+            self.result_labels.extend([Label(self.font, 32, "0", 'white', {'center':(hit_x, row_y)})])
+            row_y+=32
+
+    def update(self, spot):
+        pass
+
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+
+        for label in self.header_labels:
+            label.draw(surface)
+            
+        for label in self.result_labels:
+            label.draw(surface)
 
 class PayTable(object):
     '''Paytable readout for desired spot count'''
@@ -130,7 +166,7 @@ class PayTable(object):
 class Play(object):
     '''plays a game of keno'''
     def __init__(self, card):
-        self.rect = pg.Rect(0, 80, 150, 75)
+        self.rect = pg.Rect(838, 660, 156, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'PLAY', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -151,7 +187,7 @@ class Play(object):
 class QuickPick(object):
     '''random picks max(10) numbers for play'''
     def __init__(self, card):
-        self.rect = pg.Rect(0, 0, 150, 75)
+        self.rect = pg.Rect(370, 660, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'QUICK PICK', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -316,6 +352,8 @@ class Keno(tools._State):
 
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
+        
+        self.round_history = RoundHistory(self.keno_card)
 
     def back_to_lobby(self, *args):
         self.game_started = False
@@ -396,10 +434,13 @@ class Keno(tools._State):
         self.quick_pick.draw(surface)
         self.play.draw(surface)
 
-        self.spot_count_label.draw(surface)
-        self.hit_count_label.draw(surface)
+        #TODO: work these back in properly.
+        #self.spot_count_label.draw(surface)
+        #self.hit_count_label.draw(surface)
 
         self.pay_table.draw(surface)
+        
+        self.round_history.draw(surface)
 
         self.clear_action.draw(surface)
 
@@ -420,14 +461,15 @@ class Keno(tools._State):
         the last frame.
         """
         total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
-        screen = self.screen_rect
+        #screen = self.screen_rect
         self.balance_label = Label(self.font, 48, total_text, "gold3",
-                               {"bottomleft": (screen.left + 3, screen.bottom - 3)})
+                               #{"bottomleft": (screen.left + 3, screen.bottom - 3)})
+                               {"topleft": (1000, 660)})
                                
         bet_text = "Bet: ${}".format(self.bet_action.bet)
         self.bet_label = Label(self.font, 48, bet_text, "gold3",
-                               {"bottomleft": (screen.left + 3, screen.bottom - 51)})
-
+                               #{"bottomleft": (screen.left + 3, screen.bottom - 51)})
+                               {"topleft": (24, 660)})
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
 
