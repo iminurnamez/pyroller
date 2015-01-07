@@ -97,6 +97,8 @@ class Label(object):
         surface.blit(self.image, self.rect)
 
 
+# Should probably be depracated with Labels turned into sprites so that
+# They can use standard sprite groups.
 class GroupLabel(Label):
     """Creates a Label object which is then appended to group."""
     def __init__(self, group, path, size, text, color, rect_attr, bg=None):
