@@ -25,6 +25,13 @@ def pick_numbers(spot):
         if number not in numbers:
             numbers.append(number)
     return numbers
+    
+def is_winner(spot, hit):
+    paytable = PAYTABLE[spot]
+    for entry in paytable:
+        if entry[0] == hit:
+            return True
+    return False
 
 class Bet(object):
     def __init__(self, casino_player):
@@ -104,19 +111,28 @@ class RoundHistory(object):
         self.header_labels.extend([Label(self.font, 32, 'HITS', 'white', {'center':(300,124)})])
 
         self.result_labels = []
-        self.mock()
+        
+        self.round_x = 124
+        self.hit_x   = 300
+        self.row_y   = 124+32
+        
+        self.rounds  = 1
 
-    def mock(self):
-        round_x = 124
-        hit_x = 300
-        row_y = 124+32
-        for i in range(1,11):
-            self.result_labels.extend([Label(self.font, 32, str(i), 'white', {'center':(round_x, row_y)})])
-            self.result_labels.extend([Label(self.font, 32, "0", 'white', {'center':(hit_x, row_y)})])
-            row_y+=32
-
-    def update(self, spot):
-        pass
+    def update(self, spot, hits):
+        if self.rounds % 17 == 0:
+            self.rounds = 1
+            self.result_labels = []
+            self.row_y = 124+32
+        
+        color = "white"
+        
+        if is_winner(spot, hits):
+            color = "gold3"
+            
+        self.result_labels.extend([Label(self.font, 32, str(self.rounds), color, {'center':(self.round_x, self.row_y)})])
+        self.result_labels.extend([Label(self.font, 32, str(hits), color, {'center':(self.hit_x, self.row_y)})])
+        self.row_y+=32
+        self.rounds+=1
 
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
@@ -141,7 +157,7 @@ class PayTable(object):
 
         self.pay_labels = []
 
-    def update(self, spot):
+    def update(self, spot, bet=1):
         self.pay_labels = []
         row = PAYTABLE[spot]
         hit_x = 1024
@@ -149,6 +165,7 @@ class PayTable(object):
         row_y = 124+32
         for entry in row:
             hit, win = entry
+            win *= bet
             self.pay_labels.extend([Label(self.font, 32, str(hit), 'white', {'center':(hit_x, row_y)})])
             self.pay_labels.extend([Label(self.font, 32, str(win), 'white', {'center':(win_x, row_y)})])
             row_y+=32
@@ -386,6 +403,9 @@ class Keno(tools._State):
 
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
+                spot_count = self.keno_card.get_spot_count()
+                bet_amount = self.bet_action.bet
+                self.pay_table.update(spot_count, bet_amount)
 
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
@@ -405,6 +425,7 @@ class Keno(tools._State):
                 hit_count = self.keno_card.get_hit_count()
                 #spot_count = self.keno_card.get_spot_count()
                 self.bet_action.result(spot_count, hit_count)
+                self.round_history.update(spot_count, hit_count)
                 self.hit_count_label = Label(self.font, 64, 'HIT COUNT: {0}'.format(hit_count), 'gold3', {'center':(640,764)})
 
             if self.clear_action.rect.collidepoint(event_pos):
@@ -414,8 +435,9 @@ class Keno(tools._State):
             self.keno_card.update(event_pos)
 
             spot_count = self.keno_card.get_spot_count()
+            bet_amount = self.bet_action.bet
             if spot_count != self.prev_spot_count:
-                self.pay_table.update(spot_count)
+                self.pay_table.update(spot_count, bet_amount)
                 self.prev_spot_count = spot_count
 
             self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
