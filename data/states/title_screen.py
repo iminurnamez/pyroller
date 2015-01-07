@@ -4,11 +4,35 @@ import pygame as pg
 
 from .. import tools, prepare
 from ..components import spotlight
-from ..components.labels import ButtonGroup
-from ..components.labels import Label, Blinker, MarqueeFrame, NeonButton
+from ..components.labels import MarqueeFrame, NeonButton, ButtonGroup
 from ..components.casino_player import CasinoPlayer
 from ..components.cards import Deck
 from ..components.music_handler import MusicHandler
+
+
+class Scroller(pg.sprite.Sprite):
+    def __init__(self, rect_attr, image, speed, *groups):
+        super(Scroller, self).__init__(*groups)
+        self.image = image
+        self.rect = image.get_rect(**rect_attr)
+        self.true_x = self.rect.x
+        self.speed = speed
+        self.done = False
+
+    def update(self, screen_rect, dt):
+        if not self.done:
+            self.true_x += self.speed*dt
+            self.rect.x = self.true_x
+            if self.speed > 0 and self.rect.centerx > screen_rect.centerx:
+                self.done = True
+                self.rect.centerx = screen_rect.centerx
+            elif self.speed < 0 and self.rect.centerx < screen_rect.centerx:
+                self.done = True
+                self.rect.centerx = screen_rect.centerx
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
 
 
 class TitleScreen(tools._State):
@@ -20,7 +44,7 @@ class TitleScreen(tools._State):
         super(TitleScreen, self).__init__()
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.marquees = []
-        self.make_titles()
+        self.scrollers, self.marquees = self.make_titles()
         self.buttons = ButtonGroup()
         self.new_game, self.load_game = self.make_buttons()
         self.prepare_stats()
@@ -59,26 +83,21 @@ class TitleScreen(tools._State):
 
     def make_titles(self):
         font = prepare.FONTS["Saniretro"]
-        self.title = Blinker(font, 128, "Py Rollers", "darkred",
-                             {"midtop": (self.screen_rect.centerx,
-                                         self.screen_rect.top + 50)}, 600,
-                             image=prepare.GFX["pyrollers_shiny"])
-        self.title2 = Blinker(font, 128, "Casino", "darkred",
-                              {"midtop": (self.screen_rect.centerx,
-                                          self.title.rect.bottom + 120)}, 600,
-                              image=prepare.GFX["casino_shiny"])
-        self.title.rect.left -= 1200
-        self.title.true_x = self.title.rect.x
-        self.title2.rect.left += 1600
-        self.title2.true_x = self.title2.rect.x
-        self.title.blinking = False
-        self.title2.blinking = False
-        self.title.on = True
-        self.title2.on = True
+        scrollers = pg.sprite.Group()
+        marquees = pg.sprite.Group()
+        pos = {"right" : 0, "centery": self.screen_rect.y+123}
+        Scroller(pos, prepare.GFX["pyrollers_shiny"], 0.6, scrollers)
+        pos = {"center": (self.screen_rect.centerx, pos["centery"])}
+        MarqueeFrame(pos, prepare.GFX["pyrollers_shiny"], 20, 120, marquees)
+        pos = {"left" : self.screen_rect.w, "centery": 370}
+        Scroller(pos, prepare.GFX["casino_shiny"], -0.6, scrollers)
+        pos = {"center": (self.screen_rect.centerx, pos["centery"])}
+        MarqueeFrame(pos, prepare.GFX["casino_shiny"], 20, 120, marquees)
+        return scrollers, marquees
 
     def make_buttons(self):
         x = self.screen_rect.centerx-(NeonButton.width//2)
-        y = self.title2.rect.bottom+150
+        y = 600
         new_game = NeonButton((x,y), "New", self.load_or_new,
                               None, self.buttons, visible=False)
         y = new_game.rect.bottom+50
@@ -95,10 +114,9 @@ class TitleScreen(tools._State):
         if event.type == pg.QUIT:
             self.done = True
             self.quit = True
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(scale, event.pos)
-            self.title.rect.centerx = self.screen_rect.centerx
-            self.title2.rect.centerx = self.screen_rect.centerx
+        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+            for scroller in self.scrollers:
+                scroller.done = True
         self.buttons.get_event(event)
 
     def cleanup(self):
@@ -108,33 +126,22 @@ class TitleScreen(tools._State):
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
-        if self.title.rect.centerx < self.screen_rect.centerx:
-            self.title.true_x += 0.6*dt
-            self.title.rect.x = self.title.true_x
+        self.scrollers.update(self.screen_rect, dt)
+        if self.scrollers:
+            if all(scroller.done for scroller in self.scrollers):
+                self.scrollers.empty()
         else:
-            self.title.rect.centerx = self.screen_rect.centerx
-        if self.title2.rect.centerx > self.screen_rect.centerx:
-            self.title2.true_x -= 0.6*dt
-            self.title2.rect.x = self.title2.true_x
-        else:
-            self.title2.rect.centerx = self.screen_rect.centerx
-            if not self.marquees:
-                for title in (self.title, self.title2):
-                    self.marquees.append(MarqueeFrame(title))
-                    title.blinking = True
-                self.new_game.visible = True
-                if self.stats is not None:
-                    self.load_game.visible = True
-        for marquee in self.marquees:
-            marquee.update(dt)
+            self.marquees.update(dt)
+            self.new_game.visible = True
+            if self.stats is not None:
+                self.load_game.visible = True
         self.lights.update(dt)
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
         surface.fill(prepare.BACKGROUND_BASE)
-        self.title.draw(surface, dt)
-        self.title2.draw(surface, dt)
-        for marquee in self.marquees:
-            marquee.draw(surface)
+        self.scrollers.draw(surface)
+        if not self.scrollers:
+            self.marquees.draw(surface)
         self.lights.draw(surface)
         self.buttons.draw(surface)

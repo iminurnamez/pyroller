@@ -32,6 +32,7 @@ class Blackjack(tools._State):
         self.elapsed = 17.0
         self.warning_window = None
         self.make_buttons()
+        self.result_labels = []
 
     def make_buttons(self):
         side_margin = 10
@@ -445,6 +446,8 @@ class Blackjack(tools._State):
             self.warning_window.update(mouse_pos)
             if self.warning_window.done:
                 self.warning_window = None
+        for blinker in self.result_labels:
+                blinker.update(dt)
         self.draw(surface, dt)
 
     def draw(self, surface, dt):
@@ -464,7 +467,7 @@ class Blackjack(tools._State):
                          hand.cards[0].rect.unionall(rects).inflate(8, 8), 3)
         if self.state == "Show Results":
             for blinker in self.result_labels:
-                blinker.draw(surface, dt)
+                blinker.draw(surface)
         self.persist["music_handler"].draw(surface)
         self.chip_total_label.draw(surface)
         self.buttons.draw(surface)

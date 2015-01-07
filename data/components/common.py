@@ -23,11 +23,11 @@ E_MOUSE_LEAVE = 'mouse-leave'
 def getLabel(name, position, text, settings):
     """Return a label using properties defined in the settings dictionary"""
     return labels.Label(
-        font_path=settings['%s-font' % name],
-        text_color=settings['%s-font-color' % name],
-        font_size=settings['%s-font-size' % name],
+        path=settings["{}-font".format(name)],
+        color=settings["{}-font-color".format(name)],
+        size=settings["{}-font-size".format(name)],
         text=str(text),
-        rect_attributes={'center': position},
+        rect_attr={"center": position},
     )
 
 
