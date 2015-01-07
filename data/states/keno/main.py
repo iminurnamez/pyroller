@@ -28,7 +28,7 @@ def pick_numbers(spot):
 
 class Bet(object):
     def __init__(self, casino_player):
-        self.rect = pg.Rect(0, 240, 150, 75)
+        self.rect = pg.Rect(682, 660, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'BET 1', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -75,7 +75,7 @@ class Bet(object):
 
 class Clear(object):
     def __init__(self, card, bet_action):
-        self.rect = pg.Rect(0, 160, 150, 75)
+        self.rect = pg.Rect(526, 660, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'CLEAR', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -166,7 +166,7 @@ class PayTable(object):
 class Play(object):
     '''plays a game of keno'''
     def __init__(self, card):
-        self.rect = pg.Rect(0, 80, 150, 75)
+        self.rect = pg.Rect(838, 660, 156, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'PLAY', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -187,7 +187,7 @@ class Play(object):
 class QuickPick(object):
     '''random picks max(10) numbers for play'''
     def __init__(self, card):
-        self.rect = pg.Rect(0, 0, 150, 75)
+        self.rect = pg.Rect(370, 660, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'QUICK PICK', 'gold3', {'center':(0,0)})
         self.label.rect.center = self.rect.center
@@ -431,19 +431,20 @@ class Keno(tools._State):
 
         self.keno_card.draw(surface)
 
-        #self.quick_pick.draw(surface)
-        #self.play.draw(surface)
+        self.quick_pick.draw(surface)
+        self.play.draw(surface)
 
-        self.spot_count_label.draw(surface)
-        self.hit_count_label.draw(surface)
+        #TODO: work these back in properly.
+        #self.spot_count_label.draw(surface)
+        #self.hit_count_label.draw(surface)
 
         self.pay_table.draw(surface)
         
         self.round_history.draw(surface)
 
-        #self.clear_action.draw(surface)
+        self.clear_action.draw(surface)
 
-        #self.bet_action.draw(surface)
+        self.bet_action.draw(surface)
 
         self.balance_label.draw(surface)
         self.bet_label.draw(surface)
@@ -460,14 +461,15 @@ class Keno(tools._State):
         the last frame.
         """
         total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
-        screen = self.screen_rect
+        #screen = self.screen_rect
         self.balance_label = Label(self.font, 48, total_text, "gold3",
-                               {"bottomleft": (screen.left + 3, screen.bottom - 3)})
+                               #{"bottomleft": (screen.left + 3, screen.bottom - 3)})
+                               {"topleft": (1000, 660)})
                                
         bet_text = "Bet: ${}".format(self.bet_action.bet)
         self.bet_label = Label(self.font, 48, bet_text, "gold3",
-                               {"bottomleft": (screen.left + 3, screen.bottom - 51)})
-
+                               #{"bottomleft": (screen.left + 3, screen.bottom - 51)})
+                               {"topleft": (24, 660)})
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
 
