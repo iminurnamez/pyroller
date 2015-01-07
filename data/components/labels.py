@@ -123,7 +123,7 @@ class MultiLineLabel(object):
                   "right" : {"right": self.rect.width}}
         y = 0
         for label in labels:
-            label.rect = label.text.get_rect(**aligns[align])
+            label.rect = label.image.get_rect(**aligns[align])
             label.rect.top = y
             label.draw(self.image)
             y += label.rect.height+vert_space
@@ -150,7 +150,7 @@ class Blinker(Label):
             if self.blinking:
                 self.on = not self.on
 
-    def draw(self, surface, dt):
+    def draw(self, surface):
         if self.on:
             surface.blit(self.image, self.rect)
 

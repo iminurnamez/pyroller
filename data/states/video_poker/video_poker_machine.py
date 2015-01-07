@@ -39,7 +39,7 @@ class PayBoard:
     def update_bet_rect(self, bet):
         self.bet_rect.left = self.rect.left + self.col_space * bet
         self.show_bet_rect = True
-        
+
     def build(self):
         info_col = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
         'FLUSH','STRAIGHT', 'THREE OF A KIND', 'TWO PAIR', 'JACKS OR BETTER')
@@ -83,7 +83,7 @@ class PayBoard:
         pg.draw.rect(surface, self.border_color, self.rect, self.border_size)
         for label in self.table:
             label.draw(surface)
-        
+
         for line in self.lines:
             pg.draw.line(surface, self.border_color, line[0], line[1], self.border_size)
 
@@ -101,7 +101,7 @@ class CardsTable:
         self.big_text_color = "red"
         self.text_bg_color = "darkblue"
 
-        
+
         self.text = "Play 1 to 5 coins"
         self.standby_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
                                       {"center":self.rect.center}, 700, self.text_bg_color)
@@ -148,18 +148,20 @@ class CardsTable:
                 if self.card_index >= self.max_cards:
                     self.card_index = 0
                     self.animate = False
+        if self.standby:
+            self.standby_label.update(dt)
 
     def draw(self, surface, dt):
         for card in self.hand:
             card.draw(surface)
         if self.standby:
-            self.standby_label.draw(surface, dt)
+            self.standby_label.draw(surface)
 
 
 class Machine:
     def __init__(self, topleft, size):
         self.rect = pg.Rect(topleft, size)
-        
+
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 30
         self.text_color = "white"
@@ -217,7 +219,7 @@ class Machine:
         self.pay_board = PayBoard((x,y), (w,h))
 
         # use in info labels
-        self.label_x1 = x 
+        self.label_x1 = x
         self.label_x2 = w
 
         # calculate cards table position position
@@ -230,9 +232,9 @@ class Machine:
 
         # buttons
         y += self.padding + self.btn_padding
-        button_list = [('bet', self.bet, None), ('held', self.test, None), 
+        button_list = [('bet', self.bet, None), ('held', self.test, None),
                         ('held', self.test, None), ('held', self.test, None),
-                        ('held', self.test, None), ('held', self.test, None), 
+                        ('held', self.test, None), ('held', self.test, None),
                         ('bet max', self.bet_max, None), ('draw', self.draw_cards, None)]
         for text, func, args in button_list:
             label = Label(self.font, self.text_size, text, self.text_color, {})
@@ -250,11 +252,11 @@ class Machine:
         # game info labels
         self.info_labels = []
         credit_text = 'Credit {}'.format(self.credits)
-        label = Label(self.font, self.text_size, credit_text, self.text_color, 
+        label = Label(self.font, self.text_size, credit_text, self.text_color,
                         {"topright": (self.label_x2, self.label_y)})
         self.info_labels.append(label)
         coins_text = "Coins in {}".format(self.coins)
-        label = Label(self.font, self.text_size, coins_text, self.text_color, 
+        label = Label(self.font, self.text_size, coins_text, self.text_color,
                         {"topleft": (self.label_x1, self.label_y)})
         self.info_labels.append(label)
 
