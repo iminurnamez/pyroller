@@ -1,5 +1,6 @@
 import random
 import pygame as pg
+from ...components.warning_window import NoticeWindow
 from ...components.labels import Label, MultiLineLabel, NeonButton, ButtonGroup
 from ... import tools, prepare
 
@@ -373,6 +374,8 @@ class Keno(tools._State):
         self.pay_table.update(0)
         
         self.round_history = RoundHistory(self.keno_card)
+        
+        self.alert = None
 
     def back_to_lobby(self, *args):
         self.game_started = False
@@ -403,6 +406,11 @@ class Keno(tools._State):
             #print(event_pos) #[for debugging positional items]
             self.persist["music_handler"].get_event(event, scale)
 
+            if self.alert:
+                self.alert.update(event_pos)
+                if self.alert.done:
+                    self.alert = None
+
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
                 spot_count = self.keno_card.get_spot_count()
@@ -415,17 +423,16 @@ class Keno(tools._State):
 
             if self.play.rect.collidepoint(event_pos):
                 if self.bet_action.bet <= 0:
-                    print("Place a bet first.")
+                    self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
                     return
                     
                 spot_count = self.keno_card.get_spot_count()
                 if spot_count <= 0:
-                    print("Pick your spots first.")
+                    self.alert = NoticeWindow(self.screen_rect.center, "Please pick your spots.")
                     return
                 
                 self.play.update()
                 hit_count = self.keno_card.get_hit_count()
-                #spot_count = self.keno_card.get_spot_count()
                 self.bet_action.result(spot_count, hit_count)
                 self.round_history.update(spot_count, hit_count)
                 self.hit_count_label = Label(self.font, 64, 'HIT COUNT: {0}'.format(hit_count), 'gold3', {'center':(640,764)})
@@ -444,6 +451,9 @@ class Keno(tools._State):
 
             self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
         self.buttons.get_event(event)
+        
+        if self.alert:
+            self.alert.get_event(event, scale)
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
@@ -472,6 +482,9 @@ class Keno(tools._State):
 
         self.balance_label.draw(surface)
         self.bet_label.draw(surface)
+        
+        if self.alert and not self.alert.done:
+            self.alert.draw(surface)
 
         self.persist["music_handler"].draw(surface)
 
@@ -485,15 +498,14 @@ class Keno(tools._State):
         the last frame.
         """
         total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
-        #screen = self.screen_rect
+
         self.balance_label = Label(self.font, 48, total_text, "gold3",
-                               #{"bottomleft": (screen.left + 3, screen.bottom - 3)})
                                {"topleft": (1000, 660)})
                                
         bet_text = "Bet: ${}".format(self.bet_action.bet)
         self.bet_label = Label(self.font, 48, bet_text, "gold3",
-                               #{"bottomleft": (screen.left + 3, screen.bottom - 51)})
                                {"topleft": (24, 660)})
+                               
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
 
