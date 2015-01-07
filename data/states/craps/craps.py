@@ -146,6 +146,6 @@ class Craps(tools._State):
         self.get_dice_total(current_time)
         self.set_point()
 ##        print(self.point)
-        self.pointchip.update(current_time, self.dice_total, self.dice[0].draw_dice)
+        self.pointchip.update(current_time, self.dice_total, self.dice[0])
         self.update_total_label()
         #print(mouse_pos)

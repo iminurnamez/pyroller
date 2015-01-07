@@ -4,26 +4,28 @@ import pygame as pg
 
 class Die:
     def __init__(self, screen_rect, spacer_y=None):
-        self.spacer_y = spacer_y #used to differentiate first die and second die
+        self.spacer_y = spacer_y
+        self.is_die2 = spacer_y
         sheet = prepare.GFX['dice']
         self.dice = tools.strip_from_sheet(sheet, (0,0), (36,36), 1, 6)
         self.dice_rect = self.dice[0].get_rect()
         self.rolling = False
         
         self.roll_value = 0
+        dice_buffer_x = 15
         if not spacer_y:
-            self.dice_starting_pos = (screen_rect.right, screen_rect.centery - (screen_rect.height //4))
+            self.dice_starting_pos = (screen_rect.right, screen_rect.centery - (screen_rect.height //4) + dice_buffer_x)
         else:
-            self.dice_starting_pos = (screen_rect.right, screen_rect.centery - (screen_rect.height //4) + spacer_y)
+            self.dice_starting_pos = (screen_rect.right, screen_rect.centery - (screen_rect.height //4) + dice_buffer_x + spacer_y)
         self.dice_timer = 0
         self.dice_speed = 40
         self.dice_moving_left = True
-        self.draw_dice = False #player has already rolled
+        self.draw_dice = False #player has rolled initially
         
         dice_large_offset = 125
         x = 1050
         y = 100
-        if self.spacer_y: #on only second die
+        if self.is_die2: #on only second die
             x += dice_large_offset
         self.dice_large_pos = (x,y)
         
@@ -38,11 +40,13 @@ class Die:
                 if self.dice_moving_left:
                     if self.dice_rect.x <= 36: #hits left side
                         self.dice_rect.x *= -1
-                        self.dice_rect.y += random.randint(-10, 10)
+                        if self.is_die2:
+                            self.dice_rect.y += random.randint(-10, 10)
+                        else:
+                            self.dice_rect.y -= random.randint(0,10)
                         self.dice_moving_left = False
                     else:
                         self.dice_rect.x -= self.dice_speed
-                        #self.roll_value = random.randrange(0,5)
                 else:
                     self.dice_rect.x += self.dice_speed
                     self.dice_speed -= random.randint(1,5)
@@ -53,7 +57,6 @@ class Die:
     def draw(self, surface):
         if self.draw_dice:
             surface.blit(self.dice[self.roll_value], self.dice_rect)
-            #print('rolled {}'.format(self.roll_value + 1))
             if not self.rolling:
                 surface.blit(self.dice_large[self.roll_value], self.dice_large_pos)
                 

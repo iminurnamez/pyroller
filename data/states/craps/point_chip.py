@@ -17,35 +17,36 @@ class PointChip:
         self.speed = 10
         self.point = None
         
-    def update(self, current_time, point, draw_dice):
-        self.move_to_point(current_time, point, draw_dice)
+    def update(self, current_time, point, die):
+        self.move_to_point(current_time, point, die)
         
     def draw(self, surface):
         surface.blit(self.image, self.rect)
                             
-    def move_to_point(self, current_time, number, draw_dice):
+    def move_to_point(self, current_time, number, die):
         number = str(number)
-        if number in self.point_chip_loc.keys():
-            if current_time-self.timer > 10:
-                if draw_dice:
-                    if not self.point:
-                        self.timer = current_time
-                        number_x = self.point_chip_loc[number][0]
-                        self.image = self.on
-                        if self.rect.x >= number_x:
-                            self.rect.x = number_x
-                            self.point = number
-                        else:
-                            self.rect.x += self.speed
-        elif number == '7':
-            #if self.point:
-                self.point = None
-                x = self.point_chip_loc['0'][0]
-                self.image = self.off
-                if self.rect.x >= x:
-                    self.rect.x -= self.speed
-                else:
-                    x -= 5 #glitch fix
-                    self.rect.x = x
+        if not die.rolling:
+            if number in self.point_chip_loc.keys():
+                if current_time-self.timer > 10:
+                    if die.draw_dice:
+                        if not self.point:
+                            self.timer = current_time
+                            number_x = self.point_chip_loc[number][0]
+                            self.image = self.on
+                            if self.rect.x >= number_x:
+                                self.rect.x = number_x
+                                self.point = number
+                            else:
+                                self.rect.x += self.speed
+            elif number == '7':
+                #if self.point:
+                    self.point = None
+                    x = self.point_chip_loc['0'][0]
+                    self.image = self.off
+                    if self.rect.x >= x:
+                        self.rect.x -= self.speed
+                    else:
+                        x -= 5 #glitch fix (moving back and forth on x axis)
+                        self.rect.x = x
                     
         
