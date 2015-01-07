@@ -157,7 +157,7 @@ class PayTable(object):
 
         self.pay_labels = []
 
-    def update(self, spot):
+    def update(self, spot, bet=1):
         self.pay_labels = []
         row = PAYTABLE[spot]
         hit_x = 1024
@@ -165,6 +165,7 @@ class PayTable(object):
         row_y = 124+32
         for entry in row:
             hit, win = entry
+            win *= bet
             self.pay_labels.extend([Label(self.font, 32, str(hit), 'white', {'center':(hit_x, row_y)})])
             self.pay_labels.extend([Label(self.font, 32, str(win), 'white', {'center':(win_x, row_y)})])
             row_y+=32
@@ -402,6 +403,9 @@ class Keno(tools._State):
 
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
+                spot_count = self.keno_card.get_spot_count()
+                bet_amount = self.bet_action.bet
+                self.pay_table.update(spot_count, bet_amount)
 
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
@@ -431,8 +435,9 @@ class Keno(tools._State):
             self.keno_card.update(event_pos)
 
             spot_count = self.keno_card.get_spot_count()
+            bet_amount = self.bet_action.bet
             if spot_count != self.prev_spot_count:
-                self.pay_table.update(spot_count)
+                self.pay_table.update(spot_count, bet_amount)
                 self.prev_spot_count = spot_count
 
             self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
