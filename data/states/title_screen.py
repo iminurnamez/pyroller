@@ -11,6 +11,31 @@ from ..components.cards import Deck
 from ..components.music_handler import MusicHandler
 
 
+class Scroller(pg.sprite.Sprite):
+    def __init__(self, center, image, speed, *groups):
+        super(Scroller, self).__init__(*groups)
+        self.image = image
+        self.rect = image.get_rect(center=center)
+        self.true_x = self.rect.x
+        self.speed = speed
+        self.done = False
+
+    def update(self, screen_rect, dt):
+        if not self.done:
+            self.true_x += self.speed*dt
+            self.rect.x = self.true_x
+            if self.speed > 0 and self.rect.x > screen_rect.centerx:
+                self.done = True
+                self.rect.x = screen_rect.centerx
+            elif self.speed < 0 and self.rect.x < screen_rect.centerx:
+                self.done = True
+                self.rect.x = screen_rect.centerx
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
+
+
 class TitleScreen(tools._State):
     """
     Initial state of the game. Introduces the game and lets user load a

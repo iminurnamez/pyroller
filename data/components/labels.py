@@ -10,13 +10,13 @@ BUTTON_DEFAULTS = {"call"               : None,
                    "args"               : None,
                    "call_on_up"         : True,
                    "font"               : None,
-                   "font_size"          : 36,
+                   "size"               : 36,
                    "text"               : None,
                    "hover_text"         : None,
                    "disable_text"       : None,
-                   "text_color"         : pg.Color("white"),
-                   "hover_text_color"   : None,
-                   "disable_text_color" : None,
+                   "color"              : pg.Color("white"),
+                   "hover_color"        : None,
+                   "disable_color"      : None,
                    "fill_color"         : None,
                    "hover_fill_color"   : None,
                    "disable_fill_color" : None,
@@ -50,12 +50,12 @@ def wrap_text(text, char_limit, separator=" "):
 
 
 def _parse_color(color):
-    if color:
+    if color is not None:
         try:
             return pg.Color(color)
         except ValueError:
             return pg.Color(*color)
-    return None
+    return color
 
 
 class Label(object):
@@ -133,31 +133,26 @@ class MultiLineLabel(object):
 
 
 class Blinker(Label):
-    """A label that blinks. blink_frequency is the number of milliseconds
-    between blinks."""
-    def __init__(self, font_path, font_size, text, text_color, rect_attributes,
-                         blink_frequency, bground_color=None, image=None):
-        super(Blinker, self).__init__(font_path, font_size, text, text_color,
-                                      rect_attributes, bground_color)
-        self.image = image
-        self.frequency = blink_frequency
+    """
+    A blinking label. frequency is the number of milliseconds between blinks.
+    """
+    def __init__(self, path, size, text, color, rect_attr, frequency, bg=None):
+        super(Blinker, self).__init__(path, size, text, color, rect_attr, bg)
+        self.frequency = frequency
         self.elapsed = 0.0
         self.on = False
         self.blinking = True
 
-    def draw(self, surface, dt):
+    def update(self, dt):
         self.elapsed += dt
-        if self.elapsed >= self.frequency:
+        while self.elapsed >= self.frequency:
             self.elapsed -= self.frequency
             if self.blinking:
                 self.on = not self.on
-        if self.image:
-            surface.blit(self.text, self.rect)
-            if self.on:
-                surface.blit(self.image, self.rect)
-        elif self.on:
-            surface.blit(self.text, self.rect)
 
+    def draw(self, surface, dt):
+        if self.on:
+            surface.blit(self.image, self.rect)
 
 
 #Label Enhancements
@@ -221,31 +216,6 @@ class MarqueeFrame(object):
                 bulb.draw(surface)
 
 
-class Button(object):
-    """A simple button class."""
-    def __init__(self, left, top, width, height, label):
-        self.rect = pg.Rect(left, top, width, height)
-        label.rect.center = self.rect.center
-        self.label = label
-
-    def draw(self, surface):
-        """Draw button to surface."""
-        pg.draw.rect(surface, pg.Color("gray10"), self.rect)
-        border = self.rect.inflate(16, 18)
-        border.top = self.rect.top - 6
-        pg.draw.rect(surface, pg.Color("gray10"), border)
-        color = "gold3"
-        pg.draw.rect(surface, pg.Color(color), self.rect, 3)
-        pg.draw.rect(surface, pg.Color(color), border, 4)
-        points = [(self.rect.topleft, border.topleft),
-                      (self.rect.topright, border.topright),
-                      (self.rect.bottomleft, border.bottomleft),
-                      (self.rect.bottomright, border.bottomright)]
-        for pair in points:
-            pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)
-        self.label.draw(surface)
-
-
 class ButtonGroup(pg.sprite.LayeredDirty):
     def get_event(self, event, *args, **kwargs):
         for s in self.sprites():
@@ -270,15 +240,15 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
         self.hover = False
 
     def render_text(self):
-        font, size = self.font, self.font_size
-        if (self.font,self.font_size) not in LOADED_FONTS:
+        font, size = self.font, self.size
+        if (self.font,self.size) not in LOADED_FONTS:
             LOADED_FONTS[font, size] = pg.font.Font(font, size)
         self.font = LOADED_FONTS[font, size]
-        text = self.text and self.font.render(self.text, 1, self.text_color)
+        text = self.text and self.font.render(self.text, 1, self.color)
         hover = self.hover_text and self.font.render(self.hover_text, 1,
-                                                     self.hover_text_color)
+                                                     self.hover_color)
         disable = self.disable_text and self.font.render(self.disable_text, 1,
-                                                     self.disable_text_color)
+                                                         self.disable_color)
         return {"text" : text, "hover" : hover, "disable": disable}
 
     def make_image(self, fill, image, text):
@@ -339,10 +309,37 @@ class NeonButton(_Button):
         super(NeonButton, self).__init__(rect, *groups, **settings)
 
 
+# Deprecated: Please do not use. Marked for removal.
+class Button(object):
+    """A simple button class."""
+    def __init__(self, left, top, width, height, label):
+        self.rect = pg.Rect(left, top, width, height)
+        label.rect.center = self.rect.center
+        self.label = label
+
+    def draw(self, surface):
+        """Draw button to surface."""
+        pg.draw.rect(surface, pg.Color("gray10"), self.rect)
+        border = self.rect.inflate(16, 18)
+        border.top = self.rect.top - 6
+        pg.draw.rect(surface, pg.Color("gray10"), border)
+        color = "gold3"
+        pg.draw.rect(surface, pg.Color(color), self.rect, 3)
+        pg.draw.rect(surface, pg.Color(color), border, 4)
+        points = [(self.rect.topleft, border.topleft),
+                  (self.rect.topright, border.topright),
+                  (self.rect.bottomleft, border.bottomleft),
+                  (self.rect.bottomright, border.bottomright)]
+        for pair in points:
+            pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)
+        self.label.draw(surface)
+
+
+# Deprecated: Please do not use. Marked for removal.
 class ImageButton(object):
-    def __init__(self, image, rect_attributes, label):
+    def __init__(self, image, rect_attr, label):
         self.image = image
-        self.rect = self.image.get_rect(**rect_attributes)
+        self.rect = self.image.get_rect(**rect_attr)
         self.label = label
         self.label.rect.midtop = self.rect.midbottom
 
@@ -351,13 +348,7 @@ class ImageButton(object):
         self.label.draw(surface)
 
 
-class PayloadButton(Button):
-    """A button that holds a "payload" value."""
-    def __init__(self, left, top, width, height, label, payload):
-        super(PayloadButton, self).__init__(left, top, width, height, label)
-        self.payload = payload
-
-
+# Deprecated: Please do not use. Marked for removal.
 class FunctionButton(Button):
     """A button that calls a function when clicked."""
     def __init__(self, left, top, width, height, label, function, function_args):
