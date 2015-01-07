@@ -1,6 +1,6 @@
 import pygame as pg
 from ... import tools, prepare
-from ...components.labels import Blinker, Label, FunctionButton
+from ...components.labels import Blinker, Label, FunctionButton, _Button
 from ...components.cards import Deck
 
 PAYTABLE = [
@@ -163,7 +163,7 @@ class Dealer:
             self.changing_cards.append(index)
         else:
             self.held_cards.append(index)
-            self.changing_cards.remove(index)
+            self.changing_cards.remove(index)        
         self.held_sound.play()
         self.changing_cards.sort()
 
@@ -259,34 +259,44 @@ class Machine:
         # buttons
         y += self.padding + self.btn_padding
         button_list = [
-            ('bet', self.bet_one, None), ('held', self.make_held, (0,)), 
-            ('held', self.make_held, (1,)), ('held', self.make_held, (2,)),
-            ('held', self.make_held, (3,)), ('held', self.make_held, (4,)),
-            ('bet max', self.bet_max, None), ('draw', self.draw_cards, None)
-        ]
+            ('bet', self.bet_one, None), ('bet max', self.bet_max, None),
+            ('held', self.make_held, '0'), ('held', self.make_held, '1'), 
+            ('held', self.make_held, '2'), ('held', self.make_held, '3'), 
+            ('held', self.make_held, '4'), ('draw', self.draw_cards, None)]
+        settings = {
+            "fill_color"       : pg.Color("gray50"),
+            "font": self.font,
+            "font_size": 25,
+            "hover_text_color": pg.Color("white"),
+            "hover_fill_color" : pg.Color("gray20"),
+            "active"           : True}
         for text, func, args in button_list:
-            label = Label(self.font, self.text_size, text, self.text_color, {})
-            button = FunctionButton(x, y, self.btn_width, self.btn_height, label, func, args)
+            rect_style = (x, y, self.btn_width, self.btn_height)
+            settings.update({'text':text, 'hover_text':text, 'call':func, 'args':args})
+            button = _Button(rect_style, **settings)
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
 
-        
+
         label = Label(self.font, self.text_size, 'get credits', self.text_color, {})
         self.play_button = FunctionButton(self.rect.right + self.padding, y, 
-                                            200, 60, label, self.new_game, None)
+                                            200, 60, label, self.insert_coin, None)
         
         self.credits_sound = prepare.SFX["bingo-pay-money"]
         self.bet_sound = prepare.SFX["bingo-pick-1"]
         
 
 
-    def new_game(self):
+    def insert_coin(self):
         self.playing = True
-        self.credits = 20
+        self.credits += 1
+        # bet and bet max buttons
+        self.buttons[0].active = True
+        self.buttons[1].active = True
         self.credits_sound.play()
 
 
-    def bet_one(self):
+    def bet_one(self, *args):
         if self.credits > 0:
             if self.bet < self.max_bet:
                 self.bet += 1
@@ -302,18 +312,27 @@ class Machine:
             self.ready2play = True
             self.bet_sound.play()
         self.pay_board.update_bet_rect(self.coins)
+        # draw button
+        self.buttons[-1].active = True
 
     
-    def bet_max(self):
+    def bet_max(self, *args):
         if self.credits > 0:
-            aux = self.max_bet - self.coins
-            self.bet += aux
-            self.coins += aux
-            self.credits -= aux
+            if self.credits >= self.max_bet:
+                aux = self.max_bet - self.coins
+                self.bet += aux
+                self.coins += aux
+                self.credits -= aux
+            else:
+                self.bet += self.credits
+                self.coins += self.credits
+                self.credits = 0
             self.ready2play = True
             self.bet_sound.play()
             self.draw_cards()
         self.pay_board.update_bet_rect(self.coins)
+        # draw button
+        self.buttons[-1].active = True
 
     
     def make_last_bet(self):
@@ -331,7 +350,7 @@ class Machine:
             self.pay_board.update_bet_rect(self.coins)
 
     
-    def draw_cards(self):
+    def draw_cards(self, *args):
         if self.bet > 0:
             self.dealer.draw_cards()
             self.bet = 0
@@ -340,22 +359,32 @@ class Machine:
                 self.make_last_bet()
                 self.dealer.draw_cards()
                 self.bet = 0
+        for button in self.buttons:
+            button.active = True
+        # bet and bet max buttons
+        self.buttons[0].active = False
+        self.buttons[1].active = False
 
-    def make_held(self, index):
+
+    def make_held(self, *args):
+        """ Some unkonow issue with Int args, 
+            so Str values passed to the func and
+            here are converter tonn Int"""
+        index = int(args[0])
         self.dealer.toogle_held(index)
     
 
 
 
-    def get_event(self, mouse_pos):
-        self.dealer.get_event(self.playing, mouse_pos)
-        if self.credits <= 0:
+    def get_event(self, event, scale):
+        if event.type == pg.MOUSEBUTTONDOWN:
+            mouse_pos = tools.scaled_mouse_pos(scale)
+            self.dealer.get_event(self.playing, mouse_pos)
             self.play_button.get_event(mouse_pos)
         for button in self.buttons:
-            if self.playing:
-                button.get_event(mouse_pos)
+            button.get_event(event)
 
-    def update(self, dt):
+    def update(self, mouse_pos, dt):
         # game info labels
         self.info_labels = []
         credit_text = 'Credit {}'.format(self.credits)
@@ -365,17 +394,22 @@ class Machine:
         coins_text = "Coins in {}".format(self.coins)
         label = Label(self.font, self.text_size, coins_text, self.text_color, 
                         {"topleft": (self.label_x1, self.label_y)})
-
         self.info_labels.append(label)
+
 
         if self.credits == 0:
             self.playing = False
+            for button in self.buttons:
+                button.active = False
+
         
         if self.bet == 0:
             self.ready2play = False
 
         self.dealer.update(self.playing, self.ready2play, dt)
 
+        for button in self.buttons:
+            button.update(mouse_pos)
 
     def draw(self, surface, dt):
         self.pay_board.draw(surface)
@@ -384,7 +418,6 @@ class Machine:
             label.draw(surface)
         for button in self.buttons:
             button.draw(surface)
-        if self.credits <= 0:
-            self.play_button.draw(surface)
+        self.play_button.draw(surface)
 
 
