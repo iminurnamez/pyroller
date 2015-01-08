@@ -28,13 +28,9 @@ class VideoPoker(tools._State):
         if event.type == pg.QUIT:
             self.back_to_lobby(None)
 
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(scale, event.pos)
-            event_pos = tools.scaled_mouse_pos(scale, event.pos)
-            self.persist["music_handler"].get_event(event, scale)
-        
         self.lobby_button.get_event(event)
         self.machine.get_event(event, scale)
+        self.persist["music_handler"].get_event(event, scale)
 
 
     def update(self, surface, keys, current_time, dt, scale):
