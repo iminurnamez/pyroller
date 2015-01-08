@@ -290,6 +290,7 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
             self.image = self.disable_image or self.idle_image
         self.dirty = 1 if self.visible else 0
 
+
     def draw(self, surface):
         if self.visible:
             surface.blit(self.image, self.rect)
