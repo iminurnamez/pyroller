@@ -32,6 +32,7 @@ class Control(object):
         self.state_dict = {}
         self.state_name = None
         self.state = None
+        self.music_handler = None
 
     def setup_states(self, state_dict, start_state):
         """
@@ -54,12 +55,16 @@ class Control(object):
         elif self.state.done:
             self.flip_state()
         self.state.update(self.render_surf,self.keys,self.now,dt,self.scale)
+        if self.music_handler and self.state.use_music_handler:
+            self.music_handler.update(self.scale)
+            self.music_handler.draw(self.render_surf)
         if self.render_size != self.screen_rect.size:
             scale_args = (self.render_surf, self.screen_rect.size)
             scaled_surf = pg.transform.smoothscale(*scale_args)
             self.screen.blit(scaled_surf, (0, 0))
         else:
             self.screen.blit(self.render_surf, (0, 0))
+
 
     def flip_state(self):
         """
@@ -87,6 +92,8 @@ class Control(object):
                 self.on_resize(event.size)
                 pg.event.clear(pg.VIDEORESIZE)
             self.state.get_event(event, self.scale)
+            if self.music_handler and self.state.use_music_handler:
+                self.music_handler.get_event(event, self.scale)
 
     def on_resize(self, size):
         """
@@ -147,6 +154,7 @@ class _State(object):
         self.next = None
         self.previous = None
         self.persist = persistant
+        self.use_music_handler = True
 
     def get_event(self, event, scale=(1,1)):
         """

@@ -5,7 +5,6 @@ import pygame as pg
 from .. import tools, prepare
 from ..components.labels import Label, ImageButton, NeonButton, ButtonGroup
 from ..components.flair_pieces import ChipCurtain
-from ..components.music_handler import MusicHandler
 
 
 CURTAIN_SETTINGS = {"single_color" : True,
@@ -24,7 +23,6 @@ class LobbyScreen(tools._State):
     """
     def __init__(self):
         super(LobbyScreen, self).__init__()
-        self.persist["music_handler"] = MusicHandler()
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.font = prepare.FONTS["Saniretro"]
         self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
@@ -88,7 +86,6 @@ class LobbyScreen(tools._State):
             self.exit_game()
         elif event.type == pg.MOUSEBUTTONDOWN:
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            self.persist["music_handler"].get_event(event, scale)
             for button in self.game_buttons:
                 if button.frame_rect.collidepoint(pos):
                     self.done = True
@@ -101,7 +98,6 @@ class LobbyScreen(tools._State):
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
-        self.persist["music_handler"].update(scale)
         self.navigation_buttons.update(mouse_pos)
         self.draw(surface)
 
@@ -114,4 +110,3 @@ class LobbyScreen(tools._State):
             pg.draw.rect(surface, pg.Color("gold3"), button.rect, 4)
             pg.draw.rect(surface, pg.Color("gold3"), button.frame_rect, 4)
         self.navigation_buttons.draw(surface)
-        self.persist["music_handler"].draw(surface)

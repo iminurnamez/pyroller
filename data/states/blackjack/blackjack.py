@@ -272,7 +272,6 @@ class Blackjack(tools._State):
                 self.leave_state()
         elif event.type == pg.MOUSEBUTTONDOWN and not self.window:
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            self.persist["music_handler"].get_event(event, scale)
             if self.state == "Betting":
                 if not self.moving_stacks and event.button == 1:
                     new_movers = self.player.chip_pile.grab_chips(pos)
@@ -320,8 +319,6 @@ class Blackjack(tools._State):
         self.new_game_button.visible = self.state == "Show Results"
         for button in self.player_buttons:
             button.visible = self.state == "Player Turn" and button.active
-
-        self.persist["music_handler"].update(scale)
 
         if self.state == "Betting":
             if not self.moving_stacks:
@@ -486,7 +483,6 @@ class Blackjack(tools._State):
         if self.state == "Show Results":
             for blinker in self.result_labels:
                 blinker.draw(surface)
-        self.persist["music_handler"].draw(surface)
         self.chip_total_label.draw(surface)
         if not self.window:
             self.buttons.draw(surface)
