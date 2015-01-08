@@ -91,7 +91,7 @@ class Craps(tools._State):
             print('Input needs to be "VALUE VALUE"')
 
 
-    def roll(self):
+    def roll(self, *args):
         if not self.dice[0].rolling:
             self.update_history()
             for die in self.dice:
