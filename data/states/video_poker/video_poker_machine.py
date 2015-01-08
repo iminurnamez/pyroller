@@ -32,16 +32,16 @@ class PayBoard:
         self.text_color = "yellow"
 
         self.border_size = 5
-        self. border_color =pg.Color('gold')
+        self. border_color = pg.Color('gold')
         self.bg_color = pg.Color('darkblue')
+        self.highlight_color = pg.Color("blue")
 
         self.col_space = int(self.rect.w / 6)
         self.padding = 10
 
-        self.bet_rect = pg.Rect(( self.rect.left, self.rect.top),
-                                 (self.col_space, self.rect.h))
         self.bet_rect_color = pg.Color("red")
         self.show_bet_rect = False
+        self.show_rank_rect = False
 
 
         self.build()
@@ -49,6 +49,15 @@ class PayBoard:
     def update_bet_rect(self, bet):
         self.bet_rect.left = self.rect.left + self.col_space * bet
         self.show_bet_rect = True
+
+    def update_rank_rect(self, rank):
+        """ 99 is the rank value for no matches"""
+        if rank != 99:
+            self.rank_rect.top = self.rect.top + self.padding \
+                                                   + (self.rank_rect.h * rank)
+            self.show_rank_rect = True
+        else:
+            self.show_rank_rect = False
 
     def build(self):
         info_col = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
@@ -83,17 +92,27 @@ class PayBoard:
             self.lines.append(line)
             x += self.col_space
 
+        self.rank_rect = pg.Rect((self.rect.left, (self.rect.top + self.padding)),
+                                            (self.rect.w, self.line_height))
+
+
+        self.bet_rect = pg.Rect(( self.rect.left, self.rect.top),
+                                                 (self.col_space, self.rect.h))
+
 
     def draw(self, surface):
         pg.draw.rect(surface, self.bg_color, self.rect)
         if self.show_bet_rect:
             pg.draw.rect(surface, self.bet_rect_color, self.bet_rect)
+        if self.show_rank_rect:
+            pg.draw.rect(surface, self.highlight_color, self.rank_rect)
         pg.draw.rect(surface, self.border_color, self.rect, self.border_size)
         for label in self.table:
             label.draw(surface)
 
         for line in self.lines:
             pg.draw.line(surface, self.border_color, line[0], line[1], self.border_size)
+
 
 class Dealer:
     def __init__(self, topleft, size):
@@ -116,7 +135,7 @@ class Dealer:
                                       {"center":self.rect.center}, 700, self.text_bg_color)
 
         self.text = " play 1 to 5 coins "
-        self.help_text = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
+        self.waiting_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
                                       {"center":self.rect.center}, 700, self.text_bg_color)
 
         self.card_spacing = 30
@@ -217,48 +236,47 @@ class Dealer:
             """Three of a kind"""
             rank = HAND_RANKS['THREE_OF_A_KIND']
 
+        """Straight, if is an Ace in the hand, Check if other 4 cards are 
+            K, Q, J, 10 or  2, 3, 4, 5
+            else Check if 5 cards are continuous in rank"""
+        if 1 in values:
+            a = values[1] == 2 and values[2] == 3 \
+                         and values[3] == 4 and values[4] == 5
+            b = values[1] == 10 and values[2] == 11 \
+                         and values[3] == 12 and values[4] == 13
+            is_straight = a or b
         else:
-            """Straight, if is an Ace in the hand, Check if other 4 cards are 
-                K, Q, J, 10 or  2, 3, 4, 5
-                else Check if 5 cards are continuous in rank"""
-            if 1 in values:
-                a = values[1] == 2 and values[2] == 3 \
-                             and values[3] == 4 and values[4] == 5
-                b = values[1] == 10 and values[2] == 11 \
-                             and values[3] == 12 and values[4] == 13
-                is_straight = a or b
-            else:
-                test_value = values[0] + 1
-                is_straight = True
-                for i in range(1, 5):
-                    if values[i] != test_value:
-                        is_straight = False
-                    test_value += 1
+            test_value = values[0] + 1
+            is_straight = True
+            for i in range(1, 5):
+                if values[i] != test_value:
+                    is_straight = False
+                test_value += 1
 
-            highest = max(values)
+        highest = max(values)
 
-            """Flush, previously we sort it, so the array must look like this:
-            ['Clubs', 'Diamonds', 'Diamonds', 'Hearts', 'Hearts'],
-            so if the first and the last element are the same means that all
-            the suits are the same"""
-            if suits[0] == suits[4]:
-                if is_straight:
-                    if highest == 13 and 1 in values:
-                        rank = HAND_RANKS['ROYAL FLUSH']
-                    else:
-                        rank = HAND_RANKS['STR_FLUSH']
+        """Flush, previously we sort it, so the array must look like this:
+        ['Clubs', 'Diamonds', 'Diamonds', 'Hearts', 'Hearts'],
+        so if the first and the last element are the same means that all
+        the suits are the same"""
+        if suits[0] == suits[4]:
+            if is_straight:
+                if highest == 13 and 1 in values:
+                    rank = HAND_RANKS['ROYAL_FLUSH']
                 else:
-                    rank = HAND_RANKS['FLUSH']
-            elif is_straight:
-                rank = HAND_RANKS['STRAIGHT']
+                    rank = HAND_RANKS['STR_FLUSH']
             else:
-                """4 of a kind, Check for: 4 cards of the same value 
-                + higher value unmatched card, and Check for: lower ranked unmatched 
-                card + 4 cards of the same rank"""
-                a = values[0] == values[1] == values[2] == values[3]
-                b = values[1] == values[2] == values[3] == values[4]
-                if a or b:
-                    rank = HAND_RANKS['4_OF_A_KIND']
+                rank = HAND_RANKS['FLUSH']
+        elif is_straight:
+            rank = HAND_RANKS['STRAIGHT']
+        else:
+            """4 of a kind, Check for: 4 cards of the same value 
+            + higher value unmatched card, and Check for: lower ranked unmatched 
+            card + 4 cards of the same rank"""
+            a = values[0] == values[1] == values[2] == values[3]
+            b = values[1] == values[2] == values[3] == values[4]
+            if a or b:
+                rank = HAND_RANKS['4_OF_A_KIND']
 
         # and finally return the current rank    
         return rank
@@ -293,7 +311,7 @@ class Dealer:
             self.standby_label.update(dt)
 
         if self.ready2play:
-            self.help_text.update(dt)
+            self.waiting_label.update(dt)
 
 
     def draw(self, surface, dt):
@@ -304,7 +322,7 @@ class Dealer:
         if self.standby:
             self.standby_label.draw(surface)
         elif not self.ready2play:
-            self.help_text.draw(surface)
+            self.waiting_label.draw(surface)
 
 
 class Machine:
@@ -461,13 +479,15 @@ class Machine:
     def draw_cards(self, *args):
         if self.bet > 0:
             self.dealer.draw_cards()
-            self.dealer.evaluate_hand()
+            rank = self.dealer.evaluate_hand()
+            self.pay_board.update_rank_rect(rank)
             self.bet = 0
         else:
             if self.coins > 0:
                 self.make_last_bet()
                 self.dealer.draw_cards()
-                self.dealer.evaluate_hand()
+                rank = self.dealer.evaluate_hand()
+                self.pay_board.update_rank_rect(rank)
                 self.bet = 0
         for button in self.buttons:
             button.active = True
