@@ -6,13 +6,15 @@ import os
 import random
 import itertools
 from math import degrees
+import string
 
 import pygame as pg
 from .. import tools
 from .chips import Chip
+from .labels import Label
 from .. import prepare
 
-
+LETTERS = string.uppercase
 COLORS = ["black", "blue", "green", "red", "white"]
 
 #Y coordinates for each color of chip on the spinner spritesheet.
@@ -293,3 +295,144 @@ def make_char_map(image_name, empty=(0,0,0,255)):
         row = [chipmap.get_at((x,y)) for x in range(width)]
         converted.append("".join("O" if cell==empty else "X" for cell in row))
     return converted
+
+    
+class LetterReel(object):
+    """
+    A spinning reel of letters. After spinning num_spins times,
+    the reel will stop on the first frame.
+    """ 
+    def __init__(self, topleft, letter, letter_size, spin_speed,
+                         num_spins, num_letters=5):
+        letters = [letter]
+        self.letter = letter
+        self.letter_size = w,h = letter_size
+        for _ in range(num_letters - 1):
+            letters.append(random.choice(LETTERS))
+        self.letter_strip = pg.Surface((w, h * num_letters)).convert()
+        self.letter_strip.fill(pg.Color("antiquewhite"))
+        for num, letter in enumerate(letters):
+            label = Label(prepare.FONTS["Saniretro"], 112, letter, "gray10", 
+                               {"center": (w//2, h//2 + (h * num))})
+            label.draw(self.letter_strip)
+        self.viewport = pg.Rect((0, 0), letter_size)
+        self.image = self.letter_strip.subsurface(pg.Rect((0, 0), letter_size))  
+        self.image_rect = self.image.get_rect(topleft=topleft)
+        self.spin_speed = spin_speed
+        self.num_spins = num_spins
+        self.spins = 0
+        if self.spin_speed < 0:
+            self.spins -= 1
+        self.done = False
+        self.clunk_sound = prepare.SFX["slot_reel_clunk"]
+        
+    def make_image(self):
+        strip = self.letter_strip
+        strip_w, strip_h = strip.get_size()
+        img = pg.Surface(self.viewport.size).convert()
+        if self.spin_speed > 0:
+            if self.viewport.top > strip_h:
+                self.viewport.top = self.viewport.top - strip_h
+                self.spins += 1
+            if self.viewport.bottom > strip_h:
+                top_rect = pg.Rect(0, self.viewport.top, self.viewport.width,
+                                             strip_h - self.viewport.top)
+                top_strip = strip.subsurface(top_rect)
+                bottom_rect = pg.Rect(0, 0, self.viewport.width,
+                                                   self.viewport.height - top_rect.height)
+                bottom_strip = strip.subsurface(bottom_rect)
+                img.blit(top_strip, (0, 0))
+                img.blit(bottom_strip, (0, top_rect.height))
+            else:
+                whole_strip = strip.subsurface(self.viewport)
+                img.blit(whole_strip, (0, 0))
+        else:
+            if self.viewport.bottom < 0:
+                self.viewport.bottom = strip_h + self.viewport.bottom
+                self.spins += 1
+            if self.viewport.top < 0:
+                bottom_rect = pg.Rect(0, 0, self.viewport.width, 
+                                                  self.viewport.height + self.viewport.top)
+                bottom_strip = strip.subsurface(bottom_rect)
+                top_rect = pg.Rect(0, strip_h + self.viewport.top, self.viewport.width,
+                                             abs(self.viewport.top))
+                top_strip = strip.subsurface(top_rect)
+                img.blit(top_strip, (0, 0))
+                img.blit(bottom_strip, (0, top_rect.height))
+            else:
+                whole_strip = strip.subsurface(self.viewport)
+                img.blit(whole_strip, (0, 0))
+        return img
+        
+    def update(self):
+        if self.spins < self.num_spins:
+            self.viewport.move_ip(0, self.spin_speed)
+        else:
+            if not self.done:
+                self.done = True
+                self.clunk_sound.play()
+            self.viewport.topleft = (0, 0)    
+        self.image = self.make_image()
+        
+    def draw(self, surface):
+        surface.blit(self.image, self.image_rect)
+        
+        
+class SlotReelTitle(object):
+    """
+    Converts text into a row of spinning reels like a slot machine.
+    """
+    def __init__(self, midtop, title_text, letter_size=(80, 120), spacer=3):
+        letters = list(title_text)
+        width = len(letters) * letter_size[0] + ((len(letters) - 1) * spacer)
+        self.rect = pg.Rect(0, 0, width, letter_size[1])
+        self.rect.midtop = midtop
+        self.reels = []
+        x = self.rect.left
+        self.frame = self.rect.inflate(8, 8)
+        toggle = 0
+        speed = 33
+        num_spins = 2
+        for letter in letters:
+            spin_speed = -1 * speed if  toggle % 2 else speed
+            reel = LetterReel((x, midtop[1]), letter, letter_size,
+                                   spin_speed, num_spins)
+            self.reels.append(reel)
+            x += letter_size[0] + spacer
+            toggle += 1
+            num_spins += 1
+        self.spun_out = False
+        self.spin_sound = prepare.SFX["slot_reel_short"]
+        self.spin_sound.set_volume(.2)
+        self.moving = True
+        self.final_top = midtop[1]
+        self.move((0, -100))
+        self.move_speed = (0, 2)        
+
+    def startup(self):
+        self.spin_sound.play(-1)
+        
+    def move(self, move):
+        self.rect.move_ip(move)
+        self.frame.move_ip(move)
+        for reel in self.reels:
+            reel.image_rect.move_ip(move)
+    
+    def update(self):
+        for reel in self.reels:
+            reel.update()
+        spun_out = [x for x in self.reels if x.spins >= x.num_spins]
+        if len(spun_out) >= len(self.reels) // 2:
+            self.spun_out = True
+        if len(spun_out) >= len(self.reels):
+            self.spin_sound.stop()        
+        if self.moving:
+            self.move(self.move_speed)
+            if self.rect.top >= self.final_top:
+                self.moving = False
+                
+    def draw(self, surface):
+        for reel in self.reels:
+            reel.draw(surface) 
+        pg.draw.rect(surface, pg.Color("darkred"), self.frame, 4)    
+            
