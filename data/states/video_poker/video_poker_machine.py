@@ -13,10 +13,10 @@ HAND_RANKS = {'ROYAL_FLUSH'    : 0,
              'TWO_PAIR'        : 7,
              'JACKS_OR_BETTER' : 8}
 PAYTABLE = [
-    (800, 50, 25, 8, 6, 4, 3, 2, 1),
-    (1600, 100, 50, 16, 12, 8, 6, 4, 2),
-    (2400, 150, 75, 24, 18, 12, 9, 6, 3),
-    (3200, 200, 100, 32, 24, 16, 12, 8, 4),
+    (250, 50, 25, 8, 6, 4, 3, 2, 1),
+    (500, 100, 50, 16, 12, 8, 6, 4, 2),
+    (750, 150, 75, 24, 18, 12, 9, 6, 3),
+    (1000, 200, 100, 32, 24, 16, 12, 8, 4),
     (4000, 250, 125, 40, 30, 20, 15, 10, 5),
 ]
 
@@ -32,9 +32,9 @@ class PayBoard:
         self.text_color = "yellow"
 
         self.border_size = 5
-        self. border_color = pg.Color('gold')
+        self. border_color = pg.Color('yellow')
         self.bg_color = pg.Color('darkblue')
-        self.highlight_color = pg.Color("blue")
+        self.highlight_color = pg.Color("#000050")
 
         self.col_space = int(self.rect.w / 6)
         self.padding = 10
@@ -55,19 +55,18 @@ class PayBoard:
     def update_rank_rect(self, rank):
         """ 99 is the rank value for no matches"""
         if rank != 99:
-            self.rank_rect.top = self.rect.top + self.padding \
-                                                   + (self.rank_rect.h * rank)
+            self.rank_rect.top = self.rect.top + (self.rank_rect.h * rank)
             self.show_rank_rect = True
             self.rank_sound.play()
         else:
             self.show_rank_rect = False
 
     def build(self):
-        info_col = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
+        ranks = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
         'FLUSH','STRAIGHT', 'THREE OF A KIND', 'TWO PAIR', 'JACKS OR BETTER')
         x = x_initial = self.rect.left + self.padding
-        y = y_initial = self.rect.top + self.padding
-        for row in info_col:
+        y = y_initial = self.rect.top
+        for row in ranks:
             label = Label(self.font, self.text_size, row, self.text_color,
                                       {"topleft": (x, y)})
             self.table.append(label)
@@ -95,11 +94,11 @@ class PayBoard:
             self.lines.append(line)
             x += self.col_space
 
-        self.rank_rect = pg.Rect((self.rect.left, (self.rect.top + self.padding)),
-                                            (self.rect.w, self.line_height))
+        self.rank_rect = pg.Rect((self.rect.left, self.rect.top),
+                                            (self.rect.w, (self.line_height)))
 
 
-        self.bet_rect = pg.Rect(( self.rect.left, self.rect.top),
+        self.bet_rect = pg.Rect((self.rect.left, self.rect.top),
                                                  (self.col_space, self.rect.h))
 
 
@@ -229,7 +228,7 @@ class Dealer:
         elif pairs_len == 1:
             """ Jacks or betters"""
             if 1 in pairs or 11 in pairs or 12 in pairs or 13 in pairs:
-                rank = HAND_RANKS['JACKS_OR_BETTER']        
+                rank = HAND_RANKS['JACKS_OR_BETTER']     
         
         elif pairs_len == 2:
             """Two pair"""
@@ -367,7 +366,7 @@ class Machine:
         x += self.padding
         y += self.padding
         w -= self.padding*2
-        h = 330
+        h = 319
 
         self.pay_board = PayBoard((x,y), (w,h))
 
@@ -411,21 +410,23 @@ class Machine:
 
 
         settings = {"text"               : "Insert coin",
-                    "fill_color"         : pg.Color("gold50"),
+                    "hover_text"         : "Insert coin",
+                    "fill_color"         : pg.Color("gold"),
                     "font"               : self.font,
                     "font_size"          : self.text_size,
-                    "hover_text_color"   : pg.Color("white"),
+                    "text_color"         : pg.Color("#333333"),
+                    "hover_text_color"   : pg.Color("#333333"),
                     "disable_text_color" : pg.Color("#cccccc"),
-                    "hover_fill_color"   : pg.Color("gold"),
-                    "disable_fill_color" : pg.Color("#999999")
+                    "hover_fill_color"   : pg.Color("yellow"),
+                    "disable_fill_color" : pg.Color("#999999"),
                     "call": self.insert_coin}
 
         rect_style = ((self.rect.right + self.padding), y, 200, 60,)
 
-        self.play_button = _Button(rect_style, **settings)        
+        self.coins_button = _Button(rect_style, **settings)        
 
 
-    def insert_coin(self):
+    def insert_coin(self, *args):
         self.playing = True
         self.credits += 1
 
@@ -523,7 +524,8 @@ class Machine:
         if event.type == pg.MOUSEBUTTONDOWN:
             mouse_pos = tools.scaled_mouse_pos(scale)
             self.dealer.get_event(self.playing, mouse_pos)
-            self.play_button.get_event(mouse_pos)
+        
+        self.coins_button.get_event(event)
         for button in self.buttons:
             button.get_event(event)
 
@@ -540,8 +542,7 @@ class Machine:
         self.info_labels.append(label)
 
 
-        if self.credits == 0:
-            self.playing = False
+        if self.credits == 0 and self.playing == False:
             for button in self.buttons:
                 button.active = False
 
@@ -551,6 +552,7 @@ class Machine:
 
         self.dealer.update(self.playing, self.ready2play, dt)
 
+        self.coins_button.update(mouse_pos)
         for button in self.buttons:
             button.update(mouse_pos)
 
@@ -561,4 +563,4 @@ class Machine:
             label.draw(surface)
         for button in self.buttons:
             button.draw(surface)
-        self.play_button.draw(surface)
+        self.coins_button.draw(surface)
