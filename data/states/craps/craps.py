@@ -81,7 +81,6 @@ class Craps(tools._State):
         try:
             die1 = int(text.split()[0]) -1
             die2 = int(text.split()[1]) -1
-            print(die1, die2)
             accepted = range(0,6)
             if die1 in accepted and die2 in accepted:
                 self.dice[0].roll_value = die1
