@@ -219,13 +219,17 @@ class MarqueeFrame(pg.sprite.Sprite):
         surface.blit(self.image, self.rect)
 
 
-class ButtonGroup(pg.sprite.LayeredDirty):
+class ButtonGroup(pg.sprite.Group):
     def get_event(self, event, *args, **kwargs):
-        for s in self.sprites():
+        check = [s for s in self.sprites() if s.active and s.visible]
+        for s in check:
             s.get_event(event, *args, **kwargs)
 
 
-class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
+class _Button(pg.sprite.Sprite, tools._KwargMixin):
+    _invisible = pg.Surface((1,1)).convert_alpha()
+    _invisible.fill((0,0,0,0))
+
     def __init__(self, rect_style, *groups, **kwargs):
         super(_Button, self).__init__(*groups)
         self.process_kwargs("Button", BUTTON_DEFAULTS, kwargs)
@@ -281,15 +285,15 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
 
     def update(self, prescaled_mouse_pos):
         hover = self.rect.collidepoint(prescaled_mouse_pos)
-        if self.active:
+        if not self.visible:
+            self.image = _Button._invisible
+        elif self.active:
             self.image = (hover and self.hover_image) or self.idle_image
             if not self.hover and hover:
                 self.hover_sound and self.hover_sound.play()
             self.hover = hover
         else:
             self.image = self.disable_image or self.idle_image
-        self.dirty = 1 if self.visible else 0
-
 
     def draw(self, surface):
         if self.visible:

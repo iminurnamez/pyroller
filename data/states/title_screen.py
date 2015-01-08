@@ -7,7 +7,6 @@ from ..components import spotlight
 from ..components.labels import MarqueeFrame, NeonButton, ButtonGroup
 from ..components.casino_player import CasinoPlayer
 from ..components.cards import Deck
-from ..components.music_handler import MusicHandler
 
 
 class Scroller(pg.sprite.Sprite):
