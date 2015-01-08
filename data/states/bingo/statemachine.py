@@ -213,10 +213,7 @@ class StateMachine(tools._State, loggable.Loggable):
         self.dt = dt
         self.state_clock.tick(dt)
         self.delay -= self.state_clock.get_time()
-        #
-        if pg.key.get_mods():
-            self.log.debug('Frame rate {0}'.format(1000 / dt))
-        #
+R        #
         # Process all states
         self.persist["music_handler"].update(scale)
         for executor in list(self.generators):
