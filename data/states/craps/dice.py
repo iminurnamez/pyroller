@@ -32,8 +32,6 @@ class Die:
         self.dice_large = []
         for die in self.dice:
             self.dice_large.append(pg.transform.scale(die, (100,100)))
-            
-        self.debug = False
         
     def update(self, current_time):
         if current_time-self.dice_timer > 10:
@@ -70,7 +68,6 @@ class Die:
             self.rolling = True
             self.dice_rect.center = self.dice_starting_pos
             self.roll_value = random.randint(0,5)
-            self.debug = False
             
     def value(self):
         if not self.rolling and not self.draw_dice:
