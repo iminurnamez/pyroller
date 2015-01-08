@@ -63,6 +63,7 @@ class PayBoard:
                 self.rank_sound.play()
         else:
             self.show_rank_rect = False
+            self.rank_rect.top = 0
 
     def build(self):
         ranks = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
@@ -353,13 +354,14 @@ class Machine:
         
 
 
-    def startup(self):
+    def startup(self, player):
         self.playing = False
         self.ready2play = False
         self.waiting = False
         self.bet = 0
         self.credits = 0
         self.coins = 0
+        self.player = player
         self.build()
         self.dealer.startup()
 
@@ -428,19 +430,29 @@ class Machine:
                     "call": self.insert_coin}
 
         rect_style = ((self.rect.right + self.padding), y, 200, 60,)
+        self.coins_button = _Button(rect_style, **settings)
 
-        self.coins_button = _Button(rect_style, **settings)        
+        rect_style = ((self.rect.right + self.padding), (y - 300), 200, 60,)
+        settings.update({'text': 'Cash out','hover_text': 'Cash out',
+                                                      'call': self.cash_out})
+        self.cash_button = _Button(rect_style, **settings)
 
 
     def insert_coin(self, *args):
         self.start_waiting()
         self.credits += 1
+        self.player.stats["cash"] -= 1
         self.credits_sound.play()
 
     def start_waiting(self):
         self.dealer.standby = False
         self.waiting = True
         self.dealer.waiting = True
+
+    def cash_out(self, *args):
+        if self.credits > 0:
+            self.player.stats['cash'] += self.credits
+            self.credits = 0
 
     def toogle_buttons(self, buttons, active=True):
         for button in buttons:
@@ -526,6 +538,7 @@ class Machine:
         if rank != 99:
             index = self.bet - 1
             self.win = PAYTABLE[index][rank]
+            self.credits += self.win + self.bet
             print "Player wins: {}".format(self.win)
         self.bet = 0
         self.playing = False
@@ -544,8 +557,9 @@ class Machine:
         """ Some unkonow issue with Int args, 
             so Str values passed to the func and
             here are converter tonn Int"""
-        index = int(args[0])
-        self.dealer.toogle_held(index)
+        if self.playing:
+            index = int(args[0])
+            self.dealer.toogle_held(index)
     
 
 
@@ -556,19 +570,27 @@ class Machine:
             self.dealer.get_event(self.playing, mouse_pos)
         
         self.coins_button.get_event(event)
+        self.cash_button.get_event(event)
         for button in self.buttons:
             button.get_event(event)
 
     def update(self, mouse_pos, dt):
         # game info labels
         self.info_labels = []
+        
         credit_text = 'Credit {}'.format(self.credits)
         label = Label(self.font, self.text_size, credit_text, self.text_color,
                         {"topright": (self.label_x2, self.label_y)})
         self.info_labels.append(label)
-        coins_text = "Coins in {}".format(self.coins)
+        coins_text = "Coins in {}".format(self.coins)        
         label = Label(self.font, self.text_size, coins_text, self.text_color,
                         {"topleft": (self.label_x1, self.label_y)})
+        self.info_labels.append(label)
+
+        balance = 'Balnce: ${}'.format(self.player.stats["cash"])
+        pos = ((self.rect.right + self.padding), (self.rect.top + 300))
+        label = Label(self.font, self.text_size, balance, self.text_color,
+                        {"topleft": pos})
         self.info_labels.append(label)
 
         if self.waiting:
@@ -581,6 +603,7 @@ class Machine:
         self.dealer.update(dt)
 
         self.coins_button.update(mouse_pos)
+        self.cash_button.update(mouse_pos)
         for button in self.buttons:
             button.update(mouse_pos)
 
@@ -592,3 +615,4 @@ class Machine:
         for button in self.buttons:
             button.draw(surface)
         self.coins_button.draw(surface)
+        self.cash_button.draw(surface)

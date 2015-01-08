@@ -22,7 +22,7 @@ class VideoPoker(tools._State):
     def startup(self, current_time, persistent):
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
-        self.machine.startup()
+        self.machine.startup(self.casino_player)
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
