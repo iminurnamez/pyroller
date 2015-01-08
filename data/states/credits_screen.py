@@ -163,7 +163,7 @@ class CreditsScreen(tools._State):
             title = SlotReelTitle((self.screen.centerx, 20), title_text)
             grouped = self.make_groups(names)
             for group in grouped:
-                block = ZipperBlock(self.font, group, (700, 220))
+                block = ZipperBlock(self.font, group, (700, 230))
                 zipper_blocks.append(block)
                 titles.append(title)
         return iter(titles), iter(zipper_blocks)    
