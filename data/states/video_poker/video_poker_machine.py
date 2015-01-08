@@ -4,8 +4,8 @@ from ...components.labels import Blinker, Label, FunctionButton, _Button
 from ...components.cards import Deck
 
 HAND_RANKS = {'ROYAL_FLUSH'    : 0,
-             'STR_FLUSH'      : 1,
-             '4_OF_A KIND'     : 2,
+             'STR_FLUSH'       : 1,
+             '4_OF_A_KIND'     : 2,
              'FULL_HOUSE'      : 3,
              'FLUSH'           : 4,
              'STRAIGHT'        : 5, 
@@ -188,41 +188,79 @@ class Dealer:
         # if don't match any comparation
         rank = 99
 
-        """straight, if is an Ace in the hand, Check if other 4 cards are 
-            K, Q, J, 10 or  2, 3, 4, 5
-            else Check if 5 cards are continuous in rank"""
-        if 1 in values:
-            a = values[1] == 2 and values[2] == 3 
-                         and values[3] == 4 and values[4] == 5
-            b = values[1] == 10 and values[2] == 11 
-                         and values[3] == 12 and values[4] == 13
-            is_straight = a or b
+        pairs = []
+        are_three = False
+        for val in values:
+            matches = values.count(val)
+            if matches == 2:
+                if not val in pairs:
+                    pairs.append(val)
+            elif matches == 3:
+                if are_three == False:
+                    are_three = True
+
+        pairs_len = len(pairs)
+        if pairs_len == 1 and are_three:
+            """Full house"""
+            rank = HAND_RANKS['FULL_HOUSE']
+
+        elif pairs_len == 1:
+            """ Jacks or betters"""
+            if 1 in pairs or 11 in pairs or 12 in pairs or 13 in pairs:
+                rank = HAND_RANKS['JACKS_OR_BETTER']        
+        
+        elif pairs_len == 2:
+            """Two pair"""
+            rank = HAND_RANKS['TWO_PAIR']
+        
+        elif are_three:
+            """Three of a kind"""
+            rank = HAND_RANKS['THREE_OF_A_KIND']
+
         else:
-            test_value = values[0] + 1
-            is_straight = True
-            for i in range(1, 5):
-                if values[i] != test_value:
-                    is_straight = False
-                test_value += 1
-
-        """Flush, previously we sort it, so the array must look like this:
-        ['Clubs', 'Diamonds', 'Diamonds', 'Hearts', 'Hearts'],
-        so if the first and the last element are the same means that all
-        the suits are the same"""
-        if suits[0] == suits[4]:
-            if is_straight:
-                if highest == 13 and 1 in values:
-                    rank = HAND_RANKS['ROYAL FLUSH']
-                else:
-                    rank = HAND_RANKS['STR_FLUSH']
+            """Straight, if is an Ace in the hand, Check if other 4 cards are 
+                K, Q, J, 10 or  2, 3, 4, 5
+                else Check if 5 cards are continuous in rank"""
+            if 1 in values:
+                a = values[1] == 2 and values[2] == 3 \
+                             and values[3] == 4 and values[4] == 5
+                b = values[1] == 10 and values[2] == 11 \
+                             and values[3] == 12 and values[4] == 13
+                is_straight = a or b
             else:
-                rank = HAND_RANKS['FLUSH']
-        elif is_straight:
-            rank = HAND_RANKS['STRAIGHT']
-        elif:
-            pass
+                test_value = values[0] + 1
+                is_straight = True
+                for i in range(1, 5):
+                    if values[i] != test_value:
+                        is_straight = False
+                    test_value += 1
 
+            highest = max(values)
 
+            """Flush, previously we sort it, so the array must look like this:
+            ['Clubs', 'Diamonds', 'Diamonds', 'Hearts', 'Hearts'],
+            so if the first and the last element are the same means that all
+            the suits are the same"""
+            if suits[0] == suits[4]:
+                if is_straight:
+                    if highest == 13 and 1 in values:
+                        rank = HAND_RANKS['ROYAL FLUSH']
+                    else:
+                        rank = HAND_RANKS['STR_FLUSH']
+                else:
+                    rank = HAND_RANKS['FLUSH']
+            elif is_straight:
+                rank = HAND_RANKS['STRAIGHT']
+            else:
+                """4 of a kind, Check for: 4 cards of the same value 
+                + higher value unmatched card, and Check for: lower ranked unmatched 
+                card + 4 cards of the same rank"""
+                a = values[0] == values[1] == values[2] == values[3]
+                b = values[1] == values[2] == values[3] == values[4]
+                if a or b:
+                    rank = HAND_RANKS['4_OF_A_KIND']
+
+        # and finally return the current rank    
         return rank
 
 
@@ -423,11 +461,13 @@ class Machine:
     def draw_cards(self, *args):
         if self.bet > 0:
             self.dealer.draw_cards()
+            self.dealer.evaluate_hand()
             self.bet = 0
         else:
             if self.coins > 0:
                 self.make_last_bet()
                 self.dealer.draw_cards()
+                self.dealer.evaluate_hand()
                 self.bet = 0
         for button in self.buttons:
             button.active = True
