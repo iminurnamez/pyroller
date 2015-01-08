@@ -16,7 +16,7 @@ class NoticeWindow(object):
                                                 self.rect.top + 50)},
                                     char_limit=36, align="center")
         pos = (self.rect.centerx-159, self.rect.bottom-125)
-        self.ok = NeonButton(pos, "Exit", self.confirm)
+        self.ok = NeonButton(pos, "OK", self.confirm)
         self.done = False
 
     def confirm(self, *args):
@@ -47,7 +47,7 @@ class WarningWindow(NoticeWindow):
         self.ok.rect.topleft = (self.rect.x+x, self.rect.bottom-(101+x))
         self.ok.args = True
         pos = (self.rect.right-(318+x), self.rect.bottom-(101+x))
-        NeonButton(pos, "Back", self.confirm, False, self.buttons)
+        NeonButton(pos, "Cancel", self.confirm, False, self.buttons)
 
     def confirm(self, leave):
         self.done = True
