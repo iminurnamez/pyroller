@@ -65,7 +65,7 @@ class Bingo(statemachine.StateMachine):
         if prepare.DEBUG:
             self.buttons.append(self.debug_buttons)
         #
-        super(Bingo, self).__init__(states.S_INITIALISE)
+        super(Bingo, self).__init__()
         #
         # The machine for picking balls
         self.ball_machine = ballmachine.BallMachine('ball-machine', self)
@@ -368,16 +368,6 @@ class Bingo(statemachine.StateMachine):
         #
         if not one_shot:
             self.add_generator('highlight', self.highlight_pattern(card, pattern, one_shot=False))
-
-    def initialise(self):
-        """Start the game state"""
-        yield 0
-        self.add_generator('main-game-loop', self.main_game_loop())
-
-    def main_game_loop(self):
-        """The main game loop"""
-        while True:
-            yield 0
 
     def ball_picked(self, ball):
         """A ball was picked"""

@@ -73,7 +73,7 @@ class StateMachine(tools._State, loggable.Loggable):
 
     verbose = True
 
-    def __init__(self, initial_state, speed_factor=1.0):
+    def __init__(self):
         """Initialise the machine"""
         super(StateMachine, self).__init__()
         #
@@ -81,10 +81,8 @@ class StateMachine(tools._State, loggable.Loggable):
         self.generators = []
         self.state_clock = pygame.time.Clock()
         self.delay = 0.0
-        self.speed_factor = speed_factor
         self.verbose = True
         #
-        self.add_generator(initial_state, getattr(self, initial_state)())
         self.initUI()
         self.dt = 0
 
@@ -100,7 +98,7 @@ class StateMachine(tools._State, loggable.Loggable):
         """Update the game state"""
         self.dt = dt
         self.state_clock.tick(dt)
-        self.delay -= self.state_clock.get_time() * self.speed_factor
+        self.delay -= self.state_clock.get_time()
         #
         if pg.key.get_mods():
             self.log.debug('Frame rate {0}'.format(1000 / dt))
