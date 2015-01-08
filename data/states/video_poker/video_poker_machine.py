@@ -292,18 +292,19 @@ class Dealer:
                     self.toogle_held(index)
 
     def update(self, dt):
+        if self.revealing:
+            self.elapsed += dt
+            while self.elapsed >= self.animation_speed:
+                self.elapsed -= self.animation_speed
+                index = self.changing_cards[self.card_index]
+                self.hand[index].face_up = True
+                self.deal_sound.play()
+                self.card_index += 1
+                if self.card_index >= len(self.changing_cards):
+                    self.card_index = 0
+                    self.revealing = False
+        
         if self.playing:
-            if self.revealing:
-                self.elapsed += dt
-                while self.elapsed >= self.animation_speed:
-                    self.elapsed -= self.animation_speed
-                    index = self.changing_cards[self.card_index]
-                    self.hand[index].face_up = True
-                    self.deal_sound.play()
-                    self.card_index += 1
-                    if self.card_index >= len(self.changing_cards):
-                        self.card_index = 0
-                        self.revealing = False
             self.standby = False
         else:
             self.standby = True
@@ -433,6 +434,7 @@ class Machine:
         self.credits_sound.play()
 
     def start_waiting(self):
+        self.dealer.standby = False
         self.waiting = True
         self.dealer.waiting = True
 
@@ -519,9 +521,8 @@ class Machine:
         rank = self.dealer.evaluate_hand()
         self.pay_board.update_rank_rect(rank)
         if rank != 99:
-            self.win = PAYTABLE[self.bet][rank]
-            print "player wins: {}".format(self.win)
-        print "player wins lose, Game over"
+            self.win = PAYTABLE[self.bet - 1][rank]
+            print "Player wins: {}".format(self.win)
         self.bet = 0
         self.playing = False
         self.dealer.playing = False
