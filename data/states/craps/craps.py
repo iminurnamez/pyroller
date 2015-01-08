@@ -47,17 +47,24 @@ class Craps(tools._State):
         self.point = 0 #off position
         
         self.widgets = []
-        self.setup_debug_entry()
+        if prepare.DEBUG:
+            self.setup_debug_entry()
+            self.debug_die1 = None
+            self.debug_die2 = None
+            self.debug_dice_total = None
         
     def setup_debug_entry(self):
+        self.debug_lbl = Label(self.font, self.font_size, '6 6', "gold3", {"center": (750, 950)})
         settings = {
-            "command" : self.roll,
-            "font" : prepare.FONTS["Saniretro"],
-            "clear_on_enter" : True,
+            'id':'6 6',
+            #"command" : lambda x,y=True:self.roll(debug=y),
+            "command" : self.debug_roll,
+            #"font" : prepare.FONTS["Saniretro"],
+            #"clear_on_enter" : True,
             "inactive_on_enter" : False,
             'active': False
         }
-        self.widgets.append(TextBox((100,100,150,30), **settings))
+        self.widgets.append(TextBox((700,1000,150,30), **settings))
 
     def make_buttons(self, screen_rect):
         buttons = ButtonGroup()
@@ -70,9 +77,16 @@ class Craps(tools._State):
         self.game_started = False
         self.next = "LOBBYSCREEN"
         self.done = True
+        
+    def debug_roll(self, id, text):
+        self.roll()
+        self.dice[0].roll_value = int(text.split()[0]) -1
+        self.dice[1].roll_value = int(text.split()[1]) -1
 
-    def roll(self, *args):
+    def roll(self, debug=False):
         if not self.dice[0].rolling:
+            if debug:
+                self.dice.debug = True
             self.update_history()
             for die in self.dice:
                 die.reset()
@@ -152,6 +166,8 @@ class Craps(tools._State):
         self.pointchip.draw(surface)
         for widget in self.widgets:
             widget.draw(surface)
+        if prepare.DEBUG:
+            self.debug_lbl.draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
         self.persist["music_handler"].update(scale)
