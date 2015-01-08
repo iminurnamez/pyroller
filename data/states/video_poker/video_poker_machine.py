@@ -391,28 +391,38 @@ class Machine:
             ('held', self.make_held, '0'), ('held', self.make_held, '1'), 
             ('held', self.make_held, '2'), ('held', self.make_held, '3'), 
             ('held', self.make_held, '4'), ('draw', self.draw_cards, None)]
-        settings = {
-            "fill_color"         : pg.Color("#222222"),
-            "font"               : self.font,
-            "font_size"          : 25,
-            "hover_text_color"   : pg.Color("white"),
-            "disable_text_color" : pg.Color("#cccccc"),
-            "hover_fill_color"   : pg.Color("#353535"),
-            "disable_fill_color" : pg.Color("#999999"),
-            "active"             : True}
+
+        settings = {"fill_color"         : pg.Color("#222222"),
+                    "font"               : self.font,
+                    "font_size"          : 25,
+                    "hover_text_color"   : pg.Color("white"),
+                    "disable_text_color" : pg.Color("#cccccc"),
+                    "hover_fill_color"   : pg.Color("#353535"),
+                    "disable_fill_color" : pg.Color("#999999"),
+                    "active"             : False}
 
         for text, func, args in button_list:
             rect_style = (x, y, self.btn_width, self.btn_height)            
-            settings.update({'text':text, 'hover_text':text, 'disable_text':text, 
-                                                        'call':func, 'args':args})
+            settings.update({'text':text, 'hover_text':text, 
+                              'disable_text':text, 'call':func, 'args':args})
             button = _Button(rect_style, **settings)
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
 
 
-        label = Label(self.font, self.text_size, 'insert coin', self.text_color, {})
-        self.play_button = FunctionButton(self.rect.right + self.padding, y, 
-                                            200, 60, label, self.insert_coin, None)        
+        settings = {"text"               : "Insert coin",
+                    "fill_color"         : pg.Color("gold50"),
+                    "font"               : self.font,
+                    "font_size"          : self.text_size,
+                    "hover_text_color"   : pg.Color("white"),
+                    "disable_text_color" : pg.Color("#cccccc"),
+                    "hover_fill_color"   : pg.Color("gold"),
+                    "disable_fill_color" : pg.Color("#999999")
+                    "call": self.insert_coin}
+
+        rect_style = ((self.rect.right + self.padding), y, 200, 60,)
+
+        self.play_button = _Button(rect_style, **settings)        
 
 
     def insert_coin(self):
