@@ -2,6 +2,7 @@
 
 import time
 import sys
+import random
 import pygame as pg
 from collections import OrderedDict
 
@@ -38,13 +39,12 @@ class Bingo(statemachine.StateMachine):
         b_height = 90
         #
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.play_music = True
         self.auto_pick = S['debug-auto-pick']
         #
         self.ui = common.ClickableGroup()
         #
         lobby_label = common.getLabel('button', (0, 0), 'Lobby', S)
-        self.lobby_button = Button(20, self.screen_rect.bottom - (b_height + 15),
+        self.lobby_button = Button(740, self.screen_rect.bottom - 150,
                                    b_width, b_height, lobby_label)
         #
         # The controls to allow selection of different numbers of cards
@@ -52,14 +52,8 @@ class Bingo(statemachine.StateMachine):
         self.card_selector.linkEvent(events.E_NUM_CARDS_CHANGED, self.change_number_of_cards)
         self.ui.append(self.card_selector.ui)
         #
-        self.cards = self.get_card_collection()
+        self.create_card_collection()
         self.ui.extend(self.cards)
-        self.dealer_cards = dealercard.DealerCardCollection(
-            'dealer-card',
-            S['dealer-cards-position'],
-            S['dealer-card-offsets'],
-            self
-        )
         #
         self.winning_pattern = patterns.PATTERNS[0]
         #
@@ -70,7 +64,7 @@ class Bingo(statemachine.StateMachine):
         if prepare.DEBUG:
             self.buttons.append(self.debug_buttons)
         #
-        super(Bingo, self).__init__(states.S_INITIALISE)
+        super(Bingo, self).__init__()
         #
         # The machine for picking balls
         self.ball_machine = ballmachine.BallMachine('ball-machine', self)
@@ -83,6 +77,7 @@ class Bingo(statemachine.StateMachine):
         #
         B.linkEvent(events.E_PLAYER_PICKED, self.player_picked)
         B.linkEvent(events.E_PLAYER_UNPICKED, self.player_unpicked)
+        B.linkEvent(events.E_CARD_COMPLETE, self.card_completed)
         #
         self.current_pick_sound = 0
         self.last_pick_time = 0
@@ -119,7 +114,6 @@ class Bingo(statemachine.StateMachine):
             #
             pos = tools.scaled_mouse_pos(scale, event.pos)
             if event.type == pg.MOUSEBUTTONDOWN:
-                self.persist["music_handler"].get_event(event, scale)
                 if self.lobby_button.rect.collidepoint(pos):
                     self.game_started = False
                     self.done = True
@@ -130,10 +124,10 @@ class Bingo(statemachine.StateMachine):
                 self.done = True
                 self.next = "LOBBYSCREEN"
             elif event.key == pg.K_SPACE:
-                self.next_ball(None, None)
-            elif event.key == pg.K_m:
-                #self.persist["music_handler"].mute_unmute_music()
-                self.sound_muted = not self.sound_muted
+                self.next_chip(None, None)
+            elif event.key == pg.K_f:
+                for card in self.cards:
+                    self.add_generator('flash-labels', card.flash_labels())
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
@@ -146,21 +140,24 @@ class Bingo(statemachine.StateMachine):
         self.card_selector.draw(surface)
         self.money_display.draw(surface)
         #
-        self.persist["music_handler"].draw(surface)
 
     def initUI(self):
         """Initialise the UI display"""
         #
         # Buttons that show the winning patterns
+        x, y = S['winning-pattern-position']
         for idx, pattern in enumerate(patterns.PATTERNS):
-            self.pattern_buttons.append(common.ImageOnOffButton(
-                pattern.name, (200 + idx * 240, 400),
-                'bingo-red-button', 'bingo-red-off-button', 'button',
+            dx, dy = S['winning-pattern-buttons'][pattern.name]
+            new_button = patterns.PatternButton(
+                idx, (x + dx, y + dy),
+                'bingo-wide-red-button', 'bingo-wide-red-button-off', 'winning-pattern',
                 pattern.name,
-                pattern == self.winning_pattern, S
-            ))
-            self.pattern_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
-            self.pattern_buttons[-1].pattern = pattern
+                pattern == self.winning_pattern, S,
+                scale=S['winning-pattern-scale']
+            )
+            new_button.linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
+            new_button.pattern = pattern
+            self.pattern_buttons.append(new_button)
         self.ui.extend(self.pattern_buttons)
         #
         # Simple generator to flash the potentially winning squares
@@ -171,6 +168,23 @@ class Bingo(statemachine.StateMachine):
             'money-display', S['money-position'], 123, self
         )
         prepare.BROADCASTER.linkEvent(events.E_SPEND_MONEY, self.spend_money)
+        #
+        # Button for next chip
+        self.next_chip_button = common.ImageOnOffButton(
+                'next-chip', S['next-chip-position'],
+                'bingo-next-chip-on', 'bingo-next-chip-off', 'next-chip',
+                'Next Chip (SPC)', True,
+                S, scale=S['next-chip-scale']
+        )
+        self.next_chip_button.linkEvent(common.E_MOUSE_CLICK, self.next_chip)
+        self.ui.append(self.next_chip_button)
+        self.buttons.append(self.next_chip_button)
+        #
+        # Menu bar
+        self.menu_bar = common.NamedSprite(
+            'bingo-menu-bar', S['menu-bar-position'], scale=S['menu-bar-scale']
+        )
+        self.buttons.append(self.menu_bar)
         #
         # Debugging buttons
         if prepare.DEBUG:
@@ -218,6 +232,20 @@ class Bingo(statemachine.StateMachine):
     def change_pattern(self, obj, pattern):
         """Change the winning pattern"""
         self.log.info('Changing pattern to {0}'.format(pattern.name))
+        #
+        # Account for the random factor
+        if pattern.name == "Random":
+            self.add_generator(
+                'randomize-buttons',
+                self.randomly_highlight_buttons(
+                    self.pattern_buttons[-1],
+                    self.pattern_buttons[:-1],
+                    S['randomize-button-number'], S['randomize-button-delay'],
+                    lambda b: self.change_pattern(None, b.pattern)
+                )
+            )
+            return
+        #
         self.winning_pattern = pattern
         self.highlight_patterns(self.winning_pattern, one_shot=True)
         #
@@ -247,8 +275,24 @@ class Bingo(statemachine.StateMachine):
         self.last_pick_time = 0
 
     def next_ball(self, obj, arg):
-        """Move on to the next ball"""
+        """Move on to the next ball
+
+        This is a debugging method - no using the normal UI
+
+        """
         self.ball_machine.call_next_ball()
+
+    def next_chip(self, obj, arg):
+        """Move on to the next ball"""
+        if self.next_chip_button.state:
+            self.ball_machine.call_next_ball()
+            self.add_generator('next-chip-animation', self.animate_next_chip())
+
+    def animate_next_chip(self):
+        """Animate the button after choosing another chip"""
+        self.next_chip_button.state = False
+        yield S['next-chip-delay'] * 1000
+        self.next_chip_button.state = True
 
     def draw_new_cards(self, obj,  arg):
         """Draw a new set of cards"""
@@ -256,12 +300,21 @@ class Bingo(statemachine.StateMachine):
         self.cards.draw_new_numbers()
         self.cards.reset()
 
-    def get_card_collection(self):
+    def create_card_collection(self):
         """Return a new card collection"""
-        return playercard.PlayerCardCollection(
+        number = self.card_selector.number_of_cards
+        self.cards = playercard.PlayerCardCollection(
             'player-card',
             S['player-cards-position'],
-            S['player-card-offsets'][self.card_selector.number_of_cards],
+            S['player-card-offsets'][number],
+            self
+        )
+        dx, dy = S['dealer-card-offset']
+        dealer_offsets = [(dx + x, dy +y) for x, y in S['player-card-offsets'][number]]
+        self.dealer_cards = dealercard.DealerCardCollection(
+            'dealer-card',
+            S['player-cards-position'],
+            dealer_offsets,
             self
         )
 
@@ -276,12 +329,15 @@ class Bingo(statemachine.StateMachine):
         for card in self.cards:
             self.all_cards.remove(card)
             self.ui.remove(card)
+        for card in self.dealer_cards:
+            self.all_cards.remove(card)
         #
         # Create new cards
-        self.cards = self.get_card_collection()
+        self.create_card_collection()
         self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
         #
         self.all_cards.extend(self.cards)
+        self.all_cards.extend(self.dealer_cards)
         self.ui.extend(self.cards)
         self.restart_game(None, None)
 
@@ -306,16 +362,6 @@ class Bingo(statemachine.StateMachine):
         #
         if not one_shot:
             self.add_generator('highlight', self.highlight_pattern(card, pattern, one_shot=False))
-
-    def initialise(self):
-        """Start the game state"""
-        yield 0
-        self.add_generator('main-game-loop', self.main_game_loop())
-
-    def main_game_loop(self):
-        """The main game loop"""
-        while True:
-            yield 0
 
     def ball_picked(self, ball):
         """A ball was picked"""
@@ -380,3 +426,57 @@ class Bingo(statemachine.StateMachine):
     def get_missing_squares(self, squares):
         """Return a list of the numbers that have not been called"""
         return [square for square in squares if square.text not in self.ball_machine.called_balls]
+
+    def card_completed(self, card, arg):
+        """A card was completed"""
+        self.log.info('Card {0} owned by {1} was completed'.format(card.index, card.card_owner))
+        #
+        # Find the matching card from the dealer or player and deactivate it
+        other_card = self.cards[card.index] if card.card_owner == bingocard.T_DEALER else self.dealer_cards[card.index]
+        other_card.active = False
+        other_card.set_card_state(bingocard.S_LOST)
+        #
+        # Check for all cards done
+        for item in self.cards:
+            if item.active and item != card:
+                return
+        else:
+            for item in self.cards:
+                self.add_generator('flash-labels', item.flash_labels())
+
+    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback):
+        """Randomly highlight buttons in a group and then call the callback when complete"""
+        last_chosen = None
+        source_button.state = True
+        #
+        # Turn all buttons off
+        for button in buttons:
+            button.state = False
+        #
+        for i in range(number_of_times):
+            #
+            # Choose one to highlight, but not the last one
+            while True:
+                chosen = random.choice(buttons)
+                if chosen != last_chosen:
+                    break
+            #
+            # Highlight it
+            self.log.debug('Setting to button {0}, {1}'.format(buttons.index(chosen), chosen.name))
+            chosen.state = True
+            if last_chosen:
+                last_chosen.state = False
+            last_chosen = chosen
+            #
+            self.play_sound('bingo-beep')
+            #
+            if i != number_of_times - 1:
+                yield delay
+            #
+            # Shortern delay
+            delay *= S['randomize-button-speed-up']
+        #
+        source_button.state = False
+        #
+        final_callback(chosen)
+

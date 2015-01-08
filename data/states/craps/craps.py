@@ -15,7 +15,7 @@ x dice animation
 from collections import OrderedDict
 import pygame as pg
 from ... import tools, prepare
-from ...components.labels import NeonButton, Label, ButtonGroup
+from ...components.labels import NeonButton, Label, ButtonGroup, TextBox
 from . import data, dice, point_chip
 import random
 
@@ -46,6 +46,24 @@ class Craps(tools._State):
         self.points = [4,5,6,8,9,10]
         self.point = 0 #off position
 
+        self.widgets = []
+        if prepare.DEBUG:
+            self.setup_debug_entry()
+            self.debug_die1 = None
+            self.debug_die2 = None
+            self.debug_dice_total = None
+
+    def setup_debug_entry(self):
+        self.debug_lbl = Label(self.font, self.font_size, '6 6', "gold3", {"center": (750, 950)})
+        settings = {
+            "command" : self.debug_roll,
+            #"font" : prepare.FONTS["Saniretro"],
+            #"clear_on_enter" : True,
+            "inactive_on_enter" : False,
+            'active': False
+        }
+        self.widgets.append(TextBox((700,1000,150,30), **settings))
+
     def make_buttons(self, screen_rect):
         buttons = ButtonGroup()
         y = screen_rect.bottom-NeonButton.height-10
@@ -57,6 +75,21 @@ class Craps(tools._State):
         self.game_started = False
         self.next = "LOBBYSCREEN"
         self.done = True
+
+    def debug_roll(self, id, text):
+        self.roll()
+        try:
+            die1 = int(text.split()[0]) -1
+            die2 = int(text.split()[1]) -1
+            accepted = range(0,6)
+            if die1 in accepted and die2 in accepted:
+                self.dice[0].roll_value = die1
+                self.dice[1].roll_value = die2
+            else:
+                print('Input needs to be of values 1-6')
+        except IndexError: #user didnt input correct format "VALUE VALUE"
+            print('Input needs to be "VALUE VALUE"')
+
 
     def roll(self, *args):
         if not self.dice[0].rolling:
@@ -86,11 +119,11 @@ class Craps(tools._State):
             #self.cash_out_player()
             self.done = True
             self.next = "LOBBYSCREEN"
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            self.persist["music_handler"].get_event(event, scale)
         elif event.type == pg.VIDEORESIZE:
             self.set_table()
         self.buttons.get_event(event)
+        for widget in self.widgets:
+            widget.get_event(event, tools.scaled_mouse_pos(scale))
 
     def cash_out_player(self):
         self.casino_player.stats["cash"] = self.player.get_chip_total()
@@ -125,7 +158,6 @@ class Craps(tools._State):
         surface.fill(self.table_color)
         surface.blit(self.table, self.table_rect)
         self.buttons.draw(surface)
-        self.persist["music_handler"].draw(surface)
 
         for h in self.bets.keys():
             self.bets[h].draw(surface)
@@ -135,9 +167,12 @@ class Craps(tools._State):
         if not self.dice[0].rolling and self.dice[0].draw_dice:
             self.dice_total_label.draw(surface)
         self.pointchip.draw(surface)
+        for widget in self.widgets:
+            widget.draw(surface)
+        if prepare.DEBUG:
+            self.debug_lbl.draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
-        self.persist["music_handler"].update(scale)
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
         self.draw(surface)
@@ -146,6 +181,8 @@ class Craps(tools._State):
         self.get_dice_total(current_time)
         self.set_point()
 ##        print(self.point)
-        self.pointchip.update(current_time, self.dice_total, self.dice[0].draw_dice)
+        self.pointchip.update(current_time, self.dice_total, self.dice[0])
         self.update_total_label()
+        for widget in self.widgets:
+            widget.update()
         #print(mouse_pos)

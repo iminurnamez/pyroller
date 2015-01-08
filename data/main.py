@@ -12,6 +12,8 @@ import pstats
 from . import prepare, tools
 from .states import title_screen, lobby_screen, stats_menu
 from .states import stats_screen, blackjack, craps, bingo, keno, video_poker
+from .states import credits_screen, snake_splash, pachinko
+from .components import music_handler
 from .states import credits_screen, snake_splash, pachinko, baccarat
 
 
@@ -19,6 +21,8 @@ def main():
     args = (prepare.CAPTION, prepare.RENDER_SIZE, prepare.RESOLUTIONS)
     run_it = tools.Control(*args)
     run_it.show_fps = prepare.ARGS["FPS"]
+    run_it.music_handler = music_handler.MusicHandler()
+    print(repr(run_it.music_handler))
     state_dict = {"SNAKESPLASH": snake_splash.SnakeSplash(),
                   "TITLESCREEN" : title_screen.TitleScreen(),
                   "LOBBYSCREEN" : lobby_screen.LobbyScreen(),

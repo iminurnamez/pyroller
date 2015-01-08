@@ -15,9 +15,11 @@ from .blackjack_advisor_window import AdvisorWindow
 
 
 class Blackjack(tools._State):
-    """State to represent a blackjack game. Player cash
-        will be converted to chips for the game and converted
-        back into cash before returning to the lobby."""
+    """
+    State to represent a blackjack game. Player cash
+    will be converted to chips for the game and converted
+    back into cash before returning to the lobby.
+    """
     def __init__(self):
         super(Blackjack, self).__init__()
         self.font = prepare.FONTS["Saniretro"]
@@ -30,8 +32,9 @@ class Blackjack(tools._State):
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.game_started = False
         self.elapsed = 17.0
-        self.warning_window = None
+        self.window = None
         self.make_buttons()
+        self.result_labels = []
 
     def make_buttons(self):
         side_margin = 10
@@ -79,7 +82,6 @@ class Blackjack(tools._State):
         self.hit_button.active = True
         self.stand_button.active = True
         self.current_player_hand = self.player.hands[0]
-        self.advisor_window = None
         self.game_started = True
 
     def startup(self, current_time, persistent):
@@ -88,21 +90,22 @@ class Blackjack(tools._State):
         self.casino_player = self.persist["casino_player"]
         if not self.game_started:
             self.new_game(self.casino_player.stats["cash"])
-        self.warning_window = None
+        self.window = None
         self.elapsed = 17.0
 
     def deal(self, *args):
-        if not self.moving_stacks:
+        if not self.moving_stacks and not self.window:
             if any(x.bet.chips for x in self.player.hands):
                 self.state = "Dealing"
                 self.casino_player.stats["Blackjack"]["games played"] += 1
             else:
                 text = "You need to make a bet first!"
                 center = self.screen_rect.center
-                self.warning_window = NoticeWindow(center, text)
+                self.window = NoticeWindow(center, text)
 
     def hit_click(self, *args):
-        self.hit(self.current_player_hand)
+        if not self.window:
+            self.hit(self.current_player_hand)
 
     def hit(self, hand):
         """Draw a card from deck and add to hand."""
@@ -114,73 +117,86 @@ class Blackjack(tools._State):
 
     def stand(self, *args):
         """Player is done with this hand."""
-        self.current_player_hand.final = True
+        if not self.window:
+            self.current_player_hand.final = True
 
     def double_down(self, *args):
-        """Double player's bet on the hand, deal one
-        more card and finalize hand."""
-        player = self.player
-        hand = self.current_player_hand
-        chip_total = player.chip_pile.get_chip_total()
-        bet = hand.bet.get_chip_total()
-        if chip_total >= bet:
-            bet_chips = self.player.chip_pile.withdraw_chips(bet)
-            hand.bet.add_chips(bet_chips)
-            choice(self.deal_sounds).play()
-            card = self.deck.draw_card()
-            card.face_up = True
-            card.destination = hand.slots[-1]
-            self.moving_cards.append(card)
-            hand.final = True
-        else:
-            text = "You don't have enough cover that bet!"
-            self.warning_window = NoticeWindow(self.screen_rect.center, text)
+        """
+        Double player's bet on the hand, deal one
+        more card and finalize hand.
+        """
+        if not self.window:
+            player = self.player
+            hand = self.current_player_hand
+            chip_total = player.chip_pile.get_chip_total()
+            bet = hand.bet.get_chip_total()
+            if chip_total >= bet:
+                bet_chips = self.player.chip_pile.withdraw_chips(bet)
+                hand.bet.add_chips(bet_chips)
+                choice(self.deal_sounds).play()
+                card = self.deck.draw_card()
+                card.face_up = True
+                card.destination = hand.slots[-1]
+                self.moving_cards.append(card)
+                hand.final = True
+            else:
+                text = "You don't have enough cover that bet!"
+                center = self.screen_rect.center
+                self.window = NoticeWindow(center, text)
 
     def split_hand(self, *args):
-        """Split player's hand into two hands, adjust hand locations
-        and deal a new card to both hands."""
-        player = self.player
-        hand = self.current_player_hand
-        chip_total = player.chip_pile.get_chip_total()
-        bet = hand.bet.get_chip_total()
-        if chip_total < bet:
-            text = "You don't have enough cover that bet!"
-            self.warning_window = NoticeWindow(self.screen_rect.center, text)
-            return
-        if len(hand.cards) == 2:
-            c1 = hand.card_values[hand.cards[0].value]
-            c2 = hand.card_values[hand.cards[1].value]
-            if c1 == c2:
-                hand.slots = hand.slots[:-1]
-                self.player.move_hands(((self.screen_rect.left + 50) - hand.slots[0].left, 0))
-                p_slot = player.hands[-1].slots[0]
-                hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 3.5), 0)
-                card = hand.cards.pop()
-                new_hand = Hand((hand_slot.topleft[0], hand_slot.topleft[1]), [card],
-                                            self.player.chip_pile.withdraw_chips(bet))
-                new_hand.slots = [hand_slot]
-                card.rect.topleft = hand_slot.topleft
-                player.hands.append(new_hand)
-                player.add_slot(new_hand)
-                choice(self.deal_sounds).play()
-                card1 = self.deck.draw_card()
-                card1.destination = hand.slots[-1]
-                card1.face_up = True
-                choice(self.deal_sounds).play()
-                card2 = self.deck.draw_card()
-                card2.destination = new_hand.slots[-1]
-                card2.face_up = True
-                self.moving_cards.extend([card1, card2])
+        """
+        Split player's hand into two hands, adjust hand locations
+        and deal a new card to both hands.
+        """
+        if not self.window:
+            player = self.player
+            hand = self.current_player_hand
+            chip_total = player.chip_pile.get_chip_total()
+            bet = hand.bet.get_chip_total()
+            if chip_total < bet:
+                text = "You don't have enough cover that bet!"
+                center = self.screen_rect.center
+                self.window = NoticeWindow(center, text)
+                return
+            if len(hand.cards) == 2:
+                c1 = hand.card_values[hand.cards[0].value]
+                c2 = hand.card_values[hand.cards[1].value]
+                if c1 == c2:
+                    hand.slots = hand.slots[:-1]
+                    move = ((self.screen_rect.left+50)-hand.slots[0].left, 0)
+                    self.player.move_hands(move)
+                    p_slot = player.hands[-1].slots[0]
+                    hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 3.5), 0)
+                    card = hand.cards.pop()
+                    new_hand = Hand(handslot.topleft, [card],
+                                    self.player.chip_pile.withdraw_chips(bet))
+                    new_hand.slots = [hand_slot]
+                    card.rect.topleft = hand_slot.topleft
+                    player.hands.append(new_hand)
+                    player.add_slot(new_hand)
+                    choice(self.deal_sounds).play()
+                    card1 = self.deck.draw_card()
+                    card1.destination = hand.slots[-1]
+                    card1.face_up = True
+                    choice(self.deal_sounds).play()
+                    card2 = self.deck.draw_card()
+                    card2.destination = new_hand.slots[-1]
+                    card2.face_up = True
+                    self.moving_cards.extend([card1, card2])
 
     def back_to_lobby(self, *args):
-        if any([hand.bet.get_chip_total() for hand in self.player.hands]):
-            self.bet_warning()
-        else:
-            self.leave_state()
+        if not self.window:
+            if any(hand.bet.get_chip_total() for hand in self.player.hands):
+                self.bet_warning()
+            else:
+                self.leave_state()
 
     def tally_hands(self):
-        """Calculate result of each player hand and set appropriate
-        flag for each hand."""
+        """
+        Calculate result of each player hand and set appropriate
+        flag for each hand.
+        """
         if self.dealer.hand.blackjack:
             for hand in self.player.hands:
                 hand.loser = True
@@ -203,8 +219,10 @@ class Blackjack(tools._State):
                         hand.winner = True
 
     def pay_out(self):
-        """Calculate player win amounts, update stats and return chips
-        totalling total win amount."""
+        """
+        Calculate player win amounts, update stats and return chips
+        totalling total win amount.
+        """
         cash = 0
         for hand in self.player.hands:
             bet = hand.bet.get_chip_total()
@@ -242,22 +260,19 @@ class Blackjack(tools._State):
         self.next = "LOBBYSCREEN"
 
     def bet_warning(self):
-        warning_text = "You sure? Exiting the game will forfeit your current bets!"
-        self.warning_window = WarningWindow(self.screen_rect.center,
-                                            warning_text, self.leave_state)
+        warn = "You sure? Exiting the game will forfeit your current bets!"
+        center = self.screen_rect.center
+        self.window = WarningWindow(center, warn, self.leave_state)
 
     def get_event(self, event, scale=(1,1)):
-        if event.type == pg.QUIT:
+        if event.type == pg.QUIT and not self.window:
             if any([hand.bet.get_chip_total() for hand in self.player.hands]):
                 self.bet_warning()
             else:
                 self.leave_state()
-        elif event.type == pg.MOUSEBUTTONDOWN:
+        elif event.type == pg.MOUSEBUTTONDOWN and not self.window:
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            self.persist["music_handler"].get_event(event, scale)
-            if self.advisor_window:
-                self.advisor_window.get_event(pos)
-            elif self.state == "Betting":
+            if self.state == "Betting":
                 if not self.moving_stacks and event.button == 1:
                     new_movers = self.player.chip_pile.grab_chips(pos)
                     if new_movers:
@@ -280,16 +295,19 @@ class Blackjack(tools._State):
                         self.current_player_hand.bet.add_chips(stack.chips)
                 self.moving_stacks = []
         elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_a and not self.advisor_window:
-                test_text = "This is a test string to simulate the advice that a blackjack advisor would give. The string should be broken up into shorter lines aligned to the left."
-                self.advisor_window = AdvisorWindow((700, 500), test_text)
+            if event.key == pg.K_a and not self.window:
+                test_text = ("This is a test string to simulate the advice "
+                             "that a blackjack advisor would give. The string "
+                             "should be broken up into shorter lines aligned "
+                             "to the left.")
+                self.window = AdvisorWindow((700, 500), test_text)
 
         if self.state == "Player Turn" and not self.moving_cards:
             self.player_buttons.get_event(event)
         elif self.state == "Betting" and not self.moving_stacks:
             self.deal_button.get_event(event)
         self.nav_buttons.get_event(event)
-        self.warning_window and self.warning_window.get_event(event, scale)
+        self.window and self.window.get_event(event)
 
     def update_game(self, surface, keys, current_time, dt, scale):
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
@@ -301,8 +319,6 @@ class Blackjack(tools._State):
         self.new_game_button.visible = self.state == "Show Results"
         for button in self.player_buttons:
             button.visible = self.state == "Player Turn" and button.active
-
-        self.persist["music_handler"].update(scale)
 
         if self.state == "Betting":
             if not self.moving_stacks:
@@ -438,14 +454,16 @@ class Blackjack(tools._State):
             self.elapsed -= 17.0
             self.update_game(surface, keys, current_time, dt, scale)
         self.buttons.update(mouse_pos)
-        if self.advisor_window:
-            if self.advisor_window.done:
-                self.advisor_window = None
-        if self.warning_window:
-            self.warning_window.update(mouse_pos)
-            if self.warning_window.done:
-                self.warning_window = None
+        self.update_windows(mouse_pos)
+        for blinker in self.result_labels:
+            blinker.update(dt)
         self.draw(surface, dt)
+
+    def update_windows(self, mouse_pos):
+        if self.window:
+            self.window.update(mouse_pos)
+            if self.window.done:
+                self.window = None
 
     def draw(self, surface, dt):
         surface.fill(prepare.FELT_GREEN)
@@ -464,9 +482,8 @@ class Blackjack(tools._State):
                          hand.cards[0].rect.unionall(rects).inflate(8, 8), 3)
         if self.state == "Show Results":
             for blinker in self.result_labels:
-                blinker.draw(surface, dt)
-        self.persist["music_handler"].draw(surface)
+                blinker.draw(surface)
         self.chip_total_label.draw(surface)
-        self.buttons.draw(surface)
-        self.advisor_window and self.advisor_window.draw(surface)
-        self.warning_window and self.warning_window.draw(surface)
+        if not self.window:
+            self.buttons.draw(surface)
+        self.window and self.window.draw(surface)

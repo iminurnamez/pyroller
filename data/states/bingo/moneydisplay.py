@@ -71,7 +71,7 @@ class MoneyDigit(common.DrawableGroup, loggable.Loggable):
     def hide_and_show_new(self, digit):
         """Hide this display and then reshow with new digit"""
         # TODO: refactor the movement logic here - this should be built into the Drawable class
-        if digit != self.text.displayed_text:
+        if digit != self.text.text:
             self.new_value = digit
             for i in range(S['money-hide-repeats']):
                 for item in self:
@@ -79,7 +79,7 @@ class MoneyDigit(common.DrawableGroup, loggable.Loggable):
                     item.rect.y += self.dy
                 yield 1
             #
-            self.text.rect_attributes = {'x': self.text.rect.x, 'y': self.text.rect.y}
+            self.text.rect_attr = {'x': self.text.rect.x, 'y': self.text.rect.y}
             self.text.set_text(self.new_value)
             #
             for i in range(S['money-hide-repeats']):

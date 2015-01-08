@@ -17,6 +17,7 @@ class StatsMenu(tools._State):
                           {"midtop":(screen_rect.centerx, screen_rect.top+10)})
         self.games = ["Blackjack", "Bingo", "Craps", "Keno"]
         self.buttons = self.make_buttons(screen_rect)
+        self.use_music_handler = False
 
     def make_buttons(self, screen_rect):
         top = self.title.rect.bottom+50
