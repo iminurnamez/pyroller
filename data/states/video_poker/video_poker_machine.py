@@ -498,6 +498,7 @@ class Machine:
 
     def new_game(self):
         self.playing = True
+        self.dealer.startup()
         self.dealer.playing = True
         self.dealer.waiting = False
         if self.bet > 0:
@@ -521,7 +522,8 @@ class Machine:
         rank = self.dealer.evaluate_hand()
         self.pay_board.update_rank_rect(rank)
         if rank != 99:
-            self.win = PAYTABLE[self.bet - 1][rank]
+            index = self.bet - 1
+            self.win = PAYTABLE[index][rank]
             print "Player wins: {}".format(self.win)
         self.bet = 0
         self.playing = False
