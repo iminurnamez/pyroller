@@ -22,7 +22,7 @@ class NoticeWindow(object):
     def confirm(self, *args):
         self.done = True
 
-    def get_event(self, event, scale):
+    def get_event(self, event):
         self.ok.get_event(event)
 
     def update(self, mouse_pos):

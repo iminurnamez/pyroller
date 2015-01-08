@@ -32,7 +32,7 @@ class Blackjack(tools._State):
         self.elapsed = 17.0
         self.warning_window = None
         self.advisor_window = None
-        self.windows = None
+        self.windows = False
         self.make_buttons()
         self.result_labels = []
 
@@ -82,7 +82,9 @@ class Blackjack(tools._State):
         self.hit_button.active = True
         self.stand_button.active = True
         self.current_player_hand = self.player.hands[0]
-        self.advisor_window = None
+##        self.advisor_window = None
+##        self.warning_window = None
+##        self.windows = None
         self.game_started = True
 
     def startup(self, current_time, persistent):
@@ -261,32 +263,30 @@ class Blackjack(tools._State):
         self.next = "LOBBYSCREEN"
 
     def bet_warning(self):
-        warning_text = "You sure? Exiting the game will forfeit your current bets!"
+        warning = "You sure? Exiting the game will forfeit your current bets!"
         self.warning_window = WarningWindow(self.screen_rect.center,
-                                            warning_text, self.leave_state)
+                                            warning, self.leave_state)
 
     def get_event(self, event, scale=(1,1)):
-        windows = self.advisor_window or self.warning_window
-        if event.type == pg.QUIT and not windows:
+        if event.type == pg.QUIT and not self.windows:
             if any([hand.bet.get_chip_total() for hand in self.player.hands]):
                 self.bet_warning()
             else:
                 self.leave_state()
-        elif event.type == pg.MOUSEBUTTONDOWN and not windows:
-            if not self.warning_window and not self.advisor_window:
-                pos = tools.scaled_mouse_pos(scale, event.pos)
-                self.persist["music_handler"].get_event(event, scale)
-                if self.state == "Betting":
-                    if not self.moving_stacks and event.button == 1:
-                        new_movers = self.player.chip_pile.grab_chips(pos)
-                        if new_movers:
+        elif event.type == pg.MOUSEBUTTONDOWN and not self.windows:
+            pos = tools.scaled_mouse_pos(scale, event.pos)
+            self.persist["music_handler"].get_event(event, scale)
+            if self.state == "Betting":
+                if not self.moving_stacks and event.button == 1:
+                    new_movers = self.player.chip_pile.grab_chips(pos)
+                    if new_movers:
+                        choice(self.chip_sounds).play()
+                        self.moving_stacks.append(new_movers)
+                    for hand in self.player.hands:
+                        unbet_stack = hand.bet.grab_chips(pos)
+                        if unbet_stack:
                             choice(self.chip_sounds).play()
-                            self.moving_stacks.append(new_movers)
-                        for hand in self.player.hands:
-                            unbet_stack = hand.bet.grab_chips(pos)
-                            if unbet_stack:
-                                choice(self.chip_sounds).play()
-                                self.player.chip_pile.add_chips(unbet_stack.chips)
+                            self.player.chip_pile.add_chips(unbet_stack.chips)
         elif event.type == pg.MOUSEBUTTONUP:
             pos = tools.scaled_mouse_pos(scale, event.pos)
             if self.moving_stacks and event.button == 1:
@@ -299,7 +299,7 @@ class Blackjack(tools._State):
                         self.current_player_hand.bet.add_chips(stack.chips)
                 self.moving_stacks = []
         elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_a and not windows:
+            if event.key == pg.K_a and not self.windows:
                 test_text = ("This is a test string to simulate the advice "
                              "that a blackjack advisor would give. The string "
                              "should be broken up into shorter lines aligned "
@@ -312,7 +312,7 @@ class Blackjack(tools._State):
             self.deal_button.get_event(event)
         self.nav_buttons.get_event(event)
         self.advisor_window and self.advisor_window.get_event(event)
-        self.warning_window and self.warning_window.get_event(event, scale)
+        self.warning_window and self.warning_window.get_event(event)
 
     def update_game(self, surface, keys, current_time, dt, scale):
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
@@ -455,24 +455,25 @@ class Blackjack(tools._State):
         self.chip_rack.update()
 
     def update(self, surface, keys, current_time, dt, scale):
-        windows = self.advisor_window or self.warning_window
         mouse_pos = tools.scaled_mouse_pos(scale, pg.mouse.get_pos())
         self.elapsed += dt
         while self.elapsed >= 17.0:
             self.elapsed -= 17.0
             self.update_game(surface, keys, current_time, dt, scale)
         self.buttons.update(mouse_pos)
-        if self.advisor_window:
-            self.advisor_window.update(mouse_pos)
-            if self.advisor_window.done:
-                self.advisor_window = None
-        if self.warning_window:
-            self.warning_window.update(mouse_pos)
-            if self.warning_window.done:
-                self.warning_window = None
+        self.windows = self.update_windows()
         for blinker in self.result_labels:
-                blinker.update(dt)
+            blinker.update(dt)
         self.draw(surface, dt)
+
+    def update_windows(self):
+        for name in ("advisor_window", "warning_window"):
+            window = getattr(self, name)
+            if window:
+                window.update(mouse_pos)
+                if window.done:
+                    setattr(self, name, None)
+        return self.advisor_window or self.warning_window
 
     def draw(self, surface, dt):
         surface.fill(prepare.FELT_GREEN)
