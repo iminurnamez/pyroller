@@ -520,11 +520,12 @@ class Machine:
         self.pay_board.update_rank_rect(rank)
         if rank != 99:
             self.win = PAYTABLE[self.bet][rank]
-            self.bet = 0
-            self.playing = False
-            self.dealer.playing = False
-            self.start_waiting()
-            print self.win
+            print "player wins: {}".format(self.win)
+        print "player wins lose, Game over"
+        self.bet = 0
+        self.playing = False
+        self.dealer.playing = False
+        self.start_waiting()
     
     def draw_cards(self, *args):
         if not self.playing:
