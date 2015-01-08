@@ -153,13 +153,14 @@ class Dealer:
         self.hand = self.deck.make_hand()
         self.hand_len = len(self.hand)
         self.build()
-        self.standby = True
         self.card_index = 0
         self.max_cards = len(self.hand)
         self.revealing = False
         self.held_cards = []
         self.changing_cards = list(range(5))
-        self.ready2play = False
+        self.standby = True
+        self.waiting = False
+        self.playing = False
 
     def draw_cards(self):
         for index in range(self.hand_len):
@@ -290,9 +291,8 @@ class Dealer:
                 if card.rect.collidepoint(mouse_pos):
                     self.toogle_held(index)
 
-    def update(self, playing, ready2play, dt):
-        if playing:
-            self.ready2play = ready2play
+    def update(self, dt):
+        if self.playing:
             if self.revealing:
                 self.elapsed += dt
                 while self.elapsed >= self.animation_speed:
@@ -312,7 +312,7 @@ class Dealer:
         if self.standby:
             self.standby_label.update(dt)
 
-        if self.ready2play:
+        if self.waiting:
             self.waiting_label.update(dt)
 
 
@@ -323,7 +323,7 @@ class Dealer:
             self.held_labels[index].draw(surface)
         if self.standby:
             self.standby_label.draw(surface)
-        elif not self.ready2play:
+        elif self.waiting:
             self.waiting_label.draw(surface)
 
 
@@ -351,6 +351,7 @@ class Machine:
     def startup(self):
         self.playing = False
         self.ready2play = False
+        self.waiting = False
         self.bet = 0
         self.credits = 0
         self.coins = 0
@@ -427,13 +428,17 @@ class Machine:
 
 
     def insert_coin(self, *args):
-        self.playing = True
+        self.start_waiting()
         self.credits += 1
-
-        # bet and bet max buttons
-        self.buttons[0].active = True
-        self.buttons[1].active = True
         self.credits_sound.play()
+
+    def start_waiting(self):
+        self.waiting = True
+        self.dealer.waiting = True
+
+    def toogle_buttons(self, buttons, active=True):
+        for button in buttons:
+                button.active = active
 
 
     def bet_one(self, *args):
@@ -489,25 +494,44 @@ class Machine:
             self.ready2play = True
             self.pay_board.update_bet_rect(self.coins)
 
-    
-    def draw_cards(self, *args):
+    def new_game(self):
+        self.playing = True
+        self.dealer.playing = True
+        self.dealer.waiting = False
         if self.bet > 0:
             self.dealer.draw_cards()
             rank = self.dealer.evaluate_hand()
             self.pay_board.update_rank_rect(rank)
-            self.bet = 0
         else:
             if self.coins > 0:
                 self.make_last_bet()
                 self.dealer.draw_cards()
                 rank = self.dealer.evaluate_hand()
                 self.pay_board.update_rank_rect(rank)
-                self.bet = 0
+
         for button in self.buttons:
             button.active = True
         # bet and bet max buttons
-        self.buttons[0].active = False
-        self.buttons[1].active = False
+        self.toogle_buttons((self.buttons[0], self.buttons[1]), False)
+
+    def evaluate_final_hand(self):
+        self.dealer.draw_cards()
+        rank = self.dealer.evaluate_hand()
+        self.pay_board.update_rank_rect(rank)
+        if rank != 99:
+            self.win = PAYTABLE[self.bet][rank]
+            self.bet = 0
+            self.playing = False
+            self.dealer.playing = False
+            self.start_waiting()
+            print self.win
+    
+    def draw_cards(self, *args):
+        if not self.playing:
+            self.new_game()
+        else:
+            self.evaluate_final_hand()
+        
 
 
     def make_held(self, *args):
@@ -541,16 +565,14 @@ class Machine:
                         {"topleft": (self.label_x1, self.label_y)})
         self.info_labels.append(label)
 
-
-        if self.credits == 0 and self.playing == False:
-            for button in self.buttons:
-                button.active = False
-
+        if self.waiting:
+            # bet and bet max buttons
+            self.toogle_buttons((self.buttons[0], self.buttons[1]))
         
-        if self.bet == 0:
-            self.ready2play = False
+        if self.credits == 0 and self.playing == False:
+            self.toogle_buttons(self.buttons, False)
 
-        self.dealer.update(self.playing, self.ready2play, dt)
+        self.dealer.update(dt)
 
         self.coins_button.update(mouse_pos)
         for button in self.buttons:
