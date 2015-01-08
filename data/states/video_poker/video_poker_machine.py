@@ -491,12 +491,10 @@ class Machine:
         if self.credits > 0:
             if self.credits >= self.coins:
                 self.bet = self.coins
-                self.credits -= self.bet            
-                self.bet = 0
+                self.credits -= self.bet
             else:
                 self.bet = self.credits
                 self.coins = self.credits
-                self.credits = 0
             self.ready2play = True
             self.pay_board.update_bet_rect(self.coins)
 
@@ -526,7 +524,7 @@ class Machine:
         rank = self.dealer.evaluate_hand()
         self.pay_board.update_rank_rect(rank)
         if rank != 99:
-            index = self.bet
+            index = self.bet - 1
             self.win = PAYTABLE[index][rank]
             print "Player wins: {}".format(self.win)
         self.bet = 0
