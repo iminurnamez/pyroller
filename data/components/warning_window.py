@@ -53,7 +53,7 @@ class WarningWindow(NoticeWindow):
         self.done = True
         leave and self.callback()
 
-    def get_event(self, event, scale):
+    def get_event(self, event):
         self.buttons.get_event(event)
 
     def update(self, mouse_pos):

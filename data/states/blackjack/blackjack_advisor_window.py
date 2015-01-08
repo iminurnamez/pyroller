@@ -12,7 +12,7 @@ class AdvisorWindow(object):
         self.label = MultiLineLabel(self.font, 32, text, "gray20",
                                               {"center": self.window.center},
                                               char_limit=42)
-        pos = (self.window.centerx-159, self.window.bottom-80)
+        pos = (self.window.centerx-159, self.window.bottom-111)
         self.done_button = NeonButton(pos, "Back", self.exit_advisor)
         self.done = False
 
@@ -30,4 +30,3 @@ class AdvisorWindow(object):
         pg.draw.rect(surface, pg.Color("gray40"), self.window, 3)
         self.label.draw(surface)
         self.done_button.draw(surface)
-

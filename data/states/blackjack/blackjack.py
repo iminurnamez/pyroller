@@ -15,9 +15,11 @@ from .blackjack_advisor_window import AdvisorWindow
 
 
 class Blackjack(tools._State):
-    """State to represent a blackjack game. Player cash
-        will be converted to chips for the game and converted
-        back into cash before returning to the lobby."""
+    """
+    State to represent a blackjack game. Player cash
+    will be converted to chips for the game and converted
+    back into cash before returning to the lobby.
+    """
     def __init__(self):
         super(Blackjack, self).__init__()
         self.font = prepare.FONTS["Saniretro"]
@@ -30,9 +32,7 @@ class Blackjack(tools._State):
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.game_started = False
         self.elapsed = 17.0
-        self.warning_window = None
-        self.advisor_window = None
-        self.windows = False
+        self.windows = None
         self.make_buttons()
         self.result_labels = []
 
@@ -82,9 +82,6 @@ class Blackjack(tools._State):
         self.hit_button.active = True
         self.stand_button.active = True
         self.current_player_hand = self.player.hands[0]
-##        self.advisor_window = None
-##        self.warning_window = None
-##        self.windows = None
         self.game_started = True
 
     def startup(self, current_time, persistent):
@@ -93,8 +90,6 @@ class Blackjack(tools._State):
         self.casino_player = self.persist["casino_player"]
         if not self.game_started:
             self.new_game(self.casino_player.stats["cash"])
-        self.warning_window = None
-        self.advisor_window = None
         self.windows = None
         self.elapsed = 17.0
 
@@ -106,7 +101,7 @@ class Blackjack(tools._State):
             else:
                 text = "You need to make a bet first!"
                 center = self.screen_rect.center
-                self.warning_window = NoticeWindow(center, text)
+                self.windows = NoticeWindow(center, text)
 
     def hit_click(self, *args):
         if not self.windows:
@@ -121,8 +116,8 @@ class Blackjack(tools._State):
         self.moving_cards.append(card)
 
     def stand(self, *args):
+        """Player is done with this hand."""
         if not self.windows:
-            """Player is done with this hand."""
             self.current_player_hand.final = True
 
     def double_down(self, *args):
@@ -146,8 +141,8 @@ class Blackjack(tools._State):
                 hand.final = True
             else:
                 text = "You don't have enough cover that bet!"
-                pos = self.screen_rect.center
-                self.warning_window = NoticeWindow(pos, text)
+                center = self.screen_rect.center
+                self.windows = NoticeWindow(center, text)
 
     def split_hand(self, *args):
         """
@@ -161,8 +156,8 @@ class Blackjack(tools._State):
             bet = hand.bet.get_chip_total()
             if chip_total < bet:
                 text = "You don't have enough cover that bet!"
-                pos = self.screen_rect.center
-                self.warning_window = NoticeWindow(pos, text)
+                center = self.screen_rect.center
+                self.windows = NoticeWindow(center, text)
                 return
             if len(hand.cards) == 2:
                 c1 = hand.card_values[hand.cards[0].value]
@@ -224,8 +219,10 @@ class Blackjack(tools._State):
                         hand.winner = True
 
     def pay_out(self):
-        """Calculate player win amounts, update stats and return chips
-        totalling total win amount."""
+        """
+        Calculate player win amounts, update stats and return chips
+        totalling total win amount.
+        """
         cash = 0
         for hand in self.player.hands:
             bet = hand.bet.get_chip_total()
@@ -263,9 +260,9 @@ class Blackjack(tools._State):
         self.next = "LOBBYSCREEN"
 
     def bet_warning(self):
-        warning = "You sure? Exiting the game will forfeit your current bets!"
-        self.warning_window = WarningWindow(self.screen_rect.center,
-                                            warning, self.leave_state)
+        warn = "You sure? Exiting the game will forfeit your current bets!"
+        center = self.screen_rect.center
+        self.windows = WarningWindow(center, warn, self.leave_state)
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT and not self.windows:
@@ -304,15 +301,14 @@ class Blackjack(tools._State):
                              "that a blackjack advisor would give. The string "
                              "should be broken up into shorter lines aligned "
                              "to the left.")
-                self.advisor_window = AdvisorWindow((700, 500), test_text)
+                self.windows = AdvisorWindow((700, 500), test_text)
 
         if self.state == "Player Turn" and not self.moving_cards:
             self.player_buttons.get_event(event)
         elif self.state == "Betting" and not self.moving_stacks:
             self.deal_button.get_event(event)
         self.nav_buttons.get_event(event)
-        self.advisor_window and self.advisor_window.get_event(event)
-        self.warning_window and self.warning_window.get_event(event)
+        self.windows and self.windows.get_event(event)
 
     def update_game(self, surface, keys, current_time, dt, scale):
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
@@ -461,19 +457,16 @@ class Blackjack(tools._State):
             self.elapsed -= 17.0
             self.update_game(surface, keys, current_time, dt, scale)
         self.buttons.update(mouse_pos)
-        self.windows = self.update_windows()
+        self.update_windows(mouse_pos)
         for blinker in self.result_labels:
             blinker.update(dt)
         self.draw(surface, dt)
 
-    def update_windows(self):
-        for name in ("advisor_window", "warning_window"):
-            window = getattr(self, name)
-            if window:
-                window.update(mouse_pos)
-                if window.done:
-                    setattr(self, name, None)
-        return self.advisor_window or self.warning_window
+    def update_windows(self, mouse_pos):
+        if self.windows:
+            self.windows.update(mouse_pos)
+            if self.windows.done:
+                self.windows = None
 
     def draw(self, surface, dt):
         surface.fill(prepare.FELT_GREEN)
@@ -495,6 +488,6 @@ class Blackjack(tools._State):
                 blinker.draw(surface)
         self.persist["music_handler"].draw(surface)
         self.chip_total_label.draw(surface)
-        self.buttons.draw(surface)
-        self.advisor_window and self.advisor_window.draw(surface)
-        self.warning_window and self.warning_window.draw(surface)
+        if not self.windows:
+            self.buttons.draw(surface)
+        self.windows and self.windows.draw(surface)
