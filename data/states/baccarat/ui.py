@@ -9,11 +9,45 @@ blending of the two.
 """
 
 import random
+from collections import OrderedDict
+from itertools import product
 import pygame
 from pygame.transform import smoothscale
 from ... import prepare
 
-__all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck']
+__all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck', 'Chip',
+           'ChipPile']
+
+
+def cut_sheet(surface, dim, margin=0, spacing=0, subsurface=True):
+    """ Automatically cut a sprite sheet into individual images
+
+    :param surface: pygame Surface
+    :param dim: the dimensions of the image in tiles
+    :param margin: number of pixels around all tiles
+    :param spacing: number of pixels around each tile
+    :param subsurface: if true, images will be subsurfaces
+    :return: generator of (tile_x, tile_y, surface)
+    """
+    if subsurface:
+        surface = surface.convert_alpha()
+
+    width, height = surface.get_size()
+    tilewidth = int(width / dim[0])
+    tileheight = int(height / dim[0])
+
+    p = product(
+        range(margin, height + margin - tilewidth + 1, tileheight + spacing),
+        range(margin, width + margin - tileheight + 1, tilewidth + spacing))
+
+    for real_gid, (y, x) in p:
+        rect = (x, y, tilewidth, tileheight)
+        if subsurface:
+            yield x, y, surface.subsurface(rect)
+        else:
+            tile = pygame.Surface(rect.size, pygame.SRCALPHA)
+            tile.blit(surface, (0, 0), rect)
+            yield x, y, tile
 
 
 def make_cards(decks, card_size, shuffle=False):
@@ -53,7 +87,7 @@ class Card(pygame.sprite.DirtySprite):
                   12: "Queen",
                   13: "King"}
 
-    def __init__(self, value, suit, rect, face_up=True):
+    def __init__(self, value, suit, rect, face_up=False):
         super(Card, self).__init__()
         self.value = value
         self.suit = suit
@@ -61,6 +95,45 @@ class Card(pygame.sprite.DirtySprite):
         self._face_up = face_up
         self.get_images()
         self.update_image()
+
+    def update_image(self):
+        self.image = self.front_face if self.face_up else self.back_face
+
+    def get_images(self):
+        try:
+            self.front_face = Card.face_cache[self.value]
+        except KeyError:
+            image = self.render_front(self.name, self.rect.size)
+            self.front_face = image
+            Card.face_cache[self.value] = image
+
+        try:
+            self.back_face = Card.face_cache["back"]
+        except KeyError:
+            image = self.render_back(self.rect.size)
+            self.back_face = image
+            Card.face_cache["back"] = image
+
+    @staticmethod
+    def render_front(name, size):
+        front = prepare.GFX[name.lower().replace(" ", "_")]
+        if not size == front.get_size():
+            front = smoothscale(front, size).convert_alpha()
+        return front
+
+    @staticmethod
+    def render_back(size):
+        snake = prepare.GFX["pysnakeicon"]
+        rect = pygame.Rect((0, 0), size)
+        back = pygame.Surface(size)
+        back.fill(pygame.Color("dodgerblue"))
+        s_rect = snake.get_rect().fit(rect)
+        s_rect.midbottom = rect.midbottom
+        snake = smoothscale(snake, s_rect.size)
+        back.blit(snake, s_rect)
+        pygame.draw.rect(back, pygame.Color("gray95"), rect, 4)
+        pygame.draw.rect(back, pygame.Color("gray20"), rect, 1)
+        return back
 
     @property
     def face_up(self):
@@ -90,34 +163,6 @@ class Card(pygame.sprite.DirtySprite):
     @property
     def long_name(self):
         return "{} of {}".format(self.card_names[self.value], self.suit)
-
-    def get_images(self):
-        key = (self.value, self.suit)
-        try:
-            self.front_face, self.back_face = Card.face_cache[key]
-        except KeyError:
-            front, back = self.render_card(self.name, self.rect.size)
-            self.front_face, self.back_face = front, back
-            Card.face_cache[key] = front, back
-
-    def update_image(self):
-        self.image = self.front_face if self.face_up else self.back_face
-
-    @staticmethod
-    def render_card(name, size):
-        rect = pygame.Rect((0, 0), size)
-        image = prepare.GFX[name.lower().replace(" ", "_")]
-        snake = prepare.GFX["pysnakeicon"]
-        front = smoothscale(image, size).convert_alpha()
-        back = pygame.Surface(size)
-        back.fill(pygame.Color("dodgerblue"))
-        s_rect = snake.get_rect().fit(rect)
-        s_rect.midbottom = rect.midbottom
-        snake = smoothscale(snake, s_rect.size)
-        back.blit(snake, s_rect)
-        pygame.draw.rect(back, pygame.Color("gray95"), rect, 4)
-        pygame.draw.rect(back, pygame.Color("gray20"), rect, 1)
-        return front, back
 
 
 class Deck(pygame.sprite.OrderedUpdates):
@@ -206,6 +251,136 @@ class Deck(pygame.sprite.OrderedUpdates):
                 else:
                     y = self.rect.top
                     x += ox + card.rect.width
+
+
+CHIP_Y = {"blue"  : 0,
+          "red"   : 64,
+          "black" : 128,
+          "green" : 192,
+          "white" : 256}
+
+
+def get_chip_images():
+    image = prepare.GFX["chips"]
+    sub = image.subsurface
+    scale = pygame.transform.smoothscale
+    # small_dim = 32, 32
+    # dim = 2, 4
+    # images = dict()
+    # flat_images = dict()
+    # colors = ['blue', 'red', 'black', 'green', 'white']
+    # for x, y, surface in cut_sheet(image, dim):
+    #     if not x:
+    #         color = colors.pop(0)
+    #     images['large'] = surface
+    #     images['small'] = scale(surface, small_dim).convert_alpha()
+    #
+    #
+
+    images = {(32, 19): {col: sub(64, CHIP_Y[col], 64, 38) for col in CHIP_Y}}
+    images[(48, 30)] = {col: scale(images[(32, 19)][col], (48, 30)) for col in CHIP_Y}
+    flat_images = {(32, 19): {col: sub(0, CHIP_Y[col], 64, 64) for col in CHIP_Y}}
+    flat_images[(48, 30)] = {col: scale(flat_images[(32,19)][col], (48, 48)) for col in CHIP_Y}
+    return images, flat_images
+
+
+class Chip(object):
+    """Class to represent a single casino chip."""
+    chip_values = {100: 'black',
+                   25: 'blue',
+                   10: 'green',
+                   5: 'red',
+                   1: 'white'}
+
+    images, flat_images = get_chip_images()
+    thicknesses = {19: 5, 30: 7}
+    chip_size = prepare.CHIP_SIZE
+
+    def __init__(self, value, chip_size=None):
+        self.value = value
+        if chip_size is not None:
+            self.chip_size = chip_size
+
+        self.image = Chip.images[self.chip_size][value]
+        self.flat_image = Chip.flat_images[self.chip_size][self.color]
+        self.rect = self.image.get_rect()
+
+
+class ChipPile(object):
+    """Represents a player's pile of chips."""
+
+    def __init__(self, rect):
+        self.rect = pygame.Rect(rect)
+        self.chips = list()
+
+    def get_chip_total(self):
+        """"Returns total cash value of self.chips."""
+        return chips.chips_to_cash(self.chips)
+
+    def add_chips(self, chips):
+        """Adds chips and adjusts stacks."""
+        for chip in chips:
+            assert(isinstance(chip, Chip))
+        self.chips.extend(chips)
+
+    def withdraw_chips(self, amount):
+        """Withdraw chips totalling amount and adjust stacks."""
+
+        chips = self.chips
+        chips.sort()
+        while chips:
+            cursor = self.chips[-1]
+            if cursor <= amount:
+                chips.pop()
+                amount -= cursor
+
+        self.stacks = self.make_stacks()
+        return withdrawal
+
+    def make_stacks(self):
+        """Returns a list of ChipStacks sorted by y-position."""
+        w, h = self.chip_size
+        left = self.rect.left
+        bottom = self.rect.top + h
+        stacks = []
+        for color in self.chips:
+            chips = self.chips[color]
+            stackers = [chips[i: i + self.stack_height] for i in range(0, len(chips), self.stack_height)]
+            limit = self.columns_per_color * self.num_rows
+            if len(stackers) >  limit:
+                stackers = stackers[:limit]
+            left2 = left + w + self.horiz_space
+            bottom_ = bottom
+            for i, stacker in enumerate(stackers):
+                if not i % self.columns_per_color:
+                    stack = ChipStack(stacker, (left, bottom_))
+                else:
+                    stack = ChipStack(stacker, (left2, bottom_))
+                    bottom_ += h + self.vert_space
+                stacks.append(stack)
+            left += (w + self.horiz_space) * 2
+        return sorted(stacks, key=lambda x: x.bottomleft[1])
+
+    def grab_chips(self, click_pos):
+        """
+        Calls grab_chips on each stack, returning the first result
+        that is not None. None is returned if no chips are grabbed.
+        """
+        for stack in self.stacks[::-1]:
+            bet_stack = stack.grab_chips(click_pos)
+            if bet_stack is not None:
+                color = bet_stack.chips[0].color
+                for chip in bet_stack.chips:
+                    self.chips[color].remove(chip)
+                self.stacks = self.make_stacks()
+                return bet_stack
+
+    def get_chip_total(self):
+        """Returns cash total of all chips in pile."""
+        total = 0
+        for color in self.chips:
+            total += Chip.chip_values[color] * len(self.chips[color])
+        return total
 
 
 class TextSprite(pygame.sprite.DirtySprite):

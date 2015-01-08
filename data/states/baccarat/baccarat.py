@@ -15,7 +15,7 @@ font_size = 64
 
 
 class Baccarat(tools._State):
-    """Baccarat game.  rules are configured in rules.json
+    """Baccarat game.  rules are configured in baccarat.json
 
     Rules were compiled by quick study on the Internet.  As expected, there is
     a considerable amount of variation on the stated rules, so artistic license
@@ -28,11 +28,8 @@ class Baccarat(tools._State):
     def startup(self, now, persistent):
         self.now = now
         self.persist = persistent
-
         self.variation = "mini"
-
         self.load_json(os.path.join('resources', 'baccarat.json'))
-
         self.players = list()
 
         # stuff that might get moved to a gui layer sometime?
@@ -50,18 +47,10 @@ class Baccarat(tools._State):
         self.shoe = Deck((0, 0, 800, 600), decks=2)
         self.discard = Deck((0, 610, 0, 0), stacking=(0, 0))
 
+        self.hud.add(ChipPile((0, 800, 800, 200)))
+
         b = NeonButton('lobby', (1000, 920, 0, 0), self.goto_lobby)
         self.hud.add(b)
-
-        # if 'Baccarat' not in self.casino_player.stats:
-        #     self.casino_player.stats['Baccarat'] = OrderedDict([
-        #         ('games played', 0),
-        #         ('total winnings', 0),
-        #         ('earned', 0),
-        #         ('jackpots', 0),
-        #         ('gutters', 0),
-        #         ])
-        # self.casino_player.stats['Baccarat']['games played'] += 1
 
     def load_json(self, filename):
         with open(filename) as fp:
@@ -69,43 +58,7 @@ class Baccarat(tools._State):
 
         config = data['baccarat'][self.variation]
         self.options = dict(config['options'])
-        self.rules = dict(config['rules'])
-
-        print self.rules
-        self.fsm = fysom.Fysom(**self.rules)
-
-    def bet(self):
-        pass
-
-    def begin(self):
-        pass
-
-    def change_dealer(self):
-        dealer = self.players[0]
-
-    def deal(self):
-        pass
-
-    def three_option(self):
-        pass
-
-    def five_option(self):
-        pass
-
-    def count(self):
-        pass
-
-    def clear_table(self):
-        pass
-
-    def end(self):
-        pass
-
-    def new_shoe(self):
-        decks = 7
-        self.shoe.remove_all()
-        self.shoe.add_decks(decks)
-        self.discard.remove_all()
+        self.fsm = fysom.Fysom(**config['rules'])
 
     def goto_lobby(self):
         self.cash_out()
@@ -161,7 +114,7 @@ class Baccarat(tools._State):
 
             for sprite in reversed(self.shoe.sprites()):
                 if sprite.rect.collidepoint(pos):
-                    #sprite.face_up = not sprite.face_up
+                    # sprite.face_up = not sprite.face_up
                     self.shoe.remove(sprite)
                     self.discard.add(sprite)
                     # break so that cards under the clicked card are not picked
@@ -192,3 +145,78 @@ class Baccarat(tools._State):
         # this music stuff really needs to be moved to the core
         # self.persist["music_handler"].update(scale)
         # self.persist["music_handler"].draw(surface)
+
+
+class BaccaratState(object):
+    def __init__(self, parent):
+        self.parent = parent
+
+
+class BeginState(BaccaratState):
+    def get_event(self, event, scale=(1, 1)):
+        pass
+
+    def update(self, surface, keys, current_time, dt, scale):
+        pass
+
+
+class BetState(BaccaratState):
+    def startup(self):
+        B.linkEvent('bac-click-chip', self.on_chip)
+
+    def cleanup(self):
+        B.unlinkEvent('bac-click-chip', self.on_chip)
+
+    def on_chip(self, *args):
+        pass
+
+
+class DealState(BaccaratState):
+    def get_event(self, event, scale=(1, 1)):
+        pass
+
+    def update(self, surface, keys, current_time, dt, scale):
+        pass
+
+
+class ThreeOptionState(BaccaratState):
+    def get_event(self, event, scale=(1, 1)):
+        pass
+
+    def update(self, surface, keys, current_time, dt, scale):
+        pass
+
+
+class FiveOptionState(BaccaratState):
+    def get_event(self, event, scale=(1, 1)):
+        pass
+
+    def update(self, surface, keys, current_time, dt, scale):
+        pass
+
+
+class ClearTableState(BaccaratState):
+    def get_event(self, event, scale=(1, 1)):
+        pass
+
+    def update(self, surface, keys, current_time, dt, scale):
+        pass
+
+
+class NewShoeState(BaccaratState):
+    def get_event(self, event, scale=(1, 1)):
+        pass
+
+    def update(self, surface, keys, current_time, dt, scale):
+        decks = self.options['decks']
+        self.shoe.remove_all()
+        self.shoe.add_decks(decks)
+        self.discard.remove_all()
+
+
+class EndState(BaccaratState):
+    def get_event(self, event, scale=(1, 1)):
+        pass
+
+    def update(self, surface, keys, current_time, dt, scale):
+        pass
