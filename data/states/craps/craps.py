@@ -15,7 +15,7 @@ x dice animation
 from collections import OrderedDict
 import pygame as pg
 from ... import tools, prepare
-from ...components.labels import NeonButton, Label, ButtonGroup
+from ...components.labels import NeonButton, Label, ButtonGroup, TextBox
 from . import data, dice, point_chip
 import random
 
@@ -45,6 +45,19 @@ class Craps(tools._State):
         self.pointchip = point_chip.PointChip()
         self.points = [4,5,6,8,9,10]
         self.point = 0 #off position
+        
+        self.widgets = []
+        self.setup_debug_entry()
+        
+    def setup_debug_entry(self):
+        settings = {
+            "command" : self.roll,
+            "font" : prepare.FONTS["Saniretro"],
+            "clear_on_enter" : True,
+            "inactive_on_enter" : False,
+            'active': False
+        }
+        self.widgets.append(TextBox((100,100,150,30), **settings))
 
     def make_buttons(self, screen_rect):
         buttons = ButtonGroup()
@@ -91,6 +104,8 @@ class Craps(tools._State):
         elif event.type == pg.VIDEORESIZE:
             self.set_table()
         self.buttons.get_event(event)
+        for widget in self.widgets:
+            widget.get_event(event, tools.scaled_mouse_pos(scale))
 
     def cash_out_player(self):
         self.casino_player.stats["cash"] = self.player.get_chip_total()
@@ -135,6 +150,8 @@ class Craps(tools._State):
         if not self.dice[0].rolling and self.dice[0].draw_dice:
             self.dice_total_label.draw(surface)
         self.pointchip.draw(surface)
+        for widget in self.widgets:
+            widget.draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
         self.persist["music_handler"].update(scale)
@@ -148,4 +165,6 @@ class Craps(tools._State):
 ##        print(self.point)
         self.pointchip.update(current_time, self.dice_total, self.dice[0])
         self.update_total_label()
+        for widget in self.widgets:
+            widget.update()
         #print(mouse_pos)
