@@ -77,3 +77,16 @@ Source URL: http://www.jazz-on-line.com/
 Artist: Ella Fitzgerald
 License: Believed to be in the public domain
 
+
+
+#Sound Effects
+
+Audio Files: slot_reel_short.ogg, slot_reel_long.ogg, spindown.ogg
+Source URL: https://www.freesound.org/people/kellyconidi/sounds/218833/
+Artist: https://www.freesound.org/people/kellyconidi/
+License: CC-0
+
+Audio File: slot_reel_clunk.ogg
+Source URL: http://opengameart.org/content/equipment-clicks-iii
+Artist: http://opengameart.org/users/lfa
+License: CC-0
