@@ -213,7 +213,7 @@ class StateMachine(tools._State, loggable.Loggable):
         self.dt = dt
         self.state_clock.tick(dt)
         self.delay -= self.state_clock.get_time()
-R        #
+        #
         # Process all states
         self.persist["music_handler"].update(scale)
         for executor in list(self.generators):
