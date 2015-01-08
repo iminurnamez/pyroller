@@ -55,9 +55,12 @@ class PayBoard:
     def update_rank_rect(self, rank):
         """ 99 is the rank value for no matches"""
         if rank != 99:
+            old_pos = self.rank_rect.top
             self.rank_rect.top = self.rect.top + (self.rank_rect.h * rank)
-            self.show_rank_rect = True
-            self.rank_sound.play()
+            if not self.show_rank_rect:
+                self.show_rank_rect = True
+            if old_pos != self.rank_rect.top:
+                self.rank_sound.play()
         else:
             self.show_rank_rect = False
 
@@ -296,13 +299,14 @@ class Dealer:
             self.elapsed += dt
             while self.elapsed >= self.animation_speed:
                 self.elapsed -= self.animation_speed
-                index = self.changing_cards[self.card_index]
-                self.hand[index].face_up = True
-                self.deal_sound.play()
-                self.card_index += 1
-                if self.card_index >= len(self.changing_cards):
-                    self.card_index = 0
-                    self.revealing = False
+                if self.changing_cards:
+                    index = self.changing_cards[self.card_index]
+                    self.hand[index].face_up = True
+                    self.deal_sound.play()
+                    self.card_index += 1
+                    if self.card_index >= len(self.changing_cards):
+                        self.card_index = 0
+                        self.revealing = False
         
         if self.playing:
             self.standby = False
@@ -522,7 +526,7 @@ class Machine:
         rank = self.dealer.evaluate_hand()
         self.pay_board.update_rank_rect(rank)
         if rank != 99:
-            index = self.bet - 1
+            index = self.bet
             self.win = PAYTABLE[index][rank]
             print "Player wins: {}".format(self.win)
         self.bet = 0
