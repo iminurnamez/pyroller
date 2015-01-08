@@ -26,7 +26,7 @@ def pick_numbers(spot):
         if number not in numbers:
             numbers.append(number)
     return numbers
-    
+
 def is_winner(spot, hit):
     paytable = PAYTABLE[spot]
     for entry in paytable:
@@ -51,32 +51,32 @@ class Bet(object):
         self.casino_player.stats["cash"] -= int(amount)
         self.bet += amount
         self.is_paid = True
-        
+
     def clear(self):
         self.is_paid = False
         self.bet = 0
-        
+
     def result(self, spot, hit):
         if not self.is_paid:
             bet = self.bet
             self.bet = 0
             self.update(bet)
-            
+
         paytable = PAYTABLE[spot]
         payment = 0.0
         for entry in paytable:
             if entry[0] == hit:
                 payment = entry[1]
-                
+
             if payment > 0.0:
                 break
-                
+
         winnings = payment * self.bet
         #issue #75 (must cast to integer):
         self.casino_player.stats["cash"] += int(winnings)
         #self.bet = 0
         print("Won: {0}".format(winnings))
-        
+
         self.is_paid = False
 
     def draw(self, surface):
@@ -114,11 +114,11 @@ class RoundHistory(object):
         self.header_labels.extend([Label(self.font, 32, 'HITS', 'white', {'center':(280,224)})])
 
         self.result_labels = []
-        
+
         self.round_x = 100
         self.hit_x   = 280
         self.row_y   = 224+32
-        
+
         self.rounds  = 1
 
     def update(self, spot, hits):
@@ -126,12 +126,12 @@ class RoundHistory(object):
             self.rounds = 1
             self.result_labels = []
             self.row_y = 224+32
-        
+
         color = "white"
-        
+
         if is_winner(spot, hits):
             color = "gold3"
-            
+
         self.result_labels.extend([Label(self.font, 32, str(self.rounds), color, {'center':(self.round_x, self.row_y)})])
         self.result_labels.extend([Label(self.font, 32, str(hits), color, {'center':(self.hit_x, self.row_y)})])
         self.row_y+=32
@@ -142,7 +142,7 @@ class RoundHistory(object):
 
         for label in self.header_labels:
             label.draw(surface)
-            
+
         for label in self.result_labels:
             label.draw(surface)
 
@@ -372,9 +372,9 @@ class Keno(tools._State):
 
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
-        
+
         self.round_history = RoundHistory(self.keno_card)
-        
+
         self.alert = None
 
     def back_to_lobby(self, *args):
@@ -389,7 +389,7 @@ class Keno(tools._State):
         self.casino_player = self.persist["casino_player"]
         self.bet_action = Bet(self.casino_player)
         self.clear_action = Clear(self.keno_card, self.bet_action)
-        
+
         self.casino_player.stats["Keno"]["games played"] += 1
 
     def get_event(self, event, scale=(1,1)):
@@ -404,7 +404,6 @@ class Keno(tools._State):
             #position relative to the pygame window size.
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
             #print(event_pos) #[for debugging positional items]
-            self.persist["music_handler"].get_event(event, scale)
 
             if self.alert:
                 self.alert.update(event_pos)
@@ -425,12 +424,12 @@ class Keno(tools._State):
                 if self.bet_action.bet <= 0:
                     self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
                     return
-                    
+
                 spot_count = self.keno_card.get_spot_count()
                 if spot_count <= 0:
                     self.alert = NoticeWindow(self.screen_rect.center, "Please pick your spots.")
                     return
-                
+
                 self.play.update()
                 hit_count = self.keno_card.get_hit_count()
                 self.bet_action.result(spot_count, hit_count)
@@ -451,7 +450,8 @@ class Keno(tools._State):
 
             self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
         self.buttons.get_event(event)
-        
+        self.persist["music_handler"].get_event(event, scale)
+
         if self.alert:
             self.alert.get_event(event, scale)
 
@@ -473,7 +473,7 @@ class Keno(tools._State):
         #self.hit_count_label.draw(surface)
 
         self.pay_table.draw(surface)
-        
+
         self.round_history.draw(surface)
 
         self.clear_action.draw(surface)
@@ -482,7 +482,7 @@ class Keno(tools._State):
 
         self.balance_label.draw(surface)
         self.bet_label.draw(surface)
-        
+
         if self.alert and not self.alert.done:
             self.alert.draw(surface)
 
@@ -501,11 +501,11 @@ class Keno(tools._State):
 
         self.balance_label = Label(self.font, 48, total_text, "gold3",
                                {"topleft": (1036, 760)})
-                               
+
         bet_text = "Bet: ${}".format(self.bet_action.bet)
         self.bet_label = Label(self.font, 48, bet_text, "gold3",
                                {"topleft": (24, 760)})
-                               
+
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
 
