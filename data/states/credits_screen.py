@@ -16,7 +16,12 @@ SCREEN_WIDTH = prepare.RENDER_SIZE[0]
 DEVELOPERS = ["camarce1", "Mekire", "iminurnamez", "macaframa", "metulburr",
               "jellyberg", "PaulPaterson", "trijazzguy", "menatwrk",
               "bar777foo", "bitcraft", "net_nomad", "andarms"]
-ARTISTS = ["unnamed hero"]
+ARTISTS = ["unnamed hero/heroine"]
+ASSETS_NAMES = ["opengameart.org", "freesound.org", "jazz-on-line.com", "freemusicarchive.org",
+              "U.S. Army Blues", "dafont.com", "Grand Chaos Productions", "Byron Knoll", "TheCorruptor", 
+              "Kenney (www.kenney.nl)"] 
+SOFTWARE = ["Python", "Pygame", "Pymunk"]
+              
 COLORS = ["black", "blue", "green", "red", "white"]
 
 #Default keyword arguments for the ZipperBlock class.
@@ -131,7 +136,10 @@ class CreditsScreen(tools._State):
         self.screen = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.next = "LOBBYSCREEN"
         self.font = prepare.FONTS["Saniretro"]
-        self.names = DEVELOPERS
+        self.dev_names = DEVELOPERS
+        self.artist_names = ARTISTS
+        self.assets_names = ASSETS_NAMES
+        self.software_names = SOFTWARE
         self.zipper_blocks =[]
         self.zipper_block = None
         self.chip_curtain = None
@@ -155,7 +163,7 @@ class CreditsScreen(tools._State):
             title = SlotReelTitle((self.screen.centerx, 20), title_text)
             grouped = self.make_groups(names)
             for group in grouped:
-                block = ZipperBlock(self.font, group, (700, title.rect.bottom+183))
+                block = ZipperBlock(self.font, group, (700, 220))
                 zipper_blocks.append(block)
                 titles.append(title)
         return iter(titles), iter(zipper_blocks)    
@@ -167,11 +175,17 @@ class CreditsScreen(tools._State):
         """
         self.persist = persistent
         self.zipper_blocks = []
-        names = self.names[:]
-        random.shuffle(names)        
+        dev_names = self.dev_names[:]
+        artist_names = self.artist_names[:]
+        assets_names = self.assets_names[:]
+        software_names = self.software_names[:]
+        for names in (dev_names, artist_names, assets_names):
+            random.shuffle(names)        
         self.titles, self.zipper_blocks = self.make_titles_blocks(
-                                                  [("Developers", DEVELOPERS),
-                                                  ("Artists", ARTISTS)])
+                                                [("Developers", dev_names),
+                                                ("Artists", artist_names),
+                                                ("Assets", assets_names),
+                                                ("Software", software_names)])
         self.title = next(self.titles)
         self.zipper_block = next(self.zipper_blocks)
         spots = [(self.title.rect.left-100, self.title.rect.centery),

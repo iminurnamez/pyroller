@@ -406,7 +406,7 @@ class SlotReelTitle(object):
         self.spin_sound.set_volume(.2)
         self.moving = True
         self.final_top = midtop[1]
-        self.move((0, -100))
+        self.move((0, -120))
         self.move_speed = (0, 2)        
 
     def startup(self):
