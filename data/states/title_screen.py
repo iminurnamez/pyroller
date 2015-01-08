@@ -7,7 +7,6 @@ from ..components import spotlight
 from ..components.labels import MarqueeFrame, NeonButton, ButtonGroup
 from ..components.casino_player import CasinoPlayer
 from ..components.cards import Deck
-from ..components.music_handler import MusicHandler
 
 
 class Scroller(pg.sprite.Sprite):
@@ -50,6 +49,7 @@ class TitleScreen(tools._State):
         self.prepare_stats()
         self.lights = self.make_spotlights()
         self.check_straight_arg()
+        self.use_music_handler = False
 
     def make_spotlights(self):
         lights = pg.sprite.LayeredDirty()

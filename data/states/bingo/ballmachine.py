@@ -269,7 +269,7 @@ class SingleBallDisplay(common.Drawable, loggable.Loggable):
             'machine-ball',
             (self.background.rect.width / 2, self.background.rect.height / 2), str(ball.number), S
         )
-        self.text.text_color = S['called-ball-font-color'][ball.col]
+        self.text.color = pg.Color(S['called-ball-font-color'][ball.col])
         self.text.update_text()
         #
         # Write the number on the background

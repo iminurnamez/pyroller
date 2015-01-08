@@ -41,32 +41,32 @@ keeping state (moving across, flashing, moving down etc).
 In your State you would detect two conditions a) the motion should state, b) the
 motion should be interrupted, and a generator method move_card()
 
-class MyState(StateMachine):
-    def drawUI(self, surface, scale):
-        ...
-        if condition_to_initiate_motion:
-            self.card_mover = self.add_generator('move-card', self.move_card(50, 100))
-        if condition_to_interrupt_card:
-            self.card_mover.stop()
-        ...
+    class MyState(StateMachine):
+        def drawUI(self, surface, scale):
+            ...
+            if condition_to_initiate_motion:
+                self.card_mover = self.add_generator('move-card', self.move_card(50, 100))
+            if condition_to_interrupt_card:
+                self.card_mover.stop()
+            ...
 
-    def move_card(self, dx, dy):
-        # Move card over to the right
-        for x in range(dx):
-            self.card.x += 1
-            yield 100 # Pause for 100ms
+        def move_card(self, dx, dy):
+            # Move card over to the right
+            for x in range(dx):
+                self.card.x += 1
+                yield 100 # Pause for 100ms
 
-        # Flash the card three times
-        for repeat in range(dy):
-            self.card.visible = False
-            yield 100 # Hide for short time
-            self.card.visible = True
-            yield 900 # Show for a longer time
+            # Flash the card three times
+            for repeat in range(dy):
+                self.card.visible = False
+                yield 100 # Hide for short time
+                self.card.visible = True
+                yield 900 # Show for a longer time
 
-        # Move the card down
-        for y in range(100):
-            self.card.y -= 1
-            yield 100 # Pause for 100ms
+            # Move the card down
+            for y in range(100):
+                self.card.y -= 1
+                yield 100 # Pause for 100ms
 
 
 The above example shows how a single stateful operation can be written very cleanly.
@@ -77,26 +77,26 @@ over, one-by-one. You can chain these by calling add_generator at the end of eac
 operation.
 
 
-class State(StateMachine):
+    class State(StateMachine):
 
-    def drawUI(...):
-        if condition_to_start_dealing:
-            self.add_generator('shuffle-cards', self.shuffle_cards())
+        def drawUI(...):
+            if condition_to_start_dealing:
+                self.add_generator('shuffle-cards', self.shuffle_cards())
 
-    def shuffle_cards(self):
-        ... code to show shuffling of cards (runs over many frames, yielding as needed) ...
-        self.add_generator('deal-cards', self.deal_cards())
+        def shuffle_cards(self):
+            ... code to show shuffling of cards (runs over many frames, yielding as needed) ...
+            self.add_generator('deal-cards', self.deal_cards())
 
-    def deal_cards(self):
-        ... code to move cards from deck to table (like move_card above) ...
-        self.add_generator('turn-cards', self.turn_cards)
+        def deal_cards(self):
+            ... code to move cards from deck to table (like move_card above) ...
+            self.add_generator('turn-cards', self.turn_cards)
 
-    def turn_cards(self):
-        for card in self.cards:
-            card.turn_over()
-            yield 1000
+        def turn_cards(self):
+            for card in self.cards:
+                card.turn_over()
+                yield 1000
 
-        ... add_generator for the next step in the process ...
+            ... add_generator for the next step in the process ...
 
 
 You states can easily wait for conditions, eg if you detect a click on a card by
@@ -214,11 +214,7 @@ class StateMachine(tools._State, loggable.Loggable):
         self.state_clock.tick(dt)
         self.delay -= self.state_clock.get_time()
         #
-        if pg.key.get_mods():
-            self.log.debug('Frame rate {0}'.format(1000 / dt))
-        #
         # Process all states
-        self.persist["music_handler"].update(scale)
         for executor in list(self.generators):
             executor.update(dt)
             if executor.done:
