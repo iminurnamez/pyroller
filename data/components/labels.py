@@ -246,7 +246,7 @@ class _Button(pg.sprite.DirtySprite, tools._KwargMixin):
         if (font, size) not in LOADED_FONTS:
             LOADED_FONTS[font, size] = pg.font.Font(font, size)
         self.font = LOADED_FONTS[font, size]
-        text = self.text and self.font.render(self.text, 1, self.color)
+        text = self.text and self.font.render(self.text, 1, self.text_color)
         hover = self.hover_text and self.font.render(self.hover_text, 1,
                                                      self.hover_text_color)
         disable = self.disable_text and self.font.render(self.disable_text, 1,

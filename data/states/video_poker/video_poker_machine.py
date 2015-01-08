@@ -3,6 +3,15 @@ from ... import tools, prepare
 from ...components.labels import Blinker, Label, FunctionButton, _Button
 from ...components.cards import Deck
 
+HAND_RANKS = {'ROYAL_FLUSH'    : 0,
+             'STR_FLUSH'      : 1,
+             '4_OF_A KIND'     : 2,
+             'FULL_HOUSE'      : 3,
+             'FLUSH'           : 4,
+             'STRAIGHT'        : 5, 
+             'THREE_OF_A_KIND' : 6, 
+             'TWO_PAIR'        : 7,
+             'JACKS_OR_BETTER' : 8}
 PAYTABLE = [
     (800, 50, 25, 8, 6, 4, 3, 2, 1),
     (1600, 100, 50, 16, 12, 8, 6, 4, 2),
@@ -167,6 +176,56 @@ class Dealer:
         self.changing_cards.sort()
 
 
+    def evaluate_hand(self):
+        values = []
+        suits = []
+        for card in self.hand:
+            values.append(card.value)
+            suits.append(card.suit)
+
+        values.sort()
+        suits.sort()
+        # if don't match any comparation
+        rank = 99
+
+        """straight, if is an Ace in the hand, Check if other 4 cards are 
+            K, Q, J, 10 or  2, 3, 4, 5
+            else Check if 5 cards are continuous in rank"""
+        if 1 in values:
+            a = values[1] == 2 and values[2] == 3 
+                         and values[3] == 4 and values[4] == 5
+            b = values[1] == 10 and values[2] == 11 
+                         and values[3] == 12 and values[4] == 13
+            is_straight = a or b
+        else:
+            test_value = values[0] + 1
+            is_straight = True
+            for i in range(1, 5):
+                if values[i] != test_value:
+                    is_straight = False
+                test_value += 1
+
+        """Flush, previously we sort it, so the array must look like this:
+        ['Clubs', 'Diamonds', 'Diamonds', 'Hearts', 'Hearts'],
+        so if the first and the last element are the same means that all
+        the suits are the same"""
+        if suits[0] == suits[4]:
+            if is_straight:
+                if highest == 13 and 1 in values:
+                    rank = HAND_RANKS['ROYAL FLUSH']
+                else:
+                    rank = HAND_RANKS['STR_FLUSH']
+            else:
+                rank = HAND_RANKS['FLUSH']
+        elif is_straight:
+            rank = HAND_RANKS['STRAIGHT']
+        elif:
+            pass
+
+
+        return rank
+
+
     def get_event(self, playing, mouse_pos):
         if playing:
             for index, card in enumerate(self.hand):
@@ -218,13 +277,16 @@ class Machine:
         self.text_size = 30
         self.text_color = "white"
         self.padding = 25
-
+        
         self.buttons = []
         self.btn_width = self.btn_height = 100
         self.btn_padding = 35
+        self.max_bet = 5
+
         self.info_labels = []
 
-        self.max_bet = 5
+        self.credits_sound = prepare.SFX["bingo-pay-money"]
+        self.bet_sound = prepare.SFX["bingo-pick-1"]
         
 
 
@@ -289,18 +351,15 @@ class Machine:
             x += self.btn_width + self.btn_padding
 
 
-        label = Label(self.font, self.text_size, 'get credits', self.text_color, {})
+        label = Label(self.font, self.text_size, 'insert coin', self.text_color, {})
         self.play_button = FunctionButton(self.rect.right + self.padding, y, 
-                                            200, 60, label, self.insert_coin, None)
-        
-        self.credits_sound = prepare.SFX["bingo-pay-money"]
-        self.bet_sound = prepare.SFX["bingo-pick-1"]
-        
+                                            200, 60, label, self.insert_coin, None)        
 
 
     def insert_coin(self):
         self.playing = True
         self.credits += 1
+
         # bet and bet max buttons
         self.buttons[0].active = True
         self.buttons[1].active = True
@@ -430,5 +489,3 @@ class Machine:
         for button in self.buttons:
             button.draw(surface)
         self.play_button.draw(surface)
-
-
