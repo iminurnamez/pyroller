@@ -43,6 +43,8 @@ class PayBoard:
         self.show_bet_rect = False
         self.show_rank_rect = False
 
+        self.rank_sound = prepare.SFX['bingo-card-success']
+
 
         self.build()
 
@@ -56,6 +58,7 @@ class PayBoard:
             self.rank_rect.top = self.rect.top + self.padding \
                                                    + (self.rank_rect.h * rank)
             self.show_rank_rect = True
+            self.rank_sound.play()
         else:
             self.show_rank_rect = False
 
@@ -144,7 +147,7 @@ class Dealer:
         self.elapsed = self.animation_speed
 
         self.deal_sound = prepare.SFX["cardplace2"]
-        self.held_sound = prepare.SFX["bingo-speed-up"]
+        self.held_sound = prepare.SFX["bingo-ball-chosen"]
 
 
     def startup(self):
