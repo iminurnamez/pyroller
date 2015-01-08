@@ -45,14 +45,14 @@ class Craps(tools._State):
         self.pointchip = point_chip.PointChip()
         self.points = [4,5,6,8,9,10]
         self.point = 0 #off position
-        
+
         self.widgets = []
         if prepare.DEBUG:
             self.setup_debug_entry()
             self.debug_die1 = None
             self.debug_die2 = None
             self.debug_dice_total = None
-        
+
     def setup_debug_entry(self):
         self.debug_lbl = Label(self.font, self.font_size, '6 6', "gold3", {"center": (750, 950)})
         settings = {
@@ -75,7 +75,7 @@ class Craps(tools._State):
         self.game_started = False
         self.next = "LOBBYSCREEN"
         self.done = True
-        
+
     def debug_roll(self, id, text):
         self.roll()
         try:
@@ -119,13 +119,12 @@ class Craps(tools._State):
             #self.cash_out_player()
             self.done = True
             self.next = "LOBBYSCREEN"
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            self.persist["music_handler"].get_event(event, scale)
         elif event.type == pg.VIDEORESIZE:
             self.set_table()
         self.buttons.get_event(event)
         for widget in self.widgets:
             widget.get_event(event, tools.scaled_mouse_pos(scale))
+        self.persist["music_handler"].get_event(event, scale)
 
     def cash_out_player(self):
         self.casino_player.stats["cash"] = self.player.get_chip_total()

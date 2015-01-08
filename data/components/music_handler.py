@@ -125,10 +125,7 @@ class MusicHandler(object):
             visible.visible = False
             invisible.visible = True
         self.music_on = not self.music_on
-        if self.music_on:
-            pg.mixer.music.play()
-        else:
-            pg.mixer.music.stop()
+        pg.mixer.music.play() if self.music_on else pg.mixer.music.stop()
 
     def update(self, scale):
         pos = tools.scaled_mouse_pos(pg.mouse.get_pos(), scale)
