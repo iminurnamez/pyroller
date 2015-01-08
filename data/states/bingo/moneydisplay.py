@@ -79,7 +79,7 @@ class MoneyDigit(common.DrawableGroup, loggable.Loggable):
                     item.rect.y += self.dy
                 yield 1
             #
-            self.text.rect_attributes = {'x': self.text.rect.x, 'y': self.text.rect.y}
+            self.text.rect_attr = {'x': self.text.rect.x, 'y': self.text.rect.y}
             self.text.set_text(self.new_value)
             #
             for i in range(S['money-hide-repeats']):
