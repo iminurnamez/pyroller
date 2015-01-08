@@ -169,7 +169,7 @@ class Blackjack(tools._State):
                     p_slot = player.hands[-1].slots[0]
                     hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 3.5), 0)
                     card = hand.cards.pop()
-                    new_hand = Hand(handslot.topleft, [card],
+                    new_hand = Hand(hand_slot.topleft, [card],
                                     self.player.chip_pile.withdraw_chips(bet))
                     new_hand.slots = [hand_slot]
                     card.rect.topleft = hand_slot.topleft
