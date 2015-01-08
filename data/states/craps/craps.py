@@ -56,8 +56,6 @@ class Craps(tools._State):
     def setup_debug_entry(self):
         self.debug_lbl = Label(self.font, self.font_size, '6 6', "gold3", {"center": (750, 950)})
         settings = {
-            'id':'6 6',
-            #"command" : lambda x,y=True:self.roll(debug=y),
             "command" : self.debug_roll,
             #"font" : prepare.FONTS["Saniretro"],
             #"clear_on_enter" : True,
@@ -80,13 +78,21 @@ class Craps(tools._State):
         
     def debug_roll(self, id, text):
         self.roll()
-        self.dice[0].roll_value = int(text.split()[0]) -1
-        self.dice[1].roll_value = int(text.split()[1]) -1
+        try:
+            die1 = int(text.split()[0]) -1
+            die2 = int(text.split()[1]) -1
+            accepted = range(1,7)
+            if die1 in accepted and die2 in accepted:
+                self.dice[0].roll_value = die1
+                self.dice[1].roll_value = die2
+            else:
+                print('Input needs to be of values 1-6')
+        except IndexError: #user didnt input correct format "VALUE VALUE"
+            print('Input needs to be "VALUE VALUE"')
 
-    def roll(self, debug=False):
+
+    def roll(self):
         if not self.dice[0].rolling:
-            if debug:
-                self.dice.debug = True
             self.update_history()
             for die in self.dice:
                 die.reset()
