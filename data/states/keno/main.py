@@ -396,20 +396,14 @@ class Keno(tools._State):
         """This method will be called for each event in the event queue
         while the state is active.
         """
-        if event.type == pg.QUIT:
+        if event.type == pg.QUIT and not self.alert:
             self.done = True
             self.next = "LOBBYSCREEN"
-        elif event.type == pg.MOUSEBUTTONDOWN:
+        elif event.type == pg.MOUSEBUTTONDOWN and not self.alert:
             #Use tools.scaled_mouse_pos(scale, event.pos) for correct mouse
             #position relative to the pygame window size.
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
             #print(event_pos) #[for debugging positional items]
-
-            if self.alert:
-                self.alert.update(event_pos)
-                if self.alert.done:
-                    self.alert = None
-
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
                 spot_count = self.keno_card.get_spot_count()
@@ -449,10 +443,9 @@ class Keno(tools._State):
                 self.prev_spot_count = spot_count
 
             self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
-        self.buttons.get_event(event)
-
-        if self.alert:
-            self.alert.get_event(event, scale)
+        if not self.alert:
+            self.buttons.get_event(event)
+        self.alert and self.alert.get_event(event)
 
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
@@ -505,6 +498,10 @@ class Keno(tools._State):
 
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
+        if self.alert:
+            self.alert.update(mouse_pos)
+            if self.alert.done:
+                self.alert = None
 
         self.draw(surface)
 
