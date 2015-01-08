@@ -47,13 +47,16 @@ class MusicHandler(object):
         skip_rect = mute_rect.copy()
         skip_rect.bottomright = (self.rect.right-5, self.rect.bottom)
         skip_kwargs = {"idle_image" : icons[0], "hover_image" : icons[3],
-                       "call" : self.change_song, "call_on_up" : False}
+                       "call" : self.change_song,
+                       "bindings" : [pg.K_PERIOD]}
         mute_kwargs = {"idle_image" : icons[2], "hover_image" : icons[5],
-                       "call" : self.mute_unmute_music, "call_on_up" : False,
-                       "visible" : self.music_on}
+                       "call" : self.mute_unmute_music,
+                       "visible" : self.music_on,
+                       "bindings" : [pg.K_m]}
         unmute_kwargs = {"idle_image" : icons[1], "hover_image" : icons[4],
-                       "call" : self.mute_unmute_music, "call_on_up" : False,
-                       "visible" : not self.music_on,}
+                         "call" : self.mute_unmute_music,
+                         "visible" : not self.music_on,
+                         "bindings" : [pg.K_m]}
         _Button(skip_rect, buttons, **skip_kwargs)
         mute = _Button(mute_rect, buttons, **mute_kwargs)
         unmute = _Button(mute_rect, buttons, **unmute_kwargs)

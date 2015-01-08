@@ -27,7 +27,8 @@ BUTTON_DEFAULTS = {"call"               : None,
                    "hover_sound"        : None,
                    "click_sound"        : None,
                    "visible"            : True,
-                   "active"             : True}
+                   "active"             : True,
+                   "bindings"           : ()}
 
 
 #Helper function for MultiLineLabel class
@@ -272,19 +273,32 @@ class _Button(pg.sprite.Sprite, tools._KwargMixin):
     def get_event(self, event):
         if self.active and self.visible:
             if event.type == pg.MOUSEBUTTONUP and event.button == 1:
-                if self.clicked and self.call_on_up:
-                    self.click_sound and self.click_sound.play()
-                    self.call and self.call(self.args or self.text)
-                self.clicked = False
+                self.on_up_event(event)
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                if self.hover:
-                    self.clicked = True
-                    if not self.call_on_up:
-                        self.click_sound and self.click_sound.play()
-                        self.call and self.call(self.args or self.text)
+                self.on_down_event(event)
+            elif event.type == pg.KEYDOWN and event.key in self.bindings:
+                self.on_down_event(event, True)
+            elif event.type == pg.KEYUP and event.key in self.bindings:
+                self.on_up_event(event, True)
+
+    def on_up_event(self, event, onkey=False):
+        if self.clicked and self.call_on_up:
+            self.click_sound and self.click_sound.play()
+            self.call and self.call(self.args or self.text)
+        self.clicked = False
+
+    def on_down_event(self, event, onkey=False):
+        if self.hover or onkey:
+            self.clicked = True
+            if not self.call_on_up:
+                self.click_sound and self.click_sound.play()
+                self.call and self.call(self.args or self.text)
 
     def update(self, prescaled_mouse_pos):
         hover = self.rect.collidepoint(prescaled_mouse_pos)
+        pressed = pg.key.get_pressed()
+        if any(pressed[key] for key in self.bindings):
+            hover = True
         if not self.visible:
             self.image = _Button._invisible
         elif self.active:
@@ -296,8 +310,7 @@ class _Button(pg.sprite.Sprite, tools._KwargMixin):
             self.image = self.disable_image or self.idle_image
 
     def draw(self, surface):
-        if self.visible:
-            surface.blit(self.image, self.rect)
+        surface.blit(self.image, self.rect)
 
 
 class NeonButton(_Button):
