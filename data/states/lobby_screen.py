@@ -93,13 +93,11 @@ class LobbyScreen(tools._State):
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.exit_game()
-        self.persist["music_handler"].get_event(event, scale)
         self.navigation_buttons.get_event(event)
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
-        self.persist["music_handler"].update(scale)
         self.navigation_buttons.update(mouse_pos)
         self.draw(surface)
 
@@ -112,4 +110,3 @@ class LobbyScreen(tools._State):
             pg.draw.rect(surface, pg.Color("gold3"), button.rect, 4)
             pg.draw.rect(surface, pg.Color("gold3"), button.frame_rect, 4)
         self.navigation_buttons.draw(surface)
-        self.persist["music_handler"].draw(surface)

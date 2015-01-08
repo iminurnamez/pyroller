@@ -138,9 +138,6 @@ class Pachinko(tools._State):
         return self.persist
 
     def get_event(self, event, scale=(1, 1)):
-        # this music stuff really needs to be moved to the core
-        self.persist["music_handler"].get_event(event, scale)
-
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 self.goto_lobby()
@@ -200,9 +197,6 @@ class Pachinko(tools._State):
         self.hud.clear(surface, self._clear_surface)
         self.hud.draw(surface)
 
-        # this music stuff really needs to be moved to the core
-        self.persist["music_handler"].update(scale)
-        self.persist["music_handler"].draw(surface)
 
     @staticmethod
     def _clear_surface(surface, rect):

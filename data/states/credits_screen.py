@@ -138,6 +138,7 @@ class CreditsScreen(tools._State):
         pos = (self.screen.centerx-(NeonButton.width//2),
                self.screen.bottom-NeonButton.height-10)
         self.done_button = NeonButton(pos, "Lobby", self.back_to_lobby)
+        self.use_music_handler = False
 
     def back_to_lobby(self, *args):
         self.done = True

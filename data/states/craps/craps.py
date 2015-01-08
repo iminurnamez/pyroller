@@ -124,7 +124,6 @@ class Craps(tools._State):
         self.buttons.get_event(event)
         for widget in self.widgets:
             widget.get_event(event, tools.scaled_mouse_pos(scale))
-        self.persist["music_handler"].get_event(event, scale)
 
     def cash_out_player(self):
         self.casino_player.stats["cash"] = self.player.get_chip_total()
@@ -159,7 +158,6 @@ class Craps(tools._State):
         surface.fill(self.table_color)
         surface.blit(self.table, self.table_rect)
         self.buttons.draw(surface)
-        self.persist["music_handler"].draw(surface)
 
         for h in self.bets.keys():
             self.bets[h].draw(surface)
@@ -175,7 +173,6 @@ class Craps(tools._State):
             self.debug_lbl.draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
-        self.persist["music_handler"].update(scale)
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
         self.draw(surface)

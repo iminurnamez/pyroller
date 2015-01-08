@@ -49,6 +49,7 @@ class TitleScreen(tools._State):
         self.prepare_stats()
         self.lights = self.make_spotlights()
         self.check_straight_arg()
+        self.use_music_handler = False
 
     def make_spotlights(self):
         lights = pg.sprite.LayeredDirty()

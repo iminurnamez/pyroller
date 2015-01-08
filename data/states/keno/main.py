@@ -450,7 +450,6 @@ class Keno(tools._State):
 
             self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
         self.buttons.get_event(event)
-        self.persist["music_handler"].get_event(event, scale)
 
         if self.alert:
             self.alert.get_event(event, scale)
@@ -486,8 +485,6 @@ class Keno(tools._State):
         if self.alert and not self.alert.done:
             self.alert.draw(surface)
 
-        self.persist["music_handler"].draw(surface)
-
     def update(self, surface, keys, current_time, dt, scale):
         """
         This method will be called once each frame while the state is active.
@@ -509,6 +506,5 @@ class Keno(tools._State):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
 
-        self.persist["music_handler"].update(scale)
         self.draw(surface)
 

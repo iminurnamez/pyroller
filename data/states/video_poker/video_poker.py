@@ -30,19 +30,16 @@ class VideoPoker(tools._State):
 
         self.lobby_button.get_event(event)
         self.machine.get_event(event, scale)
-        self.persist["music_handler"].get_event(event, scale)
 
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.lobby_button.update(mouse_pos)
         self.machine.update(mouse_pos, dt)
-        self.persist["music_handler"].update(scale)
         self.draw(surface, dt)
 
 
     def draw(self, surface, dt):
         surface.fill(prepare.FELT_GREEN)
         self.machine.draw(surface, dt)
-        self.persist["music_handler"].draw(surface)
         self.lobby_button.draw(surface)

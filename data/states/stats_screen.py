@@ -12,6 +12,7 @@ class StatsScreen(tools._State):
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.buttons = self.make_buttons(screen_rect)
         self.labels = []
+        self.use_music_handler = False
 
     def make_buttons(self, screen_rect):
         buttons = ButtonGroup()

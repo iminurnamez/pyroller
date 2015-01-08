@@ -39,7 +39,6 @@ class Bingo(statemachine.StateMachine):
         b_height = 90
         #
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.play_music = True
         self.auto_pick = S['debug-auto-pick']
         #
         self.ui = common.ClickableGroup()
@@ -115,7 +114,6 @@ class Bingo(statemachine.StateMachine):
             #
             pos = tools.scaled_mouse_pos(scale, event.pos)
             if event.type == pg.MOUSEBUTTONDOWN:
-                self.persist["music_handler"].get_event(event, scale)
                 if self.lobby_button.rect.collidepoint(pos):
                     self.game_started = False
                     self.done = True
@@ -127,9 +125,6 @@ class Bingo(statemachine.StateMachine):
                 self.next = "LOBBYSCREEN"
             elif event.key == pg.K_SPACE:
                 self.next_chip(None, None)
-            elif event.key == pg.K_m:
-                #self.persist["music_handler"].mute_unmute_music()
-                self.sound_muted = not self.sound_muted
             elif event.key == pg.K_f:
                 for card in self.cards:
                     self.add_generator('flash-labels', card.flash_labels())
@@ -145,7 +140,6 @@ class Bingo(statemachine.StateMachine):
         self.card_selector.draw(surface)
         self.money_display.draw(surface)
         #
-        self.persist["music_handler"].draw(surface)
 
     def initUI(self):
         """Initialise the UI display"""
