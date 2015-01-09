@@ -26,7 +26,8 @@ class LobbyScreen(tools._State):
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
-                      ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO")]
+                      ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO"),
+                      ("Baccarat", "BACCARAT")]
         game_buttons = self.make_game_buttons(screen_rect)
         navigation_buttons = self.make_navigation_buttons(screen_rect)
         self.buttons = ButtonGroup(game_buttons, navigation_buttons)
