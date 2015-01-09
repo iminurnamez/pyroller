@@ -7,7 +7,7 @@ import pygame as pg
 from collections import OrderedDict
 
 from ... import tools, prepare
-from ...components.labels import Button
+from ...components.labels import NeonButton
 from ...components import common
 from ...prepare import BROADCASTER as B
 
@@ -33,19 +33,12 @@ class Bingo(statemachine.StateMachine):
         self.verbose = False
         self.sound_muted = prepare.ARGS['debug']
         #
-        self.font = prepare.FONTS["Saniretro"]
-        font_size = 64
-        b_width = 360
-        b_height = 90
-        #
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.auto_pick = S['debug-auto-pick']
         #
         self.ui = common.ClickableGroup()
         #
-        lobby_label = common.getLabel('button', (0, 0), 'Lobby', S)
-        self.lobby_button = Button(740, self.screen_rect.bottom - 150,
-                                   b_width, b_height, lobby_label)
+        self.lobby_button = NeonButton((740, self.screen_rect.bottom - 150), 'Lobby', self.return_to_lobby)
         #
         # The controls to allow selection of different numbers of cards
         self.card_selector = cardselector.CardSelector('card-selector', self)
@@ -101,6 +94,8 @@ class Bingo(statemachine.StateMachine):
     def get_event(self, event, scale=(1,1)):
         """Check for events"""
         super(Bingo, self).get_event(event, scale)
+        self.lobby_button.get_event(event)
+        #
         if event.type == pg.QUIT:
             if prepare.ARGS['straight']:
                 pg.quit()
@@ -113,24 +108,31 @@ class Bingo(statemachine.StateMachine):
             self.ui.process_events(event, scale)
             #
             pos = tools.scaled_mouse_pos(scale, event.pos)
-            if event.type == pg.MOUSEBUTTONDOWN:
-                if self.lobby_button.rect.collidepoint(pos):
-                    self.game_started = False
-                    self.done = True
-                    self.next = "LOBBYSCREEN"
-                    self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.done = True
                 self.next = "LOBBYSCREEN"
             elif event.key == pg.K_SPACE:
                 self.next_chip(None, None)
+            elif event.key == pg.K_m:
+                #self.persist["music_handler"].mute_unmute_music()
+                self.sound_muted = not self.sound_muted
             elif event.key == pg.K_f:
                 for card in self.cards:
                     self.add_generator('flash-labels', card.flash_labels())
 
+    def return_to_lobby(self, arg):
+        """Return to the lobby screen"""
+        self.game_started = False
+        self.done = True
+        self.next = "LOBBYSCREEN"
+        self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
+
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
+        mouse_pos = tools.scaled_mouse_pos(scale, pg.mouse.get_pos())
+        self.lobby_button.update(mouse_pos)
+        #
         surface.fill(S['table-color'])
         #
         self.lobby_button.draw(surface)

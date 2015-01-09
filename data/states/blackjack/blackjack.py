@@ -35,10 +35,13 @@ class Blackjack(tools._State):
         self.window = None
         self.make_buttons()
         self.result_labels = []
-
+        self.labels = []
+        self.quick_bet = 0
+        self.last_bet = 0
+        
     def make_buttons(self):
         side_margin = 10
-        vert_space = 20
+        vert_space = 15
         left = self.screen_rect.right-(NeonButton.width + side_margin)
         top = self.screen_rect.bottom-((NeonButton.height*5)+vert_space*4)
         self.hit_button = NeonButton((left,top), "Hit", self.hit_click)
@@ -54,25 +57,50 @@ class Blackjack(tools._State):
                                           self.double_down_button,
                                           self.split_button)
         self.nav_buttons = ButtonGroup()
-        pos = (self.deal_button.rect.left-(NeonButton.width+15),
-               self.screen_rect.bottom-(NeonButton.height+15))
-        self.new_game_button = NeonButton(pos, "Again", self.new_game_click,
+        self.new_game_button = NeonButton((0, 0), "Again", self.new_game_click,
                                           None, self.nav_buttons)
+        self.new_game_button.rect.midbottom = (self.screen_rect.centerx,
+                                                                      self.screen_rect.centery - 20)
+        self.quick_bet_button = NeonButton((0, 0), "Again", self.quick_bet_click,
+                                          None, self.nav_buttons)
+        self.quick_bet_button.rect.center = (self.screen_rect.centerx,
+                                                              self.screen_rect.centery + 20)        
         pos = (self.screen_rect.right-(NeonButton.width+side_margin),
                self.screen_rect.bottom-(NeonButton.height+15))
         NeonButton(pos, "Lobby", self.back_to_lobby, None, self.nav_buttons)
         self.buttons = ButtonGroup(self.player_buttons, self.nav_buttons)
         self.buttons.add(self.deal_button)
 
+    def make_labels(self):
+        labels_info = [
+                ("Drop chips in chip rack", 36, "antiquewhite", 100,
+                {"midtop": (self.chip_rack.rect.centerx, self.chip_rack.rect.bottom + 5)}),
+                ("to make change", 36, "antiquewhite", 100,
+                {"midtop": (self.chip_rack.rect.centerx, self.chip_rack.rect.bottom + 60)}),
+                ("Blackjack Pays 3 to 2", 64, "gold3", 120, {"midtop": (580, 300)}),
+                ("Dealer must draw to 16 and stand on 17", 48, "antiquewhite", 100,
+                {"midtop": (580, 240)})
+                ]                
+        labels = []              
+        for info in labels_info:
+            label = Label(self.font, info[1], info[0], info[2], info[4], bg=prepare.FELT_GREEN)
+            label.image.set_alpha(info[3])
+            labels.append(label)
+        return labels
+        
     def new_game_click(self, *args):
         player_chips = self.player.chip_pile.all_chips()
         self.new_game(0, chips=player_chips)
 
+    def quick_bet_click(self, *args):
+        self.quick_bet = self.last_bet
+        self.new_game_click()
+        
     def new_game(self, player_cash, chips=None):
         """Start a new round of blackjack."""
         self.deck = Deck((20, 20), prepare.CARD_SIZE, 20)
         self.dealer = Dealer()
-        self.chip_rack = ChipRack((1100, 200), self.chip_size)
+        self.chip_rack = ChipRack((1100, 130), self.chip_size)
         self.moving_cards =  []
         self.moving_stacks = []
         self.player = Player(self.chip_size, player_cash, chips)
@@ -81,8 +109,16 @@ class Blackjack(tools._State):
             button.active = False
         self.hit_button.active = True
         self.stand_button.active = True
+        self.labels = self.make_labels()
         self.current_player_hand = self.player.hands[0]
         self.game_started = True
+        if self.quick_bet:
+            chips = self.player.chip_pile.withdraw_chips(self.quick_bet)
+            self.current_player_hand.bet.add_chips(chips)
+            self.state = "Dealing"
+            self.casino_player.stats["Blackjack"]["games played"] += 1
+            self.quick_bet = 0
+        
 
     def startup(self, current_time, persistent):
         """Get state ready to resume."""
@@ -95,7 +131,10 @@ class Blackjack(tools._State):
 
     def deal(self, *args):
         if not self.moving_stacks and not self.window:
-            if any(x.bet.chips for x in self.player.hands):
+            bets = [x.bet.get_chip_total() for x in self.player.hands]
+            if bets:
+                self.last_bet = max(bets)
+                self.quick_bet = 0
                 self.state = "Dealing"
                 self.casino_player.stats["Blackjack"]["games played"] += 1
             else:
@@ -169,7 +208,7 @@ class Blackjack(tools._State):
                     p_slot = player.hands[-1].slots[0]
                     hand_slot = p_slot.move(int(prepare.CARD_SIZE[0] * 3.5), 0)
                     card = hand.cards.pop()
-                    new_hand = Hand(handslot.topleft, [card],
+                    new_hand = Hand(hand_slot.topleft, [card],
                                     self.player.chip_pile.withdraw_chips(bet))
                     new_hand.slots = [hand_slot]
                     card.rect.topleft = hand_slot.topleft
@@ -258,6 +297,8 @@ class Blackjack(tools._State):
         self.game_started = False
         self.done = True
         self.next = "LOBBYSCREEN"
+        self.quick_bet = 0
+        self.last_bet = 0
 
     def bet_warning(self):
         warn = "You sure? Exiting the game will forfeit your current bets!"
@@ -317,6 +358,7 @@ class Blackjack(tools._State):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.deal_button.visible = self.state == "Betting"
         self.new_game_button.visible = self.state == "Show Results"
+        self.quick_bet_button.visible = self.state == "Show Results"
         for button in self.player_buttons:
             button.visible = self.state == "Player Turn" and button.active
 
@@ -467,6 +509,8 @@ class Blackjack(tools._State):
 
     def draw(self, surface, dt):
         surface.fill(prepare.FELT_GREEN)
+        for label in self.labels:
+            label.draw(surface)
         self.dealer.draw_hand(surface)
         self.deck.draw(surface)
         self.chip_rack.draw(surface)

@@ -332,6 +332,45 @@ class NeonButton(_Button):
         super(NeonButton, self).__init__(rect, *groups, **settings)
 
 
+class GameButton(_Button):
+    ss_size = (320, 240)
+    font = prepare.FONTS["Saniretro"]
+
+    def __init__(self, pos, game, call, args, *groups, **kwargs):
+        screenshot = prepare.GFX["screenshot_{}".format(game.lower())]
+        idle, highlight = self.make_images(game, screenshot)
+        rect = idle.get_rect(topleft=pos)
+        settings = {"hover_image" : highlight,
+                    "idle_image"  : idle,
+                    "call"        : call,
+                    "args"        : args}
+        settings.update(kwargs)
+        super(GameButton, self).__init__(rect, *groups, **settings)
+
+    def make_images(self, game, screenshot):
+        icon = pg.transform.scale(screenshot, self.ss_size).convert_alpha()
+        icon_rect = icon.get_rect()
+        label_text = game.replace("_", " ")
+        label = Label(self.font, 48, label_text, "gold3", {"center": (0, 0)})
+        rect = pg.Rect(0, 0, icon_rect.w+20, icon_rect.h+label.rect.h+20)
+        icon_rect.midtop = (rect.centerx, 10)
+        label.rect.midtop = icon_rect.midbottom
+        frame = label.image.get_rect()
+        frame.w = icon_rect.w
+        frame.midtop=icon_rect.midbottom
+        image = pg.Surface(rect.size).convert_alpha()
+        image.fill((0,0,0,0))
+        image.blit(icon, icon_rect)
+        image.fill(pg.Color("gray10"), frame)
+        highlight = image.copy()
+        pg.draw.rect(image, pg.Color("gold3"), icon_rect, 4)
+        pg.draw.rect(image, pg.Color("gold3"), frame, 4)
+        highlight.blit(prepare.GFX["game_highlight"], (0,0))
+        for surface in (image, highlight):
+            label.draw(surface)
+        return (image, highlight)
+
+
 # Deprecated: Please do not use. Marked for removal.
 class Button(object):
     """A simple button class."""
@@ -357,43 +396,6 @@ class Button(object):
             pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)
         self.label.draw(surface)
 
-
-# Deprecated: Please do not use. Marked for removal.
-class ImageButton(object):
-    def __init__(self, image, rect_attr, label):
-        self.image = image
-        self.rect = self.image.get_rect(**rect_attr)
-        self.label = label
-        self.label.rect.midtop = self.rect.midbottom
-
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
-        self.label.draw(surface)
-
-
-# Deprecated: Please do not use. Marked for removal.
-class FunctionButton(Button):
-    """A button that calls a function when clicked."""
-    def __init__(self, left, top, width, height, label, function, function_args):
-        super(FunctionButton, self).__init__(left, top, width, height, label)
-        self.function = function
-        self.function_args = function_args
-
-    def get_event(self, mouse_pos):
-        if self.rect.collidepoint(mouse_pos):
-            self.click()
-
-    def click(self, dynamic_args=None):
-        """If the button's function requires arguments that need to be
-        calculated at the time the button is clicked they can be passed
-        as this method's dynamic_args."""
-        if self.function_args:
-            function_args = list(self.function_args)
-            if dynamic_args:
-                function_args.extend(list(dynamic_args))
-            self.function(*function_args)
-        else:
-            self.function()
 
 class TextBox(object):
     def __init__(self,rect,**kwargs):

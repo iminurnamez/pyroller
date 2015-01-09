@@ -22,7 +22,6 @@ def main():
     run_it = tools.Control(*args)
     run_it.show_fps = prepare.ARGS["FPS"]
     run_it.music_handler = music_handler.MusicHandler()
-    print(repr(run_it.music_handler))
     state_dict = {"SNAKESPLASH": snake_splash.SnakeSplash(),
                   "TITLESCREEN" : title_screen.TitleScreen(),
                   "LOBBYSCREEN" : lobby_screen.LobbyScreen(),

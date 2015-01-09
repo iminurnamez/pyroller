@@ -12,7 +12,7 @@ OFL              http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
 
 The betting chip images, chip sounds and card sounds were created by Kenney (www.kenney.nl) and are licensed as CC-0. Sources: http://opengameart.org/content/boardgame-pack and http://opengameart.org/content/54-casino-sound-effects-cards-dice-chips
 The card face images were created by Byron Knoll and are licensed as CC-0. https://code.google.com/p/vector-playing-cards/
-The pygame logo (face down card image) was created by TheCorruptor. http://www.pygame.org/docs/logos.html
+The pygame logo (face down card image, splash screen image) was created by TheCorruptor. http://www.pygame.org/docs/logos.html
 The Saniretro font (© Grand Chaos Productions. Some Rights Reserved.) was created by Jayvee D. Enaguas (Grand Chaos) and is licensed under the SIL Open Font License (OFL above). http://www.dafont.com/saniretro.font
 
 The audio files listed below are used under the indicated licenses from the list above:
@@ -31,6 +31,17 @@ Composer: Craig Friedrich
 Performed By: U.S. Army Blues 
 License: CC-0
 
+#Sound Effects
+
+Audio Files: slot_reel_short.ogg, slot_reel_long.ogg, spindown.ogg
+Source URL: https://www.freesound.org/people/kellyconidi/sounds/218833/
+Artist: https://www.freesound.org/people/kellyconidi/
+License: CC-0
+
+Audio File: slot_reel_clunk.ogg
+Source URL: http://opengameart.org/content/equipment-clicks-iii
+Artist: http://opengameart.org/users/lfa
+License: CC-0
 
 The following recordings are believed to be in the public domain, but cannot be verified as such. These files may be copyrighted.
 If you are the copyright owner of any of these recordings, please contact easinerf@gmail.com.
@@ -76,4 +87,7 @@ Source Title: "Ace In The Hole"
 Source URL: http://www.jazz-on-line.com/
 Artist: Ella Fitzgerald
 License: Believed to be in the public domain
+
+
+
 
