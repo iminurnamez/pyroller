@@ -285,7 +285,26 @@ class TestControl(unittest.TestCase):
 
     def testCanHandleScreenResize(self):
         """testCanHandleScreenResize: should call screen resize if the screen has changed"""
-        raise NotImplementedError
+        #
+        # Should store the keys on both key down and key up
+        events = [pg.event.Event(pg.VIDEORESIZE, size=RESOLUTIONS[1])]
+        #
+        # Initially screen should be default size
+        self.assertEqual(RESOLUTION, self.c.screen_rect.size)
+        self.assertEqual(RESOLUTION, self.c.screen.get_size())
+        #
+        # Run the event loop with mocked out events
+        with mock_pygame_events() as (event_queue, key_queue):
+            #
+            # Push events onto queue
+            event_queue.append(events)
+            #
+            # Do the loop
+            self.c.event_loop()
+        #
+        # Now should be new resolution
+        self.assertEqual(RESOLUTIONS[1], self.c.screen_rect.size)
+        self.assertEqual(RESOLUTIONS[1], self.c.screen.get_size())
 
     def testEventsArePassedToMusicHandler(self):
         """testEventsArePassedToMusicHandler: should pass on events to the music handler"""
@@ -359,6 +378,9 @@ class MockEvent(Mock):
             return self.queue.pop()
         except IndexError:
             return []
+
+    def clear(self, event_type):
+        pass
 
 
 class MockKeys(Mock):
