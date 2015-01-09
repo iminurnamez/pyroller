@@ -306,10 +306,11 @@ class Chip(object):
         self.rect = self.image.get_rect()
 
 
-class ChipPile(object):
+class ChipPile(pygame.sprite.Group):
     """Represents a player's pile of chips."""
 
     def __init__(self, rect):
+        super(ChipPile, self).__init__()
         self.rect = pygame.Rect(rect)
         self.chips = list()
 
@@ -326,16 +327,19 @@ class ChipPile(object):
     def withdraw_chips(self, amount):
         """Withdraw chips totalling amount and adjust stacks."""
 
+        withdraw = amount
         chips = self.chips
         chips.sort()
-        while chips:
-            cursor = self.chips[-1]
-            if cursor <= amount:
-                chips.pop()
-                amount -= cursor
+        for chip in list(self.chips):
+            if chip <= amount:
+                chips.remove(chip)
+                amount -= chip.value
+            if amount == 0:
+                break
+        else:
+            raise ValueError
 
-        self.stacks = self.make_stacks()
-        return withdrawal
+        return withdraw
 
     def make_stacks(self):
         """Returns a list of ChipStacks sorted by y-position."""

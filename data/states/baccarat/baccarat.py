@@ -7,6 +7,7 @@ from .ui import *
 import fysom
 import json
 import os
+from pygame.compat import *
 
 
 __all__ = ['Baccarat']
