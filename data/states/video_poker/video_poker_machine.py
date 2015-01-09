@@ -1,6 +1,6 @@
 import pygame as pg
 from ... import tools, prepare
-from ...components.labels import Blinker, Label, FunctionButton, _Button
+from ...components.labels import Blinker, Label, _Button
 from ...components.cards import Deck
 
 HAND_RANKS = {'ROYAL_FLUSH'    : 0,
@@ -8,8 +8,8 @@ HAND_RANKS = {'ROYAL_FLUSH'    : 0,
              '4_OF_A_KIND'     : 2,
              'FULL_HOUSE'      : 3,
              'FLUSH'           : 4,
-             'STRAIGHT'        : 5, 
-             'THREE_OF_A_KIND' : 6, 
+             'STRAIGHT'        : 5,
+             'THREE_OF_A_KIND' : 6,
              'TWO_PAIR'        : 7,
              'JACKS_OR_BETTER' : 8}
 PAYTABLE = [
@@ -135,7 +135,7 @@ class Dealer:
         self.text_bg_color = "darkblue"
 
         self.held_labels = []
-                
+
         self.text = " insert coins "
         self.standby_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
                                       {"center":self.rect.center}, 700, self.text_bg_color)
@@ -197,7 +197,7 @@ class Dealer:
             self.changing_cards.append(index)
         else:
             self.held_cards.append(index)
-            self.changing_cards.remove(index)        
+            self.changing_cards.remove(index)
         self.held_sound.play()
         self.changing_cards.sort()
 
@@ -233,17 +233,17 @@ class Dealer:
         elif pairs_len == 1:
             """ Jacks or betters"""
             if 1 in pairs or 11 in pairs or 12 in pairs or 13 in pairs:
-                rank = HAND_RANKS['JACKS_OR_BETTER']     
-        
+                rank = HAND_RANKS['JACKS_OR_BETTER']
+
         elif pairs_len == 2:
             """Two pair"""
             rank = HAND_RANKS['TWO_PAIR']
-        
+
         elif are_three:
             """Three of a kind"""
             rank = HAND_RANKS['THREE_OF_A_KIND']
 
-        """Straight, if is an Ace in the hand, Check if other 4 cards are 
+        """Straight, if is an Ace in the hand, Check if other 4 cards are
             K, Q, J, 10 or  2, 3, 4, 5
             else Check if 5 cards are continuous in rank"""
         if 1 in values:
@@ -277,15 +277,15 @@ class Dealer:
         elif is_straight:
             rank = HAND_RANKS['STRAIGHT']
         else:
-            """4 of a kind, Check for: 4 cards of the same value 
-            + higher value unmatched card, and Check for: lower ranked unmatched 
+            """4 of a kind, Check for: 4 cards of the same value
+            + higher value unmatched card, and Check for: lower ranked unmatched
             card + 4 cards of the same rank"""
             a = values[0] == values[1] == values[2] == values[3]
             b = values[1] == values[2] == values[3] == values[4]
             if a or b:
                 rank = HAND_RANKS['4_OF_A_KIND']
 
-        # and finally return the current rank    
+        # and finally return the current rank
         return rank
 
 
@@ -308,7 +308,7 @@ class Dealer:
                     if self.card_index >= len(self.changing_cards):
                         self.card_index = 0
                         self.revealing = False
-        
+
         if self.playing:
             self.standby = False
         else:
@@ -341,7 +341,7 @@ class Machine:
         self.text_size = 30
         self.text_color = "white"
         self.padding = 25
-        
+
         self.buttons = []
         self.btn_width = self.btn_height = 100
         self.btn_padding = 35
@@ -351,7 +351,7 @@ class Machine:
 
         self.credits_sound = prepare.SFX["bingo-pay-money"]
         self.bet_sound = prepare.SFX["bingo-pick-1"]
-        
+
 
 
     def startup(self, player):
@@ -395,8 +395,8 @@ class Machine:
 
         button_list = [
             ('bet', self.bet_one, None), ('bet max', self.bet_max, None),
-            ('held', self.make_held, '0'), ('held', self.make_held, '1'), 
-            ('held', self.make_held, '2'), ('held', self.make_held, '3'), 
+            ('held', self.make_held, '0'), ('held', self.make_held, '1'),
+            ('held', self.make_held, '2'), ('held', self.make_held, '3'),
             ('held', self.make_held, '4'), ('draw', self.draw_cards, None)]
 
         settings = {"fill_color"         : pg.Color("#222222"),
@@ -409,8 +409,8 @@ class Machine:
                     "active"             : False}
 
         for text, func, args in button_list:
-            rect_style = (x, y, self.btn_width, self.btn_height)            
-            settings.update({'text':text, 'hover_text':text, 
+            rect_style = (x, y, self.btn_width, self.btn_height)
+            settings.update({'text':text, 'hover_text':text,
                               'disable_text':text, 'call':func, 'args':args})
             button = _Button(rect_style, **settings)
             self.buttons.append(button)
@@ -478,7 +478,7 @@ class Machine:
         # draw button
         self.buttons[-1].active = True
 
-    
+
     def bet_max(self, *args):
         if self.credits > 0:
             if self.credits >= self.max_bet:
@@ -497,7 +497,7 @@ class Machine:
         # draw button
         self.buttons[-1].active = True
 
-    
+
     def make_last_bet(self):
         """ """
         if self.credits > 0:
@@ -544,23 +544,23 @@ class Machine:
         self.playing = False
         self.dealer.playing = False
         self.start_waiting()
-    
+
     def draw_cards(self, *args):
         if not self.playing:
             self.new_game()
         else:
             self.evaluate_final_hand()
-        
+
 
 
     def make_held(self, *args):
-        """ Some unkonow issue with Int args, 
+        """ Some unkonow issue with Int args,
             so Str values passed to the func and
             here are converter tonn Int"""
         if self.playing:
             index = int(args[0])
             self.dealer.toogle_held(index)
-    
+
 
 
 
@@ -568,7 +568,7 @@ class Machine:
         if event.type == pg.MOUSEBUTTONDOWN:
             mouse_pos = tools.scaled_mouse_pos(scale)
             self.dealer.get_event(self.playing, mouse_pos)
-        
+
         self.coins_button.get_event(event)
         self.cash_button.get_event(event)
         for button in self.buttons:
@@ -577,12 +577,12 @@ class Machine:
     def update(self, mouse_pos, dt):
         # game info labels
         self.info_labels = []
-        
+
         credit_text = 'Credit {}'.format(self.credits)
         label = Label(self.font, self.text_size, credit_text, self.text_color,
                         {"topright": (self.label_x2, self.label_y)})
         self.info_labels.append(label)
-        coins_text = "Coins in {}".format(self.coins)        
+        coins_text = "Coins in {}".format(self.coins)
         label = Label(self.font, self.text_size, coins_text, self.text_color,
                         {"topleft": (self.label_x1, self.label_y)})
         self.info_labels.append(label)
@@ -596,7 +596,7 @@ class Machine:
         if self.waiting:
             # bet and bet max buttons
             self.toogle_buttons((self.buttons[0], self.buttons[1]))
-        
+
         if self.credits == 0 and self.playing == False:
             self.toogle_buttons(self.buttons, False)
 
