@@ -48,6 +48,7 @@ class TestControl(unittest.TestCase):
         #
         # Flags for detecting calls
         self.called = {}
+        self.call_arguments = {}
 
     def tearDown(self):
         """Tear down the tests"""
@@ -60,8 +61,9 @@ class TestControl(unittest.TestCase):
         """Return a utility method to catch calls to mock methods"""
         self.called[name] = False
         #
-        def called():
+        def called(*args, **kw):
             self.called[name] = True
+            self.call_arguments[name] = (args, kw)
         #
         return called
 
@@ -131,7 +133,12 @@ class TestControl(unittest.TestCase):
 
     def testUpdateCallsStateUpdate(self):
         """testUpdateCallsStateUpdate: update method should call the active states update method"""
-        raise NotImplementedError
+        self.c.setup_states(self.states, 'one')
+        #
+        self.c.update(10)
+        #
+        # Update should have been called
+        self.assertTrue(self.c.state._update_called)
 
     def testUpdateCallsMusicHandlerUpdate(self):
         """testUpdateCallsMusicHandlerUpdate: update method should call the music handler update"""
@@ -217,6 +224,12 @@ class SimpleState(tools._State):
         """Initialise the state"""
         super(SimpleState, self).__init__()
         self._name = name
+        self._update_called = False
+
+    def update(self, surface, keys, now, dt, scale):
+        """Update the state"""
+        super(SimpleState, self).update(surface, keys, now, dt, scale)
+        self._update_called = True
 
 
 if __name__ == '__main__':
