@@ -12,9 +12,8 @@ import pstats
 from . import prepare, tools
 from .states import title_screen, lobby_screen, stats_menu
 from .states import stats_screen, blackjack, craps, bingo, keno, video_poker
-from .states import credits_screen, snake_splash, pachinko
-from .components import music_handler
 from .states import credits_screen, snake_splash, pachinko, baccarat
+from .components import music_handler
 
 
 def main():
