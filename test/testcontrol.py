@@ -98,8 +98,36 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.called['flip_state'])
 
     def testUpdateChecksForStateQuit(self):
-        """testUpdateChecksForStateQuit: update method should check if a state wants to quite"""
-        raise NotImplementedError
+        """testUpdateChecksForStateQuit: update method should check if a state wants to quit"""
+        self.c.setup_states(self.states, 'one')
+        #
+        # Normally control done should not be set
+        self.assertFalse(self.c.done)
+        self.assertFalse(self.c.state.quit)
+        #
+        # Updating shouldn't change that if the state is not requesting it
+        self.c.update(10)
+        self.assertFalse(self.c.done)
+        #
+        # Now setting state to quit should set control to done
+        self.c.state.quit = True
+        self.c.update(10)
+        self.assertTrue(self.c.done)
+
+    def testQuitCheckedBeforeDone(self):
+        """testQuitCheckedBeforeDone: update should check for quit before done"""
+        self.c.setup_states(self.states, 'one')
+        #
+        # Update would call flip_state if the state is done so we want to check for this
+        self.c.flip_state = self._catchCall('flip_state')
+        #
+        # Call when state request a quit
+        self.c.state.quit = True
+        self.c.update(10)
+        #
+        # Should be done and flip state should not have been called
+        self.assertTrue(self.c.done)
+        self.assertFalse(self.called['flip_state'])
 
     def testUpdateCallsStateUpdate(self):
         """testUpdateCallsStateUpdate: update method should call the active states update method"""
