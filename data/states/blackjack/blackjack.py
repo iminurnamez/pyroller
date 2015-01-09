@@ -83,12 +83,8 @@ class Blackjack(tools._State):
                 ]                
         labels = []              
         for info in labels_info:
-            label = Label(self.font, info[1], info[0], info[2], info[4])
-            surf = pg.Surface(label.rect.size).convert()
-            surf.fill(prepare.FELT_GREEN)
-            surf.blit(label.image, (0, 0))
-            surf.set_alpha(info[3])
-            label.image = surf
+            label = Label(self.font, info[1], info[0], info[2], info[4], bg=prepare.FELT_GREEN)
+            label.image.set_alpha(info[3])
             labels.append(label)
         return labels
         
