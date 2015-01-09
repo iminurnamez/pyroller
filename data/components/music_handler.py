@@ -140,9 +140,10 @@ class MusicHandler(object):
         self.volume_label.draw(surface)
         self.buttons.draw(surface)
         surface.blit(self.gray_icon, self.gray_rect)
-        for icon in self.volume_icons:
-            if icon.value <= self.volume_mod:
-                icon.draw(surface)
+        if self.music_on:
+            for icon in self.volume_icons:
+                if icon.value <= self.volume_mod:
+                    icon.draw(surface)
 
 
 class VolumeIcon(object):
