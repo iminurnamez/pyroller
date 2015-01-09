@@ -45,14 +45,14 @@ class Craps(tools._State):
         self.pointchip = point_chip.PointChip()
         self.points = [4,5,6,8,9,10]
         self.point = 0 #off position
-
+        
         self.widgets = []
         if prepare.DEBUG:
             self.setup_debug_entry()
             self.debug_die1 = None
             self.debug_die2 = None
             self.debug_dice_total = None
-
+        
     def setup_debug_entry(self):
         self.debug_lbl = Label(self.font, self.font_size, '6 6', "gold3", {"center": (750, 950)})
         settings = {
@@ -75,7 +75,7 @@ class Craps(tools._State):
         self.game_started = False
         self.next = "LOBBYSCREEN"
         self.done = True
-
+        
     def debug_roll(self, id, text):
         self.roll()
         try:
@@ -141,9 +141,10 @@ class Craps(tools._State):
             self.history.pop(0)
 
     def set_point(self):
-        if self.dice_total in self.points:
-            self.point = self.dice_total
-        elif self.dice_total == 7:
+        if not self.point:
+            if self.dice_total in self.points:
+                self.point = self.dice_total
+        if self.dice_total == 7:
             self.point = 0
 
     def get_dice_total(self, current_time):
@@ -176,13 +177,13 @@ class Craps(tools._State):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
         self.draw(surface)
-        for h in self.bets.keys():
-            self.bets[h].update(mouse_pos)
         self.get_dice_total(current_time)
         self.set_point()
-##        print(self.point)
+
+        for h in self.bets.keys():
+            self.bets[h].update(mouse_pos, self.point)
         self.pointchip.update(current_time, self.dice_total, self.dice[0])
         self.update_total_label()
         for widget in self.widgets:
             widget.update()
-        #print(mouse_pos)
+        print(self.point)

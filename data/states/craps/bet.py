@@ -4,7 +4,7 @@ from ...components.labels import Label
 from ... import prepare
 
 class Bet:
-    def __init__(self, size, topleft, name, mult_dict, triangles=None, pos=None, size2=None):
+    def __init__(self, size, topleft, bettable, name, mult_dict, triangles=None, pos=None, size2=None):
         self.name = name
         self.multiplier_dict = mult_dict
         self.triangles = triangles
@@ -22,6 +22,8 @@ class Bet:
         
         self.setup_highlighter(size, topleft)
         self.setup_label(name, mult_dict)
+        
+        self.bettable = bettable
     
     def setup_label(self, text, mult_dict):
         self.font = prepare.FONTS["Saniretro"]
@@ -45,11 +47,24 @@ class Bet:
         pg.draw.polygon(image, self.color, points,0)
         return image
         
-    def update(self, mouse_pos):
+    def update(self, mouse_pos, point):
         if self.highlighter_rect.collidepoint(mouse_pos):
             self.is_draw = True
         else:
             self.is_draw = False
+            
+        if self.bettable == 'always':
+            self.highlighter.fill(self.bettable_color)
+        elif self.bettable == 'on_point':
+            if point:
+                self.highlighter.fill(self.bettable_color)
+            else:
+                self.highlighter.fill(self.unbettable_color) 
+        elif self.bettable == 'off_point':
+            if not point:
+                self.highlighter.fill(self.bettable_color)
+            else:
+                self.highlighter.fill(self.unbettable_color) 
             
     def draw(self, surface):
         if self.is_draw:
