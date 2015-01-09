@@ -45,6 +45,9 @@ class TestControl(unittest.TestCase):
             'three': SimpleState('three'),
             'four': SimpleState('four'),
         }
+        #
+        # Flags for detecting calls
+        self.called = {}
 
     def tearDown(self):
         """Tear down the tests"""
@@ -52,6 +55,15 @@ class TestControl(unittest.TestCase):
     def _getControl(self):
         """Utility method to get a control"""
         return tools.Control('caption', RESOLUTION, RESOLUTIONS)
+
+    def _catchCall(self, name):
+        """Return a utility method to catch calls to mock methods"""
+        self.called[name] = False
+        #
+        def called():
+            self.called[name] = True
+        #
+        return called
 
     def testSetupStates(self):
         """testSetupStates: can setup the initial state and states dictionary"""
@@ -66,11 +78,24 @@ class TestControl(unittest.TestCase):
 
     def testFailSetupStateWithBadState(self):
         """testFailSetupStateWithBadState: should fail cleanly when setting up states with a bad name"""
+        # TODO: this behaviour should throw a more specific error (StateNotFound)
         self.assertRaises(KeyError, self.c.setup_states, self.states, 'NOT-THERE')
 
-    def testUpdateChecksStateCompletion(self):
-        """testUpdateChecksStateCompletion: update method should check if a state has completed"""
-        raise NotImplementedError
+    def testUpdateFlipsStateWhenStateCompletion(self):
+        """testUpdateFlipsStateWhenStateCompletion: update should check if a state has completed and flip state"""
+        self.c.setup_states(self.states, 'one')
+        #
+        # Update should call flip_state if the state is done so we want to check for this
+        self.c.flip_state = self._catchCall('flip_state')
+        #
+        # Call when state is not done
+        self.c.update(10)
+        self.assertFalse(self.called['flip_state'])
+        #
+        # Now make the state done and it should call flip_state
+        self.c.state.done = True
+        self.c.update(10)
+        self.assertTrue(self.called['flip_state'])
 
     def testUpdateChecksForStateQuit(self):
         """testUpdateChecksForStateQuit: update method should check if a state wants to quite"""
