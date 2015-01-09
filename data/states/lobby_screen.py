@@ -3,7 +3,7 @@ import json
 import pygame as pg
 
 from .. import tools, prepare
-from ..components.labels import Label, ImageButton, NeonButton, ButtonGroup
+from ..components.labels import Label, GameButton, NeonButton, ButtonGroup
 from ..components.flair_pieces import ChipCurtain
 
 
@@ -24,35 +24,28 @@ class LobbyScreen(tools._State):
     def __init__(self):
         super(LobbyScreen, self).__init__()
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.font = prepare.FONTS["Saniretro"]
         self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
                       ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO")]
-        self.game_buttons = self.make_game_buttons(screen_rect)
-        self.navigation_buttons = self.make_navigation_buttons(screen_rect)
+        game_buttons = self.make_game_buttons(screen_rect)
+        navigation_buttons = self.make_navigation_buttons(screen_rect)
+        self.buttons = ButtonGroup(game_buttons, navigation_buttons)
         self.chip_curtain = None #Created on startup.
 
     def make_game_buttons(self, screen_rect):
-        num_columns = 3
-        left = screen_rect.width // (num_columns + 1)
-        top = screen_rect.top + 80
-        game_buttons = []
-        for game in self.games:
-            icon_raw = prepare.GFX["screenshot_{}".format(game[0].lower())]
-            icon = pg.transform.scale(icon_raw, (280, 210)).convert_alpha()
-            icon_rect = icon.get_rect(midtop=(left, top))
-            label = Label(self.font, 48, game[0], "gold3", {"center": (0, 0)})
-            button = ImageButton(icon, {"midtop": (left, top)}, label)
-            button.payload = game[1]
-            b = button.rect
-            button.frame_rect = pg.Rect(b.topleft,
-                                       (b.width,b.height+label.rect.height))
-            game_buttons.append(button)
-            left += screen_rect.width // (num_columns + 1)
-            if left > screen_rect.width - 100:
-                left = screen_rect.width // (num_columns + 1)
-                top += label.rect.height + icon_rect.height + 50
-        return game_buttons
+        columns = 3
+        size = GameButton.ss_size
+        spacer_x, spacer_y = 50, 100
+        start_x = (screen_rect.w-size[0]*columns-spacer_x*(columns-1))//2
+        start_y = screen_rect.top+130
+        step_x, step_y = size[0]+spacer_x, size[1]+spacer_y
+        buttons = ButtonGroup()
+        for i,data in enumerate(self.games):
+            game,payload = data
+            y,x = divmod(i, columns)
+            pos = (start_x+step_x*x, start_y+step_y*y)
+            GameButton(pos, game, self.start_game, payload, buttons)
+        return buttons
 
     def make_navigation_buttons(self, screen_rect):
         buttons = ButtonGroup()
@@ -65,6 +58,10 @@ class LobbyScreen(tools._State):
                screen_rect.bottom-(NeonButton.height+11))
         NeonButton(pos, "Exit", self.exit_game, None, buttons)
         return buttons
+
+    def start_game(self, chosen_game):
+        self.done = True
+        self.next = chosen_game
 
     def startup(self, current_time, persistent):
         self.persist = persistent
@@ -84,29 +81,18 @@ class LobbyScreen(tools._State):
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
             self.exit_game()
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(scale, event.pos)
-            for button in self.game_buttons:
-                if button.frame_rect.collidepoint(pos):
-                    self.done = True
-                    self.next = button.payload
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.exit_game()
-        self.navigation_buttons.get_event(event)
+        self.buttons.get_event(event)
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
-        self.navigation_buttons.update(mouse_pos)
+        self.buttons.update(mouse_pos)
         self.draw(surface)
 
     def draw(self, surface):
         surface.fill(prepare.BACKGROUND_BASE)
         self.chip_curtain.draw(surface)
-        for button in self.game_buttons:
-            pg.draw.rect(surface, pg.Color("gray10"), button.frame_rect)
-            button.draw(surface)
-            pg.draw.rect(surface, pg.Color("gold3"), button.rect, 4)
-            pg.draw.rect(surface, pg.Color("gold3"), button.frame_rect, 4)
-        self.navigation_buttons.draw(surface)
+        self.buttons.draw(surface)

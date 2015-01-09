@@ -332,6 +332,48 @@ class NeonButton(_Button):
         super(NeonButton, self).__init__(rect, *groups, **settings)
 
 
+class GameButton(_Button):
+    ss_size = (320, 240)
+    font = prepare.FONTS["Saniretro"]
+
+    def __init__(self, pos, game, call, args, *groups, **kwargs):
+        screenshot = prepare.GFX["screenshot_{}".format(game.lower())]
+        idle, highlight = self.make_images(game, screenshot)
+        rect = idle.get_rect(topleft=pos)
+        settings = {"hover_image" : highlight,
+                    "idle_image"  : idle,
+                    "call"        : call,
+                    "args"        : args}
+        settings.update(kwargs)
+        super(GameButton, self).__init__(rect, *groups, **settings)
+
+    def make_images(self, game, screenshot):
+        icon = pg.transform.scale(screenshot, self.ss_size).convert_alpha()
+        icon_rect = icon.get_rect()
+        label_text = game.replace("_", " ")
+        label = Label(self.font, 48, label_text, "gold3", {"center": (0, 0)})
+        rect = pg.Rect(0, 0, icon_rect.w+8, icon_rect.h+label.rect.h+8)
+        icon_rect.midtop = (rect.centerx, 4)
+        label.rect.midtop = icon_rect.midbottom
+        frame = label.image.get_rect()
+        frame.w = icon_rect.w
+        frame.midtop=icon_rect.midbottom
+        image = pg.Surface(rect.size).convert_alpha()
+        image.fill((0,0,0,0))
+        image.blit(icon, icon_rect)
+        image.fill(pg.Color("gray10"), frame)
+        highlight = image.copy()
+        overlay = pg.Surface(rect.size).convert_alpha() ###
+        overlay.fill((50, 50, 200, 150)) ### add overlay image
+        highlight.blit(overlay, (0,0))
+        for surface in (image, highlight):
+            pg.draw.rect(surface, pg.Color("gold3"), icon_rect, 4)
+            pg.draw.rect(surface, pg.Color("gold3"), frame, 4)
+            label.draw(surface)
+        return (image, highlight)
+
+
+
 # Deprecated: Please do not use. Marked for removal.
 class Button(object):
     """A simple button class."""
@@ -355,19 +397,6 @@ class Button(object):
                   (self.rect.bottomright, border.bottomright)]
         for pair in points:
             pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)
-        self.label.draw(surface)
-
-
-# Deprecated: Please do not use. Marked for removal.
-class ImageButton(object):
-    def __init__(self, image, rect_attr, label):
-        self.image = image
-        self.rect = self.image.get_rect(**rect_attr)
-        self.label = label
-        self.label.rect.midtop = self.rect.midbottom
-
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
         self.label.draw(surface)
 
 
