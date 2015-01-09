@@ -382,8 +382,10 @@ class Chip(pygame.sprite.DirtySprite):
 class ChipPile(Stacker):
     """Represents a player's pile of chips."""
 
-    def __init__(self, rect):
+    def __init__(self, rect, value=0):
         super(ChipPile, self).__init__(rect, (0, -7))
+        if value:
+            self.add(*cash_to_chips(value))
 
     @property
     def value(self):
@@ -398,7 +400,7 @@ class ChipPile(Stacker):
         self.sort()
         withdraw = list()
         for chip in reversed(self.sprites()):
-            if chip <= amount:
+            if chip.value <= amount:
                 amount -= chip.value
                 self.remove(chip)
                 withdraw.append(chip)

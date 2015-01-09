@@ -62,14 +62,23 @@ class Baccarat(tools._State):
         self.shoe = Deck((0, 0, 800, 600), decks=7, stacking=(0, 0))
         self.groups = [self.hud, self.shoe]
 
+        self.bets = list()
+
         b = NeonButton('lobby', (1000, 920, 0, 0), self.goto_lobby)
         self.hud.add(b)
 
-        filename = os.path.join('resources', 'baccarat-layout.json')
-        layout.load_layout(self, filename)
+        # filename = os.path.join('resources', 'baccarat-layout.json')
+        # layout.load_layout(self, filename)
+        self.player_hand = Deck((150, 150, 200, 200), stacking=(12, 200))
+        self.dealer_hand = Deck((750, 150, 200, 200), stacking=(12, 200))
+        self.groups.extend((self.player_hand, self.dealer_hand))
+        self.player_chips = ChipPile((0, 800, 200, 200), value=1000)
+        self.groups.append(self.player_chips)
         self.on_new_round()
 
     def load_json(self, filename):
+        return
+
         with open(filename) as fp:
             data = json.load(fp)
 
@@ -141,6 +150,14 @@ class Baccarat(tools._State):
                     sprite.on_mouse_click(pos)
                 self._clicked_sprite = None
 
+    def place_bet(self, position, owner, amount):
+        bet = ChipPile((300, 800, 200, 200))
+        chips = owner.withdraw_chips(amount)
+        bet.add(*chips)
+        bet.owner = owner
+        bet.bet = position
+        self.bets.append(bet)
+
     def deal_cards(self):
         for card in self.shoe.draw_cards(2):
             card.face_up = True
@@ -156,31 +173,39 @@ class Baccarat(tools._State):
         player_result = count_hand(self.player_hand)
         dealer_result = count_hand(self.dealer_hand)
 
+        if player_result > dealer_result:
+            status_text = "Player Wins"
+            result = "player"
+        elif player_result < dealer_result:
+            status_text = "Dealer Wins"
+            result = "dealer"
+        else:
+            status_text = "Tie"
+            result = "tie"
+
+        for bet in self.bets:
+            if bet.bet == result:
+                chips = cash_to_chips(bet.value)
+                bet.owner.add(*chips)
+                bet.owner.add(*bet.sprites())
+
+        self.clear_bets()
+
         msg = '{} points'
         text = TextSprite(msg.format(player_result), self.font)
         text.rect = self.player_hand.rect.move(0, 250)
         text.kill_me_on_clear = True
         self.hud.add(text)
+
         text = TextSprite(msg.format(dealer_result), self.font)
         text.rect = self.dealer_hand.rect.move(0, 250)
         text.kill_me_on_clear = True
         self.hud.add(text)
 
-        for player in self.players:
-            if player_result > dealer_result:
-                chips = cash_to_chips(player.player_bet.value)
-                player.chips.add(*chips)
-                player.chips.add(*player.player_bet)
-            elif player_result < dealer_result:
-                chips = cash_to_chips(player.dealer_bet.value)
-                player.chips.add(*chips)
-                player.chips.add(*player.dealer_bet)
-            else:
-                pass
-
-            player.player_bet.empty()
-            player.dealer_bet.empty()
-            player.tie_bet.empty()
+        text = TextSprite(status_text, self.font)
+        text.rect = self.player_hand.rect.move(0, 400)
+        text.kill_me_on_clear = True
+        self.hud.add(text)
 
         self.show_finish_round_button()
 
@@ -191,8 +216,13 @@ class Baccarat(tools._State):
         self.deal_cards()
 
     def on_new_round(self):
+        self.bets = list()
         self.clear_table()
         self.show_bet_confirm_button()
+
+    def clear_bets(self):
+        for group in self.bets:
+            group.empty()
 
     def clear_table(self):
         self.player_hand.empty()
@@ -216,6 +246,8 @@ class Baccarat(tools._State):
             sprite.kill()
             self.on_confirm_bet()
 
+        self.place_bet("player", self.player_chips, 100)
+
         text = TextSprite('Confirm?', self.button_font)
         rect = 960, 800, 250, 75
         b = Button(text, rect, f)
@@ -226,6 +258,11 @@ class Baccarat(tools._State):
             self._background = pg.Surface(surface.get_size())
             self._background.fill(prepare.FELT_GREEN)
             surface.blit(self._background, (0, 0))
+
+        for group in self.bets:
+            group.update(dt)
+            group.clear(surface, self._background)
+            group.draw(surface)
 
         for group in self.groups:
             group.update(dt)
