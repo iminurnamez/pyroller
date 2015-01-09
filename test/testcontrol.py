@@ -187,7 +187,26 @@ class TestControl(unittest.TestCase):
 
     def testFlipState(self):
         """testFlipState: should be able to flip back to previous state"""
-        raise NotImplementedError
+        self.c.setup_states(self.states, 'one')
+        #
+        # Set the next state to go to and catch calls to the initial cleanup function
+        # and next state startup, which should be called during the process
+        self.states['one'].next = 'two'
+        self.states['one'].cleanup = self._catchCall('cleanup')
+        self.states['two'].startup = self._catchCall('startup')
+        #
+        # Now flip
+        self.c.flip_state()
+        #
+        # Expect that
+        # - we are in the new state
+        # - the old state was cleaned up
+        # - the new state was started up
+        # - the 'previous' state of the next state is the initial state
+        self.assertEqual('two', self.c.state._name)
+        self.assertTrue(self.called['cleanup'])
+        self.assertTrue(self.called['startup'])
+        self.assertEqual('one', self.c.state.previous)
 
     def testCanHandleKeyPressEvents(self):
         """testCanHandleKeyPressEvents: should detect and store key presses"""
