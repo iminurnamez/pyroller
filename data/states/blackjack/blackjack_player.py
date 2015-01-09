@@ -42,4 +42,4 @@ class Player(object):
         
     def draw(self, surface):
         self.draw_hands(surface)
-        self.chip_pile.draw_stacks(surface)
+        self.chip_pile.draw(surface)
