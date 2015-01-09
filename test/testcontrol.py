@@ -66,7 +66,7 @@ class TestControl(unittest.TestCase):
 
     def testFailSetupStateWithBadState(self):
         """testFailSetupStateWithBadState: should fail cleanly when setting up states with a bad name"""
-        raise NotImplementedError
+        self.assertRaises(KeyError, self.c.setup_states, self.states, 'NOT-THERE')
 
     def testUpdateChecksStateCompletion(self):
         """testUpdateChecksStateCompletion: update method should check if a state has completed"""
