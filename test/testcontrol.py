@@ -1,6 +1,7 @@
 """Tests for the main control class"""
 
 import unittest
+import contextlib
 import time
 
 
@@ -210,7 +211,25 @@ class TestControl(unittest.TestCase):
 
     def testCanHandleKeyPressEvents(self):
         """testCanHandleKeyPressEvents: should detect and store key presses"""
-        raise NotImplementedError
+        self.c.setup_states(self.states, 'one')
+        #
+        # Should store the keys on both key down and key up
+        for event_type, key in [(pg.KEYDOWN, pg.K_a), (pg.KEYUP, pg.K_b)]:
+            events = [pg.event.Event(event_type, key=key)]
+            keys = [key]
+            #
+            # Run the event loop with mocked out events
+            with mock_pygame_events() as (event_queue, key_queue):
+                #
+                # Push events onto queue
+                event_queue.append(events)
+                key_queue.append(keys)
+                #
+                # Do the loop
+                self.c.event_loop()
+            #
+            # Should have picked up the keys
+            self.assertEqual(keys, self.c.keys)
 
     def testCanHandleTakingScreenshots(self):
         """testCanHandleTakingScreenshots: should detect screenshot key and store screenshot"""
@@ -283,6 +302,49 @@ class SimpleState(tools._State):
 
 class Mock(object):
     """Basic mocking object"""
+
+
+class MockEvent(Mock):
+    """Mock of Pygame event queue"""
+
+    def __init__(self):
+        self.queue = []
+
+    def get(self):
+        try:
+            return self.queue.pop()
+        except IndexError:
+            return []
+
+
+class MockKeys(Mock):
+    """Mock of Pygame keyboard queue"""
+
+    def __init__(self):
+        self.queue = []
+
+    def get_pressed(self):
+        try:
+            return self.queue.pop()
+        except IndexError:
+            return []
+
+
+@contextlib.contextmanager
+def mock_pygame_events():
+    """Context manager to do lock mocking out of pygame events system"""
+    #
+    # Remember old pygame objects to restore later
+    old_pg = pg.event, pg.key
+    #
+    # Mock of the event and keyboard queues
+    pg.event = MockEvent()
+    pg.key = MockKeys()
+    #
+    try:
+        yield pg.event.queue, pg.key.queue
+    finally:
+        pg.event, pg.key = old_pg
 
 
 if __name__ == '__main__':
