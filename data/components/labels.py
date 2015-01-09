@@ -222,17 +222,17 @@ class MarqueeFrame(pg.sprite.Sprite):
 
 class ButtonGroup(pg.sprite.Group):
     def get_event(self, event, *args, **kwargs):
-        check = [s for s in self.sprites() if s.active and s.visible]
+        check = (s for s in self.sprites() if s.active and s.visible)
         for s in check:
             s.get_event(event, *args, **kwargs)
 
 
-class _Button(pg.sprite.Sprite, tools._KwargMixin):
+class Button(pg.sprite.Sprite, tools._KwargMixin):
     _invisible = pg.Surface((1,1)).convert_alpha()
     _invisible.fill((0,0,0,0))
 
     def __init__(self, rect_style, *groups, **kwargs):
-        super(_Button, self).__init__(*groups)
+        super(Button, self).__init__(*groups)
         self.process_kwargs("Button", BUTTON_DEFAULTS, kwargs)
         self.rect = pg.Rect(rect_style)
         rendered = self.render_text()
@@ -300,7 +300,7 @@ class _Button(pg.sprite.Sprite, tools._KwargMixin):
         if any(pressed[key] for key in self.bindings):
             hover = True
         if not self.visible:
-            self.image = _Button._invisible
+            self.image = Button._invisible
         elif self.active:
             self.image = (hover and self.hover_image) or self.idle_image
             if not self.hover and hover:
@@ -313,7 +313,7 @@ class _Button(pg.sprite.Sprite, tools._KwargMixin):
         surface.blit(self.image, self.rect)
 
 
-class NeonButton(_Button):
+class NeonButton(Button):
     """Neon sign style button that glows on mouseover."""
     width = 318
     height = 101
@@ -327,12 +327,12 @@ class NeonButton(_Button):
         settings = {"hover_image" : on_image,
                     "idle_image"  : off_image,
                     "call"        : call,
-                    "args"     : args}
+                    "args"        : args}
         settings.update(kwargs)
         super(NeonButton, self).__init__(rect, *groups, **settings)
 
 
-class GameButton(_Button):
+class GameButton(Button):
     ss_size = (320, 240)
     font = prepare.FONTS["Saniretro"]
 
@@ -369,32 +369,6 @@ class GameButton(_Button):
         for surface in (image, highlight):
             label.draw(surface)
         return (image, highlight)
-
-
-# Deprecated: Please do not use. Marked for removal.
-class Button(object):
-    """A simple button class."""
-    def __init__(self, left, top, width, height, label):
-        self.rect = pg.Rect(left, top, width, height)
-        label.rect.center = self.rect.center
-        self.label = label
-
-    def draw(self, surface):
-        """Draw button to surface."""
-        pg.draw.rect(surface, pg.Color("gray10"), self.rect)
-        border = self.rect.inflate(16, 18)
-        border.top = self.rect.top - 6
-        pg.draw.rect(surface, pg.Color("gray10"), border)
-        color = "gold3"
-        pg.draw.rect(surface, pg.Color(color), self.rect, 3)
-        pg.draw.rect(surface, pg.Color(color), border, 4)
-        points = [(self.rect.topleft, border.topleft),
-                  (self.rect.topright, border.topright),
-                  (self.rect.bottomleft, border.bottomleft),
-                  (self.rect.bottomright, border.bottomright)]
-        for pair in points:
-            pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)
-        self.label.draw(surface)
 
 
 class TextBox(object):
