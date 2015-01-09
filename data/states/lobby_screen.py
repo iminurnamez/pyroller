@@ -81,7 +81,7 @@ class LobbyScreen(tools._State):
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
             self.exit_game()
-        elif event.type == pg.KEYUP:
+        elif event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 self.exit_game()
         self.buttons.get_event(event)
