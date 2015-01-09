@@ -7,12 +7,13 @@ import os
 
 # Default test settings
 RESOLUTION = (10, 20)
-RESOLUTIONS = [
+RESOLUTIONS = (
+    (5, 10),
     RESOLUTION,
     (30, 40),
     (50, 60),
     (70, 80),
-]
+)
 
 # Set up the pygame system
 import pygame as pg
@@ -35,6 +36,7 @@ class TestControl(unittest.TestCase):
 
     def setUp(self):
         """Set up the tests"""
+        pg.display.set_mode(RESOLUTION, pg.RESIZABLE)
         #
         # Some simple states
         self.states = {
@@ -287,7 +289,7 @@ class TestControl(unittest.TestCase):
         """testCanHandleScreenResize: should call screen resize if the screen has changed"""
         #
         # Should store the keys on both key down and key up
-        events = [pg.event.Event(pg.VIDEORESIZE, size=RESOLUTIONS[1])]
+        events = [pg.event.Event(pg.VIDEORESIZE, size=RESOLUTIONS[2])]
         #
         # Initially screen should be default size
         self.assertEqual(RESOLUTION, self.c.screen_rect.size)
@@ -303,8 +305,8 @@ class TestControl(unittest.TestCase):
             self.c.event_loop()
         #
         # Now should be new resolution
-        self.assertEqual(RESOLUTIONS[1], self.c.screen_rect.size)
-        self.assertEqual(RESOLUTIONS[1], self.c.screen.get_size())
+        self.assertEqual(RESOLUTIONS[2], self.c.screen_rect.size)
+        self.assertEqual(RESOLUTIONS[2], self.c.screen.get_size())
 
     def testEventsArePassedToMusicHandler(self):
         """testEventsArePassedToMusicHandler: should pass on events to the music handler"""
@@ -340,15 +342,33 @@ class TestControl(unittest.TestCase):
 
     def testResizeToLargerSize(self):
         """testResizeToLargerSize: can handle resizing to larger screen size"""
-        raise NotImplementedError
+        #
+        # Initial size should be default
+        self.assertEqual(RESOLUTION, self.c.screen_rect.size)
+        #
+        # Increase size
+        self.c.on_resize(RESOLUTIONS[2])
+        self.assertEqual(RESOLUTIONS[2], self.c.screen_rect.size)
 
     def testResizeToSmallerSize(self):
         """testResizeToSmallerSize: can handle resizing to smaller screen size"""
-        raise NotImplementedError
+        #
+        # Initial size should be default
+        self.assertEqual(RESOLUTION, self.c.screen_rect.size)
+        #
+        # Increase size
+        self.c.on_resize(RESOLUTIONS[0])
+        self.assertEqual(RESOLUTIONS[0], self.c.screen_rect.size)
 
     def testResizeToSameSize(self):
         """testResizeToSameSize: can handle resizing to same screen size"""
-        raise NotImplementedError
+        #
+        # Initial size should be default
+        self.assertEqual(RESOLUTION, self.c.screen_rect.size)
+        #
+        # Increase size
+        self.c.on_resize(RESOLUTIONS[1])
+        self.assertEqual(RESOLUTIONS[1], self.c.screen_rect.size)
 
     def testFailResizeIfInvalidSize(self):
         """testFailResizeIfInvalidSize: should fail cleanly if invalid screen size detected"""
