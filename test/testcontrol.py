@@ -308,7 +308,35 @@ class TestControl(unittest.TestCase):
 
     def testEventsArePassedToMusicHandler(self):
         """testEventsArePassedToMusicHandler: should pass on events to the music handler"""
-        raise NotImplementedError
+        #
+        # Simple mock music handler to check calls are working
+        handler = Mock()
+        handler.get_event = self._catchCall('get_event')
+        #
+        events = [pg.event.Event(pg.MOUSEMOTION)]
+        #
+        # Run the event loop with mocked out events
+        with mock_pygame_events() as (event_queue, key_queue):
+            #
+            # Push events onto queue
+            #
+            # With no music handler, events should not call the method
+            event_queue.append(events)
+            self.c.event_loop()
+            self.assertFalse(self.called['get_event'])
+            #
+            # With music handler but state not requesting music, should not call the method
+            self.c.music_handler = handler
+            self.c.state.use_music_handler = False
+            event_queue.append(events)
+            self.c.event_loop()
+            self.assertFalse(self.called['get_event'])
+            #
+            # With state requesting music, should call the method
+            self.c.state.use_music_handler = True
+            event_queue.append(events)
+            self.c.event_loop()
+            self.assertTrue(self.called['get_event'])
 
     def testResizeToLargerSize(self):
         """testResizeToLargerSize: can handle resizing to larger screen size"""
