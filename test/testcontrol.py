@@ -2,7 +2,7 @@
 
 import unittest
 import contextlib
-import time
+import os
 
 
 # Default test settings
@@ -67,6 +67,13 @@ class TestControl(unittest.TestCase):
             self.call_arguments[name] = (args, kw)
         #
         return called
+
+    def _safeRemoveFile(self, filename):
+        """Remove a file if it is there - if it isn't just return"""
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
 
     def testSetupStates(self):
         """testSetupStates: can setup the initial state and states dictionary"""
@@ -233,7 +240,33 @@ class TestControl(unittest.TestCase):
 
     def testCanHandleTakingScreenshots(self):
         """testCanHandleTakingScreenshots: should detect screenshot key and store screenshot"""
-        raise NotImplementedError
+        try:
+            self.c.setup_states(self.states, 'one')
+            #
+            # Should store the keys on both key down and key up
+            events = [pg.event.Event(pg.KEYDOWN, key=pg.K_PRINT)]
+            keys = [pg.K_PRINT]
+            #
+            # Get rid of the screenshot file if it there
+            self._safeRemoveFile('screenshot.png')
+            self.assertFalse(os.path.isfile('screenshot.png'))
+            #
+            # Run the event loop with mocked out events
+            with mock_pygame_events() as (event_queue, key_queue):
+                #
+                # Push events onto queue
+                event_queue.append(events)
+                key_queue.append(keys)
+                #
+                # Do the loop
+                self.c.event_loop()
+            #
+            # Should have taken a screenshot
+            self.assertEqual(keys, self.c.keys)
+            self.assertTrue(os.path.isfile('screenshot.png'))
+        finally:
+            # Make sure to clean up the screenshot file
+            self._safeRemoveFile('screenshot.png')
 
     def testCanHandleFPS(self):
         """testCanHandleFPS: should detect FPS key pressed and show FPS"""
