@@ -141,8 +141,31 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.c.state._update_called)
 
     def testUpdateCallsMusicHandlerUpdate(self):
-        """testUpdateCallsMusicHandlerUpdate: update method should call the music handler update"""
-        raise NotImplementedError
+        """testUpdateCallsMusicHandlerUpdate: update method should call the music handler update if needed"""
+        #
+        # Simple mock music handler to check calls are working
+        handler = Mock()
+        handler.update = self._catchCall('update')
+        handler.draw = self._catchCall('draw')
+        #
+        # Set up the control
+        self.c.music_handler = handler
+        self.c.setup_states(self.states, 'one')
+        #
+        # Update and then the music handler methods should have been called
+        self.c.update(10)
+        self.assertTrue(self.called['update'])
+        self.assertTrue(self.called['draw'])
+        #
+        # Now set the state to request no music handling
+        self.c.state.use_music_handler = False
+        self.called['update'] = False
+        self.called['draw'] = False
+        #
+        # Methods should not be called now
+        self.c.update(10)
+        self.assertFalse(self.called['update'])
+        self.assertFalse(self.called['draw'])
 
     def testUpdateWorksIfNoMusicHandler(self):
         """testUpdateWorksIfNoMusicHandler: update method should bypass music if no music handler"""
@@ -153,10 +176,6 @@ class TestControl(unittest.TestCase):
         #
         self.c.update(10)
         # Nothing to test - should just work
-
-    def testUpdateRespectsStateNotWantingMusic(self):
-        """testUpdateRespectsStateNotWantingMusic: update should check and respect if state doesn't want music handled"""
-        raise NotImplementedError
 
     def testUpdateShouldScaleScreen(self):
         """testUpdateShouldScaleScreen: update method should scale the screen"""
@@ -241,6 +260,10 @@ class SimpleState(tools._State):
     def update(self, surface, keys, now, dt, scale):
         super(SimpleState, self).update(surface, keys, now, dt, scale)
         self._update_called = True
+
+
+class Mock(object):
+    """Basic mocking object"""
 
 
 if __name__ == '__main__':
