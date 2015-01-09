@@ -9,14 +9,24 @@ blending of the two.
 """
 
 import random
-from collections import OrderedDict
-from itertools import product
+from itertools import product, groupby
+from operator import attrgetter
 import pygame
 from pygame.transform import smoothscale
 from ... import prepare
 
 __all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck', 'Chip',
-           'ChipPile']
+           'ChipPile', 'SpriteGroup', 'cash_to_chips']
+
+
+def cash_to_chips(value):
+    retval = list()
+    demoninations = [100, 25, 10, 5, 1]
+    for d in demoninations:
+        number, value = divmod(value, d)
+        for i in range(number):
+            retval.append(Chip(d))
+    return retval
 
 
 def cut_sheet(surface, dim, margin=0, spacing=0, subsurface=True):
@@ -67,6 +77,49 @@ def make_cards(decks, card_size, shuffle=False):
         random.shuffle(cards)
 
     return cards
+
+
+class SpriteGroup(pygame.sprite.OrderedUpdates):
+    def draw(self, surface):
+        spritedict = self.spritedict
+        surface_blit = surface.blit
+        dirty = self.lostsprites
+        self.lostsprites = list()
+        dirty_append = dirty.append
+        for s in self.sprites():
+            if not s.visible:
+                continue
+            r = spritedict[s]
+            newrect = surface_blit(s.image, s.rect)
+            if r:
+                if newrect.colliderect(r):
+                    dirty_append(newrect.union(r))
+                else:
+                    dirty_append(newrect)
+                    dirty_append(r)
+            else:
+                dirty_append(newrect)
+            spritedict[s] = newrect
+        return dirty
+
+
+class EventButton(pygame.sprite.DirtySprite):
+    def __init__(self, callback, args=None, kwargs=None):
+        super(EventButton, self).__init__()
+        assert(callable(callback))
+        kwargs = kwargs if kwargs is not None else dict()
+        args = args if args is not None else list()
+        self._callback = callback, args, kwargs
+
+    def on_mouse_click(self, pos):
+        cb, args, kwargs = self._callback
+        cb(self, *args, **kwargs)
+
+    def on_mouse_enter(self, pos):
+        pass
+
+    def on_mouse_leave(self, pos):
+        pass
 
 
 class Card(pygame.sprite.DirtySprite):
@@ -165,92 +218,109 @@ class Card(pygame.sprite.DirtySprite):
         return "{} of {}".format(self.card_names[self.value], self.suit)
 
 
-class Deck(pygame.sprite.OrderedUpdates):
-    """Class to represent a deck of playing cards. If default_shuffle is True
-        the deck will be shuffled upon creation. If reuse_discards is True, the
-        discard pile will replenish the deck on exhaustion. If infinite is True,
-        the deck will replenish itself with a new deck upon exhaustion. Reusing
-        discards supersedes infinite replenishment."""
-
-    def __init__(self, rect, card_size=prepare.CARD_SIZE, shuffle=True,
-                 infinite=False, decks=0, stacking=(6, 6)):
-        super(Deck, self).__init__()
-        if rect[2:] == (0, 0):
-            self.rect = pygame.Rect(rect[:2], card_size)
+class Stacker(SpriteGroup):
+    def __init__(self, rect, stacking=(6, 6)):
+        super(Stacker, self).__init__()
+        self.rect = pygame.Rect(rect)
+        self.stacking = stacking
+        self._needs_arrange = True
+        self._constraint = 'height'
+        if stacking[1] >= 0:
+            self._origin = 'topleft'
+            self._sprite_anchor = 'topleft'
         else:
-            self.rect = pygame.Rect(rect)
+            self._origin = 'bottomleft'
+            self._sprite_anchor = 'bottomleft'
 
+    def add(self, *items):
+        super(Stacker, self).add(*items)
+        self._needs_arrange = True
+
+    def remove(self, *items):
+        super(Stacker, self).remove(*items)
+        self._needs_arrange = True
+
+    def pop(self):
+        try:
+            sprite = self._spritelist[-1]
+        except IndexError:
+            return None
+        else:
+            self.remove(sprite)
+            return sprite
+
+    def draw(self, surface):
+        if self._needs_arrange:
+            self.arrange()
+            self._needs_arrange = False
+        super(Stacker, self).draw(surface)
+
+    def arrange(self, sprites=None, offset=(0, 0)):
+        """ position sprites into piles.
+
+        Constraint can be "width" or "height".
+        If constraint is "width", sprite piles grow down.
+        If constraint is "height", sprite piles grow to left.
+        If rect is too small, other sprites will not be shown
+        """
+        if sprites is None:
+            sprites = list(self.sprites())
+
+        if not sprites:
+            return
+
+        if self.stacking == (0, 0):
+            pos = self.rect.topleft
+            sprites[-1].visible = 1
+            sprites[-1].rect.topleft = pos
+            for sprite in sprites[:-1]:
+                sprite.visible = 0
+                sprite.rect.topleft = pos
+            return
+
+        x, y = getattr(self.rect, self._origin)
+        x += offset[0]
+        y += offset[1]
+        rx, ry = x, y
+        ox, oy = self.stacking
+        for sprite in sprites:
+            sprite.visible = 1
+            setattr(sprite.rect, self._sprite_anchor, (x, y))
+            if hasattr(sprite, 'dirty'):
+                sprite.dirty = 1
+            if self._constraint == "height":
+                if self.rect.contains(sprite.rect.move(0, oy)):
+                    y += oy
+                else:
+                    y = ry
+                    x += ox + sprite.rect.width
+
+
+class Deck(Stacker):
+    """Class to represent a deck of playing cards. If default_shuffle is True
+    the deck will be shuffled upon creation.
+    """
+    def __init__(self, rect, card_size=prepare.CARD_SIZE, shuffle=True,
+                 decks=0, stacking=(6, 6)):
+        if rect[2:] == (0, 0):
+            rect = rect[:2], card_size
+        super(Deck, self).__init__(rect, stacking)
         self.card_size = card_size
         self.shuffle = shuffle
-        self.infinite = infinite
         self.decks = decks
-        self.stacking = stacking
         self.add_decks(decks)
-        self._needs_update = True
 
     def add_decks(self, decks):
         cards = make_cards(decks, self.card_size, self.shuffle)
         self.add(*cards)
 
-    def remove_all(self):
-        for card in self.sprites():
-            self.remove(card)
-
-    def add(self, *items):
-        super(Deck, self).add(*items)
-        self._needs_update = True
-
-    def remove(self, *items):
-        super(Deck, self).remove(*items)
-        self._needs_update = True
-
     def draw_cards(self, cards=5):
-        """Remove top card and return it"""
+        """Remove top cards and return them"""
         if len(self) >= cards:
             for i in range(cards):
                 yield self.pop()
         else:
             yield None
-
-    def pop(self):
-        try:
-            card = self._spritelist[-1]
-        except IndexError:
-            return None
-        else:
-            self.remove(card)
-            return card
-
-    def draw(self, surface):
-        if self._needs_update:
-            self.arrange_cards()
-            self._needs_update = False
-        super(Deck, self).draw(surface)
-
-    def arrange_cards(self, constraint="height"):
-        """ position cards into piles.
-
-        Constraint can be "width" or "height".
-        If constraint is "width", card piles grow down.
-        If constraint is "height", card piles grow to left.
-        If rect is too small, other cards will not be shown
-        """
-        if self.stacking == (0, 0):
-            pos = self.rect.topleft
-            for card in self.sprites():
-                card.rect.topleft = pos
-            return
-
-        x, y = self.rect.topleft
-        ox, oy = self.stacking
-        for card in self.sprites():
-            card.rect.topleft = x, y
-            if constraint == "height":
-                if self.rect.contains(card.rect.move(0, oy)):
-                    y += oy
-                else:
-                    y = self.rect.top
-                    x += ox + card.rect.width
 
 
 CHIP_Y = {"blue"  : 0,
@@ -284,7 +354,7 @@ def get_chip_images():
     return images, flat_images
 
 
-class Chip(object):
+class Chip(pygame.sprite.DirtySprite):
     """Class to represent a single casino chip."""
     chip_values = {100: 'black',
                    25: 'blue',
@@ -297,94 +367,54 @@ class Chip(object):
     chip_size = prepare.CHIP_SIZE
 
     def __init__(self, value, chip_size=None):
+        super(Chip, self).__init__()
         self.value = value
         if chip_size is not None:
             self.chip_size = chip_size
+        self.dirty = 1
 
-        self.image = Chip.images[self.chip_size][value]
-        self.flat_image = Chip.flat_images[self.chip_size][self.color]
+        color = Chip.chip_values[value]
+        self.image = Chip.images[self.chip_size][color]
+        self.flat_image = Chip.flat_images[self.chip_size][color]
         self.rect = self.image.get_rect()
 
 
-class ChipPile(pygame.sprite.Group):
+class ChipPile(Stacker):
     """Represents a player's pile of chips."""
 
     def __init__(self, rect):
-        super(ChipPile, self).__init__()
-        self.rect = pygame.Rect(rect)
-        self.chips = list()
+        super(ChipPile, self).__init__(rect, (0, -7))
 
-    def get_chip_total(self):
+    @property
+    def value(self):
         """"Returns total cash value of self.chips."""
-        return chips.chips_to_cash(self.chips)
+        return sum(chip.value for chip in self.sprites())
 
-    def add_chips(self, chips):
-        """Adds chips and adjusts stacks."""
-        for chip in chips:
-            assert(isinstance(chip, Chip))
-        self.chips.extend(chips)
+    def sort(self):
+        self._spritelist.sort(key=attrgetter('value'))
 
     def withdraw_chips(self, amount):
-        """Withdraw chips totalling amount and adjust stacks."""
-
-        withdraw = amount
-        chips = self.chips
-        chips.sort()
-        for chip in list(self.chips):
+        """Withdraw chips totalling amount"""
+        self.sort()
+        withdraw = list()
+        for chip in reversed(self.sprites()):
             if chip <= amount:
-                chips.remove(chip)
                 amount -= chip.value
-            if amount == 0:
-                break
+                self.remove(chip)
+                withdraw.append(chip)
+                if amount == 0:
+                    break
         else:
             raise ValueError
 
         return withdraw
 
-    def make_stacks(self):
-        """Returns a list of ChipStacks sorted by y-position."""
-        w, h = self.chip_size
-        left = self.rect.left
-        bottom = self.rect.top + h
-        stacks = []
-        for color in self.chips:
-            chips = self.chips[color]
-            stackers = [chips[i: i + self.stack_height] for i in range(0, len(chips), self.stack_height)]
-            limit = self.columns_per_color * self.num_rows
-            if len(stackers) >  limit:
-                stackers = stackers[:limit]
-            left2 = left + w + self.horiz_space
-            bottom_ = bottom
-            for i, stacker in enumerate(stackers):
-                if not i % self.columns_per_color:
-                    stack = ChipStack(stacker, (left, bottom_))
-                else:
-                    stack = ChipStack(stacker, (left2, bottom_))
-                    bottom_ += h + self.vert_space
-                stacks.append(stack)
-            left += (w + self.horiz_space) * 2
-        return sorted(stacks, key=lambda x: x.bottomleft[1])
-
-    def grab_chips(self, click_pos):
-        """
-        Calls grab_chips on each stack, returning the first result
-        that is not None. None is returned if no chips are grabbed.
-        """
-        for stack in self.stacks[::-1]:
-            bet_stack = stack.grab_chips(click_pos)
-            if bet_stack is not None:
-                color = bet_stack.chips[0].color
-                for chip in bet_stack.chips:
-                    self.chips[color].remove(chip)
-                self.stacks = self.make_stacks()
-                return bet_stack
-
-    def get_chip_total(self):
-        """Returns cash total of all chips in pile."""
-        total = 0
-        for color in self.chips:
-            total += Chip.chip_values[color] * len(self.chips[color])
-        return total
+    def arrange(self, sprites=None, offset=(0, 0)):
+        self.sort()
+        ox = 0
+        for k, g in groupby(self.sprites(), attrgetter('value')):
+            super(ChipPile, self).arrange(list(g), (ox, 0))
+            ox += 70
 
 
 class TextSprite(pygame.sprite.DirtySprite):
@@ -423,25 +453,6 @@ class TextSprite(pygame.sprite.DirtySprite):
     def text(self, value):
         self._text = value
         self.update_image()
-
-
-class EventButton(pygame.sprite.DirtySprite):
-    def __init__(self, callback, args=None, kwargs=None):
-        super(EventButton, self).__init__()
-        assert(callable(callback))
-        kwargs = kwargs if kwargs is not None else dict()
-        args = args if args is not None else list()
-        self._callback = callback, args, kwargs
-
-    def on_mouse_click(self, pos):
-        cb, args, kwargs = self._callback
-        cb(*args, **kwargs)
-
-    def on_mouse_enter(self, pos):
-        pass
-
-    def on_mouse_leave(self, pos):
-        pass
 
 
 class NeonButton(EventButton):

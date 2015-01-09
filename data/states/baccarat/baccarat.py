@@ -1,8 +1,9 @@
 from collections import OrderedDict
 import pygame as pg
 from ... import tools, prepare
-from ...components import cards
+from ...components.labels import NeonButton
 from ...prepare import BROADCASTER as B
+from . import layout
 from .ui import *
 import fysom
 import json
@@ -13,6 +14,17 @@ from pygame.compat import *
 __all__ = ['Baccarat']
 
 font_size = 64
+
+
+def count_hand(deck):
+    value = 0
+    for card in deck.sprites():
+        if card.value > 9:
+            continue
+        value += card.value
+    if value > 9:
+        value -= 10
+    return value
 
 
 class Baccarat(tools._State):
@@ -29,13 +41,16 @@ class Baccarat(tools._State):
     def startup(self, now, persistent):
         self.now = now
         self.persist = persistent
+        self.casino_player = self.persist['casino_player']
         self.variation = "mini"
-        self.load_json(os.path.join('resources', 'baccarat.json'))
+        self.load_json(os.path.join('resources', 'baccarat-rules.json'))
         self.players = list()
 
         # stuff that might get moved to a gui layer sometime?
         self._background = None
         self._clicked_sprite = None
+        self.font = pg.font.Font(prepare.FONTS["Saniretro"], font_size)
+        self.button_font = pg.font.Font(prepare.FONTS["Saniretro"], 48)
 
         # hack related to game states that do not finish
         self.done = False
@@ -43,15 +58,16 @@ class Baccarat(tools._State):
             return
         self.did_startup = True
 
-        self.casino_player = self.persist['casino_player']
         self.hud = pg.sprite.RenderUpdates()
-        self.shoe = Deck((0, 0, 800, 600), decks=2)
-        self.discard = Deck((0, 610, 0, 0), stacking=(0, 0))
-
-        self.hud.add(ChipPile((0, 800, 800, 200)))
+        self.shoe = Deck((0, 0, 800, 600), decks=7, stacking=(0, 0))
+        self.groups = [self.hud, self.shoe]
 
         b = NeonButton('lobby', (1000, 920, 0, 0), self.goto_lobby)
         self.hud.add(b)
+
+        filename = os.path.join('resources', 'baccarat-layout.json')
+        layout.load_layout(self, filename)
+        self.on_new_round()
 
     def load_json(self, filename):
         with open(filename) as fp:
@@ -67,7 +83,8 @@ class Baccarat(tools._State):
         self.next = 'LOBBYSCREEN'
 
     def cash_out(self):
-        pass
+        self.casino_player.stats['cash'] = self.player_chips.get_chip_total()
+        self.player_chips.empty()
 
     def cleanup(self):
         return self.persist
@@ -78,9 +95,6 @@ class Baccarat(tools._State):
             d = {'casino_player': None}
             self.startup(0, d)
             return
-
-        # this music stuff really needs to be moved to the core
-        # self.persist["music_handler"].get_event(event, scale)
 
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
@@ -115,10 +129,7 @@ class Baccarat(tools._State):
 
             for sprite in reversed(self.shoe.sprites()):
                 if sprite.rect.collidepoint(pos):
-                    # sprite.face_up = not sprite.face_up
-                    self.shoe.remove(sprite)
-                    self.discard.add(sprite)
-                    # break so that cards under the clicked card are not picked
+                    self.on_clicked_shoe_card(sprite, pos)
                     break
 
         elif event.type == pg.MOUSEBUTTONUP:
@@ -130,94 +141,93 @@ class Baccarat(tools._State):
                     sprite.on_mouse_click(pos)
                 self._clicked_sprite = None
 
+    def deal_cards(self):
+        for card in self.shoe.draw_cards(2):
+            card.face_up = True
+            self.player_hand.add(card)
+
+        for card in self.shoe.draw_cards(2):
+            card.face_up = True
+            self.dealer_hand.add(card)
+
+        self.count_hands()
+
+    def count_hands(self):
+        player_result = count_hand(self.player_hand)
+        dealer_result = count_hand(self.dealer_hand)
+
+        msg = '{} points'
+        text = TextSprite(msg.format(player_result), self.font)
+        text.rect = self.player_hand.rect.move(0, 250)
+        text.kill_me_on_clear = True
+        self.hud.add(text)
+        text = TextSprite(msg.format(dealer_result), self.font)
+        text.rect = self.dealer_hand.rect.move(0, 250)
+        text.kill_me_on_clear = True
+        self.hud.add(text)
+
+        for player in self.players:
+            if player_result > dealer_result:
+                chips = cash_to_chips(player.player_bet.value)
+                player.chips.add(*chips)
+                player.chips.add(*player.player_bet)
+            elif player_result < dealer_result:
+                chips = cash_to_chips(player.dealer_bet.value)
+                player.chips.add(*chips)
+                player.chips.add(*player.dealer_bet)
+            else:
+                pass
+
+            player.player_bet.empty()
+            player.dealer_bet.empty()
+            player.tie_bet.empty()
+
+        self.show_finish_round_button()
+
+    def on_clicked_shoe_card(self, card, pos):
+        pass
+
+    def on_confirm_bet(self):
+        self.deal_cards()
+
+    def on_new_round(self):
+        self.clear_table()
+        self.show_bet_confirm_button()
+
+    def clear_table(self):
+        self.player_hand.empty()
+        self.dealer_hand.empty()
+        for sprite in self.hud.sprites():
+            if hasattr(sprite, 'kill_me_on_clear'):
+                sprite.kill()
+
+    def show_finish_round_button(self):
+        def f(sprite):
+            sprite.kill()
+            self.on_new_round()
+
+        text = TextSprite('Again?', self.button_font)
+        rect = 960, 800, 250, 75
+        b = Button(text, rect, f)
+        self.hud.add(b)
+
+    def show_bet_confirm_button(self):
+        def f(sprite):
+            sprite.kill()
+            self.on_confirm_bet()
+
+        text = TextSprite('Confirm?', self.button_font)
+        rect = 960, 800, 250, 75
+        b = Button(text, rect, f)
+        self.hud.add(b)
+
     def update(self, surface, keys, current_time, dt, scale):
         if self._background is None:
             self._background = pg.Surface(surface.get_size())
-            self._background.fill(prepare.BACKGROUND_BASE)
+            self._background.fill(prepare.FELT_GREEN)
             surface.blit(self._background, (0, 0))
 
-        self.discard.clear(surface, self._background)
-        self.discard.draw(surface)
-        self.shoe.clear(surface, self._background)
-        self.shoe.draw(surface)
-        self.hud.clear(surface, self._background)
-        self.hud.draw(surface)
-
-        # this music stuff really needs to be moved to the core
-        # self.persist["music_handler"].update(scale)
-        # self.persist["music_handler"].draw(surface)
-
-
-class BaccaratState(object):
-    def __init__(self, parent):
-        self.parent = parent
-
-
-class BeginState(BaccaratState):
-    def get_event(self, event, scale=(1, 1)):
-        pass
-
-    def update(self, surface, keys, current_time, dt, scale):
-        pass
-
-
-class BetState(BaccaratState):
-    def startup(self):
-        B.linkEvent('bac-click-chip', self.on_chip)
-
-    def cleanup(self):
-        B.unlinkEvent('bac-click-chip', self.on_chip)
-
-    def on_chip(self, *args):
-        pass
-
-
-class DealState(BaccaratState):
-    def get_event(self, event, scale=(1, 1)):
-        pass
-
-    def update(self, surface, keys, current_time, dt, scale):
-        pass
-
-
-class ThreeOptionState(BaccaratState):
-    def get_event(self, event, scale=(1, 1)):
-        pass
-
-    def update(self, surface, keys, current_time, dt, scale):
-        pass
-
-
-class FiveOptionState(BaccaratState):
-    def get_event(self, event, scale=(1, 1)):
-        pass
-
-    def update(self, surface, keys, current_time, dt, scale):
-        pass
-
-
-class ClearTableState(BaccaratState):
-    def get_event(self, event, scale=(1, 1)):
-        pass
-
-    def update(self, surface, keys, current_time, dt, scale):
-        pass
-
-
-class NewShoeState(BaccaratState):
-    def get_event(self, event, scale=(1, 1)):
-        pass
-
-    def update(self, surface, keys, current_time, dt, scale):
-        decks = self.options['decks']
-        self.shoe.remove_all()
-        self.shoe.add_decks(decks)
-        self.discard.remove_all()
-
-
-class EndState(BaccaratState):
-    def get_event(self, event, scale=(1, 1)):
-        pass
-
-    def update(self, surface, keys, current_time, dt, scale):
-        pass
+        for group in self.groups:
+            group.update(dt)
+            group.clear(surface, self._background)
+            group.draw(surface)

@@ -1,5 +1,5 @@
 
-from ctypes import * 
+from ctypes import *
 from .vec2d import Vec2d
 cpVect = Vec2d
 STRING = c_char_p
@@ -117,7 +117,7 @@ cpConvexHull = chipmunk_lib.cpConvexHull
 cpConvexHull.restype = c_int
 cpConvexHull.argtypes = [c_int, POINTER(cpVect), POINTER(cpVect), POINTER(c_int), cpFloat]
 
-if sizeof(c_void_p) == 4: uintptr_t = c_uint 
+if sizeof(c_void_p) == 4: uintptr_t = c_uint
 else: uintptr_t = c_ulonglong
 
 cpHashValue = uintptr_t
@@ -538,7 +538,7 @@ N17cpContactPointSet4DOT_25E._fields_ = [
     ('dist', cpFloat),
 ]
 cpContactPointSet._fields_ = [
-    ('count', c_int),
+    ('count_hand', c_int),
     ('points', N17cpContactPointSet4DOT_25E * 2),
 ]
 cpArbiterGetContactPointSet = chipmunk_lib.cpArbiterGetContactPointSet
@@ -1135,7 +1135,7 @@ cpSpatialIndexQueryImpl = function_pointer(None, POINTER(cpSpatialIndex), c_void
 cpSpatialIndexSegmentQueryImpl = function_pointer(None, POINTER(cpSpatialIndex), c_void_p, cpVect, cpVect, cpFloat, cpSpatialIndexSegmentQueryFunc, c_void_p)
 cpSpatialIndexClass._fields_ = [
     ('destroy', cpSpatialIndexDestroyImpl),
-    ('count', cpSpatialIndexCountImpl),
+    ('count_hand', cpSpatialIndexCountImpl),
     ('each', cpSpatialIndexEachImpl),
     ('contains', cpSpatialIndexContainsImpl),
     ('insert', cpSpatialIndexInsertImpl),
