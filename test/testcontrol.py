@@ -4,21 +4,68 @@ import unittest
 import time
 
 
+# Default test settings
+RESOLUTION = (10, 20)
+RESOLUTIONS = [
+    RESOLUTION,
+    (30, 40),
+    (50, 60),
+    (70, 80),
+]
+
+# Set up the pygame system
+import pygame as pg
+pg.init()
+pg.display.set_mode(RESOLUTION)
+
+
+# Make the tests work from the test directory
+import sys
+sys.path.append('..')
+try:
+    from data import tools
+except ImportError:
+    print('\n** ERROR ** Tests must be run from the test directory\n\n')
+    sys.exit(1)
+
+
 class TestControl(unittest.TestCase):
     """Tests for the Control"""
 
     def setUp(self):
         """Set up the tests"""
-    
+        #
+        # Simple control to use for testing
+        self.c = self._getControl()
+        #
+        # Some simple states
+        self.states = {
+            'one': SimpleState('one'),
+            'two': SimpleState('two'),
+            'three': SimpleState('three'),
+            'four': SimpleState('four'),
+        }
+
     def tearDown(self):
         """Tear down the tests"""
 
-    def testCreate(self):
-        """testCreate: can create a control object"""
-        raise NotImplementedError
-    
+    def _getControl(self):
+        """Utility method to get a control"""
+        return tools.Control('caption', RESOLUTION, RESOLUTIONS)
+
     def testSetupStates(self):
         """testSetupStates: can setup the initial state and states dictionary"""
+        self.c.setup_states(self.states, 'one')
+        #
+        # Initial state should be set
+        self.assertEqual('one', self.c.state._name)
+        #
+        # Other states should be there
+        for name in self.states:
+            self.assertTrue(name in self.c.state_dict)
+
+    def testFailSetupStateWithBadState(self):
+        """testFailSetupStateWithBadState: should fail cleanly when setting up states with a bad name"""
         raise NotImplementedError
 
     def testUpdateChecksStateCompletion(self):
@@ -108,6 +155,15 @@ class TestControl(unittest.TestCase):
     def testMainCausesFPSToShow(self):
         """testMainCausesFPSToShow: main loop should cause the FPS to display when needed"""
         raise NotImplementedError
+
+
+class SimpleState(tools._State):
+    """A simple state to use for testing"""
+
+    def __init__(self, name):
+        """Initialise the state"""
+        super(SimpleState, self).__init__()
+        self._name = name
 
 
 if __name__ == '__main__':
