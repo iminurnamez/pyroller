@@ -227,12 +227,12 @@ class ButtonGroup(pg.sprite.Group):
             s.get_event(event, *args, **kwargs)
 
 
-class _Button(pg.sprite.Sprite, tools._KwargMixin):
+class Button(pg.sprite.Sprite, tools._KwargMixin):
     _invisible = pg.Surface((1,1)).convert_alpha()
     _invisible.fill((0,0,0,0))
 
     def __init__(self, rect_style, *groups, **kwargs):
-        super(_Button, self).__init__(*groups)
+        super(Button, self).__init__(*groups)
         self.process_kwargs("Button", BUTTON_DEFAULTS, kwargs)
         self.rect = pg.Rect(rect_style)
         rendered = self.render_text()
@@ -300,7 +300,7 @@ class _Button(pg.sprite.Sprite, tools._KwargMixin):
         if any(pressed[key] for key in self.bindings):
             hover = True
         if not self.visible:
-            self.image = _Button._invisible
+            self.image = Button._invisible
         elif self.active:
             self.image = (hover and self.hover_image) or self.idle_image
             if not self.hover and hover:
@@ -313,7 +313,7 @@ class _Button(pg.sprite.Sprite, tools._KwargMixin):
         surface.blit(self.image, self.rect)
 
 
-class NeonButton(_Button):
+class NeonButton(Button):
     """Neon sign style button that glows on mouseover."""
     width = 318
     height = 101
@@ -327,12 +327,12 @@ class NeonButton(_Button):
         settings = {"hover_image" : on_image,
                     "idle_image"  : off_image,
                     "call"        : call,
-                    "args"     : args}
+                    "args"        : args}
         settings.update(kwargs)
         super(NeonButton, self).__init__(rect, *groups, **settings)
 
 
-class GameButton(_Button):
+class GameButton(Button):
     ss_size = (320, 240)
     font = prepare.FONTS["Saniretro"]
 

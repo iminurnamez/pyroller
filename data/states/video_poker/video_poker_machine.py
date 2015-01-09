@@ -1,6 +1,6 @@
 import pygame as pg
 from ... import tools, prepare
-from ...components.labels import Blinker, Label, _Button
+from ...components.labels import Blinker, Label, Button
 from ...components.cards import Deck
 
 HAND_RANKS = {'ROYAL_FLUSH'    : 0,
@@ -412,7 +412,7 @@ class Machine:
             rect_style = (x, y, self.btn_width, self.btn_height)
             settings.update({'text':text, 'hover_text':text,
                               'disable_text':text, 'call':func, 'args':args})
-            button = _Button(rect_style, **settings)
+            button = Button(rect_style, **settings)
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
 
@@ -430,12 +430,12 @@ class Machine:
                     "call": self.insert_coin}
 
         rect_style = ((self.rect.right + self.padding), y, 200, 60,)
-        self.coins_button = _Button(rect_style, **settings)
+        self.coins_button = Button(rect_style, **settings)
 
         rect_style = ((self.rect.right + self.padding), (y - 300), 200, 60,)
         settings.update({'text': 'Cash out','hover_text': 'Cash out',
                                                       'call': self.cash_out})
-        self.cash_button = _Button(rect_style, **settings)
+        self.cash_button = Button(rect_style, **settings)
 
 
     def insert_coin(self, *args):
