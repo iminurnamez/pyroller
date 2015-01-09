@@ -365,6 +365,8 @@ def get_cli_args(caption, win_pos, start_size, money):
         help='show FPS in title bar')
     parser.add_argument('-p', '--profile', action='store_true',
         help='run game with profiling')
+    parser.add_argument('-B', '--bots', action='store_true',
+        help='enable test bots')
     args = vars(parser.parse_args())
     #check each condition
     if not args['center'] or (args['winpos'] != win_pos): #if -c or -w options

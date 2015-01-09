@@ -160,7 +160,7 @@ class CreditsScreen(tools._State):
         zipper_blocks = []
         for pair in title_name_pairs:
             title_text, names = pair
-            title = SlotReelTitle((self.screen.centerx, 20), title_text)
+            title = SlotReelTitle((self.screen.centerx, 20), title_text, initial_move=(0, -120))
             grouped = self.make_groups(names)
             for group in grouped:
                 block = ZipperBlock(self.font, group, (700, 230))
@@ -225,6 +225,9 @@ class CreditsScreen(tools._State):
                 Spinner(spots[1], "blue", self.spinners, reverse=True)
                 self.title.startup()
         except StopIteration:
+            self.end_titles = []
+            
+            
             self.zipper_block = None
             self.title = None
             self.spinners.empty()

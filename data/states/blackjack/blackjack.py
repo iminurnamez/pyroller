@@ -12,6 +12,7 @@ from .blackjack_dealer import Dealer
 from .blackjack_player import Player
 from .blackjack_hand import Hand
 from .blackjack_advisor_window import AdvisorWindow
+from .blackjack_bot import BlackjackBot
 
 
 class Blackjack(tools._State):
@@ -38,6 +39,8 @@ class Blackjack(tools._State):
         self.labels = []
         self.quick_bet = 0
         self.last_bet = 0
+        self.bot = None
+        self.bot_queue = []
         
     def make_buttons(self):
         side_margin = 10
@@ -60,11 +63,11 @@ class Blackjack(tools._State):
         self.new_game_button = NeonButton((0, 0), "Again", self.new_game_click,
                                           None, self.nav_buttons)
         self.new_game_button.rect.midbottom = (self.screen_rect.centerx,
-                                                                      self.screen_rect.centery - 20)
+                                                                      self.screen_rect.centery - 30)
         self.quick_bet_button = NeonButton((0, 0), "Again", self.quick_bet_click,
                                           None, self.nav_buttons)
         self.quick_bet_button.rect.center = (self.screen_rect.centerx,
-                                                              self.screen_rect.centery + 20)        
+                                                              self.screen_rect.centery + 30)        
         pos = (self.screen_rect.right-(NeonButton.width+side_margin),
                self.screen_rect.bottom-(NeonButton.height+15))
         NeonButton(pos, "Lobby", self.back_to_lobby, None, self.nav_buttons)
@@ -96,6 +99,11 @@ class Blackjack(tools._State):
         self.quick_bet = self.last_bet
         self.new_game_click()
         
+    def get_bot_events(self):
+        for event in self.bot_queue:
+            if event.type == pg.MOUSEBUTTONDOWN:
+                self.buttons.get_event(event)
+        
     def new_game(self, player_cash, chips=None):
         """Start a new round of blackjack."""
         self.deck = Deck((20, 20), prepare.CARD_SIZE, 20)
@@ -112,7 +120,7 @@ class Blackjack(tools._State):
         self.labels = self.make_labels()
         self.current_player_hand = self.player.hands[0]
         self.game_started = True
-        if self.quick_bet:
+        if self.quick_bet and (self.quick_bet <= self.player.chip_pile.get_chip_total()):
             chips = self.player.chip_pile.withdraw_chips(self.quick_bet)
             self.current_player_hand.bet.add_chips(chips)
             self.state = "Dealing"
@@ -124,6 +132,8 @@ class Blackjack(tools._State):
         """Get state ready to resume."""
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
+        if prepare.ARGS["bots"]:
+            self.bot = BlackjackBot(self)
         if not self.game_started:
             self.new_game(self.casino_player.stats["cash"])
         self.window = None
@@ -132,7 +142,7 @@ class Blackjack(tools._State):
     def deal(self, *args):
         if not self.moving_stacks and not self.window:
             bets = [x.bet.get_chip_total() for x in self.player.hands]
-            if bets:
+            if any(bets):
                 self.last_bet = max(bets)
                 self.quick_bet = 0
                 self.state = "Dealing"
@@ -342,7 +352,11 @@ class Blackjack(tools._State):
                              "should be broken up into shorter lines aligned "
                              "to the left.")
                 self.window = AdvisorWindow((700, 500), test_text)
-
+            elif event.key == pg.K_ESCAPE:
+                self.leave_state()
+            elif event.key == pg.K_SPACE:
+                if self.bot:
+                    self.bot.active = not self.bot.active
         if self.state == "Player Turn" and not self.moving_cards:
             self.player_buttons.get_event(event)
         elif self.state == "Betting" and not self.moving_stacks:
@@ -351,6 +365,8 @@ class Blackjack(tools._State):
         self.window and self.window.get_event(event)
 
     def update_game(self, surface, keys, current_time, dt, scale):
+        if self.bot:
+            self.bot.update()
         total_text = "Chip Total:  ${}".format(self.player.chip_pile.get_chip_total())
         screen = self.screen_rect
         self.chip_total_label = Label(self.font, 48, total_text, "gold3",
@@ -500,7 +516,7 @@ class Blackjack(tools._State):
         for blinker in self.result_labels:
             blinker.update(dt)
         self.draw(surface, dt)
-
+        
     def update_windows(self, mouse_pos):
         if self.window:
             self.window.update(mouse_pos)
