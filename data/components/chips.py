@@ -224,6 +224,8 @@ class ChipPile(object):
 
     def withdraw_chips(self, amount):
         """Withdraw chips totalling amount and adjust stacks."""
+        if self.get_chip_total() < amount:
+            return
         chips = cash_to_chips(self.get_chip_total() - amount, self.chip_size)
         withdrawal = cash_to_chips(amount, self.chip_size)
         for color in self.chips:
