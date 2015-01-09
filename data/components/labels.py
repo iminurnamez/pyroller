@@ -352,8 +352,8 @@ class GameButton(_Button):
         icon_rect = icon.get_rect()
         label_text = game.replace("_", " ")
         label = Label(self.font, 48, label_text, "gold3", {"center": (0, 0)})
-        rect = pg.Rect(0, 0, icon_rect.w+8, icon_rect.h+label.rect.h+8)
-        icon_rect.midtop = (rect.centerx, 4)
+        rect = pg.Rect(0, 0, icon_rect.w+20, icon_rect.h+label.rect.h+20)
+        icon_rect.midtop = (rect.centerx, 10)
         label.rect.midtop = icon_rect.midbottom
         frame = label.image.get_rect()
         frame.w = icon_rect.w
@@ -363,15 +363,12 @@ class GameButton(_Button):
         image.blit(icon, icon_rect)
         image.fill(pg.Color("gray10"), frame)
         highlight = image.copy()
-        overlay = pg.Surface(rect.size).convert_alpha() ###
-        overlay.fill((50, 50, 200, 150)) ### add overlay image
-        highlight.blit(overlay, (0,0))
+        pg.draw.rect(image, pg.Color("gold3"), icon_rect, 4)
+        pg.draw.rect(image, pg.Color("gold3"), frame, 4)
+        highlight.blit(prepare.GFX["game_highlight"], (0,0))
         for surface in (image, highlight):
-            pg.draw.rect(surface, pg.Color("gold3"), icon_rect, 4)
-            pg.draw.rect(surface, pg.Color("gold3"), frame, 4)
             label.draw(surface)
         return (image, highlight)
-
 
 
 # Deprecated: Please do not use. Marked for removal.
@@ -399,30 +396,6 @@ class Button(object):
             pg.draw.line(surface, pg.Color(color), pair[0], pair[1], 2)
         self.label.draw(surface)
 
-
-# Deprecated: Please do not use. Marked for removal.
-class FunctionButton(Button):
-    """A button that calls a function when clicked."""
-    def __init__(self, left, top, width, height, label, function, function_args):
-        super(FunctionButton, self).__init__(left, top, width, height, label)
-        self.function = function
-        self.function_args = function_args
-
-    def get_event(self, mouse_pos):
-        if self.rect.collidepoint(mouse_pos):
-            self.click()
-
-    def click(self, dynamic_args=None):
-        """If the button's function requires arguments that need to be
-        calculated at the time the button is clicked they can be passed
-        as this method's dynamic_args."""
-        if self.function_args:
-            function_args = list(self.function_args)
-            if dynamic_args:
-                function_args.extend(list(dynamic_args))
-            self.function(*function_args)
-        else:
-            self.function()
 
 class TextBox(object):
     def __init__(self,rect,**kwargs):

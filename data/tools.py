@@ -86,6 +86,9 @@ class Control(object):
             if event.type == pg.KEYDOWN:
                 self.keys = pg.key.get_pressed()
                 self.toggle_show_fps(event.key)
+                if event.key == pg.K_PRINT:
+                    #Print screen for full render-sized screencaps.
+                    pg.image.save(self.render_surf, "screenshot.png")
             elif event.type == pg.KEYUP:
                 self.keys = pg.key.get_pressed()
             elif event.type == pg.VIDEORESIZE:
