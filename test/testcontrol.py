@@ -36,9 +36,6 @@ class TestControl(unittest.TestCase):
     def setUp(self):
         """Set up the tests"""
         #
-        # Simple control to use for testing
-        self.c = self._getControl()
-        #
         # Some simple states
         self.states = {
             'one': SimpleState('one'),
@@ -46,6 +43,9 @@ class TestControl(unittest.TestCase):
             'three': SimpleState('three'),
             'four': SimpleState('four'),
         }
+        #
+        # Simple control to use for testing
+        self.c = self._getControl()
         #
         # Flags for detecting calls
         self.called = {}
@@ -56,7 +56,9 @@ class TestControl(unittest.TestCase):
 
     def _getControl(self):
         """Utility method to get a control"""
-        return SimpleControl('caption', RESOLUTION, RESOLUTIONS)
+        control = SimpleControl('caption', RESOLUTION, RESOLUTIONS)
+        control.setup_states(self.states, 'one')
+        return control
 
     def _catchCall(self, name):
         """Return a utility method to catch calls to mock methods"""
@@ -77,7 +79,6 @@ class TestControl(unittest.TestCase):
 
     def testSetupStates(self):
         """testSetupStates: can setup the initial state and states dictionary"""
-        self.c.setup_states(self.states, 'one')
         #
         # Initial state should be set
         self.assertEqual('one', self.c.state._name)
@@ -93,7 +94,6 @@ class TestControl(unittest.TestCase):
 
     def testUpdateFlipsStateWhenStateCompletion(self):
         """testUpdateFlipsStateWhenStateCompletion: update should check if a state has completed and flip state"""
-        self.c.setup_states(self.states, 'one')
         #
         # Update should call flip_state if the state is done so we want to check for this
         self.c.flip_state = self._catchCall('flip_state')
@@ -109,7 +109,6 @@ class TestControl(unittest.TestCase):
 
     def testUpdateChecksForStateQuit(self):
         """testUpdateChecksForStateQuit: update method should check if a state wants to quit"""
-        self.c.setup_states(self.states, 'one')
         #
         # Normally control done should not be set
         self.assertFalse(self.c.done)
@@ -126,7 +125,6 @@ class TestControl(unittest.TestCase):
 
     def testQuitCheckedBeforeDone(self):
         """testQuitCheckedBeforeDone: update should check for quit before done"""
-        self.c.setup_states(self.states, 'one')
         #
         # Update would call flip_state if the state is done so we want to check for this
         self.c.flip_state = self._catchCall('flip_state')
@@ -141,7 +139,6 @@ class TestControl(unittest.TestCase):
 
     def testUpdateCallsStateUpdate(self):
         """testUpdateCallsStateUpdate: update method should call the active states update method"""
-        self.c.setup_states(self.states, 'one')
         #
         self.c.update(10)
         #
@@ -158,7 +155,6 @@ class TestControl(unittest.TestCase):
         #
         # Set up the control
         self.c.music_handler = handler
-        self.c.setup_states(self.states, 'one')
         #
         # Update and then the music handler methods should have been called
         self.c.update(10)
@@ -177,7 +173,6 @@ class TestControl(unittest.TestCase):
 
     def testUpdateWorksIfNoMusicHandler(self):
         """testUpdateWorksIfNoMusicHandler: update method should bypass music if no music handler"""
-        self.c.setup_states(self.states, 'one')
         #
         # Update should work fine if there is no music handler set
         self.assertEqual(None, self.c.music_handler)
@@ -195,7 +190,6 @@ class TestControl(unittest.TestCase):
 
     def testFlipState(self):
         """testFlipState: should be able to flip back to previous state"""
-        self.c.setup_states(self.states, 'one')
         #
         # Set the next state to go to and catch calls to the initial cleanup function
         # and next state startup, which should be called during the process
@@ -218,7 +212,6 @@ class TestControl(unittest.TestCase):
 
     def testCanHandleKeyPressEvents(self):
         """testCanHandleKeyPressEvents: should detect and store key presses"""
-        self.c.setup_states(self.states, 'one')
         #
         # Should store the keys on both key down and key up
         for event_type, key in [(pg.KEYDOWN, pg.K_a), (pg.KEYUP, pg.K_b)]:
@@ -241,8 +234,7 @@ class TestControl(unittest.TestCase):
     def testCanHandleTakingScreenshots(self):
         """testCanHandleTakingScreenshots: should detect screenshot key and store screenshot"""
         try:
-            self.c.setup_states(self.states, 'one')
-            #
+                #
             # Should store the keys on both key down and key up
             events = [pg.event.Event(pg.KEYDOWN, key=pg.K_PRINT)]
             keys = [pg.K_PRINT]
