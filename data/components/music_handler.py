@@ -2,7 +2,7 @@ from random import choice
 
 import pygame as pg
 from .. import tools, prepare
-from ..components.labels import Label, ButtonGroup, _Button
+from ..components.labels import Label, ButtonGroup, Button
 
 
 SONGS = [
@@ -57,9 +57,9 @@ class MusicHandler(object):
                          "call" : self.mute_unmute_music,
                          "visible" : not self.music_on,
                          "bindings" : [pg.K_m]}
-        _Button(skip_rect, buttons, **skip_kwargs)
-        mute = _Button(mute_rect, buttons, **mute_kwargs)
-        unmute = _Button(mute_rect, buttons, **unmute_kwargs)
+        Button(skip_rect, buttons, **skip_kwargs)
+        mute = Button(mute_rect, buttons, **mute_kwargs)
+        unmute = Button(mute_rect, buttons, **unmute_kwargs)
         mute.args, unmute.args = (mute, unmute), (unmute, mute)
         return buttons
 
