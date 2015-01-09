@@ -234,7 +234,7 @@ class TestControl(unittest.TestCase):
     def testCanHandleTakingScreenshots(self):
         """testCanHandleTakingScreenshots: should detect screenshot key and store screenshot"""
         try:
-                #
+            #
             # Should store the keys on both key down and key up
             events = [pg.event.Event(pg.KEYDOWN, key=pg.K_PRINT)]
             keys = [pg.K_PRINT]
@@ -262,7 +262,26 @@ class TestControl(unittest.TestCase):
 
     def testCanHandleFPS(self):
         """testCanHandleFPS: should detect FPS key pressed and show FPS"""
-        raise NotImplementedError
+        #
+        # Should store the keys on both key down and key up
+        events = [pg.event.Event(pg.KEYDOWN, key=pg.K_F5)]
+        keys = [pg.K_F5]
+        #
+        # Initially showing FPS should be off
+        self.assertFalse(self.c.show_fps)
+        #
+        # Run the event loop with mocked out events
+        with mock_pygame_events() as (event_queue, key_queue):
+            #
+            # Push events onto queue
+            event_queue.append(events)
+            key_queue.append(keys)
+            #
+            # Do the loop
+            self.c.event_loop()
+        #
+        # Now should be showing FPS
+        self.assertTrue(self.c.show_fps)
 
     def testCanHandleScreenResize(self):
         """testCanHandleScreenResize: should call screen resize if the screen has changed"""
