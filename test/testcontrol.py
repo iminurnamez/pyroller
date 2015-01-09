@@ -55,7 +55,7 @@ class TestControl(unittest.TestCase):
 
     def _getControl(self):
         """Utility method to get a control"""
-        return tools.Control('caption', RESOLUTION, RESOLUTIONS)
+        return SimpleControl('caption', RESOLUTION, RESOLUTIONS)
 
     def _catchCall(self, name):
         """Return a utility method to catch calls to mock methods"""
@@ -217,17 +217,22 @@ class TestControl(unittest.TestCase):
         raise NotImplementedError
 
 
+class SimpleControl(tools.Control):
+    """A simple control to use for testing"""
+
+    def __init__(self, *args, **kw):
+        super(SimpleControl, self).__init__(*args, **kw)
+
+
 class SimpleState(tools._State):
     """A simple state to use for testing"""
 
     def __init__(self, name):
-        """Initialise the state"""
         super(SimpleState, self).__init__()
         self._name = name
         self._update_called = False
 
     def update(self, surface, keys, now, dt, scale):
-        """Update the state"""
         super(SimpleState, self).update(surface, keys, now, dt, scale)
         self._update_called = True
 
