@@ -12,6 +12,7 @@ HAND_RANKS = {'ROYAL_FLUSH'    : 0,
              'THREE_OF_A_KIND' : 6, 
              'TWO_PAIR'        : 7,
              'JACKS_OR_BETTER' : 8}
+NO_HAND = 99
 PAYTABLE = [
     (250, 50, 25, 8, 6, 4, 3, 2, 1),
     (500, 100, 50, 16, 12, 8, 6, 4, 2),
@@ -54,7 +55,7 @@ class PayBoard:
 
     def update_rank_rect(self, rank):
         """ 99 is the rank value for no matches"""
-        if rank != 99:
+        if rank != NO_HAND:
             old_pos = self.rank_rect.top
             self.rank_rect.top = self.rect.top + (self.rank_rect.h * rank)
             if not self.show_rank_rect:
@@ -64,6 +65,11 @@ class PayBoard:
         else:
             self.show_rank_rect = False
             self.rank_rect.top = 0
+
+    def reset(self):
+        self.show_rank_rect = False
+        self.show_bet_rect = False
+        self.rank_rect.top = 0
 
     def build(self):
         ranks = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
@@ -212,7 +218,7 @@ class Dealer:
         values.sort()
         suits.sort()
         # if don't match any comparation
-        rank = 99
+        rank = NO_HAND
 
         pairs = []
         are_three = False
@@ -535,7 +541,7 @@ class Machine:
         self.dealer.draw_cards()
         rank = self.dealer.evaluate_hand()
         self.pay_board.update_rank_rect(rank)
-        if rank != 99:
+        if rank != NO_HAND:
             index = self.bet - 1
             self.win = PAYTABLE[index][rank]
             self.credits += self.win + self.bet
@@ -547,6 +553,7 @@ class Machine:
     
     def draw_cards(self, *args):
         if not self.playing:
+            self.pay_board.reset()
             self.new_game()
         else:
             self.evaluate_final_hand()
@@ -587,7 +594,7 @@ class Machine:
                         {"topleft": (self.label_x1, self.label_y)})
         self.info_labels.append(label)
 
-        balance = 'Balnce: ${}'.format(self.player.stats["cash"])
+        balance = 'Balance: ${}'.format(self.player.stats["cash"])
         pos = ((self.rect.right + self.padding), (self.rect.top + 300))
         label = Label(self.font, self.text_size, balance, self.text_color,
                         {"topleft": pos})
