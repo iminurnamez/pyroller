@@ -539,7 +539,7 @@ class Machine:
             index = self.bet - 1
             self.win = PAYTABLE[index][rank]
             self.credits += self.win + self.bet
-            print "Player wins: {}".format(self.win)
+            print("Player wins: {}".format(self.win))
         self.bet = 0
         self.playing = False
         self.dealer.playing = False

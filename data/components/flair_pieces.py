@@ -14,7 +14,7 @@ from .chips import Chip
 from .labels import Label
 from .. import prepare
 
-LETTERS = string.uppercase
+LETTERS = string.ascii_uppercase
 COLORS = ["black", "blue", "green", "red", "white"]
 
 #Y coordinates for each color of chip on the spinner spritesheet.
