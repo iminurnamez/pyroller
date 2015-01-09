@@ -146,7 +146,13 @@ class TestControl(unittest.TestCase):
 
     def testUpdateWorksIfNoMusicHandler(self):
         """testUpdateWorksIfNoMusicHandler: update method should bypass music if no music handler"""
-        raise NotImplementedError
+        self.c.setup_states(self.states, 'one')
+        #
+        # Update should work fine if there is no music handler set
+        self.assertEqual(None, self.c.music_handler)
+        #
+        self.c.update(10)
+        # Nothing to test - should just work
 
     def testUpdateRespectsStateNotWantingMusic(self):
         """testUpdateRespectsStateNotWantingMusic: update should check and respect if state doesn't want music handled"""
