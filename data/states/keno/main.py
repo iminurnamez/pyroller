@@ -1,8 +1,15 @@
 import random
 import pygame as pg
+from ...components.loggable import getLogger
 from ...components.warning_window import NoticeWindow
 from ...components.labels import Label, MultiLineLabel, NeonButton, ButtonGroup
 from ... import tools, prepare
+
+# Utilize the logger along with the following functions to print to console instead of prints.
+log = getLogger("KENO")
+#log.debug("testing debug log")
+#log.info("testing info log")
+#log.error("testing error log")
 
 #http://casinogamblingtips.info/tag/pay-table
 PAYTABLE = [
@@ -75,7 +82,7 @@ class Bet(object):
         #issue #75 (must cast to integer):
         self.casino_player.stats["cash"] += int(winnings)
         #self.bet = 0
-        print("Won: {0}".format(winnings))
+        log.info("Won: {0}".format(winnings))
 
         self.is_paid = False
 
@@ -403,7 +410,7 @@ class Keno(tools._State):
             #Use tools.scaled_mouse_pos(scale, event.pos) for correct mouse
             #position relative to the pygame window size.
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
-            #print(event_pos) #[for debugging positional items]
+            log.info(event_pos) #[for debugging positional items]
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
                 spot_count = self.keno_card.get_spot_count()
