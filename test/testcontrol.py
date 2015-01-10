@@ -390,13 +390,13 @@ class TestControl(unittest.TestCase):
         """testCanToggleFPSDisplay: should be able to toggle FPS display"""
         #
         # By default caption should not include FPS
-        with controllable_main_loop(self, 'update', 1):
+        with controllable_main_loop(self, 'pgupdate', 1):
             self.c.main()
             self.assertEqual('pygame window', pg.display.get_caption()[0])
         #
         # When turning on FPS then the caption should reflect it
         self.c.done = False
-        with controllable_main_loop(self, 'update', 1):
+        with controllable_main_loop(self, 'pgupdate', 1):
             self.c.show_fps = True
             self.c.main()
             #
@@ -409,11 +409,35 @@ class TestControl(unittest.TestCase):
         # Need to check that main does something but exits so we check
         # that it will call the event_loop
         self.c.event_loop = self._catchCall('event_loop')
-        with controllable_main_loop(self, 'update', 2, after_call=lambda: setattr(self.c, 'done', True)):
+        with controllable_main_loop(self, 'pgupdate', 2, after_call=lambda: setattr(self.c, 'done', True)):
             self.c.main()
+            self.assertTrue(self.called['event_loop'])
 
     def testMainCallsUpdateWithDelta(self):
         """testMainCallsUpdateWithDelta: main loop should call update with appropriate delta"""
+        #
+        # Check that the main loop calls update with the right delta
+        self.c.update = self._catchCall('update')
+        with controllable_main_loop(self, 'pgupdate', 2):
+            self.c.fps = 10
+            self.c.main()
+            #
+            # Update should have been called with a delta of 10 fps (ie 1/10th of a second)
+            self.assertTrue(self.called['update'])
+            self.assertAlmostEqual(self.call_arguments['update'][0][0] / 1000, 0.1, 2)
+        #
+        # Now do again with a different FPS
+        with controllable_main_loop(self, 'pgupdate', 2):
+            self.called['update'] = False
+            self.c.fps = 20
+            self.c.done = False
+            self.c.main()
+            #
+            self.assertTrue(self.called['update'])
+            self.assertAlmostEqual(self.call_arguments['update'][0][0] / 1000, 0.05, 2)
+
+    def testMainCallsPygameUpdate(self):
+        """testMainCalls: main loop should call pygame update"""
         raise NotImplementedError
 
 
