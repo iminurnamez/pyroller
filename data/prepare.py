@@ -55,18 +55,14 @@ def _load_graphics():
 
 def _get_cards(gfx):
     """Cut cards into subsurfaces."""
-    card_width, card_height = CARD_SIZE
+    c_width, c_height = CARD_SIZE
     sheet = gfx["cardsheet"]
     card_names = ["ace", 2, 3, 4, 5, 6, 7, 8, 9, 10, "jack", "queen", "king"]
-    top = 0
-    for suit in ["clubs", "hearts", "diamonds", "spades"]:
-        left = 0
-        for name in card_names:
-            rect = pg.Rect(left, top, card_width, card_height)
+    for j,suit in enumerate(["clubs", "hearts", "diamonds", "spades"]):
+        for i,name in enumerate(card_names):
+            rect = pg.Rect(i*c_width, j*c_height, c_width, c_height)
             key = "{}_of_{}".format(name, suit)
             gfx[key] = sheet.subsurface(rect)
-            left += card_width
-        top += card_height
 
 
 def _get_neon_buttons(gfx):

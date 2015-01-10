@@ -41,7 +41,7 @@ class Blackjack(tools._State):
         self.last_bet = 0
         self.bot = None
         self.bot_queue = []
-        
+
     def make_buttons(self):
         side_margin = 10
         vert_space = 15
@@ -60,14 +60,14 @@ class Blackjack(tools._State):
                                           self.double_down_button,
                                           self.split_button)
         self.nav_buttons = ButtonGroup()
-        self.new_game_button = NeonButton((0, 0), "Again", self.new_game_click,
+        self.new_game_button = NeonButton((0,0), "Change", self.new_game_click,
                                           None, self.nav_buttons)
         self.new_game_button.rect.midbottom = (self.screen_rect.centerx,
-                                                                      self.screen_rect.centery - 30)
-        self.quick_bet_button = NeonButton((0, 0), "Again", self.quick_bet_click,
-                                          None, self.nav_buttons)
+                                               self.screen_rect.centery-30)
+        self.quick_bet_button = NeonButton((0, 0), "Ride", self.quick_bet_click,
+                                           None, self.nav_buttons)
         self.quick_bet_button.rect.center = (self.screen_rect.centerx,
-                                                              self.screen_rect.centery + 30)        
+                                             self.screen_rect.centery+30)
         pos = (self.screen_rect.right-(NeonButton.width+side_margin),
                self.screen_rect.bottom-(NeonButton.height+15))
         NeonButton(pos, "Lobby", self.back_to_lobby, None, self.nav_buttons)
@@ -83,14 +83,14 @@ class Blackjack(tools._State):
                 ("Blackjack Pays 3 to 2", 64, "gold3", 120, {"midtop": (580, 300)}),
                 ("Dealer must draw to 16 and stand on 17", 48, "antiquewhite", 100,
                 {"midtop": (580, 240)})
-                ]                
-        labels = []              
+                ]
+        labels = []
         for info in labels_info:
             label = Label(self.font, info[1], info[0], info[2], info[4], bg=prepare.FELT_GREEN)
             label.image.set_alpha(info[3])
             labels.append(label)
         return labels
-        
+
     def new_game_click(self, *args):
         player_chips = self.player.chip_pile.all_chips()
         self.new_game(0, chips=player_chips)
@@ -98,12 +98,12 @@ class Blackjack(tools._State):
     def quick_bet_click(self, *args):
         self.quick_bet = self.last_bet
         self.new_game_click()
-        
+
     def get_bot_events(self):
         for event in self.bot_queue:
             if event.type == pg.MOUSEBUTTONDOWN:
                 self.buttons.get_event(event)
-        
+
     def new_game(self, player_cash, chips=None):
         """Start a new round of blackjack."""
         self.deck = Deck((20, 20), prepare.CARD_SIZE, 20)
@@ -126,7 +126,7 @@ class Blackjack(tools._State):
             self.state = "Dealing"
             self.casino_player.stats["Blackjack"]["games played"] += 1
             self.quick_bet = 0
-        
+
 
     def startup(self, current_time, persistent):
         """Get state ready to resume."""
@@ -516,7 +516,7 @@ class Blackjack(tools._State):
         for blinker in self.result_labels:
             blinker.update(dt)
         self.draw(surface, dt)
-        
+
     def update_windows(self, mouse_pos):
         if self.window:
             self.window.update(mouse_pos)
