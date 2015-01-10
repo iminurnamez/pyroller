@@ -424,7 +424,7 @@ class TestControl(unittest.TestCase):
             #
             # Update should have been called with a delta of 10 fps (ie 1/10th of a second)
             self.assertTrue(self.called['update'])
-            self.assertAlmostEqual(self.call_arguments['update'][0][0] / 1000, 0.1, 2)
+            self.assertAlmostEqual(self.call_arguments['update'][0][0] / 1000., 0.1, 2)
         #
         # Now do again with a different FPS
         with controllable_main_loop(self, 'pgupdate', 2):
@@ -434,7 +434,7 @@ class TestControl(unittest.TestCase):
             self.c.main()
             #
             self.assertTrue(self.called['update'])
-            self.assertAlmostEqual(self.call_arguments['update'][0][0] / 1000, 0.05, 2)
+            self.assertAlmostEqual(self.call_arguments['update'][0][0] / 1000., 0.05, 2)
 
     def testMainCallsPygameUpdate(self):
         """testMainCalls: main loop should call pygame update"""
