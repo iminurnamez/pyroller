@@ -405,7 +405,12 @@ class TestControl(unittest.TestCase):
 
     def testMainLoopRespectsDone(self):
         """testMainLoopRespectsDone: main loop should quit when done is set"""
-        raise NotImplementedError
+        #
+        # Need to check that main does something but exits so we check
+        # that it will call the event_loop
+        self.c.event_loop = self._catchCall('event_loop')
+        with controllable_main_loop(self, 'update', 2, after_call=lambda: setattr(self.c, 'done', True)):
+            self.c.main()
 
     def testMainCallsUpdateWithDelta(self):
         """testMainCallsUpdateWithDelta: main loop should call update with appropriate delta"""
@@ -483,7 +488,7 @@ def mock_pygame_events():
 
 
 @contextlib.contextmanager
-def controllable_main_loop(test_class, called_name, loops):
+def controllable_main_loop(test_class, called_name, loops, after_call=None):
     """Context manager to allow the main loop to be controlled"""
     #
     # This is a real hack - we cannot run the main loop and exit without creating
@@ -504,7 +509,10 @@ def controllable_main_loop(test_class, called_name, loops):
             # But if the main loop is badly broken then we will be stuck
             # in which case we raise an exception to make sure the test doesn't
             # hang completely
-            raise Exception('Get me out of here')
+            raise Exception('Main loop did not exit properly')
+        #
+        if after_call:
+            after_call()
     #
     old_pg = pg.display.update
     pg.display.update = new_update
