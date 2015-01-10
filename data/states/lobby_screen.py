@@ -3,7 +3,8 @@ import json
 import pygame as pg
 
 from .. import tools, prepare
-from ..components.labels import Label, GameButton, NeonButton, ButtonGroup
+from ..components.labels import Label, GameButton, NeonButton
+from ..components.labels import Button, ButtonGroup
 from ..components.flair_pieces import ChipCurtain
 
 
@@ -29,17 +30,18 @@ class LobbyScreen(tools._State):
                       ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO"),
                       ("Baccarat", "BACCARAT")]
         game_buttons = self.make_game_buttons(screen_rect)
-        navigation_buttons = self.make_navigation_buttons(screen_rect)
-        self.buttons = ButtonGroup(game_buttons, navigation_buttons)
+        nav_buttons = self.make_navigation_buttons(screen_rect)
+        main_buttons = self.make_main_buttons(screen_rect)
+        self.buttons = ButtonGroup(game_buttons, nav_buttons, main_buttons)
         self.chip_curtain = None #Created on startup.
 
     def make_game_buttons(self, screen_rect):
         columns = 3
-        size = GameButton.ss_size
-        spacer_x, spacer_y = 50, 100
-        start_x = (screen_rect.w-size[0]*columns-spacer_x*(columns-1))//2
-        start_y = screen_rect.top+130
-        step_x, step_y = size[0]+spacer_x, size[1]+spacer_y
+        width, height = GameButton.width, GameButton.height
+        spacer_x, spacer_y = 50, 80
+        start_x = (screen_rect.w-width*columns-spacer_x*(columns-1))//2
+        start_y = screen_rect.top+105
+        step_x, step_y = width+spacer_x, height+spacer_y
         buttons = ButtonGroup()
         for i,data in enumerate(self.games):
             game,payload = data
@@ -49,6 +51,25 @@ class LobbyScreen(tools._State):
         return buttons
 
     def make_navigation_buttons(self, screen_rect):
+        sheet = prepare.GFX["nav_buttons"]
+        size = (106,101)
+        y = 790
+        from_center = 15
+        icons = tools.strip_from_sheet(sheet, (0,0), size, 4)
+        buttons = ButtonGroup()
+        l_kwargs = {"idle_image" : icons[0], "hover_image" : icons[1],
+                    "call" : self.scroll_page, "args" : -1,
+                    "bindings" : [pg.K_LEFT, pg.K_KP4]}
+        r_kwargs = {"idle_image"  : icons[2], "hover_image" : icons[3],
+                    "call" : self.scroll_page, "args" : 1,
+                    "bindings" : [pg.K_RIGHT, pg.K_KP6]}
+        left = Button(((0,y),size), buttons, **l_kwargs)
+        left.rect.right = screen_rect.centerx-from_center
+        right = Button(((0,y),size), buttons, **r_kwargs)
+        right.rect.x = screen_rect.centerx+from_center
+        return buttons
+
+    def make_main_buttons(self, screen_rect):
         buttons = ButtonGroup()
         pos = (9, screen_rect.bottom-(NeonButton.height+11))
         NeonButton(pos, "Credits", self.change_state, "CREDITSSCREEN", buttons)
@@ -60,6 +81,9 @@ class LobbyScreen(tools._State):
         NeonButton(pos, "Exit", self.exit_game, None,
                    buttons, bindings=[pg.K_ESCAPE])
         return buttons
+
+    def scroll_page(self, direction):
+        pass
 
     def start_game(self, chosen_game):
         self.done = True

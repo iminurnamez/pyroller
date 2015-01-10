@@ -15,7 +15,8 @@ class StatsMenu(tools._State):
         self.font = prepare.FONTS["Saniretro"]
         self.title = Label(self.font, 64, "Statistics", "darkred",
                           {"midtop":(screen_rect.centerx, screen_rect.top+10)})
-        self.games = ["Blackjack", "Bingo", "Craps", "Keno"]
+        self.games = ["Blackjack", "Bingo", "Craps", "Keno", "Video Poker",
+                      "Pachinko"]
         self.buttons = self.make_buttons(screen_rect)
         self.use_music_handler = False
 
