@@ -1,16 +1,3 @@
-'''
-TO DO
-
-x set highlight positions for each bet position
-- position chip placement for each bet position
-- calculate payoffs for bets
-- setup AI rollers and betters
-- setup buttons (roll, bet, info)
-- make point chip image
-x dice animation
-
-'''
-
 
 from collections import OrderedDict
 import pygame as pg
@@ -57,8 +44,6 @@ class Craps(tools._State):
         self.debug_lbl = Label(self.font, self.font_size, '6 6', "gold3", {"center": (750, 950)})
         settings = {
             "command" : self.debug_roll,
-            #"font" : prepare.FONTS["Saniretro"],
-            #"clear_on_enter" : True,
             "inactive_on_enter" : False,
             'active': False
         }
@@ -89,7 +74,6 @@ class Craps(tools._State):
                 print('Input needs to be of values 1-6')
         except IndexError: #user didnt input correct format "VALUE VALUE"
             print('Input needs to be "VALUE VALUE"')
-
 
     def roll(self, *args):
         if not self.dice[0].rolling:
@@ -159,7 +143,6 @@ class Craps(tools._State):
         surface.fill(self.table_color)
         surface.blit(self.table, self.table_rect)
         self.buttons.draw(surface)
-
         for h in self.bets.keys():
             self.bets[h].draw(surface)
 
@@ -186,4 +169,3 @@ class Craps(tools._State):
         self.update_total_label()
         for widget in self.widgets:
             widget.update()
-        print(self.point)

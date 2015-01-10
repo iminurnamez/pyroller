@@ -1,0 +1,16 @@
+x set highlight positions for each bet position
+- position chip placement for each bet position
+- calculate payoffs for bets
+- setup AI rollers and betters
+- setup buttons (roll, info)
+x make point chip image
+x dice animation
+- add game logic
+- add positions for any yo eleven and any craps bets
+- add popup for leaving while chips on table
+- add dice histroy popup
+- change red letters to yellow, change point numbers from yellow to white
+- add highlight and clickable sections for entire passline and dont pass bars
+- add popup for attempting to place bet on unbettable location
+- simplify/remove payoff display and add info on betting location
+

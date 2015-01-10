@@ -21,16 +21,22 @@ class Bet:
                 self.fillers.append(self.setup_fillers(triangle))
         
         self.setup_highlighter(size, topleft)
+        self.text = ''
         self.setup_label(name, mult_dict)
-        
         self.bettable = bettable
     
     def setup_label(self, text, mult_dict):
         self.font = prepare.FONTS["Saniretro"]
-        font_size = 30
+        self.font_size = 30
+        self.bettable_lbl_color = 'white'
+        self.unbettable_lbl_color = 'red'
+        self.lbl_color = self.bettable_lbl_color
         spacer = 5
-        text += '{}Payoff: {}'.format(' '*spacer, mult_dict)
-        self.label_name = Label(self.font, font_size, text, "white", {"bottomleft": (20, 918)})
+        self.text += '{}Payoff: {}'.format(' '*spacer, mult_dict)
+        self.update_label()
+        
+    def update_label(self):
+        self.label_name = Label(self.font, self.font_size, self.text, self.lbl_color, {"bottomleft": (20, 918)})
         
     def setup_highlighter(self, size, topleft):
         self.highlighter = pg.Surface(size).convert()
@@ -47,24 +53,34 @@ class Bet:
         pg.draw.polygon(image, self.color, points,0)
         return image
         
+    def update_highlight_color(self, point):
+        if self.bettable == 'always':
+            self.color = self.bettable_color
+            self.lbl_color = self.bettable_lbl_color
+        elif self.bettable == 'on_point':
+            if point:
+                self.color = self.bettable_color
+                self.lbl_color = self.bettable_lbl_color
+            else:
+                self.color = self.unbettable_color 
+                self.lbl_color = self.unbettable_lbl_color
+        elif self.bettable == 'off_point':
+            if not point:
+                self.color = self.bettable_color
+                self.lbl_color = self.bettable_lbl_color
+            else:
+                self.color = self.unbettable_color 
+                self.lbl_color = self.unbettable_lbl_color
+        self.highlighter.fill(self.color) 
+        self.update_label()
+        
     def update(self, mouse_pos, point):
         if self.highlighter_rect.collidepoint(mouse_pos):
             self.is_draw = True
         else:
             self.is_draw = False
-            
-        if self.bettable == 'always':
-            self.highlighter.fill(self.bettable_color)
-        elif self.bettable == 'on_point':
-            if point:
-                self.highlighter.fill(self.bettable_color)
-            else:
-                self.highlighter.fill(self.unbettable_color) 
-        elif self.bettable == 'off_point':
-            if not point:
-                self.highlighter.fill(self.bettable_color)
-            else:
-                self.highlighter.fill(self.unbettable_color) 
+        self.update_highlight_color(point)
+
             
     def draw(self, surface):
         if self.is_draw:
