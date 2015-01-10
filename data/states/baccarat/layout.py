@@ -31,11 +31,18 @@ def load_layout(state, filename):
         pass
 
     def handle_shoe(data):
-        state.shoe.rect = get_rect(data)
-        pass
+        shoe = Deck(get_rect(data), decks=state.options['decks'])
+        state.shoe = shoe
+        state.groups.append(shoe)
 
     def handle_player_chips(data):
-        pass
+        chips = ChipPile(get_rect(data))
+        state.player_chips = chips
+        state.groups.append(chips)
+
+    def handle_imagelayer(layer):
+        fn = os.path.splitext(os.path.basename(layer['image']))[0]
+        state.background_filename = fn
 
     def handle_objectgroup(layer):
         for thing in layer['objects']:

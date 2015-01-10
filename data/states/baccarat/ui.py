@@ -429,7 +429,7 @@ class ChipPile(Stacker):
         x = 0
         for k, g in groupby(self.sprites(), attrgetter('value')):
             x, y = super(ChipPile, self).arrange(list(g), (x, 0))
-            x += 70
+            x += 40
 
 
 class TextSprite(pygame.sprite.DirtySprite):

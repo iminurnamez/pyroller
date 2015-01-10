@@ -68,25 +68,15 @@ class Baccarat(tools._State):
         self.on_new_round()
 
     def reload_config(self):
-        # will get moved to json config
-        self.options = dict()
-        self.options['commission'] = .05
-        self.options['decks'] = 7
-        self.shoe = Deck((0, 0, 800, 600), decks=self.options['decks'])
-        self.player_hand = Deck((150, 150, 200, 200), stacking=(12, 200))
-        self.dealer_hand = Deck((750, 150, 200, 200), stacking=(12, 200))
-        self.player_chips = ChipPile((0, 800, 400, 200))
-        self.groups.extend((self.player_hand, self.dealer_hand,
-                            self.player_chips, self.shoe))
+        filename = os.path.join('resources', 'baccarat-rules.json')
+        with open(filename) as fp:
+            data = json.load(fp)
+        config = data['baccarat'][self.variation]
+        self.options = dict(config['options'])
+        self.fsm = fysom.Fysom(**config['rules'])
 
-        # filename = os.path.join('resources', 'baccarat-layout.json')
-        # layout.load_layout(self, filename)
-        # filename = os.path.join('resources', 'baccarat-rules.json')
-        # with open(filename) as fp:
-        #     data = json.load(fp)
-        # config = data['baccarat'][self.variation]
-        # self.options = dict(config['options'])
-        # self.fsm = fysom.Fysom(**config['rules'])
+        filename = os.path.join('resources', 'baccarat-layout.json')
+        layout.load_layout(self, filename)
 
     def get_event(self, event, scale=(1, 1)):
         if event.type == pg.KEYDOWN:
@@ -293,6 +283,9 @@ class Baccarat(tools._State):
         if self._background is None:
             self._background = pg.Surface(surface.get_size())
             self._background.fill(prepare.FELT_GREEN)
+            if hasattr(self, 'background_filename'):
+                im = prepare.GFX[self.background_filename]
+                self._background.blit(im, (0, 0))
             surface.blit(self._background, (0, 0))
 
         for group in chain(self.bets, self.groups):
