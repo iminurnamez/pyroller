@@ -57,7 +57,8 @@ class LobbyScreen(tools._State):
         NeonButton(pos, "Stats", self.change_state, "STATSMENU", buttons)
         pos = (screen_rect.centerx-(NeonButton.width//2),
                screen_rect.bottom-(NeonButton.height+11))
-        NeonButton(pos, "Exit", self.exit_game, None, buttons)
+        NeonButton(pos, "Exit", self.exit_game, None,
+                   buttons, bindings=[pg.K_ESCAPE])
         return buttons
 
     def start_game(self, chosen_game):
@@ -82,9 +83,6 @@ class LobbyScreen(tools._State):
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
             self.exit_game()
-        elif event.type == pg.KEYUP:
-            if event.key == pg.K_ESCAPE:
-                self.exit_game()
         self.buttons.get_event(event)
 
     def update(self, surface, keys, current_time, dt, scale):
