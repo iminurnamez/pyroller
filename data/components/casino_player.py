@@ -33,6 +33,15 @@ class CasinoPlayer(object):
                                                     ("_last squares", [])])),
                                              ("Keno", OrderedDict(
                                                     [("games played", 0)])),
+                                             ("Video Poker", OrderedDict(
+                                                    [("games played", 0)])),
+                                             ("Pachinko", OrderedDict(
+                                                    [('games played', 0),
+                                                    ('total winnings', 0),
+                                                    ('earned', 0),
+                                                    ('jackpots', 0),
+                                                    ('gutters', 0),
+                                                    ]))
                                             ])
 
         if stats is not None:
