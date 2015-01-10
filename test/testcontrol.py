@@ -240,10 +240,6 @@ class TestControl(unittest.TestCase):
                       (RESOLUTION[0] - 1 - dx, RESOLUTION[1] - 1 - dy)):
             self._checkPoint((0, 255, 0), self.c.screen, point, 'green', 5, False)
 
-    def testUpdateScreenScalingOmittedIfNotNeeded(self):
-        """testUpdateScreenScalingOmittedIfNotNeeded: update method should do no scaling if it is not required"""
-        raise NotImplementedError
-
     def testFlipState(self):
         """testFlipState: should be able to flip back to previous state"""
         #
