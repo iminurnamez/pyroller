@@ -334,6 +334,8 @@ class NeonButton(Button):
 
 class GameButton(Button):
     ss_size = (320, 240)
+    width = ss_size[0]+20
+    height = ss_size[1]+20
     font = prepare.FONTS["Saniretro"]
 
     def __init__(self, pos, game, call, args, *groups, **kwargs):
@@ -347,12 +349,12 @@ class GameButton(Button):
         settings.update(kwargs)
         super(GameButton, self).__init__(rect, *groups, **settings)
 
-    def make_images(self, game, screenshot):
-        icon = pg.transform.scale(screenshot, self.ss_size).convert_alpha()
+    def make_images(self, game, icon):
+        icon = pg.transform.scale(icon, self.ss_size).convert_alpha()
         icon_rect = icon.get_rect()
         label_text = game.replace("_", " ")
         label = Label(self.font, 48, label_text, "gold3", {"center": (0, 0)})
-        rect = pg.Rect(0, 0, icon_rect.w+20, icon_rect.h+label.rect.h+20)
+        rect = pg.Rect(0, 0, self.width, self.height+label.rect.h)
         icon_rect.midtop = (rect.centerx, 10)
         label.rect.midtop = icon_rect.midbottom
         frame = label.image.get_rect()
