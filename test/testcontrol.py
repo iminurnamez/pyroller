@@ -98,7 +98,7 @@ class TestControl(unittest.TestCase):
                          '%s - Failed colour test at %d, %d (%s). Expected (%s)' % (name, x, y, got, colour))
 
     def testSetupStates(self):
-        """testSetupStates: can setup the initial state and states dictionary"""
+        """can setup the initial state and states dictionary"""
         #
         # Initial state should be set
         self.assertEqual('one', self.c.state._name)
@@ -108,12 +108,12 @@ class TestControl(unittest.TestCase):
             self.assertTrue(name in self.c.state_dict)
 
     def testFailSetupStateWithBadState(self):
-        """testFailSetupStateWithBadState: should fail cleanly when setting up states with a bad name"""
+        """should fail cleanly when setting up states with a bad name"""
         # TODO: this behaviour should throw a more specific error (StateNotFound)
         self.assertRaises(KeyError, self.c.setup_states, self.states, 'NOT-THERE')
 
     def testUpdateFlipsStateWhenStateCompletion(self):
-        """testUpdateFlipsStateWhenStateCompletion: update should check if a state has completed and flip state"""
+        """update should check if a state has completed and flip state"""
         #
         # Update should call flip_state if the state is done so we want to check for this
         self.c.flip_state = self._catchCall('flip_state')
@@ -128,7 +128,7 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.called['flip_state'])
 
     def testUpdateChecksForStateQuit(self):
-        """testUpdateChecksForStateQuit: update method should check if a state wants to quit"""
+        """update method should check if a state wants to quit"""
         #
         # Normally control done should not be set
         self.assertFalse(self.c.done)
@@ -144,7 +144,7 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.c.done)
 
     def testQuitCheckedBeforeDone(self):
-        """testQuitCheckedBeforeDone: update should check for quit before done"""
+        """update should check for quit before done"""
         #
         # Update would call flip_state if the state is done so we want to check for this
         self.c.flip_state = self._catchCall('flip_state')
@@ -158,7 +158,7 @@ class TestControl(unittest.TestCase):
         self.assertFalse(self.called['flip_state'])
 
     def testUpdateCallsStateUpdate(self):
-        """testUpdateCallsStateUpdate: update method should call the active states update method"""
+        """update method should call the active states update method"""
         #
         self.c.update(10)
         #
@@ -166,7 +166,7 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.c.state._update_called)
 
     def testUpdateCallsMusicHandlerUpdate(self):
-        """testUpdateCallsMusicHandlerUpdate: update method should call the music handler update if needed"""
+        """update method should call the music handler update if needed"""
         #
         # Simple mock music handler to check calls are working
         handler = Mock()
@@ -192,7 +192,7 @@ class TestControl(unittest.TestCase):
         self.assertFalse(self.called['draw'])
 
     def testUpdateWorksIfNoMusicHandler(self):
-        """testUpdateWorksIfNoMusicHandler: update method should bypass music if no music handler"""
+        """update method should bypass music if no music handler"""
         #
         # Update should work fine if there is no music handler set
         self.assertEqual(None, self.c.music_handler)
@@ -201,7 +201,7 @@ class TestControl(unittest.TestCase):
         # Nothing to test - should just work
 
     def testUpdateShouldScaleScreen(self):
-        """testUpdateShouldScaleScreen: update method should scale the screen"""
+        """update method should scale the screen"""
         #
         # We will render something in the state at a higher resolution and then
         # use the control to scale back down
@@ -241,7 +241,7 @@ class TestControl(unittest.TestCase):
             self._checkPoint((0, 255, 0), self.c.screen, point, 'green', 5, False)
 
     def testFlipState(self):
-        """testFlipState: should be able to flip back to previous state"""
+        """should be able to flip back to previous state"""
         #
         # Set the next state to go to and catch calls to the initial cleanup function
         # and next state startup, which should be called during the process
@@ -263,7 +263,7 @@ class TestControl(unittest.TestCase):
         self.assertEqual('one', self.c.state.previous)
 
     def testCanHandleKeyPressEvents(self):
-        """testCanHandleKeyPressEvents: should detect and store key presses"""
+        """should detect and store key presses"""
         #
         # Should store the keys on both key down and key up
         for event_type, key in [(pg.KEYDOWN, pg.K_a), (pg.KEYUP, pg.K_b)]:
@@ -284,7 +284,7 @@ class TestControl(unittest.TestCase):
             self.assertEqual(keys, self.c.keys)
 
     def testCanHandleTakingScreenshots(self):
-        """testCanHandleTakingScreenshots: should detect screenshot key and store screenshot"""
+        """should detect screenshot key and store screenshot"""
         try:
             #
             # Should store the keys on both key down and key up
@@ -313,7 +313,7 @@ class TestControl(unittest.TestCase):
             self._safeRemoveFile('screenshot.png')
 
     def testCanHandleFPS(self):
-        """testCanHandleFPS: should detect FPS key pressed and show FPS"""
+        """should detect FPS key pressed and show FPS"""
         #
         # Should store the keys on both key down and key up
         events = [pg.event.Event(pg.KEYDOWN, key=pg.K_F5)]
@@ -336,7 +336,7 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.c.show_fps)
 
     def testCanHandleScreenResize(self):
-        """testCanHandleScreenResize: should call screen resize if the screen has changed"""
+        """should call screen resize if the screen has changed"""
         #
         # Should store the keys on both key down and key up
         events = [pg.event.Event(pg.VIDEORESIZE, size=RESOLUTIONS[2])]
@@ -359,7 +359,7 @@ class TestControl(unittest.TestCase):
         self.assertEqual(RESOLUTIONS[2], self.c.screen.get_size())
 
     def testEventsArePassedToMusicHandler(self):
-        """testEventsArePassedToMusicHandler: should pass on events to the music handler"""
+        """should pass on events to the music handler"""
         #
         # Simple mock music handler to check calls are working
         handler = Mock()
@@ -391,7 +391,7 @@ class TestControl(unittest.TestCase):
             self.assertTrue(self.called['get_event'])
 
     def testResizeToLargerSize(self):
-        """testResizeToLargerSize: can handle resizing to larger screen size"""
+        """can handle resizing to larger screen size"""
         #
         # Initial size should be default
         self.assertEqual(RESOLUTION, self.c.screen_rect.size)
@@ -401,7 +401,7 @@ class TestControl(unittest.TestCase):
         self.assertEqual(RESOLUTIONS[2], self.c.screen_rect.size)
 
     def testResizeToSmallerSize(self):
-        """testResizeToSmallerSize: can handle resizing to smaller screen size"""
+        """can handle resizing to smaller screen size"""
         #
         # Initial size should be default
         self.assertEqual(RESOLUTION, self.c.screen_rect.size)
@@ -411,7 +411,7 @@ class TestControl(unittest.TestCase):
         self.assertEqual(RESOLUTIONS[0], self.c.screen_rect.size)
 
     def testResizeToSameSize(self):
-        """testResizeToSameSize: can handle resizing to same screen size"""
+        """can handle resizing to same screen size"""
         #
         # Initial size should be default
         self.assertEqual(RESOLUTION, self.c.screen_rect.size)
@@ -421,7 +421,7 @@ class TestControl(unittest.TestCase):
         self.assertEqual(RESOLUTION, self.c.screen_rect.size)
 
     def testResizeInvalidSize(self):
-        """testResizeInvalidSize: should just grow or shrink screen if invalid resolution selected"""
+        """should just grow or shrink screen if invalid resolution selected"""
         #
         # Increase size but not by enough
         self.c.on_resize((RESOLUTION[0] + 1, RESOLUTION[1] + 1))
@@ -436,7 +436,7 @@ class TestControl(unittest.TestCase):
         self.assertEqual(RESOLUTIONS[DEFAULT_RESOLUTION_INDEX - 1], self.c.screen_rect.size)
 
     def testCanToggleFPSDisplay(self):
-        """testCanToggleFPSDisplay: should be able to toggle FPS display"""
+        """should be able to toggle FPS display"""
         #
         # By default caption should not include FPS
         with controllable_main_loop(self, 'pgupdate', 1):
@@ -453,7 +453,7 @@ class TestControl(unittest.TestCase):
             self.assertTrue('FPS' in pg.display.get_caption()[0])
 
     def testMainLoopRespectsDone(self):
-        """testMainLoopRespectsDone: main loop should quit when done is set"""
+        """main loop should quit when done is set"""
         #
         # Need to check that main does something but exits so we check
         # that it will call the event_loop
@@ -463,7 +463,7 @@ class TestControl(unittest.TestCase):
             self.assertTrue(self.called['event_loop'])
 
     def testMainCallsUpdateWithDelta(self):
-        """testMainCallsUpdateWithDelta: main loop should call update with appropriate delta"""
+        """main loop should call update with appropriate delta"""
         #
         # Check that the main loop calls update with the right delta
         self.c.update = self._catchCall('update')
@@ -486,7 +486,7 @@ class TestControl(unittest.TestCase):
             self.assertAlmostEqual(self.call_arguments['update'][0][0] / 1000., 0.05, 2)
 
     def testMainCallsPygameUpdate(self):
-        """testMainCalls: main loop should call pygame update"""
+        """main loop should call pygame update"""
         #
         # This test is a bit redundant given how we are controlling the main loop
         # but is kept here as a reminder to create the proper test when the
