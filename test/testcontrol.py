@@ -438,7 +438,15 @@ class TestControl(unittest.TestCase):
 
     def testMainCallsPygameUpdate(self):
         """testMainCalls: main loop should call pygame update"""
-        raise NotImplementedError
+        #
+        # This test is a bit redundant given how we are controlling the main loop
+        # but is kept here as a reminder to create the proper test when the
+        # main loop is made more directly testable
+        #
+        with controllable_main_loop(self, 'pgupdate', 2):
+            self.c.main()
+        #
+        self.assertTrue(self.called['pgupdate'])
 
 
 class SimpleControl(tools.Control):
