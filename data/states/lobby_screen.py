@@ -28,17 +28,17 @@ class LobbyScreen(tools._State):
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
                       ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO")]
         game_buttons = self.make_game_buttons(screen_rect)
-        navigation_buttons = self.make_navigation_buttons(screen_rect)
-        self.buttons = ButtonGroup(game_buttons, navigation_buttons)
+        main_buttons = self.make_main_buttons(screen_rect)
+        self.buttons = ButtonGroup(game_buttons, main_buttons)
         self.chip_curtain = None #Created on startup.
 
     def make_game_buttons(self, screen_rect):
         columns = 3
-        size = GameButton.ss_size
+        width, height = GameButton.width, GameButton.height
         spacer_x, spacer_y = 50, 100
-        start_x = (screen_rect.w-size[0]*columns-spacer_x*(columns-1))//2
+        start_x = (screen_rect.w-width*columns-spacer_x*(columns-1))//2
         start_y = screen_rect.top+130
-        step_x, step_y = size[0]+spacer_x, size[1]+spacer_y
+        step_x, step_y = width+spacer_x, height+spacer_y
         buttons = ButtonGroup()
         for i,data in enumerate(self.games):
             game,payload = data
@@ -47,7 +47,10 @@ class LobbyScreen(tools._State):
             GameButton(pos, game, self.start_game, payload, buttons)
         return buttons
 
-    def make_navigation_buttons(self, screen_rect):
+    def make_navigation_buttons(self):
+        pass
+
+    def make_main_buttons(self, screen_rect):
         buttons = ButtonGroup()
         pos = (9, screen_rect.bottom-(NeonButton.height+11))
         NeonButton(pos, "Credits", self.change_state, "CREDITSSCREEN", buttons)
