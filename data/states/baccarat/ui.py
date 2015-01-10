@@ -219,18 +219,29 @@ class Card(pygame.sprite.DirtySprite):
 
 
 class Stacker(SpriteGroup):
-    def __init__(self, rect, stacking=(6, 6)):
+    def __init__(self, rect, stacking=None):
         super(Stacker, self).__init__()
         self.rect = pygame.Rect(rect)
-        self.stacking = stacking
         self._needs_arrange = True
         self._constraint = 'height'
-        if stacking[1] >= 0:
-            self._origin = 'topleft'
-            self._sprite_anchor = 'topleft'
-        else:
-            self._origin = 'bottomleft'
-            self._sprite_anchor = 'bottomleft'
+        self._origin = None
+        self._sprite_anchor = None
+        self.stacking = stacking
+
+    @property
+    def stacking(self):
+        return self._stacking
+
+    @stacking.setter
+    def stacking(self, value):
+        self._stacking = value
+        if value is not None:
+            if value[1] >= 0:
+                self._origin = 'topleft'
+                self._sprite_anchor = 'topleft'
+            else:
+                self._origin = 'bottomleft'
+                self._sprite_anchor = 'bottomleft'
 
     def add(self, *items):
         super(Stacker, self).add(*items)
@@ -269,7 +280,7 @@ class Stacker(SpriteGroup):
         if not sprites:
             return
 
-        if self.stacking == (0, 0):
+        if self.stacking is None:
             pos = self.rect.topleft
             sprites[-1].visible = 1
             sprites[-1].rect.topleft = pos
@@ -295,13 +306,15 @@ class Stacker(SpriteGroup):
                     y = ry
                     x += ox + sprite.rect.width
 
+        return x, y
+
 
 class Deck(Stacker):
     """Class to represent a deck of playing cards. If default_shuffle is True
     the deck will be shuffled upon creation.
     """
     def __init__(self, rect, card_size=prepare.CARD_SIZE, shuffle=True,
-                 decks=0, stacking=(6, 6)):
+                 decks=0, stacking=None):
         if rect[2:] == (0, 0):
             rect = rect[:2], card_size
         super(Deck, self).__init__(rect, stacking)
@@ -413,10 +426,10 @@ class ChipPile(Stacker):
 
     def arrange(self, sprites=None, offset=(0, 0)):
         self.sort()
-        ox = 0
+        x = 0
         for k, g in groupby(self.sprites(), attrgetter('value')):
-            super(ChipPile, self).arrange(list(g), (ox, 0))
-            ox += 70
+            x, y = super(ChipPile, self).arrange(list(g), (x, 0))
+            x += 70
 
 
 class TextSprite(pygame.sprite.DirtySprite):

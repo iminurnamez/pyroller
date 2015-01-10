@@ -1,6 +1,16 @@
+"""
+todo:
+exchange chips
+add cards when deck is low
+betting areas
+clicking stacks
+lose bet amount if bailing
+sounds?
+"""
+
+from itertools import chain
 import pygame as pg
 from ... import tools, prepare
-from ...prepare import BROADCASTER as B
 from . import layout
 from .ui import *
 import fysom
@@ -37,81 +47,52 @@ class Baccarat(tools._State):
     a considerable amount of variation on the stated rules, so artistic license
     was taken in determining what the rules should be.
     """
-
-    # hack related to game states that do not finish
-    did_startup = False
-
     def startup(self, now, persistent):
         self.now = now
         self.persist = persistent
         self.casino_player = self.persist['casino_player']
         self.variation = "mini"
-        self.load_json(os.path.join('resources', 'baccarat-rules.json'))
 
         # stuff that might get moved to a gui layer sometime?
         self._background = None
         self._clicked_sprite = None
         self.font = pg.font.Font(prepare.FONTS["Saniretro"], font_size)
         self.button_font = pg.font.Font(prepare.FONTS["Saniretro"], 48)
-
-        # # hack related to game states that do not finish
-        # self.done = False
-        # if self.did_startup:
-        #     return
-        # self.did_startup = True
-
-        self.hud = pg.sprite.RenderUpdates()
-        self.shoe = Deck((0, 0, 800, 600), decks=7, stacking=(0, 0))
-        self.groups = [self.hud, self.shoe]
-
         self.bets = list()
+        self.groups = list()
+        self.hud = pg.sprite.RenderUpdates()
+        self.groups.append(self.hud)
+        self.reload_config()
+        self.hud.add(NeonButton('lobby', (1000, 920, 0, 0), self.goto_lobby))
+        self.cash_in()
+        self.on_new_round()
 
-        b = NeonButton('lobby', (1000, 920, 0, 0), self.goto_lobby)
-        self.hud.add(b)
+    def reload_config(self):
+        # will get moved to json config
+        self.options = dict()
+        self.options['commission'] = .05
+        self.options['decks'] = 7
+        self.shoe = Deck((0, 0, 800, 600), decks=self.options['decks'])
+        self.player_hand = Deck((150, 150, 200, 200), stacking=(12, 200))
+        self.dealer_hand = Deck((750, 150, 200, 200), stacking=(12, 200))
+        self.player_chips = ChipPile((0, 800, 400, 200))
+        self.groups.extend((self.player_hand, self.dealer_hand,
+                            self.player_chips, self.shoe))
 
         # filename = os.path.join('resources', 'baccarat-layout.json')
         # layout.load_layout(self, filename)
-        self.player_hand = Deck((150, 150, 200, 200), stacking=(12, 200))
-        self.dealer_hand = Deck((750, 150, 200, 200), stacking=(12, 200))
-        self.groups.extend((self.player_hand, self.dealer_hand))
-        self.player_chips = ChipPile((0, 800, 400, 200),
-                                     value=self.casino_player.stats['cash'])
-        self.groups.append(self.player_chips)
-        self.on_new_round()
-
-    def load_json(self, filename):
-        self.options = dict()
-        self.options['commission'] = .05
-
+        # filename = os.path.join('resources', 'baccarat-rules.json')
         # with open(filename) as fp:
         #     data = json.load(fp)
-        #
         # config = data['baccarat'][self.variation]
         # self.options = dict(config['options'])
         # self.fsm = fysom.Fysom(**config['rules'])
-
-    def draw_card(self, hand):
-        """Shortcut to draw card from shoe and add to a hand
-
-        :param hand: Deck instance
-        :return: Card instance
-        """
-        card = self.shoe.pop()
-        card.face_up = True
-        hand.add(card)
-        return card
-
-    # def cleanup(self):
-    #     return self.persist
 
     def get_event(self, event, scale=(1, 1)):
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 self.goto_lobby()
                 return
-
-        elif event.type == pg.KEYUP:
-            pass
 
         if event.type == pg.MOUSEMOTION:
             pos = tools.scaled_mouse_pos(scale)
@@ -136,11 +117,6 @@ class Baccarat(tools._State):
                         sprite.pressed = True
                         self._clicked_sprite = sprite
 
-            # for sprite in reversed(self.shoe.sprites()):
-            #     if sprite.rect.collidepoint(pos):
-            #         self.on_clicked_shoe_card(sprite, pos)
-            #         break
-
         elif event.type == pg.MOUSEBUTTONUP:
             pos = tools.scaled_mouse_pos(scale)
             sprite = self._clicked_sprite
@@ -150,13 +126,21 @@ class Baccarat(tools._State):
                     sprite.on_mouse_click(pos)
                 self._clicked_sprite = None
 
-    def on_confirm_bet(self):
-        self.deal_cards()
-
     def on_new_round(self):
         self.bets = list()
         self.clear_table()
         self.show_bet_confirm_button()
+
+    def draw_card(self, hand):
+        """Shortcut to draw card from shoe and add to a hand
+
+        :param hand: Deck instance
+        :return: Card instance
+        """
+        card = self.shoe.pop()
+        card.face_up = True
+        hand.add(card)
+        return card
 
     def place_bet(self, result, owner, amount):
         """Shortcut to place a bet
@@ -164,21 +148,21 @@ class Baccarat(tools._State):
         :param result: "player", "dealer", or "tie"
         :param owner: ChipsPile instance
         :param amount: amount to wager
-        :return:
+        :return: ChipsPile instance
         """
         bet = ChipPile((600, 800, 200, 200))
         chips = owner.withdraw_chips(amount)
-        bet.add(*chips)
+        bet.add(chips)
         bet.owner = owner
         bet.result = result
         self.bets.append(bet)
+        return bet
 
     def deal_cards(self):
         self.draw_card(self.player_hand)
         self.draw_card(self.player_hand)
         self.draw_card(self.dealer_hand)
         self.draw_card(self.dealer_hand)
-
         player_count = count_hand(self.player_hand)
         dealer_count = count_hand(self.dealer_hand)
 
@@ -187,18 +171,17 @@ class Baccarat(tools._State):
             self.count_hands()
             return
 
-        # punto
-        self.player_three_rule(player_count, self.player_hand)
-
         # punto rules only
+        self.players_three_rule(player_count, self.player_hand)
         if len(self.player_hand) == 2:
-            self.player_three_rule(dealer_count, self.dealer_hand)
+            self.players_three_rule(dealer_count, self.dealer_hand)
         else:
             self.bankers_three_rule(dealer_count)
 
         self.count_hands()
 
     def bankers_three_rule(self, banker_count):
+        # TODO: needs testing
         value = count_card(self.player_hand.sprites()[-1].value)
         if value == 9:
             value = -1
@@ -211,7 +194,7 @@ class Baccarat(tools._State):
         if banker_count <= value:
             self.draw_card(self.dealer_hand)
 
-    def player_three_rule(self, count, hand):
+    def players_three_rule(self, count, hand):
         if count < 6:
             self.draw_card(hand)
 
@@ -236,9 +219,9 @@ class Baccarat(tools._State):
                 if result == "dealer" and commission:
                     fee = int(math.ceil(bet.value * commission))
                     winnings -= fee
-                chips = cash_to_chips(winnings)
-                bet.owner.add(*chips)
-                bet.owner.add(*bet.sprites())
+                bet.owner.add(cash_to_chips(winnings))
+                bet.owner.add(bet.sprites())
+                bet.empty()
 
         msg = '{} points'
         text = TextSprite(msg.format(player_result), self.font)
@@ -256,12 +239,7 @@ class Baccarat(tools._State):
         text.kill_me_on_clear = True
         self.hud.add(text)
 
-        self.clear_bets()
         self.show_finish_round_button()
-
-    def clear_bets(self):
-        for group in self.bets:
-            group.empty()
 
     def clear_table(self):
         self.player_hand.empty()
@@ -270,13 +248,24 @@ class Baccarat(tools._State):
             if hasattr(sprite, 'kill_me_on_clear'):
                 sprite.kill()
 
-    def goto_lobby(self, sprite):
+    def goto_lobby(self, *args):
         self.cash_out()
         self.done = True
         self.next = 'LOBBYSCREEN'
 
+    def cash_in(self):
+        chips = cash_to_chips(self.casino_player.stats['cash'])
+        self.casino_player.stats['cash'] = 0
+        self.player_chips.add(chips)
+
     def cash_out(self):
-        self.casino_player.stats['cash'] = self.player_chips.value
+        cash = self.player_chips.value
+        for bet in list(self.bets):
+            if bet.owner == self.player_chips:
+                self.bets.remove(bet)
+                cash += bet.value
+
+        self.casino_player.stats['cash'] = cash
         self.player_chips.empty()
 
     def show_finish_round_button(self):
@@ -292,14 +281,13 @@ class Baccarat(tools._State):
     def show_bet_confirm_button(self):
         def f(sprite):
             sprite.kill()
-            self.on_confirm_bet()
+            self.deal_cards()
 
+        # TODO: no automatic bet
         self.place_bet("dealer", self.player_chips, 100)
 
         text = TextSprite('Confirm Bet', self.button_font)
-        rect = 960, 800, 300, 75
-        b = Button(text, rect, f)
-        self.hud.add(b)
+        self.hud.add(Button(text, (960, 800, 300, 75), f))
 
     def update(self, surface, keys, current_time, dt, scale):
         if self._background is None:
@@ -307,12 +295,7 @@ class Baccarat(tools._State):
             self._background.fill(prepare.FELT_GREEN)
             surface.blit(self._background, (0, 0))
 
-        for group in self.bets:
-            group.update(dt)
-            group.clear(surface, self._background)
-            group.draw(surface)
-
-        for group in self.groups:
+        for group in chain(self.bets, self.groups):
             group.update(dt)
             group.clear(surface, self._background)
             group.draw(surface)
