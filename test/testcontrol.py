@@ -6,14 +6,15 @@ import os
 
 
 # Default test settings
-RESOLUTION = (10, 20)
 RESOLUTIONS = (
     (5, 10),
-    RESOLUTION,
+    (10, 20),
     (30, 40),
     (50, 60),
     (70, 80),
 )
+DEFAULT_RESOLUTION_INDEX = 1
+RESOLUTION = RESOLUTIONS[DEFAULT_RESOLUTION_INDEX]
 
 # Set up the pygame system
 import pygame as pg
@@ -367,12 +368,23 @@ class TestControl(unittest.TestCase):
         self.assertEqual(RESOLUTION, self.c.screen_rect.size)
         #
         # Increase size
-        self.c.on_resize(RESOLUTIONS[1])
-        self.assertEqual(RESOLUTIONS[1], self.c.screen_rect.size)
+        self.c.on_resize(RESOLUTION)
+        self.assertEqual(RESOLUTION, self.c.screen_rect.size)
 
-    def testFailResizeIfInvalidSize(self):
-        """testFailResizeIfInvalidSize: should fail cleanly if invalid screen size detected"""
-        raise NotImplementedError
+    def testResizeInvalidSize(self):
+        """testResizeInvalidSize: should just grow or shrink screen if invalid resolution selected"""
+        #
+        # Increase size but not by enough
+        self.c.on_resize((RESOLUTION[0] + 1, RESOLUTION[1] + 1))
+        self.assertEqual(RESOLUTIONS[DEFAULT_RESOLUTION_INDEX + 1], self.c.screen_rect.size)
+        #
+        # Reset
+        self.c.on_resize(RESOLUTION)
+        self.assertEqual(RESOLUTION, self.c.screen_rect.size)
+        #
+        # Decrease size but not by enough
+        self.c.on_resize((RESOLUTION[0] - 1, RESOLUTION[1] - 1))
+        self.assertEqual(RESOLUTIONS[DEFAULT_RESOLUTION_INDEX - 1], self.c.screen_rect.size)
 
     def testCanToggleFPSDisplay(self):
         """testCanToggleFPSDisplay: should be able to toggle FPS display"""
