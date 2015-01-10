@@ -96,7 +96,7 @@ class Pachinko(tools._State):
                 ('earned', 0),
                 ('jackpots', 0),
                 ('gutters', 0),
-                ])
+            ])
 
         self.casino_player.stats['Pachinko']['games played'] += 1
 
@@ -112,7 +112,8 @@ class Pachinko(tools._State):
         self.casino_player.stats["Pachinko"]["gutters"] += 1
 
     def on_tray(self, *args):
-        self.tray_count.text = '{} balls in play'.format(self.playfield.ball_tray)
+        self.tray_count.text = '{} balls in play'.format(
+            self.playfield.ball_tray)
 
     def fill_tray(self):
         cost = 25
@@ -196,7 +197,6 @@ class Pachinko(tools._State):
         self.playfield.update(surface, dt)
         self.hud.clear(surface, self._clear_surface)
         self.hud.draw(surface)
-
 
     @staticmethod
     def _clear_surface(surface, rect):
