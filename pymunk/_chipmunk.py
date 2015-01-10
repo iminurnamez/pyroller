@@ -538,7 +538,7 @@ N17cpContactPointSet4DOT_25E._fields_ = [
     ('dist', cpFloat),
 ]
 cpContactPointSet._fields_ = [
-    ('count_hand', c_int),
+    ('count', c_int),
     ('points', N17cpContactPointSet4DOT_25E * 2),
 ]
 cpArbiterGetContactPointSet = chipmunk_lib.cpArbiterGetContactPointSet
@@ -1135,7 +1135,7 @@ cpSpatialIndexQueryImpl = function_pointer(None, POINTER(cpSpatialIndex), c_void
 cpSpatialIndexSegmentQueryImpl = function_pointer(None, POINTER(cpSpatialIndex), c_void_p, cpVect, cpVect, cpFloat, cpSpatialIndexSegmentQueryFunc, c_void_p)
 cpSpatialIndexClass._fields_ = [
     ('destroy', cpSpatialIndexDestroyImpl),
-    ('count_hand', cpSpatialIndexCountImpl),
+    ('count', cpSpatialIndexCountImpl),
     ('each', cpSpatialIndexEachImpl),
     ('contains', cpSpatialIndexContainsImpl),
     ('insert', cpSpatialIndexInsertImpl),

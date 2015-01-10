@@ -154,7 +154,7 @@ class RoundHistory(object):
             label.draw(surface)
 
 class PayTable(object):
-    '''Paytable readout for desired spot count_hand'''
+    '''Paytable readout for desired spot count'''
     def __init__(self, card):
         self.rect = pg.Rect(1036, 200, 340, 554)
         self.font = prepare.FONTS["Saniretro"]
