@@ -388,7 +388,20 @@ class TestControl(unittest.TestCase):
 
     def testCanToggleFPSDisplay(self):
         """testCanToggleFPSDisplay: should be able to toggle FPS display"""
-        raise NotImplementedError
+        #
+        # By default caption should not include FPS
+        with controllable_main_loop(self, 'update', 1):
+            self.c.main()
+            self.assertEqual('pygame window', pg.display.get_caption()[0])
+        #
+        # When turning on FPS then the caption should reflect it
+        self.c.done = False
+        with controllable_main_loop(self, 'update', 1):
+            self.c.show_fps = True
+            self.c.main()
+            #
+            # We don't check the exact text, just that there is some FPS display
+            self.assertTrue('FPS' in pg.display.get_caption()[0])
 
     def testMainLoopRespectsDone(self):
         """testMainLoopRespectsDone: main loop should quit when done is set"""
@@ -396,10 +409,6 @@ class TestControl(unittest.TestCase):
 
     def testMainCallsUpdateWithDelta(self):
         """testMainCallsUpdateWithDelta: main loop should call update with appropriate delta"""
-        raise NotImplementedError
-
-    def testMainCausesFPSToShow(self):
-        """testMainCausesFPSToShow: main loop should cause the FPS to display when needed"""
         raise NotImplementedError
 
 
@@ -471,6 +480,40 @@ def mock_pygame_events():
         yield pg.event.queue, pg.key.queue
     finally:
         pg.event, pg.key = old_pg
+
+
+@contextlib.contextmanager
+def controllable_main_loop(test_class, called_name, loops):
+    """Context manager to allow the main loop to be controlled"""
+    #
+    # This is a real hack - we cannot run the main loop and exit without creating
+    # threads which are a pain in unit tests. So we abuse the fact that pg.display.update
+    # should be called. We replace that call with some control logic that allows us to
+    # break out at will.
+    # TODO: alter the main loop to be testable
+    #
+    control = test_class.c
+    #
+    def new_update():
+        test_class.called[called_name] = True
+        control._update_count += 1
+        if control._update_count == loops:
+            # This should break out of the main loop ...
+            control.done = True
+        elif control._update_count >= loops:
+            # But if the main loop is badly broken then we will be stuck
+            # in which case we raise an exception to make sure the test doesn't
+            # hang completely
+            raise Exception('Get me out of here')
+    #
+    old_pg = pg.display.update
+    pg.display.update = new_update
+    control._update_count = 0
+    #
+    try:
+        yield
+    finally:
+        pg.display.update = old_pg
 
 
 if __name__ == '__main__':
