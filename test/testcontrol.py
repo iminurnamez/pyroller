@@ -80,6 +80,23 @@ class TestControl(unittest.TestCase):
         except OSError:
             pass
 
+    def _checkPoint(self, colour, surface, point, name, accuracy=1, check_alpha=True):
+        """Check a point is the right colour
+
+        There is quite a bit of variability in pixel colours so this method allows
+        some variation in the check and it will still pass
+
+        """
+        x, y = point
+        upto = 4 if check_alpha else 3
+        try:
+            got = surface.get_at((x, y))
+        except IndexError:
+            raise IndexError('Point {0} is outside the range of the surface'.format(point))
+        for e, g in list(zip(colour, got))[:upto]:
+            self.assert_(abs(e - g) <= accuracy,
+                         '%s - Failed colour test at %d, %d (%s). Expected (%s)' % (name, x, y, got, colour))
+
     def testSetupStates(self):
         """testSetupStates: can setup the initial state and states dictionary"""
         #
@@ -185,7 +202,43 @@ class TestControl(unittest.TestCase):
 
     def testUpdateShouldScaleScreen(self):
         """testUpdateShouldScaleScreen: update method should scale the screen"""
-        raise NotImplementedError
+        #
+        # We will render something in the state at a higher resolution and then
+        # use the control to scale back down
+        w, h = 100, 100
+        self.c = SimpleControl('control', (w, h), [])
+        self.c.setup_states(self.states, 'one')
+        #
+        self.c.render_size = (w, h)
+        real_surface = pg.Surface(self.c.render_size)
+        self.c.state._surface_to_render = real_surface
+        real_surface.fill((255, 0, 0))
+        pg.draw.rect(real_surface, (0, 255, 0), (10, 10, 80, 80))
+        #
+        # The new surface should be red at the edges and green in the middle
+        for point in ((0, 0), (0, w - 1), (h - 1, 0), (w - 1, h - 1)):
+            self._checkPoint((255, 0, 0), real_surface, point, 'red', 1, False)
+        for point in ((11, 11), (11, 88), (88, 11), (88, 88)):
+            self._checkPoint((0, 255, 0), real_surface, point, 'green', 1, False)
+        #
+        # Now call update, which should create a scaled down version of this
+        self.c.update(10)
+        #pg.image.save(self.c.render_surf, 'test1.png')
+        #pg.image.save(self.c.screen, 'test2.png')
+        #
+        # Check size
+        self.assertEqual(RESOLUTION, self.c.screen.get_size())
+        #
+        # Offsets of the test pixels to check scaling
+        dx, dy = int(10./w * RESOLUTION[0]) + 1, int(10./h * RESOLUTION[1]) + 1
+        #
+        # The scaled surface should be red at the edges and green in the middle
+        for point in ((0, 0), (RESOLUTION[0] - 1, 0), (0, RESOLUTION[1] - 1),
+                      (RESOLUTION[0] - 1, RESOLUTION[1] - 1)):
+            self._checkPoint((255, 0, 0), self.c.screen, point, 'red', 5, False)
+        for point in ((dx, dy), (RESOLUTION[0] - 1 - dx, dy), (dx, RESOLUTION[1] - 1 - dy),
+                      (RESOLUTION[0] - 1 - dx, RESOLUTION[1] - 1 - dy)):
+            self._checkPoint((0, 255, 0), self.c.screen, point, 'green', 5, False)
 
     def testUpdateScreenScalingOmittedIfNotNeeded(self):
         """testUpdateScreenScalingOmittedIfNotNeeded: update method should do no scaling if it is not required"""
@@ -463,9 +516,15 @@ class SimpleState(tools._State):
         super(SimpleState, self).__init__()
         self._name = name
         self._update_called = False
+        self._surface_to_render = None
 
     def update(self, surface, keys, now, dt, scale):
         super(SimpleState, self).update(surface, keys, now, dt, scale)
+        #
+        # Test rendering to the surface
+        if self._surface_to_render:
+            surface.blit(self._surface_to_render, (0, 0))
+        #
         self._update_called = True
 
 
