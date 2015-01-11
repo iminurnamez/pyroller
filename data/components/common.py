@@ -15,6 +15,7 @@ from . import loggable
 
 # Events for the components
 E_MOUSE_CLICK = 'mouse-click'
+E_RIGHT_MOUSE_CLICK = 'right-mouse-click'
 E_MOUSE_ENTER = 'mouse-enter'
 E_MOUSE_MOVE = 'mouse-move'
 E_MOUSE_LEAVE = 'mouse-leave'
@@ -59,7 +60,10 @@ class Clickable(EventAware, loggable.Loggable):
         #
         if event.type == pg.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(pos):
-                self.handle_click()
+                if event.button == 1:
+                    self.handle_click()
+                elif event.button == 3:
+                    self.handle_right_click()
         elif event.type == pg.MOUSEMOTION:
             mouse_over = self.rect.collidepoint(pos)
             if mouse_over != self.mouse_over:
@@ -72,6 +76,10 @@ class Clickable(EventAware, loggable.Loggable):
     def handle_click(self):
         """Do something when we are clicked on"""
         self.processEvent((E_MOUSE_CLICK, self))
+
+    def handle_right_click(self):
+        """Do something when we are clicked on with the right button"""
+        self.processEvent((E_RIGHT_MOUSE_CLICK, self))
 
     def handle_mouse_enter(self):
         """Do something when the mouse enters our rect"""
