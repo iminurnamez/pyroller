@@ -111,7 +111,7 @@ class Baccarat(tools._State):
         self._background = None
         self._clicked_sprite = None
         self.font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
-        self.large_font = pg.font.Font(prepare.FONTS["Saniretro"], 96)
+        self.large_font = pg.font.Font(prepare.FONTS["Saniretro"], 120)
         self.button_font = pg.font.Font(prepare.FONTS["Saniretro"], 48)
         self.bets = list()
         self.groups = list()
@@ -376,7 +376,7 @@ class Baccarat(tools._State):
             midtop = get_midpoint(self.player_hand.rect.midbottom,
                                   self.dealer_hand.rect.midbottom)
         text.rect.midtop = midtop
-        text.rect.y += 150
+        text.rect.y += 170
         text.kill_me_on_clear = True
         self.hud.add(text)
 
@@ -418,7 +418,7 @@ class Baccarat(tools._State):
             if bet.owner == self.player_chips:
                 self.bets.remove(bet)
                 cash += bet.value
-
+                bet.kill()
         self.casino_player.stats['cash'] = cash
         self.player_chips.empty()
 
@@ -470,16 +470,13 @@ class Baccarat(tools._State):
             if hasattr(self, 'background_filename'):
                 im = prepare.GFX[self.background_filename]
                 self._background.blit(im, (0, 0))
-            label = TextSprite('', self.font)
+            label = TextSprite('', self.font, bg=prepare.FELT_GREEN)
             for name, rect in self.betting_areas.items():
                 label.text = name
                 label.rect.center = rect.center
                 image = label.draw()
-                image2 = pg.Surface(image.get_size())
-                image2.fill(prepare.FELT_GREEN)
-                image2.blit(image, (0, 0))
-                image2.set_alpha(128)
-                self._background.blit(image2, label.rect)
+                image.set_alpha(128)
+                self._background.blit(image, label.rect)
             surface.blit(self._background, (0, 0))
 
         self.animations.update(dt)

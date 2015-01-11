@@ -187,8 +187,8 @@ class Card(Sprite):
             width, height = image.get_size()
             value = 180 * cos(two_pi * self.rotation / 180.) + 180
             width *= value / 360.0
-            width = max(1, abs(width))
-            image = smoothscale(image, (int(round(width, 0)), int(height)))
+            width = int(round(max(1, abs(width)), 0))
+            image = smoothscale(image, (width, int(height)))
         rect = image.get_rect(center=self.rect.center)
         self._image = image
         self.rect.size = rect.size
