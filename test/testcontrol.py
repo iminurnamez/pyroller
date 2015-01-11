@@ -94,7 +94,7 @@ class TestControl(unittest.TestCase):
         except IndexError:
             raise IndexError('Point {0} is outside the range of the surface'.format(point))
         for e, g in list(zip(colour, got))[:upto]:
-            self.assert_(abs(e - g) <= accuracy,
+            self.assertTrue(abs(e - g) <= accuracy,
                          '%s - Failed colour test at %d, %d (%s). Expected (%s)' % (name, x, y, got, colour))
 
     def testSetupStates(self):
