@@ -45,7 +45,7 @@ class TextSprite(pygame.sprite.DirtySprite):
 class EventButton(pygame.sprite.DirtySprite):
     def __init__(self, callback, args=None, kwargs=None):
         super(EventButton, self).__init__()
-        assert(callable(callback))
+        assert (callable(callback))
         kwargs = kwargs if kwargs is not None else dict()
         args = args if args is not None else list()
         self._callback = callback, args, kwargs

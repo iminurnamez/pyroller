@@ -13,12 +13,12 @@ import pygame.draw
 from pygame.transform import rotozoom, smoothscale
 from ... import prepare
 from ...prepare import BROADCASTER as B
+from pygame.compat import *
 
 __all__ = ['Playfield']
 
 if sys.version_info[0] == 3:
     xrange = range
-
 
 supported_shapes = frozenset(('polyline', ))
 plunger_mass = 5
@@ -144,10 +144,10 @@ class PhysicsSprite(pygame.sprite.DirtySprite):
         self._original_image = None
         self._old_angle = None
         self.shapes = None
-        self.dirty = 0
-        self.visible = 1
         self.image = None
         self.rect = None
+        self.dirty = 0
+        self.visible = 1
 
     @property
     def shape(self):
@@ -199,7 +199,7 @@ class Handle(PhysicsSprite):
         shape = Circle(body, radius)
         rect2 = pygame.Rect(0, 0, rect.width, rect.width)
         image = pygame.Surface(rect2.size, pygame.SRCALPHA)
-        pygame.draw.circle(image, color, rect2.center, int(radius//4))
+        pygame.draw.circle(image, color, rect2.center, int(radius // 4))
         pygame.draw.line(image, (0, 0, 255), rect2.center, rect2.midtop, 8)
         self.shapes = [shape]
         self.rect = rect
@@ -232,7 +232,6 @@ class Pocket(PhysicsSprite):
 class Ball(PhysicsSprite):
     def __init__(self, space, rect):
         super(Ball, self).__init__()
-        color = (192, 192, 220)
         radius = rect.width / 2
         body = Body(ball_mass, moment_for_circle(ball_mass, 0, radius))
         body.position = rect.center
@@ -249,7 +248,6 @@ class Ball(PhysicsSprite):
 class Spinner(PhysicsSprite):
     def __init__(self, space, rect, playfield=None):
         super(Spinner, self).__init__()
-        color = (220, 220, 220)
         r, cy = rect.width / 2, rect.height / 2
         assert (r == cy)
         body = Body(.1, moment_for_circle(.1, 0, r))
@@ -338,6 +336,9 @@ class Playfield(pygame.sprite.LayeredUpdates):
         self._plunger = None
         self._plunger_force = None
         self._hopper = 100
+        self._auto_power = .85
+        self._space = pymunk.Space()
+        self._space.gravity = (0, 1000)
         self.auto_strength = 7800
         self.jackpot_amount = 5
         self.ball_tray = 0
@@ -346,7 +347,11 @@ class Playfield(pygame.sprite.LayeredUpdates):
         self.step_times = 10
         self.timers = pygame.sprite.Group()
 
-        self._auto_power = .85
+        for item in load_json(self._space, 'default.json'):
+            self.add(item)
+
+        self.handle = Handle(self._space, pygame.Rect((1100, 700, 200, 200)))
+        self.add(self.handle)
 
         def on_jackpot(space, arbiter):
             ball, pocket = arbiter.shapes
@@ -369,14 +374,6 @@ class Playfield(pygame.sprite.LayeredUpdates):
             B.processEvent(('pachinko_gutter', self))
             return True
 
-        self._space = pymunk.Space()
-        self._space.gravity = (0, 1000)
-        for item in load_json(self._space, 'default.json'):
-            self.add(item)
-
-        self.handle = Handle(self._space, pygame.Rect((1100, 700, 200, 200)))
-        self.add(self.handle)
-
         f = self._space.add_collision_handler
         f(ball_type, pocket_win_type, begin=on_jackpot)
         f(ball_type, pocket_return_type, begin=on_ball_return)
@@ -384,7 +381,7 @@ class Playfield(pygame.sprite.LayeredUpdates):
         f(sensor0_type, plunger_type, separate=self.new_ball)
 
     def auto_push_plunger(self):
-        # TODO: make this 8,500 calculated somewhere
+        # TODO: make this 9,000 calculated somewhere
         f = int(round(self._auto_power * 9000.0, 0))
         force = random.randint(f - 200, f + 200)
         self._plunger.plunger_body.apply_impulse((force, 0))
