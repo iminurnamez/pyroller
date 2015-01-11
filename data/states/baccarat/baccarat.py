@@ -13,7 +13,7 @@ import pygame as pg
 from ... import tools, prepare
 from . import layout
 from .ui import *
-import fysom
+from . import fysom
 import json
 import os
 import math
