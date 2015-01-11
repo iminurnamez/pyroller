@@ -2,10 +2,8 @@
 todo:
 exchange chips
 add cards when deck is low
-betting areas
 clicking stacks
 lose bet amount if bailing
-sounds?
 """
 
 from collections import OrderedDict
@@ -15,7 +13,8 @@ import pygame as pg
 from ... import tools, prepare
 from . import layout
 from .ui import *
-from ...components.animation import Task, Animation, AnimationTransition
+from ...components.animation import Task, Animation
+from ...components.angles import get_midpoint
 import json
 import os
 import math
@@ -28,12 +27,10 @@ font_size = 64
 
 
 def count_card(value):
-    if value > 9:
-        return 0
-    return value
+    return 0 if value > 9 else value
 
 
-def count_hand(deck):
+def count_deck(deck):
     return divmod(sum(count_card(card.value) for card in deck), 10)[1]
 
 
@@ -55,7 +52,11 @@ def players_deal_rule(count):
 
 
 def natural(deck):
-    return count_card(deck) >= 8 and len(deck) == 2
+    return count_deck(deck) >= 8 and len(deck) == 2
+
+
+def points_message(value):
+    return '{} point' if value == 1 else '{} points'
 
 
 class Baccarat(tools._State):
@@ -96,6 +97,7 @@ class Baccarat(tools._State):
 
         # declared here to appease pycharm's syntax checking
         # will be filled in when configuration is loaded
+        self.betting_areas = dict()
         self.dealer_hand = None
         self.player_hand = None
         self.player_chips = None
@@ -108,7 +110,8 @@ class Baccarat(tools._State):
 
         self._background = None
         self._clicked_sprite = None
-        self.font = pg.font.Font(prepare.FONTS["Saniretro"], font_size)
+        self.font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
+        self.large_font = pg.font.Font(prepare.FONTS["Saniretro"], 96)
         self.button_font = pg.font.Font(prepare.FONTS["Saniretro"], 48)
         self.bets = list()
         self.groups = list()
@@ -118,7 +121,7 @@ class Baccarat(tools._State):
         self.groups.append(self.hud)
         self.reload_config()
         self.cash_in()
-        self.on_new_round()
+        self.new_round()
 
     def cleanup(self):
         self.casino_player.stats['baccarat'] = self.stats
@@ -157,12 +160,13 @@ class Baccarat(tools._State):
                         sprite.on_mouse_leave(pos)
 
         elif event.type == pg.MOUSEBUTTONDOWN:
-            pos = tools.scaled_mouse_pos(scale)
-            for sprite in self.hud.sprites():
-                if hasattr(sprite, 'on_mouse_click'):
-                    if sprite.rect.collidepoint(pos):
-                        sprite.pressed = True
-                        self._clicked_sprite = sprite
+            if event.button == 1:
+                pos = tools.scaled_mouse_pos(scale)
+                for sprite in self.hud.sprites():
+                    if hasattr(sprite, 'on_mouse_click'):
+                        if sprite.rect.collidepoint(pos):
+                            sprite.pressed = True
+                            self._clicked_sprite = sprite
 
         elif event.type == pg.MOUSEBUTTONUP:
             pos = tools.scaled_mouse_pos(scale)
@@ -185,11 +189,6 @@ class Baccarat(tools._State):
         task = Task(callback, amount, 1, args, kwargs)
         self.animations.add(task)
         return task
-
-    def on_new_round(self):
-        self.bets = list()
-        self.clear_table()
-        self.show_bet_confirm_button()
 
     def deal_card(self, hand):
         """Shortcut to draw card from shoe and add to a hand
@@ -229,26 +228,36 @@ class Baccarat(tools._State):
         self.bets.append(bet)
         return bet
 
+    def new_round(self):
+        def force_empty():
+            self.player_hand.empty()
+            self.dealer_hand.empty()
+            self.show_bet_confirm_button()
+
+        self.bets = list()
+        self.clear_table()
+        self.delay(500, force_empty)
+
     def deal_cards(self):
         self.stats['Hands Dealt'] += 1
         self.delay(0, self.deal_card, (self.player_hand,))
         self.delay(200, self.deal_card, (self.player_hand,))
         self.delay(600, self.deal_card, (self.dealer_hand,))
-        self.delay(800, self.deal_card, (self.dealer_hand,))
-        self.delay(1000, self.count_naturals)
+        task = self.delay(800, self.deal_card, (self.dealer_hand,))
+        task.chain(Task(self.count_naturals))
 
     def count_naturals(self):
         if natural(self.player_hand):
             self.stats['Player Naturals'] += 1
-            self.final_count_hands()
+            self.delay(800, self.final_count_hands)
         elif natural(self.dealer_hand):
             self.stats['Dealer Naturals'] += 1
-            self.final_count_hands()
+            self.delay(800, self.final_count_hands)
         else:
             self.count_player_hand()
 
     def count_player_hand(self):
-        player_count = count_hand(self.player_hand)
+        player_count = count_deck(self.player_hand)
         if players_deal_rule(player_count):
             if self.options['third_card_option']:
                 self.show_deal_player_third_card_buttons()
@@ -262,7 +271,7 @@ class Baccarat(tools._State):
         self.count_dealer_hand()
 
     def count_dealer_hand(self):
-        dealer_count = count_hand(self.dealer_hand)
+        dealer_count = count_deck(self.dealer_hand)
         if len(self.player_hand) == 2:
             deal_again = players_deal_rule(dealer_count)
         else:
@@ -276,30 +285,30 @@ class Baccarat(tools._State):
 
     def deal_dealer_third_card(self):
         self.deal_card(self.dealer_hand)
-        self.delay(500, self.final_count_hands)
+        self.delay(800, self.final_count_hands)
 
     def final_count_hands(self):
         stats = self.stats
-        player_result = count_hand(self.player_hand)
-        dealer_result = count_hand(self.dealer_hand)
+        player_result = count_deck(self.player_hand)
+        dealer_result = count_deck(self.dealer_hand)
         player_natural = natural(self.player_hand)
         dealer_natural = natural(self.dealer_hand)
 
         if player_result > dealer_result:
+            winner = self.player_hand
             stats['Player Wins'] += 1
-            status_rect = self.player_hand.rect.move(0, 400)
             status_text = "Player Wins"
             result = "player"
 
         elif player_result < dealer_result:
+            winner = self.dealer_hand
             stats['Dealer Wins'] += 1
-            status_rect = self.dealer_hand.rect.move(0, 400)
             status_text = "Dealer Wins"
             result = "dealer"
 
         else:
+            winner = None
             stats['Tie Result'] += 1
-            status_rect = self.player_hand.rect.move(0, 400)
             status_text = "Tie"
             result = "tie"
 
@@ -346,39 +355,48 @@ class Baccarat(tools._State):
 
             bet.empty()
 
-        msg = '{} points'
+        msg = points_message(player_result)
         text = TextSprite(msg.format(player_result), self.font)
-        text.rect = self.player_hand.rect.move(0, 250)
+        text.rect.midtop = self.player_hand.bounding_rect.midbottom
+        text.rect.y += 50
         text.kill_me_on_clear = True
         self.hud.add(text)
 
+        msg = points_message(dealer_result)
         text = TextSprite(msg.format(dealer_result), self.font)
-        text.rect = self.dealer_hand.rect.move(0, 250)
+        text.rect.midtop = self.dealer_hand.bounding_rect.midbottom
+        text.rect.y += 50
         text.kill_me_on_clear = True
         self.hud.add(text)
 
-        text = TextSprite(status_text, self.font)
-        text.rect = status_rect
+        text = OutlineTextSprite(status_text, self.large_font)
+        if winner:
+            midtop = winner.bounding_rect.midbottom
+        else:
+            midtop = get_midpoint(self.player_hand.rect.midbottom,
+                                  self.dealer_hand.rect.midbottom)
+        text.rect.midtop = midtop
+        text.rect.y += 150
         text.kill_me_on_clear = True
         self.hud.add(text)
 
         self.show_finish_round_button()
 
     def clear_table(self):
-        def clear(card):
+        def clear_card(card):
             choice(self.deal_sounds).play()
-            card.face_up = False
             fx, fy = card.rect.move(-1400, -200).topleft
-            ani = Animation(x=fx, y=fy, duration=400,
-                            transition='in_out_quint', round_values=True)
-            ani.start(card.rect)
-            self.animations.add(ani)
+            ani0 = Animation(x=fx, y=fy, duration=400,
+                             transition='in_out_quint', round_values=True)
+            ani1 = Animation(rotation=180, duration=400, transition='out_quart')
+            ani0.start(card.rect)
+            ani1.start(card)
+            ani0.callback = card.kill
+            self.animations.add(ani0, ani1)
 
-        self.delay(500, self.player_hand.empty)
-        self.delay(500, self.dealer_hand.empty)
         cards = list(chain(self.player_hand, self.dealer_hand))
         for i, card in enumerate(reversed(cards)):
-            self.delay(i * 100, clear, (card,))
+            self.delay(i * 100, clear_card, (card,))
 
         for sprite in self.hud.sprites():
             if hasattr(sprite, 'kill_me_on_clear'):
@@ -418,21 +436,21 @@ class Baccarat(tools._State):
 
         text = TextSprite('Draw Again', self.button_font)
         rect = pg.Rect(text.rect).inflate(48, 48)
-        rect.topright = self.player_hand.rect.midbottom
-        rect.x -= 24
+        rect.topright = self.player_hand.moudning_rect.midbottom
+        rect.move_ip(50, -24)
         b0 = Button(text, rect, f0)
 
         text = TextSprite('Decline', self.button_font)
         rect = pg.Rect(text.rect).inflate(48, 48)
-        rect.topleft = self.player_hand.rect.midbottom
-        rect.x += 24
+        rect.topleft = self.player_hand.bounding_rect.midbottom
+        rect.move_ip(50, 24)
         b1 = Button(text, rect, f1)
         self.hud.add(b0, b1)
 
     def show_finish_round_button(self):
         def f(sprite):
             sprite.kill()
-            self.on_new_round()
+            self.new_round()
 
         text = TextSprite('Again?', self.button_font)
         self.hud.add(Button(text, (960, 800, 300, 75), f))
@@ -452,6 +470,16 @@ class Baccarat(tools._State):
             if hasattr(self, 'background_filename'):
                 im = prepare.GFX[self.background_filename]
                 self._background.blit(im, (0, 0))
+            label = TextSprite('', self.font)
+            for name, rect in self.betting_areas.items():
+                label.text = name
+                label.rect.center = rect.center
+                image = label.draw()
+                image2 = pg.Surface(image.get_size())
+                image2.fill(prepare.FELT_GREEN)
+                image2.blit(image, (0, 0))
+                image2.set_alpha(128)
+                self._background.blit(image2, label.rect)
             surface.blit(self._background, (0, 0))
 
         self.animations.update(dt)

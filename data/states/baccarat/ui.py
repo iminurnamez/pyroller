@@ -8,6 +8,7 @@ blending of the two.
 """
 
 import random
+from math import sin, pi, cos, radians
 from itertools import product, groupby
 from operator import attrgetter
 import pygame
@@ -15,8 +16,10 @@ from pygame.transform import smoothscale
 from ... import prepare
 
 __all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck', 'Chip',
-           'ChipPile', 'SpriteGroup', 'cash_to_chips']
+           'ChipPile', 'SpriteGroup', 'cash_to_chips', 'OutlineTextSprite']
 
+
+two_pi = pi * 2
 
 def cash_to_chips(value):
     retval = list()
@@ -109,6 +112,16 @@ class SpriteGroup(pygame.sprite.OrderedUpdates):
             spritedict[s] = newrect
         return dirty
 
+    @property
+    def bounding_rect(self):
+        sprites = self.sprites()
+        if len(sprites) == 0:
+            return self.rect
+        elif len(sprites) == 1:
+            return pygame.Rect(sprites[0].rect)
+        else:
+            return sprites[0].rect.unionall([s.rect for s in sprites[1:]])
+
 
 class EventButton(Sprite):
     def __init__(self, callback, args=None, kwargs=None):
@@ -150,6 +163,8 @@ class Card(Sprite):
 
     def __init__(self, value, suit, rect, face_up=False):
         super(Card, self).__init__()
+        self._rotation = 0
+        self._needs_update = True
         self.value = value
         self.suit = suit
         self.rect = pygame.Rect(rect)
@@ -160,8 +175,25 @@ class Card(Sprite):
         self.back_face = self.get_back(self.rect.size)
         self.update_image()
 
+    @property
+    def image(self):
+        if self._needs_update:
+            self.update_image()
+        return self._image
+
     def update_image(self):
-        self.image = self.front_face if self.face_up else self.back_face
+        image = self.front_face if self._face_up else self.back_face
+        if self.rotation:
+            width, height = image.get_size()
+            value = 180 * cos(two_pi * self.rotation / 180.) + 180
+            width *= value / 360.0
+            width = max(1, abs(width))
+            image = smoothscale(image, (int(round(width, 0)), int(height)))
+        rect = image.get_rect(center=self.rect.center)
+        self._image = image
+        self.rect.size = rect.size
+        self.rect.center = rect.center
+        self.dirty = 1
 
     @classmethod
     def initialize_cache(cls, size):
@@ -216,7 +248,23 @@ class Card(Sprite):
         face_up = bool(value)
         if not self._face_up == face_up:
             self._face_up = face_up
+            self._needs_update = True
             self.update_image()
+
+    @property
+    def rotation(self):
+        return self._rotation
+
+    @rotation.setter
+    def rotation(self, value):
+        value %= 360
+        if not value == self._rotation:
+            face = value < 90
+            if not face:
+                face = value > 270
+            self._face_up = face
+            self._rotation = value
+            self._needs_update = True
 
     @property
     def name(self):
@@ -427,13 +475,13 @@ class ChipPile(Stacker):
         return sum(chip.value for chip in self.sprites())
 
     def sort(self):
-        self._spritelist.sort(key=attrgetter('value'))
+        self._spritelist.sort(key=attrgetter('value'), reverse=True)
 
     def withdraw_chips(self, amount):
         """Withdraw chips totalling amount"""
         self.sort()
         withdraw = list()
-        for chip in reversed(self.sprites()):
+        for chip in self.sprites():
             if chip.value <= amount:
                 amount -= chip.value
                 self.remove(chip)
@@ -450,13 +498,13 @@ class ChipPile(Stacker):
         x = 0
         for k, g in groupby(self.sprites(), attrgetter('value')):
             x, y = super(ChipPile, self).arrange(list(g), (x, 0))
-            x += 40
+            x += 30
 
 
 class TextSprite(Sprite):
     def __init__(self, text, font=None, fg=None, bg=None, cache=True):
         super(TextSprite, self).__init__()
-        self.rect = pygame.Rect(0, 0, 0, 0)
+        self.rect = pygame.Rect((0, 0), font.size(text))
         self._fg = fg if fg is not None else (255, 255, 255)
         self._bg = bg
         self._text = text
@@ -489,6 +537,27 @@ class TextSprite(Sprite):
     def text(self, value):
         self._text = value
         self.update_image()
+
+
+class OutlineTextSprite(TextSprite):
+    def draw(self, surface=None, rect=None):
+        bg = self._bg
+        if bg is None:
+            bg = (0, 0, 0)
+        w, h = self._font.size(self._text)
+        w += 12
+        h += 12
+        image = pygame.Surface((w, h), pygame.SRCALPHA)
+        outline = self._font.render(self._text, 1, bg)
+        inner = self._font.render(self._text, 1, self._fg)
+        ww, hh = outline.get_size()
+        cx = w/2-ww/2
+        cy = h/2-hh/2
+        for x in range(-6, 6):
+            for y in range(-6, 6):
+                image.blit(outline, (x+cx, y+cy))
+        image.blit(inner, (cx, cy))
+        return image
 
 
 class NeonButton(EventButton):

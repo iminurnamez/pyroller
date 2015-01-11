@@ -13,6 +13,16 @@ def get_distance(origin, destination):
     return hypot(destination[0] - origin[0],
                         destination[1] - origin[1])
 
+def get_midpoint(origin, destination):
+    """ Return the midpoint between two points on cartesian plane.
+    :param origin: (x, y)
+    :param destination: (x, y)
+    :return: (x, y)
+    """
+    x_dist = destination[0] + origin[0]
+    y_dist = destination[1] + origin[1]
+    return x_dist / 2, y_dist / 2
+
 def get_angle(origin, destination):
     """Returns angle in radians from origin to destination.
         This is the angle that you would get if the points were
