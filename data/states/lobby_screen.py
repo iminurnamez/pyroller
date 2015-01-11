@@ -46,7 +46,7 @@ class LobbyScreen(tools._State):
             game,payload = data
             y,x = divmod(i, columns)
             pos = (start_x+step_x*x, start_y+step_y*y)
-            GameButton(pos, game, self.start_game, payload, buttons)
+            GameButton(pos, game, self.change_state, payload, buttons)
         return buttons
 
     def make_navigation_buttons(self, screen_rect):
@@ -84,14 +84,9 @@ class LobbyScreen(tools._State):
     def scroll_page(self, direction):
         pass
 
-    def start_game(self, chosen_game):
-        self.done = True
-        self.next = chosen_game
-
     def startup(self, current_time, persistent):
         self.persist = persistent
-        if not self.chip_curtain:
-            self.chip_curtain = ChipCurtain(None, **CURTAIN_SETTINGS)
+        self.chip_curtain = ChipCurtain(None, **CURTAIN_SETTINGS)
 
     def exit_game(self, *args):
         with open(os.path.join("resources", "save_game.json"), "w") as f:
