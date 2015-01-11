@@ -1,5 +1,5 @@
 
-from ctypes import * 
+from ctypes import *
 from .vec2d import Vec2d
 cpVect = Vec2d
 STRING = c_char_p
@@ -117,7 +117,7 @@ cpConvexHull = chipmunk_lib.cpConvexHull
 cpConvexHull.restype = c_int
 cpConvexHull.argtypes = [c_int, POINTER(cpVect), POINTER(cpVect), POINTER(c_int), cpFloat]
 
-if sizeof(c_void_p) == 4: uintptr_t = c_uint 
+if sizeof(c_void_p) == 4: uintptr_t = c_uint
 else: uintptr_t = c_ulonglong
 
 cpHashValue = uintptr_t
