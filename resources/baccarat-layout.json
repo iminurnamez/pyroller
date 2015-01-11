@@ -26,7 +26,7 @@
                  "rotation":0,
                  "type":"player_bet",
                  "visible":true,
-                 "width":416,
+                 "width":432,
                  "x":496,
                  "y":704
                 }, 
@@ -40,8 +40,8 @@
                  "rotation":0,
                  "type":"banker_bet",
                  "visible":true,
-                 "width":352,
-                 "x":528,
+                 "width":400,
+                 "x":512,
                  "y":528
                 }, 
                 {
@@ -54,8 +54,8 @@
                  "rotation":0,
                  "type":"tie_bet",
                  "visible":true,
-                 "width":352,
-                 "x":528,
+                 "width":336,
+                 "x":544,
                  "y":400
                 }, 
                 {
@@ -69,8 +69,8 @@
                  "type":"player_hand",
                  "visible":true,
                  "width":400,
-                 "x":288,
-                 "y":80
+                 "x":176,
+                 "y":128
                 }, 
                 {
                  "height":336,
@@ -83,8 +83,8 @@
                  "type":"dealer_hand",
                  "visible":true,
                  "width":400,
-                 "x":704,
-                 "y":80
+                 "x":848,
+                 "y":128
                 }, 
                 {
                  "height":272,
@@ -97,11 +97,11 @@
                  "type":"player_chips",
                  "visible":true,
                  "width":544,
-                 "x":32,
-                 "y":768
+                 "x":48,
+                 "y":752
                 }, 
                 {
-                 "height":240,
+                 "height":144,
                  "name":"",
                  "properties":
                     {
@@ -110,9 +110,9 @@
                  "rotation":0,
                  "type":"shoe",
                  "visible":true,
-                 "width":144,
-                 "x":1232,
-                 "y":48
+                 "width":96,
+                 "x":624,
+                 "y":-192
                 }],
          "opacity":1,
          "type":"objectgroup",

@@ -1,8 +1,7 @@
 """ Note to maintainers:
 
 Yes, these classes are duplicates of built in types.  I have reimplemented
-the built in types because I felt that these offer lower memory use and
-better performance, as well as useful features.
+the built in types because I feel these are a little easier to use.
 
 Perhaps we could look at the existing classes and these and make some new
 blending of the two.
@@ -79,7 +78,15 @@ def make_cards(decks, card_size, shuffle=False):
     return cards
 
 
+class Sprite(pygame.sprite.DirtySprite):
+    """DirtySprite class with extra support for animations
+    """
+    pass
+
+
 class SpriteGroup(pygame.sprite.OrderedUpdates):
+    """Like OrderedUpdates, but supports visible/invisible sprites
+    """
     def draw(self, surface):
         spritedict = self.spritedict
         surface_blit = surface.blit
@@ -103,7 +110,7 @@ class SpriteGroup(pygame.sprite.OrderedUpdates):
         return dirty
 
 
-class EventButton(pygame.sprite.DirtySprite):
+class EventButton(Sprite):
     def __init__(self, callback, args=None, kwargs=None):
         super(EventButton, self).__init__()
         assert(callable(callback))
@@ -122,10 +129,11 @@ class EventButton(pygame.sprite.DirtySprite):
         pass
 
 
-class Card(pygame.sprite.DirtySprite):
+class Card(Sprite):
     """pretty much components.cards.Card that is also pygame sprite"""
 
-    face_cache = {}
+    face_cache = None
+    card_suits = 'clubs', 'spades', 'hearts', 'diamonds'
     card_names = {1: "Ace",
                   2: "Two",
                   3: "Three",
@@ -145,27 +153,38 @@ class Card(pygame.sprite.DirtySprite):
         self.value = value
         self.suit = suit
         self.rect = pygame.Rect(rect)
+        if self.face_cache is None:
+            self.initialize_cache(self.rect.size)
         self._face_up = face_up
-        self.get_images()
+        self.front_face = self.get_front(self.name, self.rect.size)
+        self.back_face = self.get_back(self.rect.size)
         self.update_image()
 
     def update_image(self):
         self.image = self.front_face if self.face_up else self.back_face
 
-    def get_images(self):
-        try:
-            self.front_face = Card.face_cache[self.value]
-        except KeyError:
-            image = self.render_front(self.name, self.rect.size)
-            self.front_face = image
-            Card.face_cache[self.value] = image
+    @classmethod
+    def initialize_cache(cls, size):
+        cls.face_cache = dict()
+        for suit in cls.card_suits:
+            for value, name in cls.card_names.items():
+                Card(value, suit, ((0, 0), size))
 
+    def get_front(self, name, size):
         try:
-            self.back_face = Card.face_cache["back"]
+            return Card.face_cache[name]
         except KeyError:
-            image = self.render_back(self.rect.size)
-            self.back_face = image
+            image = self.render_front(name, size)
+            Card.face_cache[size] = image
+            return image
+
+    def get_back(self, size):
+        try:
+            return Card.face_cache["back"]
+        except KeyError:
+            image = self.render_back(size)
             Card.face_cache["back"] = image
+            return image
 
     @staticmethod
     def render_front(name, size):
@@ -222,6 +241,7 @@ class Stacker(SpriteGroup):
     def __init__(self, rect, stacking=None):
         super(Stacker, self).__init__()
         self.rect = pygame.Rect(rect)
+        self.auto_arrange = True
         self._needs_arrange = True
         self._constraint = 'height'
         self._origin = None
@@ -261,7 +281,7 @@ class Stacker(SpriteGroup):
             return sprite
 
     def draw(self, surface):
-        if self._needs_arrange:
+        if self.auto_arrange and self._needs_arrange:
             self.arrange()
             self._needs_arrange = False
         super(Stacker, self).draw(surface)
@@ -367,7 +387,7 @@ def get_chip_images():
     return images, flat_images
 
 
-class Chip(pygame.sprite.DirtySprite):
+class Chip(Sprite):
     """Class to represent a single casino chip."""
     chip_values = {100: 'black',
                    25: 'blue',
@@ -432,7 +452,7 @@ class ChipPile(Stacker):
             x += 40
 
 
-class TextSprite(pygame.sprite.DirtySprite):
+class TextSprite(Sprite):
     def __init__(self, text, font=None, fg=None, bg=None, cache=True):
         super(TextSprite, self).__init__()
         self.rect = pygame.Rect(0, 0, 0, 0)
