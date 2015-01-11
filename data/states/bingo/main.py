@@ -367,6 +367,9 @@ class Bingo(statemachine.StateMachine):
 
     def ball_picked(self, ball):
         """A ball was picked"""
+        # Turn off the button to prevent the player from accidentally choosing another
+        # ball at the same time
+        self.add_generator('next-chip-animation', self.animate_next_chip())
         #
         # If auto-picking then update the cards
         auto_pick_cards = list(self.dealer_cards)
