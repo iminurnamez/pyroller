@@ -103,6 +103,8 @@ class Control(object):
         If the user resized the window, change to the next available
         resolution depending on if scaled up or scaled down.
         """
+        if size == self.screen_rect.size:
+            return
         res_index = self.resolutions.index(self.screen_rect.size)
         adjust = 1 if size > self.screen_rect.size else -1
         if 0 <= res_index+adjust < len(self.resolutions):

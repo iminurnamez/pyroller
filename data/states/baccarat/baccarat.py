@@ -65,7 +65,6 @@ class Baccarat(tools._State):
     a considerable amount of variation on the stated rules, so artistic license
     was taken in determining what the rules should be.
     """
-
     def startup(self, now, persistent):
         self.now = now
         self.persist = persistent

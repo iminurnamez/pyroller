@@ -335,8 +335,9 @@ class Deck(Stacker):
     """
     def __init__(self, rect, card_size=prepare.CARD_SIZE, shuffle=True,
                  decks=0, stacking=None):
-        if rect[2:] == (0, 0):
-            rect = rect[:2], card_size
+        rect = pygame.Rect(rect)
+        if rect.size == (0, 0):
+            rect = pygame.Rect(rect.topleft, card_size)
         super(Deck, self).__init__(rect, stacking)
         self.card_size = card_size
         self.shuffle = shuffle

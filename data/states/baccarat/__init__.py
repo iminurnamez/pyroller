@@ -1,1 +1,1 @@
-from baccarat import Baccarat
+from .baccarat import Baccarat
