@@ -29,26 +29,33 @@ class LobbyScreen(tools._State):
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
                       ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO"),
                       ("Baccarat", "BACCARAT")]
-        game_buttons = self.make_game_buttons(screen_rect)
+        self.pages = self.make_game_pages(screen_rect)
+        self.page_index = 0
+        self.page = self.pages[self.page_index]
         nav_buttons = self.make_navigation_buttons(screen_rect)
         main_buttons = self.make_main_buttons(screen_rect)
-        self.buttons = ButtonGroup(game_buttons, nav_buttons, main_buttons)
+        self.buttons = ButtonGroup(nav_buttons, main_buttons)
         self.chip_curtain = None #Created on startup.
 
-    def make_game_buttons(self, screen_rect):
+    def make_game_pages(self, screen_rect):
+        per = 6 # Games per page
+        groups = (self.games[i:i+per] for i in range(0,len(self.games),per))
         columns = 3
         width, height = GameButton.width, GameButton.height
         spacer_x, spacer_y = 50, 80
         start_x = (screen_rect.w-width*columns-spacer_x*(columns-1))//2
         start_y = screen_rect.top+105
         step_x, step_y = width+spacer_x, height+spacer_y
-        buttons = ButtonGroup()
-        for i,data in enumerate(self.games):
-            game,payload = data
-            y,x = divmod(i, columns)
-            pos = (start_x+step_x*x, start_y+step_y*y)
-            GameButton(pos, game, self.start_game, payload, buttons)
-        return buttons
+        pages = []
+        for group in groups:
+            buttons = ButtonGroup()
+            for i,data in enumerate(group):
+                game,payload = data
+                y,x = divmod(i, columns)
+                pos = (start_x+step_x*x, start_y+step_y*y)
+                GameButton(pos, game, self.change_state, payload, buttons)
+            pages.append(buttons)
+        return pages
 
     def make_navigation_buttons(self, screen_rect):
         sheet = prepare.GFX["nav_buttons"]
@@ -83,16 +90,12 @@ class LobbyScreen(tools._State):
         return buttons
 
     def scroll_page(self, direction):
-        pass
-
-    def start_game(self, chosen_game):
-        self.done = True
-        self.next = chosen_game
+        self.page_index = (self.page_index+direction)%len(self.pages)
+        self.page = self.pages[self.page_index]
 
     def startup(self, current_time, persistent):
         self.persist = persistent
-        if not self.chip_curtain:
-            self.chip_curtain = ChipCurtain(None, **CURTAIN_SETTINGS)
+        self.chip_curtain = ChipCurtain(None, **CURTAIN_SETTINGS)
 
     def exit_game(self, *args):
         with open(os.path.join("resources", "save_game.json"), "w") as f:
@@ -108,14 +111,17 @@ class LobbyScreen(tools._State):
         if event.type == pg.QUIT:
             self.exit_game()
         self.buttons.get_event(event)
+        self.page.get_event(event)
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
         self.buttons.update(mouse_pos)
+        self.page.update(mouse_pos)
         self.draw(surface)
 
     def draw(self, surface):
         surface.fill(prepare.BACKGROUND_BASE)
         self.chip_curtain.draw(surface)
         self.buttons.draw(surface)
+        self.page.draw(surface)
