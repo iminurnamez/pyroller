@@ -15,7 +15,7 @@ import pygame as pg
 from ... import tools, prepare
 from . import layout
 from .ui import *
-from data.components.animation import Task, Animation
+from ...components.animation import Task, Animation, AnimationTransition
 import json
 import os
 import math

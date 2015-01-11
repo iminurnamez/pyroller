@@ -1,11 +1,13 @@
 import os
 import json
+from math import ceil
 import pygame as pg
 
 from .. import tools, prepare
 from ..components.labels import Label, GameButton, NeonButton
 from ..components.labels import Button, ButtonGroup
 from ..components.flair_pieces import ChipCurtain
+from ..components.animation import Animation
 
 
 CURTAIN_SETTINGS = {"single_color" : True,
@@ -29,16 +31,17 @@ class LobbyScreen(tools._State):
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
                       ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO"),
                       ("Baccarat", "BACCARAT")]
-        self.pages = self.make_game_pages(screen_rect)
-        self.page_index = 0
-        self.page = self.pages[self.page_index]
+        per_page = 6
+        number_of_pages = int(ceil(len(self.games)/float(per_page)))
+        self.loop_length = prepare.RENDER_SIZE[0]*number_of_pages
+        self.game_buttons = self.make_game_pages(screen_rect, per_page)
         nav_buttons = self.make_navigation_buttons(screen_rect)
         main_buttons = self.make_main_buttons(screen_rect)
         self.buttons = ButtonGroup(nav_buttons, main_buttons)
         self.chip_curtain = None #Created on startup.
+        self.animations = pg.sprite.Group()
 
-    def make_game_pages(self, screen_rect):
-        per = 6 # Games per page
+    def make_game_pages(self, screen_rect, per):
         groups = (self.games[i:i+per] for i in range(0,len(self.games),per))
         columns = 3
         width, height = GameButton.width, GameButton.height
@@ -46,16 +49,15 @@ class LobbyScreen(tools._State):
         start_x = (screen_rect.w-width*columns-spacer_x*(columns-1))//2
         start_y = screen_rect.top+105
         step_x, step_y = width+spacer_x, height+spacer_y
-        pages = []
-        for group in groups:
-            buttons = ButtonGroup()
+        buttons = ButtonGroup()
+        for offset,group in enumerate(groups):
+            offset *= prepare.RENDER_SIZE[0]
             for i,data in enumerate(group):
                 game,payload = data
                 y,x = divmod(i, columns)
-                pos = (start_x+step_x*x, start_y+step_y*y)
+                pos = (start_x+step_x*x+offset, start_y+step_y*y)
                 GameButton(pos, game, self.change_state, payload, buttons)
-            pages.append(buttons)
-        return pages
+        return buttons
 
     def make_navigation_buttons(self, screen_rect):
         sheet = prepare.GFX["nav_buttons"]
@@ -65,10 +67,10 @@ class LobbyScreen(tools._State):
         icons = tools.strip_from_sheet(sheet, (0,0), size, 4)
         buttons = ButtonGroup()
         l_kwargs = {"idle_image" : icons[0], "hover_image" : icons[1],
-                    "call" : self.scroll_page, "args" : -1,
+                    "call" : self.scroll_page, "args" : 1,
                     "bindings" : [pg.K_LEFT, pg.K_KP4]}
         r_kwargs = {"idle_image"  : icons[2], "hover_image" : icons[3],
-                    "call" : self.scroll_page, "args" : 1,
+                    "call" : self.scroll_page, "args" : -1,
                     "bindings" : [pg.K_RIGHT, pg.K_KP6]}
         left = Button(((0,y),size), buttons, **l_kwargs)
         left.rect.right = screen_rect.centerx-from_center
@@ -89,9 +91,22 @@ class LobbyScreen(tools._State):
                    buttons, bindings=[pg.K_ESCAPE])
         return buttons
 
-    def scroll_page(self, direction):
-        self.page_index = (self.page_index+direction)%len(self.pages)
-        self.page = self.pages[self.page_index]
+    def scroll_page(self, mag):
+        if not self.animations:
+            for game in self.game_buttons:
+                self.normalize_scroll(game, mag)
+                fx, fy = game.rect.x+prepare.RENDER_SIZE[0]*mag, game.rect.y
+                ani = Animation(x=fx, y=fy, duration=350.0,
+                                transition='in_out_quint', round_values=True)
+                ani.start(game.rect)
+                self.animations.add(ani)
+            prepare.SFX["cardplace4"].play()
+
+    def normalize_scroll(self, game, mag):
+        if game.rect.x < 0 and mag == -1:
+            game.rect.x += self.loop_length
+        elif game.rect.x >= prepare.RENDER_SIZE[0] and mag == 1:
+            game.rect.x -= self.loop_length
 
     def startup(self, current_time, persistent):
         self.persist = persistent
@@ -111,17 +126,21 @@ class LobbyScreen(tools._State):
         if event.type == pg.QUIT:
             self.exit_game()
         self.buttons.get_event(event)
-        self.page.get_event(event)
+        self.game_buttons.get_event(event)
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
         self.buttons.update(mouse_pos)
-        self.page.update(mouse_pos)
+        self.game_buttons.update(mouse_pos)
+        self.animations.update(dt)
         self.draw(surface)
 
     def draw(self, surface):
+        rect = surface.get_rect()
         surface.fill(prepare.BACKGROUND_BASE)
         self.chip_curtain.draw(surface)
         self.buttons.draw(surface)
-        self.page.draw(surface)
+        for button in self.game_buttons:
+            if button.rect.colliderect(rect):
+                button.draw(surface)
