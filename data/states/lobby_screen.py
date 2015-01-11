@@ -68,12 +68,10 @@ class LobbyScreen(tools._State):
         buttons = ButtonGroup()
         l_kwargs = {"idle_image" : icons[0], "hover_image" : icons[1],
                     "call" : self.scroll_page, "args" : 1,
-                    "bindings" : [pg.K_LEFT, pg.K_KP4],
-                    "click_sound" : prepare.SFX["cardplace4"]}
+                    "bindings" : [pg.K_LEFT, pg.K_KP4]}
         r_kwargs = {"idle_image"  : icons[2], "hover_image" : icons[3],
                     "call" : self.scroll_page, "args" : -1,
-                    "bindings" : [pg.K_RIGHT, pg.K_KP6],
-                    "click_sound" : prepare.SFX["cardplace4"]}
+                    "bindings" : [pg.K_RIGHT, pg.K_KP6]}
         left = Button(((0,y),size), buttons, **l_kwargs)
         left.rect.right = screen_rect.centerx-from_center
         right = Button(((0,y),size), buttons, **r_kwargs)
@@ -94,14 +92,15 @@ class LobbyScreen(tools._State):
         return buttons
 
     def scroll_page(self, mag):
-        self.scrolling = True
-        for game in self.game_buttons:
-            self.normalize_scroll(game, mag)
-            fx, fy = game.rect.x+prepare.RENDER_SIZE[0]*mag, game.rect.y
-            ani = Animation(x=fx, y=fy, duration=350.0,
-                            transition='in_out_quint', round_values=True)
-            ani.start(game.rect)
-            self.animations.add(ani)
+        if not self.animations:
+            for game in self.game_buttons:
+                self.normalize_scroll(game, mag)
+                fx, fy = game.rect.x+prepare.RENDER_SIZE[0]*mag, game.rect.y
+                ani = Animation(x=fx, y=fy, duration=350.0,
+                                transition='in_out_quint', round_values=True)
+                ani.start(game.rect)
+                self.animations.add(ani)
+            prepare.SFX["cardplace4"].play()
 
     def normalize_scroll(self, game, mag):
         if game.rect.x < 0 and mag == -1:
