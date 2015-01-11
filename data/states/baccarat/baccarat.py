@@ -28,9 +28,10 @@ font_size = 64
 
 
 def count_card(value):
-    if value > 9:
+    try:
+        return 0 if value > 9 else value
+    except TypeError:
         return 0
-    return value
 
 
 def count_hand(deck):
