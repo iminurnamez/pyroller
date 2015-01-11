@@ -59,6 +59,13 @@ class Animation(pygame.sprite.Sprite):
 
     When the Animation has finished, then it will remove itself
     from the sprite group that contains it.
+
+    You can optionally delay the start of the animation using the
+    delay keyword.
+
+    Note: if you are using pygame rects are a target, you should
+    pass 'round_values=True' to the constructor to avoid jitter
+    caused by integer truncation.
     """
     def __init__(self, **kwargs):
         super(Animation, self).__init__()
@@ -66,11 +73,12 @@ class Animation(pygame.sprite.Sprite):
         self._started = False
         self._round_values = kwargs.get('round_values', False)
         self._duration = float(kwargs.get('duration', 1000.))
+        self._delay = kwargs.get('delay', 0)
         self._transition = kwargs.get('transition', 'linear')
         if isinstance(self._transition, string_types):
             self._transition = getattr(AnimationTransition, self._transition)
         self._elapsed = 0.
-        for key in ('duration', 'transition', 'round_values'):
+        for key in ('duration', 'transition', 'round_values', 'delay'):
             kwargs.pop(key, None)
         self.props = kwargs
 
@@ -82,6 +90,9 @@ class Animation(pygame.sprite.Sprite):
         :param dt: Time passed since last update.
         """
         self._elapsed += dt
+        if self._elapsed < self._delay:
+            return
+
         p = min(1., self._elapsed / self._duration)
         t = self._transition(p)
         for target, props in self._targets:

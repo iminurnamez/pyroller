@@ -15,7 +15,7 @@ import pygame as pg
 from ... import tools, prepare
 from . import layout
 from .ui import *
-from .animation import Task, Animation, AnimationTransition
+from data.components.animation import Task, Animation
 import json
 import os
 import math
@@ -114,7 +114,7 @@ class Baccarat(tools._State):
         self.groups = list()
         self.animations = pg.sprite.Group()
         self.hud = pg.sprite.RenderUpdates()
-        self.hud.add(NeonButton('lobby', (1000, 920, 0, 0), self.goto_lobby))
+        self.hud.add(NeonButton('lobby', (960, 920, 0, 0), self.goto_lobby))
         self.groups.append(self.hud)
         self.reload_config()
         self.cash_in()
