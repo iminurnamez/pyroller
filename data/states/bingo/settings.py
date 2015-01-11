@@ -262,7 +262,7 @@ SETTINGS = {
     'next-chip-size': (180, 45),
     'next-chip-scale': 1.7,
     'next-chip-position': (1260, 930),
-    'next-chip-delay': 1,
+    'next-chip-delay': 2,
 
     #
     # Menu bar

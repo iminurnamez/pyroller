@@ -2,8 +2,9 @@
 
 import logging
 import sys
+from .. import prepare
 
-LOGGING_LEVEL = 5
+LOGGING_LEVEL = logging.DEBUG if prepare.ARGS['debug'] else logging.ERROR
 
 log = logger = logging.getLogger('pyroller')
 handler = logging.StreamHandler(sys.stdout)
