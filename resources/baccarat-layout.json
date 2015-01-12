@@ -38,7 +38,7 @@
 
                     },
                  "rotation":0,
-                 "type":"banker_bet",
+                 "type":"dealer_bet",
                  "visible":true,
                  "width":400,
                  "x":512,
@@ -59,7 +59,7 @@
                  "y":400
                 }, 
                 {
-                 "height":336,
+                 "height":208,
                  "name":"",
                  "properties":
                     {
@@ -73,7 +73,7 @@
                  "y":128
                 }, 
                 {
-                 "height":336,
+                 "height":208,
                  "name":"",
                  "properties":
                     {
@@ -82,7 +82,7 @@
                  "rotation":0,
                  "type":"dealer_hand",
                  "visible":true,
-                 "width":400,
+                 "width":384,
                  "x":848,
                  "y":128
                 }, 

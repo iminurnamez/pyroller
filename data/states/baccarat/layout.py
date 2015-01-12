@@ -24,13 +24,13 @@ def load_layout(state, filename):
         state.groups.append(deck)
 
     def handle_player_bet(data):
-        pass
+        state.betting_areas['player'] = get_rect(data)
 
     def handle_dealer_bet(data):
-        pass
+        state.betting_areas['dealer'] = get_rect(data)
 
     def handle_tie_bet(data):
-        pass
+        state.betting_areas['tie'] = get_rect(data)
 
     def handle_shoe(data):
         shoe = Deck(get_rect(data), decks=state.options['decks'])
