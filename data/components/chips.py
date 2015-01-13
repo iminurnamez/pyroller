@@ -3,6 +3,7 @@ from random import choice
 
 import pygame as pg
 from .. import prepare
+from .labels import Label
 
 
 CHIP_Y = {"blue"  : 0,
@@ -172,6 +173,22 @@ class ChipPile(object):
         h = (self.num_rows * (self.chip_size[1] + self.vert_space)) - self.vert_space
         self.rect = pg.Rect((0, 0), (w, h))
         self.rect.bottomleft = bottomleft
+        
+        frame_rects = []
+        frame_width = (self.chip_size[0] + horiz_space) * columns_per_color
+        for x in range(0, frame_width * num_colors, frame_width):
+            frame_rects.append(pg.Rect(x, 0, frame_width, h))
+        self.frame = pg.Surface((frame_width * num_colors, h)).convert()
+        self.frame.fill((0,0,0))
+        self.frame.set_colorkey((0,0,0))
+        for frame, num in zip(frame_rects, [100, 25, 10, 5, 1]):
+            pg.draw.rect(self.frame, pg.Color("antiquewhite"), frame, 2)
+            label = Label(prepare.FONTS["Saniretro"], 56, "${}".format(num), pg.Color("antiquewhite"),
+                                {"midbottom": (frame.centerx, frame.bottom - 8)}, bg=prepare.FELT_GREEN)
+            label.draw(self.frame)
+        self.frame.set_alpha(75)            
+        
+        
         chips = [] if chips is None else chips
         if cash:
             chips.extend(cash_to_chips(cash, self.chip_size))
@@ -207,6 +224,8 @@ class ChipPile(object):
 
     def withdraw_chips(self, amount):
         """Withdraw chips totalling amount and adjust stacks."""
+        if self.get_chip_total() < amount:
+            return
         chips = cash_to_chips(self.get_chip_total() - amount, self.chip_size)
         withdrawal = cash_to_chips(amount, self.chip_size)
         for color in self.chips:
@@ -258,6 +277,10 @@ class ChipPile(object):
         for color in self.chips:
             total += Chip.chip_values[color] * len(self.chips[color])
         return total
+        
+    def draw(self, surface):
+        surface.blit(self.frame, self.rect)
+        self.draw_stacks(surface)
 
 
 class ChipRack(object):

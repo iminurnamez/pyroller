@@ -65,9 +65,10 @@ class TitleScreen(tools._State):
         Check options to go straight to a particular game
         rather than showing the lobby - good for debugging.
         """
-        if prepare.ARGS['straight']:
+        straight = prepare.ARGS['straight']
+        if straight and straight != "TITLESCREEN":
             self.persist["casino_player"] = CasinoPlayer(self.stats)
-            self.next = prepare.ARGS['straight']
+            self.next = straight
             self.done = True
         else:
             self.next = "LOBBYSCREEN"

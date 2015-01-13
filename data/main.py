@@ -12,7 +12,7 @@ import pstats
 from . import prepare, tools
 from .states import title_screen, lobby_screen, stats_menu
 from .states import stats_screen, blackjack, craps, bingo, keno, video_poker
-from .states import credits_screen, snake_splash, pachinko
+from .states import credits_screen, snake_splash, pachinko, baccarat
 from .components import music_handler
 
 
@@ -33,6 +33,7 @@ def main():
                   "KENO"        : keno.Keno(),
                   "VIDEOPOKER"  : video_poker.VideoPoker(),
                   "PACHINKO"    : pachinko.Pachinko(),
+                  "BACCARAT"    : baccarat.Baccarat(),
     }
     if prepare.ARGS['straight']:
         run_it.setup_states(state_dict, "TITLESCREEN")

@@ -1,8 +1,15 @@
 import random
 import pygame as pg
+from ...components.loggable import getLogger
 from ...components.warning_window import NoticeWindow
 from ...components.labels import Label, MultiLineLabel, NeonButton, ButtonGroup
 from ... import tools, prepare
+
+# Utilize the logger along with the following functions to print to console instead of prints.
+log = getLogger("KENO")
+#log.debug("testing debug log")
+#log.info("testing info log")
+#log.error("testing error log")
 
 #http://casinogamblingtips.info/tag/pay-table
 PAYTABLE = [
@@ -44,6 +51,7 @@ class Bet(object):
         self.casino_player = casino_player
         self.bet = 0
         self.is_paid = False
+        self.winnings = 0
 
     def update(self, amount):
         #unsafe - can end up withdrawing beyond zero...
@@ -55,6 +63,7 @@ class Bet(object):
     def clear(self):
         self.is_paid = False
         self.bet = 0
+        self.winnings = 0
 
     def result(self, spot, hit):
         if not self.is_paid:
@@ -71,11 +80,11 @@ class Bet(object):
             if payment > 0.0:
                 break
 
-        winnings = payment * self.bet
+        self.winnings = payment * self.bet
         #issue #75 (must cast to integer):
-        self.casino_player.stats["cash"] += int(winnings)
+        self.casino_player.stats["cash"] += int(self.winnings)
         #self.bet = 0
-        print("Won: {0}".format(winnings))
+        log.info("Won: {0}".format(self.winnings))
 
         self.is_paid = False
 
@@ -403,7 +412,7 @@ class Keno(tools._State):
             #Use tools.scaled_mouse_pos(scale, event.pos) for correct mouse
             #position relative to the pygame window size.
             event_pos = tools.scaled_mouse_pos(scale, event.pos)
-            #print(event_pos) #[for debugging positional items]
+            log.info(event_pos) #[for debugging positional items]
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
                 spot_count = self.keno_card.get_spot_count()
@@ -474,6 +483,7 @@ class Keno(tools._State):
 
         self.balance_label.draw(surface)
         self.bet_label.draw(surface)
+        self.won_label.draw(surface)
 
         if self.alert and not self.alert.done:
             self.alert.draw(surface)
@@ -495,6 +505,10 @@ class Keno(tools._State):
         bet_text = "Bet: ${}".format(self.bet_action.bet)
         self.bet_label = Label(self.font, 48, bet_text, "gold3",
                                {"topleft": (24, 760)})
+                               
+        won_text = "Won: ${}".format(self.bet_action.winnings)
+        self.won_label = Label(self.font, 48, won_text, "gold3",
+                               {"topleft": (24, 760+48)})
 
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)

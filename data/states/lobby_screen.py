@@ -1,10 +1,13 @@
 import os
 import json
+from math import ceil
 import pygame as pg
 
 from .. import tools, prepare
-from ..components.labels import Label, GameButton, NeonButton, ButtonGroup
+from ..components.labels import Label, GameButton, NeonButton
+from ..components.labels import Button, ButtonGroup
 from ..components.flair_pieces import ChipCurtain
+from ..components.animation import Animation
 
 
 CURTAIN_SETTINGS = {"single_color" : True,
@@ -26,28 +29,56 @@ class LobbyScreen(tools._State):
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
-                      ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO")]
-        game_buttons = self.make_game_buttons(screen_rect)
-        navigation_buttons = self.make_navigation_buttons(screen_rect)
-        self.buttons = ButtonGroup(game_buttons, navigation_buttons)
+                      ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO"),
+                      ("Baccarat", "BACCARAT")]
+        per_page = 6
+        number_of_pages = int(ceil(len(self.games)/float(per_page)))
+        self.loop_length = prepare.RENDER_SIZE[0]*number_of_pages
+        self.game_buttons = self.make_game_pages(screen_rect, per_page)
+        nav_buttons = self.make_navigation_buttons(screen_rect)
+        main_buttons = self.make_main_buttons(screen_rect)
+        self.buttons = ButtonGroup(nav_buttons, main_buttons)
         self.chip_curtain = None #Created on startup.
+        self.animations = pg.sprite.Group()
 
-    def make_game_buttons(self, screen_rect):
+    def make_game_pages(self, screen_rect, per):
+        groups = (self.games[i:i+per] for i in range(0,len(self.games),per))
         columns = 3
-        size = GameButton.ss_size
-        spacer_x, spacer_y = 50, 100
-        start_x = (screen_rect.w-size[0]*columns-spacer_x*(columns-1))//2
-        start_y = screen_rect.top+130
-        step_x, step_y = size[0]+spacer_x, size[1]+spacer_y
+        width, height = GameButton.width, GameButton.height
+        spacer_x, spacer_y = 50, 80
+        start_x = (screen_rect.w-width*columns-spacer_x*(columns-1))//2
+        start_y = screen_rect.top+105
+        step_x, step_y = width+spacer_x, height+spacer_y
         buttons = ButtonGroup()
-        for i,data in enumerate(self.games):
-            game,payload = data
-            y,x = divmod(i, columns)
-            pos = (start_x+step_x*x, start_y+step_y*y)
-            GameButton(pos, game, self.start_game, payload, buttons)
+        for offset,group in enumerate(groups):
+            offset *= prepare.RENDER_SIZE[0]
+            for i,data in enumerate(group):
+                game,payload = data
+                y,x = divmod(i, columns)
+                pos = (start_x+step_x*x+offset, start_y+step_y*y)
+                GameButton(pos, game, self.change_state, payload, buttons)
         return buttons
 
     def make_navigation_buttons(self, screen_rect):
+        sheet = prepare.GFX["nav_buttons"]
+        size = (106,101)
+        y = 790
+        from_center = 15
+        icons = tools.strip_from_sheet(sheet, (0,0), size, 4)
+        buttons = ButtonGroup()
+        l_kwargs = {"idle_image" : icons[0], "hover_image" : icons[1],
+                    "call" : self.scroll_page, "args" : 1,
+                    "bindings" : [pg.K_LEFT, pg.K_KP4]}
+        r_kwargs = {"idle_image"  : icons[2], "hover_image" : icons[3],
+                    "call" : self.scroll_page, "args" : -1,
+                    "bindings" : [pg.K_RIGHT, pg.K_KP6]}
+        left = Button(((0,y),size), buttons, **l_kwargs)
+        left.rect.right = screen_rect.centerx-from_center
+        right = Button(((0,y),size), buttons, **r_kwargs)
+        right.rect.x = screen_rect.centerx+from_center
+        return buttons
+
+    def make_main_buttons(self, screen_rect):
         buttons = ButtonGroup()
         pos = (9, screen_rect.bottom-(NeonButton.height+11))
         NeonButton(pos, "Credits", self.change_state, "CREDITSSCREEN", buttons)
@@ -56,17 +87,30 @@ class LobbyScreen(tools._State):
         NeonButton(pos, "Stats", self.change_state, "STATSMENU", buttons)
         pos = (screen_rect.centerx-(NeonButton.width//2),
                screen_rect.bottom-(NeonButton.height+11))
-        NeonButton(pos, "Exit", self.exit_game, None, buttons)
+        NeonButton(pos, "Exit", self.exit_game, None,
+                   buttons, bindings=[pg.K_ESCAPE])
         return buttons
 
-    def start_game(self, chosen_game):
-        self.done = True
-        self.next = chosen_game
+    def scroll_page(self, mag):
+        if not self.animations:
+            for game in self.game_buttons:
+                self.normalize_scroll(game, mag)
+                fx, fy = game.rect.x+prepare.RENDER_SIZE[0]*mag, game.rect.y
+                ani = Animation(x=fx, y=fy, duration=350.0,
+                                transition='in_out_quint', round_values=True)
+                ani.start(game.rect)
+                self.animations.add(ani)
+            prepare.SFX["cardplace4"].play()
+
+    def normalize_scroll(self, game, mag):
+        if game.rect.x < 0 and mag == -1:
+            game.rect.x += self.loop_length
+        elif game.rect.x >= prepare.RENDER_SIZE[0] and mag == 1:
+            game.rect.x -= self.loop_length
 
     def startup(self, current_time, persistent):
         self.persist = persistent
-        if not self.chip_curtain:
-            self.chip_curtain = ChipCurtain(None, **CURTAIN_SETTINGS)
+        self.chip_curtain = ChipCurtain(None, **CURTAIN_SETTINGS)
 
     def exit_game(self, *args):
         with open(os.path.join("resources", "save_game.json"), "w") as f:
@@ -81,18 +125,22 @@ class LobbyScreen(tools._State):
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
             self.exit_game()
-        elif event.type == pg.KEYUP:
-            if event.key == pg.K_ESCAPE:
-                self.exit_game()
         self.buttons.get_event(event)
+        self.game_buttons.get_event(event)
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.chip_curtain.update(dt)
         self.buttons.update(mouse_pos)
+        self.game_buttons.update(mouse_pos)
+        self.animations.update(dt)
         self.draw(surface)
 
     def draw(self, surface):
+        rect = surface.get_rect()
         surface.fill(prepare.BACKGROUND_BASE)
         self.chip_curtain.draw(surface)
         self.buttons.draw(surface)
+        for button in self.game_buttons:
+            if button.rect.colliderect(rect):
+                button.draw(surface)

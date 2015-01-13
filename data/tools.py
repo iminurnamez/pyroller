@@ -58,13 +58,17 @@ class Control(object):
         if self.music_handler and self.state.use_music_handler:
             self.music_handler.update(self.scale)
             self.music_handler.draw(self.render_surf)
+
+    def render(self):
+        """
+        Scale the render surface if not the same size as the display surface.
+        The render surface is then drawn to the screen.
+        """
         if self.render_size != self.screen_rect.size:
-            scale_args = (self.render_surf, self.screen_rect.size)
-            scaled_surf = pg.transform.smoothscale(*scale_args)
-            self.screen.blit(scaled_surf, (0, 0))
+            scale_args = (self.render_surf, self.screen_rect.size, self.screen)
+            pg.transform.smoothscale(*scale_args)
         else:
             self.screen.blit(self.render_surf, (0, 0))
-
 
     def flip_state(self):
         """
@@ -86,6 +90,9 @@ class Control(object):
             if event.type == pg.KEYDOWN:
                 self.keys = pg.key.get_pressed()
                 self.toggle_show_fps(event.key)
+                if event.key == pg.K_PRINT:
+                    #Print screen for full render-sized screencaps.
+                    pg.image.save(self.render_surf, "screenshot.png")
             elif event.type == pg.KEYUP:
                 self.keys = pg.key.get_pressed()
             elif event.type == pg.VIDEORESIZE:
@@ -100,6 +107,8 @@ class Control(object):
         If the user resized the window, change to the next available
         resolution depending on if scaled up or scaled down.
         """
+        if size == self.screen_rect.size:
+            return
         res_index = self.resolutions.index(self.screen_rect.size)
         adjust = 1 if size > self.screen_rect.size else -1
         if 0 <= res_index+adjust < len(self.resolutions):
@@ -132,6 +141,7 @@ class Control(object):
             time_delta = self.clock.tick(self.fps)
             self.event_loop()
             self.update(time_delta)
+            self.render()
             pg.display.update()
             if self.show_fps:
                 fps = self.clock.get_fps()
@@ -362,6 +372,8 @@ def get_cli_args(caption, win_pos, start_size, money):
         help='show FPS in title bar')
     parser.add_argument('-p', '--profile', action='store_true',
         help='run game with profiling')
+    parser.add_argument('-B', '--bots', action='store_true',
+        help='enable test bots')
     args = vars(parser.parse_args())
     #check each condition
     if not args['center'] or (args['winpos'] != win_pos): #if -c or -w options

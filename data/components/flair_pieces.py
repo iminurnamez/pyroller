@@ -14,7 +14,7 @@ from .chips import Chip
 from .labels import Label
 from .. import prepare
 
-LETTERS = string.uppercase
+LETTERS = string.ascii_uppercase
 COLORS = ["black", "blue", "green", "red", "white"]
 
 #Y coordinates for each color of chip on the spinner spritesheet.
@@ -382,7 +382,7 @@ class SlotReelTitle(object):
     """
     Converts text into a row of spinning reels like a slot machine.
     """
-    def __init__(self, midtop, title_text, letter_size=(80, 120), spacer=3):
+    def __init__(self, midtop, title_text, letter_size=(80, 120), spacer=3, initial_move=(0, 0)):
         letters = list(title_text)
         width = len(letters) * letter_size[0] + ((len(letters) - 1) * spacer)
         self.rect = pg.Rect(0, 0, width, letter_size[1])
@@ -406,7 +406,7 @@ class SlotReelTitle(object):
         self.spin_sound.set_volume(.2)
         self.moving = True
         self.final_top = midtop[1]
-        self.move((0, -120))
+        self.move(initial_move)
         self.move_speed = (0, 2)        
 
     def startup(self):

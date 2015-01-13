@@ -1,0 +1,81 @@
+{"baccarat":{
+  "mini": {
+    "options": {
+      "decks": 4,
+      "max_players": 7,
+      "number_of_croupiers": 1,
+      "tie_payout": 8,
+      "third_card_option": false,
+      "banker_hands": 1,
+      "player_hands": 1,
+      "dealt_face_up": true,
+      "high_roller_advantage": false,
+      "banker_rotates": false,
+      "croupier_chooses_banker": false,
+      "commission": 0.5
+    }
+  },
+  "punto":{
+    "options": {
+      "decks": 8,
+      "max_players": 14,
+      "number_of_croupiers": 3,
+      "tie_payout": 8,
+      "third_card_option": false,
+      "banker_hands": 1,
+      "player_hands": 1,
+      "dealt_face_up": true,
+      "high_roller_advantage": false,
+      "banker_rotates": false,
+      "croupier_chooses_banker": false,
+      "commission": 0.5
+    }
+  },
+  "chemin_de_fer":{
+    "options": {
+      "decks": 6,
+      "max_players": 7,
+      "number_of_croupiers": 1,
+      "tie_payout": 8,
+      "third_card_option": true,
+      "banker_hands": 1,
+      "player_hands": 1,
+      "dealt_face_up": false,
+      "high_roller_advantage": true,
+      "banker_rotates": true,
+      "croupier_chooses_banker": false,
+      "commission": 0.5
+    }
+  },
+    "european":{
+      "options": {
+        "decks": 6,
+        "max_players": 7,
+        "number_of_croupiers": 1,
+        "tie_payout": 8,
+        "third_card_option": true,
+        "banker_hands": 1,
+        "player_hands": 1,
+        "dealt_face_up": false,
+        "high_roller_advantage": true,
+        "banker_rotates": true,
+        "croupier_chooses_banker": false,
+        "commission": 0.5
+      }
+  },
+  "banque": {
+    "options": {
+      "decks": 4,
+      "max_players": 7,
+      "number_of_croupiers": 1,
+      "tie_payout": 8,
+      "third_card_option": false,
+      "banker_hands": 1,
+      "player_hands": 2,
+      "dealt_face_up": true,
+      "high_roller_advantage": false,
+      "banker_rotates": false,
+      "croupier_chooses_banker": true,
+      "commission": 0.5
+    }
+  }}}
