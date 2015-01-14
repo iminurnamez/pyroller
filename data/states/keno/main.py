@@ -49,9 +49,33 @@ class Bet(object):
         self.label.rect.center = self.rect.center
         self.color = '#181818'
         self.casino_player = casino_player
-        self.bet = 0
-        self.is_paid = False
-        self.winnings = 0
+        self._bet = 0
+        self._is_paid = False
+        self._winnings = 0
+
+    @property
+    def bet(self):
+        return self._bet
+        
+    @bet.setter
+    def bet(self, value):
+        self._bet = value
+        
+    @property
+    def is_paid(self):
+        return self._is_paid
+        
+    @is_paid.setter
+    def is_paid(self, value):
+        self._is_paid = value
+        
+    @property
+    def winnings(self):
+        return self._winnings
+        
+    @winnings.setter
+    def winnings(self, value):
+        self._winnings = value
 
     def update(self, amount):
         #unsafe - can end up withdrawing beyond zero...
@@ -327,6 +351,22 @@ class KenoCard(object):
         self.spots = []
         self.build()
 
+    @property
+    def spot_count(self):
+        count = 0
+        for spot in self.spots:
+            if spot.owned:
+                count+=1
+        return count
+        
+    @property
+    def hit_count(self):
+        count = 0
+        for spot in self.spots:
+            if spot.hit and spot.owned:
+                count+=1
+        return count
+
     def build(self):
         font_size = 48
         text = "0"
@@ -345,20 +385,6 @@ class KenoCard(object):
                 x += 70
             y += 70
             x = x_origin
-
-    def get_spot_count(self):
-        count = 0
-        for spot in self.spots:
-            if spot.owned:
-                count+=1
-        return count
-
-    def get_hit_count(self):
-        count = 0
-        for spot in self.spots:
-            if spot.hit and spot.owned:
-                count+=1
-        return count
 
     def toggle_owned(self, number):
         self.spots[number].toggle_owned()
@@ -383,9 +409,8 @@ class KenoCard(object):
     def update(self, mouse_pos):
         for spot in self.spots:
             if spot.rect.collidepoint(mouse_pos):
-                if (self.get_spot_count() < 10 and not spot.owned) or spot.owned:
+                if (self.spot_count < 10 and not spot.owned) or spot.owned:
                     spot.toggle_owned()
-
 
     def draw(self, surface):
         for spot in self.spots:
@@ -424,6 +449,22 @@ class Keno(tools._State):
         self.round_history = RoundHistory(self.keno_card)
 
         self.alert = None
+        
+        self.gui_widgets = {
+            'title'         : self.mock_label,
+            'card'          : self.keno_card,
+            'quick_pick'    : self.quick_pick,
+            'play'          : self.play,
+            'play_max'      : self.play_max,
+            'pay_table'     : self.pay_table,
+            'round_history' : self.round_history,
+            'balance'       : None,
+            'bet_action'    : None,
+            'clear'         : None,
+            'bet'           : None,
+            'won'           : None,
+            'spot'          : None,
+        }
 
     def back_to_lobby(self, *args):
         self.game_started = False
@@ -437,12 +478,14 @@ class Keno(tools._State):
         self.casino_player = self.persist["casino_player"]
         self.bet_action = Bet(self.casino_player)
         self.clear_action = Clear(self.keno_card, self.bet_action, self.round_history)
+        self.gui_widgets['bet_action'] = self.bet_action
+        self.gui_widgets['clear'] = self.clear_action
 
         self.casino_player.stats["Keno"]["games played"] += 1
 
     def play_game(self):
-        spot_count = self.keno_card.get_spot_count()
-        hit_count = self.keno_card.get_hit_count()
+        spot_count = self.keno_card.spot_count
+        hit_count = self.keno_card.hit_count
         self.bet_action.result(spot_count, hit_count)
         self.round_history.update(spot_count, hit_count)
 
@@ -460,7 +503,7 @@ class Keno(tools._State):
             log.info(event_pos) #[for debugging positional items]
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
-                spot_count = self.keno_card.get_spot_count()
+                spot_count = self.keno_card.spot_count
                 bet_amount = self.bet_action.bet
                 self.pay_table.update(spot_count, bet_amount)
 
@@ -473,7 +516,7 @@ class Keno(tools._State):
                     self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
                     return
 
-                spot_count = self.keno_card.get_spot_count()
+                spot_count = self.keno_card.spot_count
                 if spot_count <= 0:
                     self.alert = NoticeWindow(self.screen_rect.center, "Please pick your spots.")
                     return
@@ -488,7 +531,7 @@ class Keno(tools._State):
                     self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
                     return
 
-                spot_count = self.keno_card.get_spot_count()
+                spot_count = self.keno_card.spot_count
                 if spot_count <= 0:
                     self.alert = NoticeWindow(self.screen_rect.center, "Please pick your spots.")
                     return
@@ -501,7 +544,7 @@ class Keno(tools._State):
 
             self.keno_card.update(event_pos)
 
-            spot_count = self.keno_card.get_spot_count()
+            spot_count = self.keno_card.spot_count
             bet_amount = self.bet_action.bet
             if spot_count != self.prev_spot_count:
                 self.pay_table.update(spot_count, bet_amount)
@@ -515,28 +558,11 @@ class Keno(tools._State):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(prepare.FELT_GREEN)
 
-        self.mock_label.draw(surface)
-
         self.buttons.draw(surface)
 
-        self.keno_card.draw(surface)
-
-        self.quick_pick.draw(surface)
-        self.play.draw(surface)
-        self.play_max.draw(surface)
-
-        self.pay_table.draw(surface)
-
-        self.round_history.draw(surface)
-
-        self.clear_action.draw(surface)
-
-        self.bet_action.draw(surface)
-
-        self.balance_label.draw(surface)
-        self.bet_label.draw(surface)
-        self.won_label.draw(surface)
-        self.spot_count_label.draw(surface)
+        for widget in self.gui_widgets.values():
+            if widget:
+                widget.draw(surface)
 
         if self.alert and not self.alert.done:
             self.alert.draw(surface)
@@ -550,6 +576,7 @@ class Keno(tools._State):
         since pygame was initialized. dt is the number of milliseconds since
         the last frame.
         """
+            
         if self.play_max.active:
             self.play_max.update()
             self.play_game()
@@ -557,20 +584,20 @@ class Keno(tools._State):
         
         total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
 
-        self.balance_label = Label(self.font, 48, total_text, "gold3",
+        self.gui_widgets['balance'] = Label(self.font, 48, total_text, "gold3",
                                {"topleft": (1036, 760)})
 
         bet_text = "Bet: ${}".format(self.bet_action.bet)
-        self.bet_label = Label(self.font, 48, bet_text, "gold3",
+        self.gui_widgets['bet'] = Label(self.font, 48, bet_text, "gold3",
                                {"topleft": (24, 760)})
                                
         won_text = "Won: ${}".format(self.bet_action.winnings)
-        self.won_label = Label(self.font, 48, won_text, "gold3",
+        self.gui_widgets['won'] = Label(self.font, 48, won_text, "gold3",
                                {"topleft": (24, 760+48)})
                                
-        spot_count = self.keno_card.get_spot_count()
+        spot_count = self.keno_card.spot_count
         spot_text = "Spot: {}".format(spot_count)
-        self.spot_count_label = Label(self.font, 48, spot_text, "gold3",
+        self.gui_widgets['spot'] = Label(self.font, 48, spot_text, "gold3",
                                {"topleft": (1045, 134)})
 
         mouse_pos = tools.scaled_mouse_pos(scale)
