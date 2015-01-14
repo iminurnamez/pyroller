@@ -359,7 +359,7 @@ class Keno(tools._State):
         self.game_started = False
         self.font = prepare.FONTS["Saniretro"]
 
-        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(680,140)})
+        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(180,140)})
 
         b_width = 360
         b_height = 90
@@ -374,10 +374,7 @@ class Keno(tools._State):
         self.quick_pick = QuickPick(self.keno_card)
         self.play = Play(self.keno_card)
 
-        self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: 0', 'gold3', {'center':(640,700)})
         self.prev_spot_count = 0
-
-        self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
 
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
@@ -421,7 +418,6 @@ class Keno(tools._State):
 
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
-                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
 
             if self.play.rect.collidepoint(event_pos):
                 if self.bet_action.bet <= 0:
@@ -437,11 +433,9 @@ class Keno(tools._State):
                 hit_count = self.keno_card.get_hit_count()
                 self.bet_action.result(spot_count, hit_count)
                 self.round_history.update(spot_count, hit_count)
-                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: {0}'.format(hit_count), 'gold3', {'center':(640,764)})
 
             if self.clear_action.rect.collidepoint(event_pos):
                 self.clear_action.update()
-                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
 
             self.keno_card.update(event_pos)
 
@@ -451,7 +445,6 @@ class Keno(tools._State):
                 self.pay_table.update(spot_count, bet_amount)
                 self.prev_spot_count = spot_count
 
-            self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
         if not self.alert:
             self.buttons.get_event(event)
         self.alert and self.alert.get_event(event)
@@ -469,10 +462,6 @@ class Keno(tools._State):
         self.quick_pick.draw(surface)
         self.play.draw(surface)
 
-        #TODO: work these back in properly.
-        #self.spot_count_label.draw(surface)
-        #self.hit_count_label.draw(surface)
-
         self.pay_table.draw(surface)
 
         self.round_history.draw(surface)
@@ -484,6 +473,7 @@ class Keno(tools._State):
         self.balance_label.draw(surface)
         self.bet_label.draw(surface)
         self.won_label.draw(surface)
+        self.spot_count_label.draw(surface)
 
         if self.alert and not self.alert.done:
             self.alert.draw(surface)
@@ -509,6 +499,11 @@ class Keno(tools._State):
         won_text = "Won: ${}".format(self.bet_action.winnings)
         self.won_label = Label(self.font, 48, won_text, "gold3",
                                {"topleft": (24, 760+48)})
+                               
+        spot_count = self.keno_card.get_spot_count()
+        spot_text = "Spot: {}".format(spot_count)
+        self.spot_count_label = Label(self.font, 48, spot_text, "gold3",
+                               {"topleft": (1045, 134)})
 
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
