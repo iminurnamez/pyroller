@@ -143,7 +143,7 @@ class Dealer:
         self.held_labels = []
 
         self.text = " insert coins "
-        self.standby_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
+        self.no_playing_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
                                       {"center":self.rect.center}, 700, self.text_bg_color)
 
         self.text = " play 1 to 5 coins "
@@ -168,7 +168,6 @@ class Dealer:
         self.revealing = False
         self.held_cards = []
         self.changing_cards = list(range(5))
-        self.standby = True
         self.waiting = False
         self.playing = False
 
@@ -315,14 +314,8 @@ class Dealer:
                         self.card_index = 0
                         self.revealing = False
 
-        if self.playing:
-            self.standby = False
-        else:
-            self.standby = True
-
-        # need review
-        if self.standby:
-            self.standby_label.update(dt)
+        if not self.playing:
+            self.no_playing_label.update(dt)
 
         if self.waiting:
             self.waiting_label.update(dt)
@@ -333,8 +326,8 @@ class Dealer:
             card.draw(surface)
         for index in self.held_cards:
             self.held_labels[index].draw(surface)
-        if self.standby:
-            self.standby_label.draw(surface)
+        if not self.playing:
+            self.no_playing_label.draw(surface)
         elif self.waiting:
             self.waiting_label.draw(surface)
 
@@ -362,7 +355,6 @@ class Machine:
 
     def startup(self, player):
         self.playing = False
-        self.ready2play = False
         self.waiting = False
         self.bet = 0
         self.credits = 0
@@ -451,7 +443,7 @@ class Machine:
         self.credits_sound.play()
 
     def start_waiting(self):
-        self.dealer.standby = False
+        self.dealer.playing = True
         self.waiting = True
         self.dealer.waiting = True
 
@@ -478,7 +470,6 @@ class Machine:
                 self.bet = 1
                 self.coins = 1
                 self.credits += 4
-            self.ready2play = True
             self.bet_sound.play()
         self.pay_board.update_bet_rect(self.coins)
         # draw button
@@ -496,7 +487,6 @@ class Machine:
                 self.bet += self.credits
                 self.coins += self.credits
                 self.credits = 0
-            self.ready2play = True
             self.bet_sound.play()
             self.draw_cards()
         self.pay_board.update_bet_rect(self.coins)
@@ -513,7 +503,6 @@ class Machine:
             else:
                 self.bet = self.credits
                 self.coins = self.credits
-            self.ready2play = True
             self.pay_board.update_bet_rect(self.coins)
 
     def new_game(self):
@@ -548,7 +537,6 @@ class Machine:
             print("Player wins: {}".format(self.win))
         self.bet = 0
         self.playing = False
-        self.dealer.playing = False
         self.start_waiting()
 
     def draw_cards(self, *args):
@@ -563,7 +551,7 @@ class Machine:
     def make_held(self, *args):
         """ Some unkonow issue with Int args,
             so Str values passed to the func and
-            here are converter tonn Int"""
+            here are converter to Int"""
         if self.playing:
             index = int(args[0])
             self.dealer.toogle_held(index)
@@ -606,6 +594,7 @@ class Machine:
 
         if self.credits == 0 and self.playing == False:
             self.toogle_buttons(self.buttons, False)
+            self.dealer.playing = False
 
         self.dealer.update(dt)
 
