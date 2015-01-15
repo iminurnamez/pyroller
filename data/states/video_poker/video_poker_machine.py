@@ -1,6 +1,6 @@
 import pygame as pg
 from ... import tools, prepare
-from ...components.labels import Blinker, Label, Button
+from ...components.labels import Blinker, Label, Button, MultiLineLabel
 from ...components.cards import Deck
 
 HAND_RANKS = {'ROYAL_FLUSH'    : 0,
@@ -337,7 +337,7 @@ class Machine:
         self.rect = pg.Rect(topleft, size)
 
         self.font = prepare.FONTS["Saniretro"]
-        self.text_size = 30
+        self.text_size = 35
         self.text_color = "white"
         self.padding = 25
 
@@ -356,7 +356,9 @@ class Machine:
     def startup(self, player):
         self.playing = False
         self.waiting = False
+        self.double_up = False
         self.bet = 0
+        self.bet_value = 1
         self.credits = 0
         self.coins = 0
         self.player = player
@@ -414,7 +416,7 @@ class Machine:
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
 
-
+        # cash out and insert coins buttons
         settings = {"text"               : "Insert coin",
                     "hover_text"         : "Insert coin",
                     "fill_color"         : pg.Color("gold"),
@@ -436,15 +438,33 @@ class Machine:
         self.cash_button = Button(rect_style, **settings)
 
 
+    def make_help_labels(self, rect):
+        labels = []
+        text = "Credits {}".format(self.credits)
+        label = Blinker(self.font, 100, text, "red",
+                               {"centerx":rect.centerx, "top": rect.top}, 700)
+        labels.append(label)
+        text = "If selected card beats dealers player wins Ace is highest, two is lowets"
+        label = MultiLineLabel(self.font, self.text_size, text,
+                     self.text_color, {"center": rect.center}, align="center")
+        labels.append(label)
+        text = "Double up?"
+        label = Blinker(self.font, 100, text, "red",
+                               {"centerx":rect.centerx, "bottom": rect.bottom}, 700)
+        labels.append(label)
+
+        return labels
+
+
     def insert_coin(self, *args):
         self.start_waiting()
-        self.credits += 1
-        self.player.stats["cash"] -= 1
+        self.credits += self.bet_value
+        self.player.stats["cash"] -= self.bet_value
         self.credits_sound.play()
 
     def start_waiting(self):
-        self.dealer.playing = True
         self.waiting = True
+        self.dealer.playing = True
         self.dealer.waiting = True
 
     def cash_out(self, *args):
@@ -510,6 +530,7 @@ class Machine:
         self.dealer.startup()
         self.dealer.playing = True
         self.dealer.waiting = False
+        self.double_up = False
         if self.bet > 0:
             self.dealer.draw_cards()
             rank = self.dealer.evaluate_hand()
@@ -533,11 +554,13 @@ class Machine:
         if rank != NO_HAND:
             index = self.bet - 1
             self.win = PAYTABLE[index][rank]
-            self.credits += self.win + self.bet
-            print("Player wins: {}".format(self.win))
-        self.bet = 0
-        self.playing = False
-        self.start_waiting()
+            # self.credits += self.win + self.bet
+            self.help_labels = self.make_help_labels(self.pay_board.rect)
+            self.double_up = True
+        else:
+            self.bet = 0
+            self.playing = False
+            self.start_waiting()
 
     def draw_cards(self, *args):
         if not self.playing:
@@ -573,7 +596,7 @@ class Machine:
         # game info labels
         self.info_labels = []
 
-        credit_text = 'Credit {}'.format(self.credits)
+        credit_text = 'Credits {}'.format(self.credits)
         label = Label(self.font, self.text_size, credit_text, self.text_color,
                         {"topright": (self.label_x2, self.label_y)})
         self.info_labels.append(label)
@@ -598,13 +621,22 @@ class Machine:
 
         self.dealer.update(dt)
 
+        if self.double_up:
+            for label in self.help_labels:
+                if isinstance(label, Blinker):
+                    label.update(dt)
+
         self.coins_button.update(mouse_pos)
         self.cash_button.update(mouse_pos)
         for button in self.buttons:
             button.update(mouse_pos)
 
     def draw(self, surface, dt):
-        self.pay_board.draw(surface)
+        if self.double_up:
+            for label in self.help_labels:
+                label.draw(surface)
+        else:
+            self.pay_board.draw(surface)
         self.dealer.draw(surface, dt)
         for label in self.info_labels:
             label.draw(surface)
