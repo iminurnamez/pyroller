@@ -361,6 +361,7 @@ class Machine:
         self.bet_value = 1
         self.credits = 0
         self.coins = 0
+        self.win = 0
         self.player = player
         self.build()
         self.dealer.startup()
@@ -375,23 +376,16 @@ class Machine:
         y += self.padding
         w -= self.padding*2
         h = 319
-
         self.pay_board = PayBoard((x,y), (w,h))
-
-        # use in info labels
-        self.label_x1 = x
-        self.label_x2 = w
 
         # calculate cards table position position
         y += self.padding + self.pay_board.rect.h
         h = 300
         self.dealer = Dealer((x,y), (w,h))
 
-        y = self.dealer.rect.bottom + self.padding*2
-        self.label_y = y # use in info labels
 
         # buttons
-        y += self.padding + self.btn_padding
+        y = self.dealer.rect.bottom + self.padding*4 + self.btn_padding
 
         button_list = [
             ('bet', self.bet_one, None), ('bet max', self.bet_max, None),
@@ -448,12 +442,40 @@ class Machine:
         label = MultiLineLabel(self.font, self.text_size, text,
                      self.text_color, {"center": rect.center}, align="center")
         labels.append(label)
-        text = "Double up?"
+        text = "Double up ?"
         label = Blinker(self.font, 100, text, "red",
-                               {"centerx":rect.centerx, "bottom": rect.bottom}, 700)
+                          {"centerx":rect.centerx, "bottom": rect.bottom}, 700)
         labels.append(label)
 
         return labels
+
+    def make_info_label(self, rect):
+        labels = []
+        y = rect.bottom + self.padding
+        if self.double_up:
+            text = "you have won: {} double up to: {}".format(self.win, self.win*2)
+            label = MultiLineLabel(self.font, 35, text, self.text_color,
+                             {"centerx": rect.centerx, "top": y},
+                                                char_limit=18, align="center")
+            labels.append(label)
+        else:
+            text = 'Credits {}'.format(self.credits)
+            label = Label(self.font, self.text_size, text, self.text_color,
+                            {"topright": (rect.right, y)})
+            labels.append(label)
+            coins_text = "Coins in {}".format(self.coins)
+            label = Label(self.font, self.text_size, coins_text, self.text_color,
+                            {"topleft": (rect.x, y)})
+            labels.append(label)
+
+        balance = 'Balance: ${}'.format(self.player.stats["cash"])
+        pos = ((self.rect.right + self.padding), (self.rect.top + 300))
+        label = Label(self.font, 50, balance, self.text_color,
+                        {"topleft": pos})
+        labels.append(label)
+
+        return labels
+
 
 
     def insert_coin(self, *args):
@@ -594,22 +616,7 @@ class Machine:
 
     def update(self, mouse_pos, dt):
         # game info labels
-        self.info_labels = []
-
-        credit_text = 'Credits {}'.format(self.credits)
-        label = Label(self.font, self.text_size, credit_text, self.text_color,
-                        {"topright": (self.label_x2, self.label_y)})
-        self.info_labels.append(label)
-        coins_text = "Coins in {}".format(self.coins)
-        label = Label(self.font, self.text_size, coins_text, self.text_color,
-                        {"topleft": (self.label_x1, self.label_y)})
-        self.info_labels.append(label)
-
-        balance = 'Balance: ${}'.format(self.player.stats["cash"])
-        pos = ((self.rect.right + self.padding), (self.rect.top + 300))
-        label = Label(self.font, self.text_size, balance, self.text_color,
-                        {"topleft": pos})
-        self.info_labels.append(label)
+        self.info_labels = self.make_info_label(self.dealer.rect)
 
         if self.waiting:
             # bet and bet max buttons
