@@ -49,13 +49,38 @@ class Bet(object):
         self.label.rect.center = self.rect.center
         self.color = '#181818'
         self.casino_player = casino_player
-        self.bet = 0
-        self.is_paid = False
-        self.winnings = 0
+        self._bet = 0
+        self._is_paid = False
+        self._winnings = 0
+
+    @property
+    def bet(self):
+        return self._bet
+        
+    @bet.setter
+    def bet(self, value):
+        self._bet = value
+        
+    @property
+    def is_paid(self):
+        return self._is_paid
+        
+    @is_paid.setter
+    def is_paid(self, value):
+        self._is_paid = value
+        
+    @property
+    def winnings(self):
+        return self._winnings
+        
+    @winnings.setter
+    def winnings(self, value):
+        self._winnings = value
 
     def update(self, amount):
         #unsafe - can end up withdrawing beyond zero...
         #issue #75 (must cast to integer):
+        log.debug("betting={0}".format(amount))
         self.casino_player.stats["cash"] -= int(amount)
         self.bet += amount
         self.is_paid = True
@@ -80,9 +105,10 @@ class Bet(object):
             if payment > 0.0:
                 break
 
-        self.winnings = payment * self.bet
+        won = payment * self.bet
+        self.winnings += won
         #issue #75 (must cast to integer):
-        self.casino_player.stats["cash"] += int(self.winnings)
+        self.casino_player.stats["cash"] += int(won)
         #self.bet = 0
         log.info("Won: {0}".format(self.winnings))
 
@@ -93,7 +119,7 @@ class Bet(object):
         self.label.draw(surface)
 
 class Clear(object):
-    def __init__(self, card, bet_action):
+    def __init__(self, card, bet_action, round_history):
         self.rect = pg.Rect(526, 760, 150, 75)
         self.font = prepare.FONTS["Saniretro"]
         self.label = Label(self.font, 32, 'CLEAR', 'gold3', {'center':(0,0)})
@@ -101,10 +127,12 @@ class Clear(object):
         self.color = '#181818'
         self.card = card
         self.bet_action = bet_action
+        self.round_history = round_history
 
     def update(self):
         self.card.ready_play(clear_all=True)
         self.bet_action.clear()
+        self.round_history.clear()
 
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
@@ -130,11 +158,14 @@ class RoundHistory(object):
 
         self.rounds  = 1
 
+    def clear(self):
+        self.rounds = 1
+        self.result_labels = []
+        self.row_y = 224+32
+
     def update(self, spot, hits):
         if self.rounds % 17 == 0:
-            self.rounds = 1
-            self.result_labels = []
-            self.row_y = 224+32
+            self.clear()
 
         color = "white"
 
@@ -191,6 +222,39 @@ class PayTable(object):
 
         for label in self.pay_labels:
             label.draw(surface)
+
+class PlayMax(object):
+    '''plays 16 games of keno'''
+    def __init__(self, card):
+        self.rect = pg.Rect(838, 840, 156, 75)
+        self.font = prepare.FONTS["Saniretro"]
+        self.label = Label(self.font, 32, 'PLAY MAX', 'gold3', {'center':(0,0)})
+        self.label.rect.center = self.rect.center
+        self.color = '#181818'
+        self.card = card
+        self.turns = 16
+        self.active = False
+    
+    def keep_playing(self):
+        return self.turns >= 0
+    
+    def update(self):
+        log.debug("turns={0}".format(self.turns))
+        self.active = True
+        numbers = pick_numbers(20)
+
+        self.card.ready_play()
+        for number in numbers:
+            self.card.toggle_hit(number)
+            
+        self.turns -= 1
+        if self.turns <= 0:
+            self.active = False
+            self.turns = 16
+            
+    def draw(self, surface):
+        pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
+        self.label.draw(surface)
 
 class Play(object):
     '''plays a game of keno'''
@@ -287,6 +351,22 @@ class KenoCard(object):
         self.spots = []
         self.build()
 
+    @property
+    def spot_count(self):
+        count = 0
+        for spot in self.spots:
+            if spot.owned:
+                count+=1
+        return count
+        
+    @property
+    def hit_count(self):
+        count = 0
+        for spot in self.spots:
+            if spot.hit and spot.owned:
+                count+=1
+        return count
+
     def build(self):
         font_size = 48
         text = "0"
@@ -305,20 +385,6 @@ class KenoCard(object):
                 x += 70
             y += 70
             x = x_origin
-
-    def get_spot_count(self):
-        count = 0
-        for spot in self.spots:
-            if spot.owned:
-                count+=1
-        return count
-
-    def get_hit_count(self):
-        count = 0
-        for spot in self.spots:
-            if spot.hit and spot.owned:
-                count+=1
-        return count
 
     def toggle_owned(self, number):
         self.spots[number].toggle_owned()
@@ -343,9 +409,8 @@ class KenoCard(object):
     def update(self, mouse_pos):
         for spot in self.spots:
             if spot.rect.collidepoint(mouse_pos):
-                if (self.get_spot_count() < 10 and not spot.owned) or spot.owned:
+                if (self.spot_count < 10 and not spot.owned) or spot.owned:
                     spot.toggle_owned()
-
 
     def draw(self, surface):
         for spot in self.spots:
@@ -359,7 +424,7 @@ class Keno(tools._State):
         self.game_started = False
         self.font = prepare.FONTS["Saniretro"]
 
-        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(680,140)})
+        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(180,140)})
 
         b_width = 360
         b_height = 90
@@ -373,11 +438,10 @@ class Keno(tools._State):
 
         self.quick_pick = QuickPick(self.keno_card)
         self.play = Play(self.keno_card)
+        
+        self.play_max = PlayMax(self.keno_card)
 
-        self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: 0', 'gold3', {'center':(640,700)})
         self.prev_spot_count = 0
-
-        self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
 
         self.pay_table = PayTable(self.keno_card)
         self.pay_table.update(0)
@@ -385,6 +449,22 @@ class Keno(tools._State):
         self.round_history = RoundHistory(self.keno_card)
 
         self.alert = None
+        
+        self.gui_widgets = {
+            'title'         : self.mock_label,
+            'card'          : self.keno_card,
+            'quick_pick'    : self.quick_pick,
+            'play'          : self.play,
+            'play_max'      : self.play_max,
+            'pay_table'     : self.pay_table,
+            'round_history' : self.round_history,
+            'balance'       : None,
+            'bet_action'    : None,
+            'clear'         : None,
+            'bet'           : None,
+            'won'           : None,
+            'spot'          : None,
+        }
 
     def back_to_lobby(self, *args):
         self.game_started = False
@@ -397,9 +477,17 @@ class Keno(tools._State):
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
         self.bet_action = Bet(self.casino_player)
-        self.clear_action = Clear(self.keno_card, self.bet_action)
+        self.clear_action = Clear(self.keno_card, self.bet_action, self.round_history)
+        self.gui_widgets['bet_action'] = self.bet_action
+        self.gui_widgets['clear'] = self.clear_action
 
         self.casino_player.stats["Keno"]["games played"] += 1
+
+    def play_game(self):
+        spot_count = self.keno_card.spot_count
+        hit_count = self.keno_card.hit_count
+        self.bet_action.result(spot_count, hit_count)
+        self.round_history.update(spot_count, hit_count)
 
     def get_event(self, event, scale=(1,1)):
         """This method will be called for each event in the event queue
@@ -415,43 +503,53 @@ class Keno(tools._State):
             log.info(event_pos) #[for debugging positional items]
             if self.bet_action.rect.collidepoint(event_pos):
                 self.bet_action.update(1)
-                spot_count = self.keno_card.get_spot_count()
+                spot_count = self.keno_card.spot_count
                 bet_amount = self.bet_action.bet
                 self.pay_table.update(spot_count, bet_amount)
 
             if self.quick_pick.rect.collidepoint(event_pos):
                 self.quick_pick.update()
-                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
 
             if self.play.rect.collidepoint(event_pos):
+                self.bet_action.winnings = 0
                 if self.bet_action.bet <= 0:
                     self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
                     return
 
-                spot_count = self.keno_card.get_spot_count()
+                spot_count = self.keno_card.spot_count
                 if spot_count <= 0:
                     self.alert = NoticeWindow(self.screen_rect.center, "Please pick your spots.")
                     return
 
                 self.play.update()
-                hit_count = self.keno_card.get_hit_count()
-                self.bet_action.result(spot_count, hit_count)
-                self.round_history.update(spot_count, hit_count)
-                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: {0}'.format(hit_count), 'gold3', {'center':(640,764)})
+                self.play_game()
+                
+            if self.play_max.rect.collidepoint(event_pos):
+                self.round_history.clear()
+                self.bet_action.winnings = 0
+                if self.bet_action.bet <= 0:
+                    self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
+                    return
+
+                spot_count = self.keno_card.spot_count
+                if spot_count <= 0:
+                    self.alert = NoticeWindow(self.screen_rect.center, "Please pick your spots.")
+                    return
+
+                self.play_max.update()
+                self.play_game()
 
             if self.clear_action.rect.collidepoint(event_pos):
                 self.clear_action.update()
-                self.hit_count_label = Label(self.font, 64, 'HIT COUNT: 0', 'gold3', {'center':(640,764)})
 
             self.keno_card.update(event_pos)
 
-            spot_count = self.keno_card.get_spot_count()
+            spot_count = self.keno_card.spot_count
             bet_amount = self.bet_action.bet
             if spot_count != self.prev_spot_count:
                 self.pay_table.update(spot_count, bet_amount)
                 self.prev_spot_count = spot_count
 
-            self.spot_count_label = Label(self.font, 64, 'SPOT COUNT: {0}'.format(spot_count), 'gold3', {'center':(640,700)})
         if not self.alert:
             self.buttons.get_event(event)
         self.alert and self.alert.get_event(event)
@@ -460,30 +558,11 @@ class Keno(tools._State):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(prepare.FELT_GREEN)
 
-        self.mock_label.draw(surface)
-
         self.buttons.draw(surface)
 
-        self.keno_card.draw(surface)
-
-        self.quick_pick.draw(surface)
-        self.play.draw(surface)
-
-        #TODO: work these back in properly.
-        #self.spot_count_label.draw(surface)
-        #self.hit_count_label.draw(surface)
-
-        self.pay_table.draw(surface)
-
-        self.round_history.draw(surface)
-
-        self.clear_action.draw(surface)
-
-        self.bet_action.draw(surface)
-
-        self.balance_label.draw(surface)
-        self.bet_label.draw(surface)
-        self.won_label.draw(surface)
+        for widget in self.gui_widgets.values():
+            if widget:
+                widget.draw(surface)
 
         if self.alert and not self.alert.done:
             self.alert.draw(surface)
@@ -497,18 +576,29 @@ class Keno(tools._State):
         since pygame was initialized. dt is the number of milliseconds since
         the last frame.
         """
+            
+        if self.play_max.active:
+            self.play_max.update()
+            self.play_game()
+            #pg.time.wait(5000)
+        
         total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
 
-        self.balance_label = Label(self.font, 48, total_text, "gold3",
+        self.gui_widgets['balance'] = Label(self.font, 48, total_text, "gold3",
                                {"topleft": (1036, 760)})
 
         bet_text = "Bet: ${}".format(self.bet_action.bet)
-        self.bet_label = Label(self.font, 48, bet_text, "gold3",
+        self.gui_widgets['bet'] = Label(self.font, 48, bet_text, "gold3",
                                {"topleft": (24, 760)})
                                
         won_text = "Won: ${}".format(self.bet_action.winnings)
-        self.won_label = Label(self.font, 48, won_text, "gold3",
+        self.gui_widgets['won'] = Label(self.font, 48, won_text, "gold3",
                                {"topleft": (24, 760+48)})
+                               
+        spot_count = self.keno_card.spot_count
+        spot_text = "Spot: {}".format(spot_count)
+        self.gui_widgets['spot'] = Label(self.font, 48, spot_text, "gold3",
+                               {"topleft": (1045, 134)})
 
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
