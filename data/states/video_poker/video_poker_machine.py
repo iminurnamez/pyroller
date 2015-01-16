@@ -36,7 +36,6 @@ class PayBoard:
     def update_bet_rect(self, bet):
         self.bet_rect.left = self.rect.left + self.col_space * bet
         self.show_bet_rect = True
-        print bet 
 
     def update_rank_rect(self, rank):
         """ 99 is the rank value for no matches"""
@@ -56,11 +55,9 @@ class PayBoard:
         self.rank_rect.top = 0
 
     def build(self):
-        ranks = ('ROYAL FLUSH', 'STR. FLUSH', '4 OF A KIND', 'FULL HOUSE',
-        'FLUSH','STRAIGHT', 'THREE OF A KIND', 'TWO PAIR', 'JACKS OR BETTER')
         x = x_initial = self.rect.left + self.padding
         y = y_initial = self.rect.top
-        for row in ranks:
+        for row in RANKS:
             label = Label(self.font, self.text_size, row, self.text_color,
                                       {"topleft": (x, y)})
             self.table.append(label)
@@ -133,9 +130,6 @@ class Machine:
         self.bet_sound = prepare.SFX["bingo-pick-1"]
 
     def startup(self, player):
-        # self.playing = False
-        # self.waiting = False
-        # self.double_up = False
         self.state = "GAME OVER"
         self.bet = 0
         self.bet_value = 1
@@ -241,6 +235,7 @@ class Machine:
         button.rect.centery = self.dealer.rect.centery
         self.yes_no_buttons.append(button)
 
+
     def make_help_labels(self, rect):
         labels = []
         text = "Credits {}".format(self.credits)
@@ -257,6 +252,7 @@ class Machine:
         labels.append(label)
 
         return labels
+
 
     def make_info_label(self, rect):
         labels = []
@@ -299,16 +295,18 @@ class Machine:
 
         return labels
 
+
     def insert_coin(self, *args):
         self.start_waiting()
         self.credits += self.bet_value
         self.player.stats["cash"] -= self.bet_value
         self.credits_sound.play()
 
+
     def start_waiting(self):
-        # self.state = "waiting"
         self.dealer.playing = True
         self.dealer.waiting = True
+
 
     def cash_out(self, *args):
         if self.state == "GAME OVER":
@@ -316,9 +314,11 @@ class Machine:
                 self.player.stats['cash'] += self.credits
                 self.credits = 0
 
+
     def toogle_buttons(self, buttons, active=True):
         for button in buttons:
                 button.active = active
+
 
     def bet_one(self, *args):
         if self.credits > 0:
@@ -334,9 +334,9 @@ class Machine:
                 self.coins = 1
                 self.credits += 4
             self.bet_sound.play()
-        self.pay_board.update_bet_rect(self.coins)
-        # draw button
-        self.buttons[-1].active = True
+        self.pay_board.update_bet_rect(self.coins)        
+        self.buttons[-1].active = True # draw button
+
 
     def bet_max(self, *args):
         if self.credits > 0:
@@ -352,8 +352,7 @@ class Machine:
             self.bet_sound.play()
             self.draw_cards()
         self.pay_board.update_bet_rect(self.coins)
-        # draw button
-        self.buttons[-1].active = True
+        self.buttons[-1].active = True # draw button
 
     def make_last_bet(self):
         """ """
@@ -367,12 +366,10 @@ class Machine:
         self.pay_board.update_bet_rect(self.coins)
 
     def new_game(self):
-        # self.playing = True
         self.state = "PLAYING"
         self.dealer.startup()
         self.dealer.playing = True
         self.dealer.waiting = False
-        # self.double_up = False
         self.win = 0
         if self.bet > 0:
             self.dealer.draw_cards()
@@ -404,12 +401,14 @@ class Machine:
             self.state = "GAME OVER"
             self.start_waiting()
 
+
     def draw_cards(self, *args):
-        if self.state == "GAME OVER":
-            self.pay_board.reset()
-            self.new_game()
-        elif self.state == "PLAYING":
-            self.evaluate_final_hand()
+        if self.coins > 0:
+            if self.state == "GAME OVER":
+                self.pay_board.reset()
+                self.new_game()
+            elif self.state == "PLAYING":
+                self.evaluate_final_hand()
 
 
     def make_held(self, *args):
@@ -431,6 +430,7 @@ class Machine:
                     self.win = 0
                     self.state = "GAME OVER"
                     self.start_waiting()
+
 
     def check_double_up(self, *args):
         double_up = args[0][0]
@@ -462,12 +462,14 @@ class Machine:
             for button in self.yes_no_buttons:
                 button.get_event(event)
 
+
     def update(self, mouse_pos, dt):
         self.info_labels = self.make_info_label(self.dealer.rect)
 
         if self.state == "GAME OVER" and self.credits > 0:
-            # bet and bet max buttons
-            self.toogle_buttons((self.buttons[0], self.buttons[1]))
+            # draw, bet and bet max buttons
+            buttons = (self.buttons[0], self.buttons[1], self.buttons[-1])
+            self.toogle_buttons(buttons)
 
         if self.credits == 0 and self.state == "GAME OVER":
             self.toogle_buttons(self.buttons, False)
@@ -490,7 +492,6 @@ class Machine:
         for button in self.buttons:
             button.update(mouse_pos)
 
-        # print self.state
 
     def draw(self, surface):        
         self.dealer.draw(surface)
