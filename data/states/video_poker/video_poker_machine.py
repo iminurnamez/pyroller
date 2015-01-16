@@ -2,24 +2,8 @@ import pygame as pg
 from ... import tools, prepare
 from ...components.labels import Blinker, Label, Button, MultiLineLabel
 from .video_poker_dealer import Dealer
+from video_poker_data import *
 
-HAND_RANKS = {'ROYAL_FLUSH'    : 0,
-             'STR_FLUSH'       : 1,
-             '4_OF_A_KIND'     : 2,
-             'FULL_HOUSE'      : 3,
-             'FLUSH'           : 4,
-             'STRAIGHT'        : 5,
-             'THREE_OF_A_KIND' : 6,
-             'TWO_PAIR'        : 7,
-             'JACKS_OR_BETTER' : 8}
-NO_HAND = 99
-PAYTABLE = [
-    (250, 50, 25, 8, 6, 4, 3, 2, 1),
-    (500, 100, 50, 16, 12, 8, 6, 4, 2),
-    (750, 150, 75, 24, 18, 12, 9, 6, 3),
-    (1000, 200, 100, 32, 24, 16, 12, 8, 4),
-    (4000, 250, 125, 40, 30, 20, 15, 10, 5),
-]
 
 class PayBoard:
     def __init__(self, topleft, size):
@@ -69,7 +53,6 @@ class PayBoard:
 
     def reset(self):
         self.show_rank_rect = False
-        self.show_bet_rect = False
         self.rank_rect.top = 0
 
     def build(self):
