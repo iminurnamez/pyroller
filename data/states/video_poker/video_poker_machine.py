@@ -171,6 +171,12 @@ class Dealer:
         self.waiting = False
         self.playing = False
 
+    def star_double_up(self):
+        self.hand = self.deck.make_hand()
+        self.held_cards = []
+        self.changing_cards = list(range(5))
+        self.hand[0].face_up = True
+
     def draw_cards(self):
         for index in range(self.hand_len):
             if index not in self.held_cards:
@@ -189,10 +195,6 @@ class Dealer:
             self.held_labels.append(label)
             x += self.card_spacing + card.rect.w
 
-
-
-    def face_up_cards(self):
-            card.face_up = True
 
 
     def toogle_held(self, index):
@@ -651,6 +653,7 @@ class Machine:
         if double_up:
             self.win *= 2
             self.help_labels = self.make_help_labels(self.pay_board.rect)
+            self.dealer.draw_cards()
             self.state = "DOUBLE UP"
         else:
             self.credits += self.win + self.bet
