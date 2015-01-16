@@ -491,6 +491,12 @@ class Machine:
                                                 char_limit=20, align="center")
             labels.append(label)
         else:
+            if not self.playing and self.win > 0:
+                text = 'you win {}'.format(self.win)
+                label = Label(self.font, self.text_size, text, self.text_color,
+                                {"centerx": rect.centerx, "top": y})
+                labels.append(label)
+
             text = 'Credits {}'.format(self.credits)
             label = Label(self.font, self.text_size, text, self.text_color,
                             {"topright": (rect.right, y)})
@@ -558,8 +564,8 @@ class Machine:
                 self.coins += aux
                 self.credits -= aux
             else:
-                self.bet += self.credits
-                self.coins += self.credits
+                self.bet = self.credits
+                self.coins = self.credits
                 self.credits = 0
             self.bet_sound.play()
             self.draw_cards()
@@ -585,6 +591,7 @@ class Machine:
         self.dealer.playing = True
         self.dealer.waiting = False
         self.double_up = False
+        self.win = 0
         if self.bet > 0:
             self.dealer.draw_cards()
             rank = self.dealer.evaluate_hand()
@@ -640,7 +647,12 @@ class Machine:
             self.double_up = True
         else:
             self.credits += self.win + self.bet
-            self.cash_out(*args)
+            # self.cash_out(*args)
+            # self.bet = 0
+            self.double_up = False
+            self.playing = False
+            self.start_waiting()
+
 
 
 
