@@ -19,6 +19,7 @@ class Dealer:
         self.text_bg_color = "darkblue"
 
         self.held_labels = []
+        self.double_up_labels = []
 
         self.text = " insert coins "
         self.no_playing_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
@@ -48,6 +49,7 @@ class Dealer:
         self.changing_cards = list(range(5))
         self.waiting = False
         self.playing = False
+        self.double_up = False
 
     def start_double_up(self):
         for index in range(self.hand_len):
@@ -69,12 +71,20 @@ class Dealer:
     def build(self):
         x = self.rect.left
         y = self.rect.top  + self.line_height
-        for card in self.hand:
+        for index, card in enumerate(self.hand):
             card.rect.left = x
             card.rect.top = y
             label = Label(self.font, self.text_size, 'held', self.text_color,
                                 {"bottom":card.rect.top, "centerx":card.rect.centerx})
             self.held_labels.append(label)
+
+            if index == 0:
+                label = Label(self.font, self.text_size, 'dealer', self.text_color,
+                                    {"bottom":card.rect.top, "centerx":card.rect.centerx})
+            else:
+                label = Label(self.font, self.text_size, 'player', self.text_color,
+                                {"bottom":card.rect.top, "centerx":card.rect.centerx})
+            self.double_up_labels.append(label)
             x += self.card_spacing + card.rect.w
 
 
@@ -200,7 +210,7 @@ class Dealer:
         if self.playing:
             for index, card in enumerate(self.hand):
                 if card.rect.collidepoint(mouse_pos):
-                    self.toogle_held(index)
+                    return index
 
     def update(self, dt):
         if self.revealing:
@@ -227,7 +237,10 @@ class Dealer:
         for card in self.hand:
             card.draw(surface)
         for index in self.held_cards:
-            self.held_labels[index].draw(surface)
+            if self.double_up:
+                self.double_up_labels[index].draw(surface)
+            else:
+                self.held_labels[index].draw(surface)
         if not self.playing:
             self.no_playing_label.draw(surface)
         elif self.waiting:

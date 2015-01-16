@@ -438,6 +438,7 @@ class Machine:
             self.help_labels = self.make_help_labels(self.pay_board.rect)
             self.dealer.start_double_up()
             self.state = "DOUBLE UP"
+            self.dealer.double_up = True
         else:
             self.credits += self.win + self.bet
             self.state = "GAME OVER"
@@ -452,7 +453,9 @@ class Machine:
     def get_event(self, event, scale):
         if event.type == pg.MOUSEBUTTONDOWN:
             mouse_pos = tools.scaled_mouse_pos(scale)
-            self.dealer.get_event(mouse_pos)
+            index = self.dealer.get_event(mouse_pos)
+            if type(index) == int:
+                self.make_held(str(index)) # Little hack
 
         self.coins_button.get_event(event)
         self.cash_button.get_event(event)
