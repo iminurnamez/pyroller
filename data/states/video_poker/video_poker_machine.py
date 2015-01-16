@@ -171,11 +171,15 @@ class Dealer:
         self.waiting = False
         self.playing = False
 
-    def star_double_up(self):
-        self.hand = self.deck.make_hand()
+    def start_double_up(self):
+        for index in range(self.hand_len):
+            self.hand[index] = self.deck.draw_card()
         self.held_cards = []
         self.changing_cards = list(range(5))
+        # first card
         self.hand[0].face_up = True
+        self.toogle_held(0)
+        self.build()
 
     def draw_cards(self):
         for index in range(self.hand_len):
@@ -210,6 +214,7 @@ class Dealer:
 
     def select_card(self, index):
         self.hand[index].face_up = True
+        self.toogle_held(index)
 
 
     def evaluate_hand(self):
@@ -647,13 +652,14 @@ class Machine:
             self.dealer.toogle_held(index)
         elif self.state == "DOUBLE UP":
             self.dealer.select_card(index)
+            self.dealer.draw_cards()
 
     def check_double_up(self, *args):
         double_up = args[0][0]
         if double_up:
             self.win *= 2
             self.help_labels = self.make_help_labels(self.pay_board.rect)
-            self.dealer.draw_cards()
+            self.dealer.start_double_up()
             self.state = "DOUBLE UP"
         else:
             self.credits += self.win + self.bet
