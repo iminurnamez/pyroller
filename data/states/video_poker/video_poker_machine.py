@@ -321,7 +321,7 @@ class Dealer:
             self.waiting_label.update(dt)
 
 
-    def draw(self, surface, dt):
+    def draw(self, surface):
         for card in self.hand:
             card.draw(surface)
         for index in self.held_cards:
@@ -431,6 +431,38 @@ class Machine:
                                                       'call': self.cash_out})
         self.cash_button = Button(rect_style, **settings)
 
+        # yes no buttons
+        self.yes_no_buttons = []
+        from_center = 125
+        settings = {"text"             : "Yes",
+                    "hover_text"       : "Yes",
+                    "font"             : self.font,
+                    "font_size"        : 80,
+                    "text_color"       : pg.Color("white"),
+                    "hover_text_color" : pg.Color("white"),
+                    "fill_color"       : pg.Color("#0000c3"),
+                    "hover_fill_color" : pg.Color("blue"),
+                    "call"             : self.check_double_up,
+                    "args"             : (True,),
+                    "bindings"         : [pg.K_y]}
+        rect_style = (0, 0, 200, 100)        
+        button = Button(rect_style, **settings)
+        button.rect.centerx = self.dealer.rect.centerx - from_center
+        button.rect.centery = self.dealer.rect.centery
+        self.yes_no_buttons.append(button)
+
+        settings.update({'text': 'No',
+                         'hover_text': 'No',
+                         'call': self.check_double_up,
+                         'args': (False,), 
+                         "bindings": [pg.K_n]})
+        rect_style = (0, 0, 200, 100)        
+        button = Button(rect_style, **settings)
+        button.rect.centerx = self.dealer.rect.centerx + from_center
+        button.rect.centery = self.dealer.rect.centery
+        self.yes_no_buttons.append(button)
+
+
 
     def make_help_labels(self, rect):
         labels = []
@@ -456,7 +488,7 @@ class Machine:
             text = "you have won: {} double up to: {}".format(self.win, self.win*2)
             label = MultiLineLabel(self.font, 35, text, self.text_color,
                              {"centerx": rect.centerx, "top": y},
-                                                char_limit=18, align="center")
+                                                char_limit=20, align="center")
             labels.append(label)
         else:
             text = 'Credits {}'.format(self.credits)
@@ -576,7 +608,6 @@ class Machine:
         if rank != NO_HAND:
             index = self.bet - 1
             self.win = PAYTABLE[index][rank]
-            # self.credits += self.win + self.bet
             self.help_labels = self.make_help_labels(self.pay_board.rect)
             self.double_up = True
         else:
@@ -601,6 +632,18 @@ class Machine:
             index = int(args[0])
             self.dealer.toogle_held(index)
 
+    def check_double_up(self, *args):
+        double_up = args[0][0]
+        if double_up:
+            self.win *= 2
+            self.help_labels = self.make_help_labels(self.pay_board.rect)
+            self.double_up = True
+        else:
+            self.credits += self.win + self.bet
+            self.cash_out(*args)
+
+
+
 
 
 
@@ -613,6 +656,9 @@ class Machine:
         self.cash_button.get_event(event)
         for button in self.buttons:
             button.get_event(event)
+        if self.double_up:
+            for button in self.yes_no_buttons:
+                button.get_event(event)
 
     def update(self, mouse_pos, dt):
         # game info labels
@@ -632,22 +678,26 @@ class Machine:
             for label in self.help_labels:
                 if isinstance(label, Blinker):
                     label.update(dt)
+            for button in self.yes_no_buttons:
+                button.update(mouse_pos)
 
         self.coins_button.update(mouse_pos)
         self.cash_button.update(mouse_pos)
         for button in self.buttons:
             button.update(mouse_pos)
 
-    def draw(self, surface, dt):
-        if self.double_up:
-            for label in self.help_labels:
-                label.draw(surface)
-        else:
-            self.pay_board.draw(surface)
-        self.dealer.draw(surface, dt)
+    def draw(self, surface):        
+        self.dealer.draw(surface)
         for label in self.info_labels:
             label.draw(surface)
         for button in self.buttons:
             button.draw(surface)
         self.coins_button.draw(surface)
         self.cash_button.draw(surface)
+        if self.double_up:
+            for label in self.help_labels:
+                label.draw(surface)
+            for button in self.yes_no_buttons:
+                button.draw(surface)
+        else:
+            self.pay_board.draw(surface)

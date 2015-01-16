@@ -41,5 +41,5 @@ class VideoPoker(tools._State):
 
     def draw(self, surface, dt):
         surface.fill(prepare.FELT_GREEN)
-        self.machine.draw(surface, dt)
+        self.machine.draw(surface)
         self.lobby_button.draw(surface)
