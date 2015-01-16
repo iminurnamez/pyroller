@@ -108,9 +108,10 @@ class Dealer:
     def compare_cards(self, index):
         val1 = self.hand[0].value
         val2 = self.hand[index].value
+        
+        if val2 == 1:
+            return True
         if val1 == 1:
-            if val2 == 1:
-                return True
             # if dealer card is an Ace and player isn't an Ace
             return False
         else:

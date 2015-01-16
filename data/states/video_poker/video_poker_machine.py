@@ -359,10 +359,11 @@ class Machine:
         if self.credits > 0:
             if self.credits >= self.coins:
                 self.bet = self.coins
-                self.credits -= self.bet
+                self.credits -= self.coins
             else:
                 self.bet = self.credits
                 self.coins = self.credits
+                self.credits = 0
         self.pay_board.update_bet_rect(self.coins)
 
     def new_game(self):
@@ -440,7 +441,7 @@ class Machine:
             self.state = "DOUBLE UP"
             self.dealer.double_up = True
         else:
-            self.credits += self.win + self.bet
+            self.credits += self.win
             self.state = "GAME OVER"
             self.start_waiting()
 
@@ -451,12 +452,6 @@ class Machine:
 
 
     def get_event(self, event, scale):
-        if event.type == pg.MOUSEBUTTONDOWN:
-            mouse_pos = tools.scaled_mouse_pos(scale)
-            index = self.dealer.get_event(mouse_pos)
-            if type(index) == int:
-                self.make_held(str(index)) # Little hack
-
         self.coins_button.get_event(event)
         self.cash_button.get_event(event)
         for button in self.buttons:
@@ -464,6 +459,14 @@ class Machine:
         if self.state == "WON":
             for button in self.yes_no_buttons:
                 button.get_event(event)
+
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if self.state == "PLAYING" or self.state == "DOUBLE UP":
+                mouse_pos = tools.scaled_mouse_pos(scale)
+                index = self.dealer.get_event(mouse_pos)
+                if type(index) == int:
+                    self.make_held(str(index)) # Little hack
+
 
 
     def update(self, mouse_pos, dt):
