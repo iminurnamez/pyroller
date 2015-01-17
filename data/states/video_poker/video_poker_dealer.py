@@ -2,7 +2,7 @@ import pygame as pg
 from ... import prepare
 from ...components.labels import Blinker, Label
 from ...components.cards import Deck
-#from video_poker_data import *
+from .video_poker_data import *
 
 class Dealer:
     def __init__(self, topleft, size):
