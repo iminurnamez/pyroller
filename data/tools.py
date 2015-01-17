@@ -33,6 +33,8 @@ class Control(object):
         self.state_name = None
         self.state = None
         self.music_handler = None
+        self.max_iterations = None
+        self.iterations = 0
 
     def setup_states(self, state_dict, start_state):
         """
@@ -137,7 +139,8 @@ class Control(object):
 
     def main(self):
         """Main loop for entire program."""
-        while not self.done:
+        self.iterations = 0
+        while not self.is_complete():
             time_delta = self.clock.tick(self.fps)
             self.event_loop()
             self.update(time_delta)
@@ -147,6 +150,14 @@ class Control(object):
                 fps = self.clock.get_fps()
                 with_fps = "{} - {:.2f} FPS".format(self.caption, fps)
                 pg.display.set_caption(with_fps)
+            self.iterations += 1
+
+    def is_complete(self):
+        """Return True if the control is complete and should stop running"""
+        if self.max_iterations is None:
+            return self.done
+        else:
+            return self.done or self.iterations >= self.max_iterations
 
 
 class _State(object):
@@ -374,6 +385,8 @@ def get_cli_args(caption, win_pos, start_size, money):
         help='run game with profiling')
     parser.add_argument('-B', '--bots', action='store_true',
         help='enable test bots')
+    parser.add_argument('-N', '--iterations', action='store', type=int,
+        help='maximum number of iterations to run for (useful with profiling option')
     args = vars(parser.parse_args())
     #check each condition
     if not args['center'] or (args['winpos'] != win_pos): #if -c or -w options
