@@ -195,7 +195,7 @@ class Bingo(statemachine.StateMachine):
         self.buttons.append(self.menu_bar)
         #
         # Debugging buttons
-        if prepare.DEBUG:
+        if prepare.DEBUG and S['show-debug-buttons']:
             self.debug_buttons.append(common.ImageOnOffButton(
                 'auto-pick', S['debug-auto-pick-position'],
                 'bingo-yellow-button', 'bingo-yellow-off-button', 'small-button',

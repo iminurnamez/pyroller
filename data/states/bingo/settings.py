@@ -276,6 +276,7 @@ SETTINGS = {
 
     #
     # Debug settings
+    'show-debug-buttons': False,
     'debug-auto-pick': False,
     'debug-restart-position': (1250, 120),
     'debug-next-ball-position': (1250, 200),
