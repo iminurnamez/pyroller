@@ -137,6 +137,7 @@ class BingoCard(common.Clickable):
     label_class = BingoLabel
     style_name = 'card-square'
     card_success_sound = 'unknown'
+    card_back = None
 
     def __init__(self, name, position, state, index):
         """Initialise the bingo card"""
@@ -174,6 +175,14 @@ class BingoCard(common.Clickable):
         self.drawables = common.DrawableGroup([
             self.squares, self.labels,
         ])
+        #
+        # The back of the card
+        if self.card_back:
+            dx, dy = S['square-back-offset']
+            self.card_back_image = common.NamedSprite(
+                'bingo-card-back', (position[0] + dx, position[1] + dy), scale=S['square-back-scale']
+            )
+            self.drawables.append(self.card_back_image)
         #
         self.card_state = S_NONE
         #

@@ -32,6 +32,8 @@ SETTINGS = {
     'square-number-font-size': 32,
     'square-number-font-color': 'white',
     'square-number-scale': 1.0,
+    'square-back-offset': (0, 70),
+    'square-back-scale': 1.0,
 
     'player-square-label-font': prepare.FONTS["Saniretro"],
     'player-square-label-font-size': 32,
