@@ -128,6 +128,7 @@ class Bingo(statemachine.StateMachine):
         self.done = True
         self.next = "LOBBYSCREEN"
         self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
+        self.casino_player.stats['cash'] = self.money_display.amount
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
