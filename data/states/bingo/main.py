@@ -38,7 +38,8 @@ class Bingo(statemachine.StateMachine):
         #
         self.ui = common.ClickableGroup()
         #
-        self.lobby_button = NeonButton((740, self.screen_rect.bottom - 150), 'Lobby', self.return_to_lobby)
+        self.lobby_button = NeonButton(S['lobby-position'], 'Lobby', self.return_to_lobby)
+        self.new_game_button = NeonButton(S['new-game-position'], 'New', lambda x: self.restart_game(None, None))
         #
         # The controls to allow selection of different numbers of cards
         self.card_selector = cardselector.CardSelector('card-selector', self)
@@ -90,11 +91,13 @@ class Bingo(statemachine.StateMachine):
         #
         self.casino_player.stats['Bingo']['games played'] += 1
         self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
+        self.money_display.set_money(self.casino_player.stats['cash'])
 
     def get_event(self, event, scale=(1,1)):
         """Check for events"""
         super(Bingo, self).get_event(event, scale)
         self.lobby_button.get_event(event)
+        self.new_game_button.get_event(event)
         #
         if event.type == pg.QUIT:
             if prepare.ARGS['straight']:
@@ -127,15 +130,18 @@ class Bingo(statemachine.StateMachine):
         self.done = True
         self.next = "LOBBYSCREEN"
         self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
+        self.casino_player.stats['cash'] = self.money_display.amount
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
         mouse_pos = tools.scaled_mouse_pos(scale, pg.mouse.get_pos())
         self.lobby_button.update(mouse_pos)
+        self.new_game_button.update(mouse_pos)
         #
         surface.fill(S['table-color'])
         #
         self.lobby_button.draw(surface)
+        self.new_game_button.draw(surface)
         self.all_cards.draw(surface)
         self.ball_machine.draw(surface)
         self.buttons.draw(surface)
@@ -167,7 +173,7 @@ class Bingo(statemachine.StateMachine):
         #
         # Display of the money the player has
         self.money_display = moneydisplay.MoneyDisplay(
-            'money-display', S['money-position'], 123, self
+            'money-display', S['money-position'], 0, self
         )
         prepare.BROADCASTER.linkEvent(events.E_SPEND_MONEY, self.spend_money)
         #
@@ -189,7 +195,7 @@ class Bingo(statemachine.StateMachine):
         self.buttons.append(self.menu_bar)
         #
         # Debugging buttons
-        if prepare.DEBUG:
+        if prepare.DEBUG and S['show-debug-buttons']:
             self.debug_buttons.append(common.ImageOnOffButton(
                 'auto-pick', S['debug-auto-pick-position'],
                 'bingo-yellow-button', 'bingo-yellow-off-button', 'small-button',

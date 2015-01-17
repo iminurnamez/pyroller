@@ -33,7 +33,11 @@ class MoneyDisplay(common.DrawableGroup, loggable.Loggable):
 
     def add_money(self, amount):
         """Add or remove money from the display"""
-        self.amount += amount
+        self.set_money(self.amount + amount)
+
+    def set_money(self, amount):
+        """Set the amount of money"""
+        self.amount = amount
         for digit, item in zip(self.get_desired_digits(), self):
             item.set_digit(digit)
 
