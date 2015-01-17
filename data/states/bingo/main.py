@@ -90,6 +90,7 @@ class Bingo(statemachine.StateMachine):
         #
         self.casino_player.stats['Bingo']['games played'] += 1
         self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
+        self.money_display.set_money(self.casino_player.stats['cash'])
 
     def get_event(self, event, scale=(1,1)):
         """Check for events"""
@@ -167,7 +168,7 @@ class Bingo(statemachine.StateMachine):
         #
         # Display of the money the player has
         self.money_display = moneydisplay.MoneyDisplay(
-            'money-display', S['money-position'], 123, self
+            'money-display', S['money-position'], 0, self
         )
         prepare.BROADCASTER.linkEvent(events.E_SPEND_MONEY, self.spend_money)
         #
