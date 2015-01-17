@@ -2,7 +2,7 @@ import pygame as pg
 from ... import prepare
 from ...components.labels import Blinker, Label
 from ...components.cards import Deck
-from video_poker_data import *
+##from video_poker_data import *
 
 class Dealer:
     def __init__(self, topleft, size):
@@ -108,7 +108,7 @@ class Dealer:
     def compare_cards(self, index):
         val1 = self.hand[0].value
         val2 = self.hand[index].value
-        
+
         if val2 == 1:
             return True
         if val1 == 1:
@@ -127,7 +127,7 @@ class Dealer:
 
         values.sort()
         suits.sort()
-        
+
         # if don't match any rank
         rank = NO_HAND
 

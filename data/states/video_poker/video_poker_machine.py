@@ -2,7 +2,7 @@ import pygame as pg
 from ... import tools, prepare
 from ...components.labels import Blinker, Label, Button, MultiLineLabel
 from .video_poker_dealer import Dealer
-from video_poker_data import *
+##from video_poker_data import *
 
 
 class PayBoard:
@@ -218,7 +218,7 @@ class Machine:
                     "call"             : self.check_double_up,
                     "args"             : (True,),
                     "bindings"         : [pg.K_y]}
-        rect_style = (0, 0, 200, 100)        
+        rect_style = (0, 0, 200, 100)
         button = Button(rect_style, **settings)
         button.rect.centerx = self.dealer.rect.centerx - from_center
         button.rect.centery = self.dealer.rect.centery
@@ -227,9 +227,9 @@ class Machine:
         settings.update({'text': 'No',
                          'hover_text': 'No',
                          'call': self.check_double_up,
-                         'args': (False,), 
+                         'args': (False,),
                          "bindings": [pg.K_n]})
-        rect_style = (0, 0, 200, 100)        
+        rect_style = (0, 0, 200, 100)
         button = Button(rect_style, **settings)
         button.rect.centerx = self.dealer.rect.centerx + from_center
         button.rect.centery = self.dealer.rect.centery
@@ -267,13 +267,13 @@ class Machine:
             if self.state == "GAME OVER":
                 if self.win > 0:
                     text = 'you win {}'.format(self.win)
-                    label = Label(self.font, self.text_size, text, 
+                    label = Label(self.font, self.text_size, text,
                                           self.text_color,
                                           {"centerx": rect.centerx, "top": y})
                     labels.append(label)
                 elif self.coins > 0:
                     text = "game over"
-                    label = Label(self.font, self.text_size, text, 
+                    label = Label(self.font, self.text_size, text,
                                           self.text_color,
                                           {"centerx": rect.centerx, "top": y})
                     labels.append(label)
@@ -334,7 +334,7 @@ class Machine:
                 self.coins = 1
                 self.credits += 4
             self.bet_sound.play()
-        self.pay_board.update_bet_rect(self.coins)        
+        self.pay_board.update_bet_rect(self.coins)
         self.buttons[-1].active = True # draw button
 
 
@@ -420,7 +420,7 @@ class Machine:
         if self.state == "PLAYING":
             self.dealer.toogle_held(index)
         elif self.state == "DOUBLE UP":
-            if index > 0: # if is not the first card 
+            if index > 0: # if is not the first card
                 win = self.dealer.select_card(index)
                 self.dealer.draw_cards()
                 if win:
@@ -499,7 +499,7 @@ class Machine:
             button.update(mouse_pos)
 
 
-    def draw(self, surface):        
+    def draw(self, surface):
         self.dealer.draw(surface)
         for label in self.info_labels:
             label.draw(surface)
