@@ -38,7 +38,8 @@ class Bingo(statemachine.StateMachine):
         #
         self.ui = common.ClickableGroup()
         #
-        self.lobby_button = NeonButton((740, self.screen_rect.bottom - 150), 'Lobby', self.return_to_lobby)
+        self.lobby_button = NeonButton(S['lobby-position'], 'Lobby', self.return_to_lobby)
+        self.new_game_button = NeonButton(S['new-game-position'], 'New', lambda x: self.restart_game(None, None))
         #
         # The controls to allow selection of different numbers of cards
         self.card_selector = cardselector.CardSelector('card-selector', self)
@@ -96,6 +97,7 @@ class Bingo(statemachine.StateMachine):
         """Check for events"""
         super(Bingo, self).get_event(event, scale)
         self.lobby_button.get_event(event)
+        self.new_game_button.get_event(event)
         #
         if event.type == pg.QUIT:
             if prepare.ARGS['straight']:
@@ -134,10 +136,12 @@ class Bingo(statemachine.StateMachine):
         """Update the main surface once per frame"""
         mouse_pos = tools.scaled_mouse_pos(scale, pg.mouse.get_pos())
         self.lobby_button.update(mouse_pos)
+        self.new_game_button.update(mouse_pos)
         #
         surface.fill(S['table-color'])
         #
         self.lobby_button.draw(surface)
+        self.new_game_button.draw(surface)
         self.all_cards.draw(surface)
         self.ball_machine.draw(surface)
         self.buttons.draw(surface)

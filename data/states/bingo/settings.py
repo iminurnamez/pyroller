@@ -261,13 +261,18 @@ SETTINGS = {
     'next-chip-font-color': 'black',
     'next-chip-size': (180, 45),
     'next-chip-scale': 1.7,
-    'next-chip-position': (1260, 930),
+    'next-chip-position': (860, 924),
     'next-chip-delay': 2,
 
     #
     # Menu bar
     'menu-bar-position': (1400 / 2, 50),
     'menu-bar-scale': 1.55,
+
+    #
+    # Lobby etc button
+    'lobby-position': (1050, 928),
+    'new-game-position': (1050, 820),
 
     #
     # Debug settings
