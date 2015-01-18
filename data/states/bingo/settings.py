@@ -283,7 +283,7 @@ SETTINGS = {
     'bonus-flash-repeat': 10,
     'bonus-flash-on': 0.02,
     'bonus-flash-off': 0.003,
-    'bonus-charge-delay': 0.1,
+    'bonus-charge-delay': 0.02,
 
     #
     # Debug settings
