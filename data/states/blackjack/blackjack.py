@@ -70,7 +70,7 @@ class Blackjack(tools._State):
                                              self.screen_rect.centery+30)
         pos = (self.screen_rect.right-(NeonButton.width+side_margin),
                self.screen_rect.bottom-(NeonButton.height+15))
-        NeonButton(pos, "Lobby", self.back_to_lobby, None, self.nav_buttons)
+        NeonButton(pos, "Lobby", self.back_to_lobby, None, self.nav_buttons, bindings=[pg.K_ESCAPE])
         self.buttons = ButtonGroup(self.player_buttons, self.nav_buttons)
         self.buttons.add(self.deal_button)
 
@@ -352,8 +352,6 @@ class Blackjack(tools._State):
                              "should be broken up into shorter lines aligned "
                              "to the left.")
                 self.window = AdvisorWindow((700, 500), test_text)
-            elif event.key == pg.K_ESCAPE:
-                self.leave_state()
             elif event.key == pg.K_SPACE:
                 if self.bot:
                     self.bot.active = not self.bot.active

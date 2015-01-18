@@ -22,11 +22,11 @@ class BlackjackBot(object):
                         6: 16,
                         7: 16,
                         8: 16,
-                        9: 16,
-                        10: 16,
-                        11: 16,
-                        12: 16,
-                        13: 16}
+                        9: 17,
+                        10: 17,
+                        11: 17,
+                        12: 17,
+                        13: 17}
         
         self.tick_count = 0
         self.tick_delay = 10
@@ -42,12 +42,16 @@ class BlackjackBot(object):
         pass
         
     def player_turn(self):
-        best_score = self.game.current_player_hand.best_score()
+        hand = self.game.current_player_hand
+        best_score = hand.best_score()
         player_total = self.game.player.chip_pile.get_chip_total()
         bet_amount = self.game.current_player_hand.bet.get_chip_total()
         showing = sum([x.value for x in self.game.dealer.hand.cards if x.face_up])
         if len(self.game.moving_cards) < 1:
             
+            if all([x.value == 1 for x in hand.cards]):
+                if player_total >= bet_amount:
+                    self.game.split_hand()
             if best_score == 11 and showing not in (10, 11, 12, 13, 1):
                 if player_total >= bet_amount:
                     self.game.double_down()
