@@ -57,23 +57,23 @@ class Bet(object):
     @property
     def bet(self):
         return self._bet
-        
+
     @bet.setter
     def bet(self, value):
         self._bet = value
-        
+
     @property
     def is_paid(self):
         return self._is_paid
-        
+
     @is_paid.setter
     def is_paid(self, value):
         self._is_paid = value
-        
+
     @property
     def winnings(self):
         return self._winnings
-        
+
     @winnings.setter
     def winnings(self, value):
         self._winnings = value
@@ -235,10 +235,10 @@ class PlayMax(object):
         self.card = card
         self.turns = 16
         self.active = False
-    
+
     def keep_playing(self):
         return self.turns >= 0
-    
+
     def update(self):
         log.debug("turns={0}".format(self.turns))
         self.active = True
@@ -248,12 +248,12 @@ class PlayMax(object):
         self.card.current_pick = numbers
         for number in numbers:
             self.card.toggle_hit(number)
-            
+
         self.turns -= 1
         if self.turns <= 0:
             self.active = False
             self.turns = 16
-            
+
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
         self.label.draw(surface)
@@ -348,7 +348,7 @@ class KenoSpot(object):
 
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
-        
+
         if self.img:
             if self.hit:
                 surface.blit(self.img, self.rect)
@@ -372,7 +372,7 @@ class KenoCard(object):
             if spot.owned:
                 count+=1
         return count
-        
+
     @property
     def hit_count(self):
         count = 0
@@ -394,12 +394,12 @@ class KenoCard(object):
             for col in range(1,11):
                 text = str(col+(10*row))
                 label = Label(self.font, font_size, text, text_color, rect_attrib)
-                
+
                 if self.sheet:
                     spot = KenoSpot(x, y, 64, 64, label, self.sheet[int(text)-1])
                 else:
                     spot = KenoSpot(x, y, 64, 64, label)
-                    
+
                 self.spots.extend([spot])
                 x += 70
             y += 70
@@ -439,8 +439,8 @@ class KenoCard(object):
             img = self.spots[ball].img
             surface.blit(img, pg.Rect(x_pos, y_pos, size, size))
             x_pos += size
-                
-        
+
+
         for spot in self.spots:
             spot.draw(surface)
 
@@ -463,7 +463,7 @@ class Keno(tools._State):
         NeonButton((w, h), "Lobby", self.back_to_lobby, None, self.buttons)
 
         ball_path = os.path.join('resources', 'keno', 'balls', '64x64', 'sheet.png')
-        ball_sheet = pg.image.load(ball_path)
+        ball_sheet = pg.image.load(ball_path).convert_alpha()
         self.balls = tools.strip_from_sheet(ball_sheet, (0,0), (64,64), 10, 8)
 
         self.keno_card = KenoCard(self.balls)
@@ -471,7 +471,7 @@ class Keno(tools._State):
 
         self.quick_pick = QuickPick(self.keno_card)
         self.play = Play(self.keno_card)
-        
+
         self.play_max = PlayMax(self.keno_card)
 
         self.prev_spot_count = 0
@@ -482,7 +482,7 @@ class Keno(tools._State):
         self.round_history = RoundHistory(self.keno_card)
 
         self.alert = None
-        
+
         self.gui_widgets = {
             'title'         : self.mock_label,
             'card'          : self.keno_card,
@@ -556,7 +556,7 @@ class Keno(tools._State):
 
                 self.play.update()
                 self.play_game()
-                
+
             if self.play_max.rect.collidepoint(event_pos):
                 self.round_history.clear()
                 self.bet_action.winnings = 0
@@ -609,12 +609,12 @@ class Keno(tools._State):
         since pygame was initialized. dt is the number of milliseconds since
         the last frame.
         """
-            
+
         if self.play_max.active:
             self.play_max.update()
             self.play_game()
             #pg.time.wait(5000)
-        
+
         total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
 
         self.gui_widgets['balance'] = Label(self.font, 48, total_text, "gold3",
@@ -623,11 +623,11 @@ class Keno(tools._State):
         bet_text = "Bet: ${}".format(self.bet_action.bet)
         self.gui_widgets['bet'] = Label(self.font, 48, bet_text, "gold3",
                                {"topleft": (24, 760+48)})
-                               
+
         won_text = "Won: ${}".format(self.bet_action.winnings)
         self.gui_widgets['won'] = Label(self.font, 48, won_text, "gold3",
                                {"topleft": (24, 760+48+48)})
-                               
+
         spot_count = self.keno_card.spot_count
         spot_text = "Spot: {}".format(spot_count)
         self.gui_widgets['spot'] = Label(self.font, 48, spot_text, "gold3",
