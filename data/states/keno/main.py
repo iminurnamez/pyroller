@@ -1,3 +1,4 @@
+import os
 import random
 import pygame as pg
 from ...components.loggable import getLogger
@@ -308,11 +309,12 @@ class KenoSpot(object):
     }
 
     """A spot on a Keno card."""
-    def __init__(self, left, top, width, height, label):
+    def __init__(self, left, top, width, height, label, img=None):
         self.rect = pg.Rect(left, top, width, height)
         label.rect.center = self.rect.center
         self.label = label
         self.color = self.COLORS['open']
+        self.img = img
 
         self.owned = False
         self.hit   = False
@@ -343,11 +345,19 @@ class KenoSpot(object):
 
     def draw(self, surface):
         pg.draw.rect(surface, pg.Color(self.color), self.rect, 0)
-        self.label.draw(surface)
+        
+        if self.img:
+            if self.hit:
+                surface.blit(self.img, self.rect)
+            else:
+                self.label.draw(surface)
+        else:
+            self.label.draw(surface)
 
 class KenoCard(object):
-    def __init__(self):
+    def __init__(self, sprite_sheet=None):
         self.font = prepare.FONTS["Saniretro"]
+        self.sheet = sprite_sheet
         self.spots = []
         self.build()
 
@@ -380,7 +390,12 @@ class KenoCard(object):
             for col in range(1,11):
                 text = str(col+(10*row))
                 label = Label(self.font, font_size, text, text_color, rect_attrib)
-                spot = KenoSpot(x, y, 64, 64, label)
+                
+                if self.sheet:
+                    spot = KenoSpot(x, y, 64, 64, label, self.sheet[int(text)-1])
+                else:
+                    spot = KenoSpot(x, y, 64, 64, label)
+                    
                 self.spots.extend([spot])
                 x += 70
             y += 70
@@ -434,7 +449,12 @@ class Keno(tools._State):
         self.buttons = ButtonGroup()
         NeonButton((w, h), "Lobby", self.back_to_lobby, None, self.buttons)
 
-        self.keno_card = KenoCard()
+        ball_path = os.path.join('resources', 'keno', 'balls', '64x64', 'sheet.png')
+        ball_sheet = pg.image.load(ball_path)
+        self.balls = tools.strip_from_sheet(ball_sheet, (0,0), (64,64), 10, 8)
+
+        self.keno_card = KenoCard(self.balls)
+        #self.keno_card = KenoCard() -- no ball graphics
 
         self.quick_pick = QuickPick(self.keno_card)
         self.play = Play(self.keno_card)
