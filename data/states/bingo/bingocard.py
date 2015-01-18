@@ -352,7 +352,6 @@ class BingoCard(common.Clickable):
 
     def set_dirty(self):
         """Mark the card as dirty"""
-        self.log.debug('Setting card {0} to dirty'.format(self.name))
         self.cache = None
 
 
