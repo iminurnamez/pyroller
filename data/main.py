@@ -20,6 +20,7 @@ def main():
     args = (prepare.CAPTION, prepare.RENDER_SIZE, prepare.RESOLUTIONS)
     run_it = tools.Control(*args)
     run_it.show_fps = prepare.ARGS["FPS"]
+    run_it.max_iterations = prepare.ARGS["iterations"]
     run_it.music_handler = music_handler.MusicHandler()
     state_dict = {"SNAKESPLASH": snake_splash.SnakeSplash(),
                   "TITLESCREEN" : title_screen.TitleScreen(),

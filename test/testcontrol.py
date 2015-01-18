@@ -53,6 +53,7 @@ class TestControl(unittest.TestCase):
         # Flags for detecting calls
         self.called = {}
         self.call_arguments = {}
+        self.call_times = {}
 
     def tearDown(self):
         """Tear down the tests"""
@@ -70,6 +71,7 @@ class TestControl(unittest.TestCase):
         def called(*args, **kw):
             self.called[name] = True
             self.call_arguments[name] = (args, kw)
+            self.call_times[name] = self.call_times.get(name, 0) + 1
         #
         return called
 
@@ -496,6 +498,25 @@ class TestControl(unittest.TestCase):
         #
         self.assertTrue(self.called['pgupdate'])
 
+    def testCanExitMainAfterNumberOfIterations(self):
+        """should be able to quit the main loop after a number of iterations"""
+        #
+        # Test base behaviour that continues to run for ever
+        with controllable_main_loop(self, 'pgupdate-1', 10):
+            self.c.main()
+        #
+        # Should have called the update 10 times
+        self.assertEqual(10, self.call_times['pgupdate-1'])
+        #
+        # Now try again but tell the control to only run for a few iterations
+        # and check that we called the exact amount of times
+        self.c.max_iterations = 5
+        self.c.done = False
+        with controllable_main_loop(self, 'pgupdate-2', 10):
+            self.c.main()
+        #
+        self.assertEqual(5, self.call_times['pgupdate-2'])
+
 
 class SimpleControl(tools.Control):
     """A simple control to use for testing"""
@@ -573,6 +594,9 @@ def mock_pygame_events():
         pg.event, pg.key = old_pg
 
 
+class RanTooLongException(Exception): """The main loop ran for too long"""
+
+
 @contextlib.contextmanager
 def controllable_main_loop(test_class, called_name, loops, after_call=None):
     """Context manager to allow the main loop to be controlled"""
@@ -587,6 +611,7 @@ def controllable_main_loop(test_class, called_name, loops, after_call=None):
     #
     def new_update():
         test_class.called[called_name] = True
+        test_class.call_times[called_name] = test_class.call_times.get(called_name, 0) + 1
         control._update_count += 1
         if control._update_count == loops:
             # This should break out of the main loop ...
@@ -595,7 +620,7 @@ def controllable_main_loop(test_class, called_name, loops, after_call=None):
             # But if the main loop is badly broken then we will be stuck
             # in which case we raise an exception to make sure the test doesn't
             # hang completely
-            raise Exception('Main loop did not exit properly')
+            raise RanTooLongException('Main loop did not exit properly')
         #
         if after_call:
             after_call()
