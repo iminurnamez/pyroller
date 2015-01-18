@@ -202,7 +202,7 @@ class BingoCard(common.Clickable):
         self.is_active = True
         #
         self.cache = None
-        self.w, self.h = 300, 700
+        self.w, self.h = S['square-cache-size']
         self.cached_rect = pg.Rect(position[0] - self.w / 2, position[1] - self.h / 2, self.w, self.h)
 
     def set_new_numbers(self, numbers=None):
