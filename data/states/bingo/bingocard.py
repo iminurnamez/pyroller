@@ -78,6 +78,16 @@ class BingoLabel(common.Clickable):
         """Reset the label"""
         self.highlighted_state = S_NONE
 
+    def handle_mouse_enter(self):
+        """Handle when the mouse enters"""
+        if self.show_mouse_over:
+            self.card.set_dirty()
+
+    def handle_mouse_leave(self):
+        """Handle when the mouse enters"""
+        if self.show_mouse_over:
+            self.card.set_dirty()
+
 
 class BingoSquare(BingoLabel):
     """A square on a bingo card"""
@@ -342,7 +352,7 @@ class BingoCard(common.Clickable):
 
     def set_dirty(self):
         """Mark the card as dirty"""
-        self.log.debug('Setting card {0} to dirty'.format(self))
+        self.log.debug('Setting card {0} to dirty'.format(self.name))
         self.cache = None
 
 

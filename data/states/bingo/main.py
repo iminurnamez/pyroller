@@ -427,8 +427,11 @@ class Bingo(statemachine.StateMachine):
         while True:
             for state, delay in S['card-focus-flash-timing']:
                 for card in self.all_cards:
-                    for square in card.potential_winning_squares:
-                        square.is_focused = state
+                    potential_squares = card.potential_winning_squares
+                    if potential_squares:
+                        for square in potential_squares:
+                            square.is_focused = state
+                        card.set_dirty()
                 yield delay * 1000
 
     def play_sound(self, name):

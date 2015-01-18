@@ -137,7 +137,6 @@ class PlayerCard(bingocard.BingoCard):
         prepare.BROADCASTER.processEvent((events.E_SPEND_MONEY, multiplier * self.value))
 
 
-
 class PlayerCardCollection(bingocard.CardCollection):
     """A collection of player cards"""
 
