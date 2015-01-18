@@ -2,7 +2,7 @@ import pygame as pg
 from ... import tools, prepare
 from ...components.labels import Blinker, Label, Button, MultiLineLabel
 from .video_poker_dealer import Dealer
-from video_poker_data import *
+from .video_poker_data import *
 
 
 class PayBoard:
