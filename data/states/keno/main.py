@@ -245,6 +245,7 @@ class PlayMax(object):
         numbers = pick_numbers(20)
 
         self.card.ready_play()
+        self.card.current_pick = numbers
         for number in numbers:
             self.card.toggle_hit(number)
             
@@ -269,8 +270,10 @@ class Play(object):
 
     def update(self):
         numbers = pick_numbers(20)
+        log.debug("pick: {}".format(numbers))
 
         self.card.ready_play()
+        self.card.current_pick = numbers
         for number in numbers:
             self.card.toggle_hit(number)
 
@@ -359,6 +362,7 @@ class KenoCard(object):
         self.font = prepare.FONTS["Saniretro"]
         self.sheet = sprite_sheet
         self.spots = []
+        self.current_pick = []
         self.build()
 
     @property
@@ -428,6 +432,15 @@ class KenoCard(object):
                     spot.toggle_owned()
 
     def draw(self, surface):
+        x_pos = 64
+        y_pos = 136
+        size  = 64
+        for ball in self.current_pick:
+            img = self.spots[ball].img
+            surface.blit(img, pg.Rect(x_pos, y_pos, size, size))
+            x_pos += size
+                
+        
         for spot in self.spots:
             spot.draw(surface)
 
@@ -439,7 +452,7 @@ class Keno(tools._State):
         self.game_started = False
         self.font = prepare.FONTS["Saniretro"]
 
-        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(180,140)})
+        self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(672,102)})
 
         b_width = 360
         b_height = 90
@@ -605,20 +618,20 @@ class Keno(tools._State):
         total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
 
         self.gui_widgets['balance'] = Label(self.font, 48, total_text, "gold3",
-                               {"topleft": (1036, 760)})
+                               {"topleft": (24, 760)})
 
         bet_text = "Bet: ${}".format(self.bet_action.bet)
         self.gui_widgets['bet'] = Label(self.font, 48, bet_text, "gold3",
-                               {"topleft": (24, 760)})
+                               {"topleft": (24, 760+48)})
                                
         won_text = "Won: ${}".format(self.bet_action.winnings)
         self.gui_widgets['won'] = Label(self.font, 48, won_text, "gold3",
-                               {"topleft": (24, 760+48)})
+                               {"topleft": (24, 760+48+48)})
                                
         spot_count = self.keno_card.spot_count
         spot_text = "Spot: {}".format(spot_count)
         self.gui_widgets['spot'] = Label(self.font, 48, spot_text, "gold3",
-                               {"topleft": (1045, 134)})
+                               {"topleft": (1036, 760)})
 
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
