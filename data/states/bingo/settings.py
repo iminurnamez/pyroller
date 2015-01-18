@@ -267,13 +267,23 @@ SETTINGS = {
 
     #
     # Menu bar
-    'menu-bar-position': (1400 / 2, 50),
+    'menu-bar-position': (1400 / 2, 770),
     'menu-bar-scale': 1.55,
 
     #
     # Lobby etc button
     'lobby-position': (1050, 928),
     'new-game-position': (1050, 820),
+
+    #
+    # Bonus light properties
+    'bonus-light-position': (10, 705),
+    'bonus-light-offset': (0, -38),
+    'bonus-light-number': 10,
+    'bonus-flash-repeat': 10,
+    'bonus-flash-on': 0.02,
+    'bonus-flash-off': 0.003,
+    'bonus-charge-delay': 0.1,
 
     #
     # Debug settings

@@ -12,7 +12,6 @@ from ...components import common
 from ...prepare import BROADCASTER as B
 
 from . import statemachine
-from . import states
 from . import playercard
 from . import dealercard
 from . import patterns
@@ -21,6 +20,7 @@ from . import cardselector
 from . import events
 from . import bingocard
 from . import moneydisplay
+from . import bonusdisplay
 from .settings import SETTINGS as S
 
 
@@ -147,7 +147,7 @@ class Bingo(statemachine.StateMachine):
         self.buttons.draw(surface)
         self.card_selector.draw(surface)
         self.money_display.draw(surface)
-        #
+        self.bonus_display.draw(surface)
 
     def initUI(self):
         """Initialise the UI display"""
@@ -193,6 +193,10 @@ class Bingo(statemachine.StateMachine):
             'bingo-menu-bar', S['menu-bar-position'], scale=S['menu-bar-scale']
         )
         self.buttons.append(self.menu_bar)
+        #
+        self.bonus_display = bonusdisplay.BonusDisplay(
+            'bonus-display', S['bonus-light-position'], self)
+
         #
         # Debugging buttons
         if prepare.DEBUG and S['show-debug-buttons']:
@@ -394,6 +398,8 @@ class Bingo(statemachine.StateMachine):
         """The player picked a square"""
         if not square.card.is_active:
             return
+        #
+        self.bonus_display.add_bonus()
         #
         # Check to see if we created a new potentially winning square
         called_squares = list(square.card.called_squares)
