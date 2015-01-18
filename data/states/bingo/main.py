@@ -363,9 +363,11 @@ class Bingo(statemachine.StateMachine):
         for squares in pattern.get_matches(card):
             for square in squares:
                 square.highlighted_state = bingocard.S_GOOD
+            card.set_dirty()
             yield 100
             for square in squares:
                 square.highlighted_state = bingocard.S_NONE
+            card.set_dirty()
             yield 10
         #
         if not one_shot:

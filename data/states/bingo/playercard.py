@@ -1,5 +1,6 @@
 """Represents the player's bingo card"""
 
+import pygame as pg
 
 from ...components import common
 from ... import prepare
@@ -44,6 +45,7 @@ class PlayerCard(bingocard.BingoCard):
     state_names = ['bingo-value-off', 'bingo-value-win', 'bingo-value-lose']
     card_success_sound = 'bingo-card-success'
     card_back = 'bingo-card-back'
+    use_cache = True
 
     def __init__(self, name, position, state, index):
         """Initialise the card"""
@@ -102,6 +104,7 @@ class PlayerCard(bingocard.BingoCard):
         """Re-enable the double down button"""
         yield delay
         self.double_down_button.state = True
+        self.set_dirty()
 
     def reset(self):
         """Reset the card"""
@@ -118,11 +121,13 @@ class PlayerCard(bingocard.BingoCard):
         """Set the card state and flash it a bit"""
         self.state.add_generator('flash-card-state', self.flash_card_state(self.card_state, state))
         self.double_down_button.state = False
+        self.set_dirty()
 
     def flash_card_state(self, old_state, new_state):
         """Flash the card state"""
         for state, delay in S['card-winning-flash-timing']:
             self.card_state = new_state if state else old_state
+            self.set_dirty()
             yield delay * 1000
         #
         super(PlayerCard, self).set_card_state(new_state)
@@ -130,6 +135,7 @@ class PlayerCard(bingocard.BingoCard):
         # Win money if we won
         multiplier = [0, 1, -1][new_state]
         prepare.BROADCASTER.processEvent((events.E_SPEND_MONEY, multiplier * self.value))
+
 
 
 class PlayerCardCollection(bingocard.CardCollection):
