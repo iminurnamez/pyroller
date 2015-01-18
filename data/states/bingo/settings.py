@@ -190,7 +190,7 @@ SETTINGS = {
 
     #
     # Card selection
-    'card-selection-default': 2,
+    'card-selection-default': 4,
     'card-selection': [
         ('One', 1, (-70, -70)),
         ('Two', 2, (+70, -70)),
