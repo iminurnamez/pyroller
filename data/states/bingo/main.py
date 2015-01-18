@@ -21,6 +21,7 @@ from . import events
 from . import bingocard
 from . import moneydisplay
 from . import bonusdisplay
+from . import bonusbuttons
 from .settings import SETTINGS as S
 
 
@@ -109,6 +110,7 @@ class Bingo(statemachine.StateMachine):
         elif event.type in (pg.MOUSEBUTTONDOWN, pg.MOUSEMOTION):
             #
             self.ui.process_events(event, scale)
+            self.bonus_buttons.process_events(event, scale)
             #
             pos = tools.scaled_mouse_pos(scale, event.pos)
         elif event.type == pg.KEYUP:
@@ -148,6 +150,7 @@ class Bingo(statemachine.StateMachine):
         self.card_selector.draw(surface)
         self.money_display.draw(surface)
         self.bonus_display.draw(surface)
+        self.bonus_buttons.draw(surface)
 
     def initUI(self):
         """Initialise the UI display"""
@@ -196,7 +199,14 @@ class Bingo(statemachine.StateMachine):
         #
         self.bonus_display = bonusdisplay.BonusDisplay(
             'bonus-display', S['bonus-light-position'], self)
-
+        #
+        self.bonus_buttons = bonusbuttons.BonusButtonsDisplay(
+            'bonus-buttons', S['bonus-buttons-position'], self
+        )
+        self.bonus_display.linkEvent(
+            events.E_BONUS_REACHED,
+            lambda o, a: self.bonus_buttons.pick_new_button()
+        )
         #
         # Debugging buttons
         if prepare.DEBUG and S['show-debug-buttons']:
@@ -466,10 +476,11 @@ class Bingo(statemachine.StateMachine):
             for item in self.cards:
                 self.add_generator('flash-labels', item.flash_labels())
 
-    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback):
+    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback, speed_up=None):
         """Randomly highlight buttons in a group and then call the callback when complete"""
         last_chosen = None
-        source_button.state = True
+        if source_button:
+            source_button.state = True
         #
         # Turn all buttons off
         for button in buttons:
@@ -496,9 +507,10 @@ class Bingo(statemachine.StateMachine):
                 yield delay
             #
             # Shortern delay
-            delay *= S['randomize-button-speed-up']
+            delay *= speed_up if speed_up else S['randomize-button-speed-up']
         #
-        source_button.state = False
+        if source_button:
+            source_button.state = False
         #
         final_callback(chosen)
 

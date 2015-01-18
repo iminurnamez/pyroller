@@ -89,6 +89,7 @@ class BonusDisplay(common.Drawable, loggable.Loggable, events.EventAware):
         #
         # When we get to the end then recharge the display
         if self.number >= self.max_number:
+            self.processEvent((event_types.E_BONUS_REACHED, self))
             self.state.play_sound('bingo-tada')
             self.charging = S_CHARGING_DOWN
             for i in range(self.max_number, 0, -1):
@@ -102,4 +103,3 @@ class BonusDisplay(common.Drawable, loggable.Loggable, events.EventAware):
             #
             self.charging = S_NONE
             self.number = 0
-            self.processEvent((event_types.E_BONUS_REACHED, self))

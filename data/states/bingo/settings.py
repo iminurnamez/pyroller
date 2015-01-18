@@ -286,6 +286,24 @@ SETTINGS = {
     'bonus-charge-delay': 0.02,
 
     #
+    # Bonus buttons
+    'bonus-buttons-position': (1370, 705),
+    'bonus-buttons-offsets': (0, -76),
+    'bonus-buttons': [
+        ('Pause', None),
+        ('Slow', None),
+        ('Pick', None),
+        ('x2', None),
+        ('Win!', None),
+    ],
+    'bonus-button-text-font': prepare.FONTS["Saniretro"],
+    'bonus-button-text-font-size': 24,
+    'bonus-button-text-font-color': 'black',
+    'bonus-randomize-button-number': 45,
+    'bonus-randomize-button-delay': 16,
+    'bonus-randomize-button-speed-up': 1.06,
+
+    #
     # Debug settings
     'show-debug-buttons': False,
     'debug-auto-pick': False,
