@@ -43,6 +43,7 @@ class PlayerCard(bingocard.BingoCard):
     style_name = 'player-card-square'
     state_names = ['bingo-value-off', 'bingo-value-win', 'bingo-value-lose']
     card_success_sound = 'bingo-card-success'
+    card_back = 'bingo-card-back'
 
     def __init__(self, name, position, state, index):
         """Initialise the card"""

@@ -32,6 +32,8 @@ SETTINGS = {
     'square-number-font-size': 32,
     'square-number-font-color': 'white',
     'square-number-scale': 1.0,
+    'square-back-offset': (0, 70),
+    'square-back-scale': 1.0,
 
     'player-square-label-font': prepare.FONTS["Saniretro"],
     'player-square-label-font-size': 32,
@@ -261,7 +263,7 @@ SETTINGS = {
     'next-chip-font-color': 'black',
     'next-chip-size': (180, 45),
     'next-chip-scale': 1.7,
-    'next-chip-position': (1260, 930),
+    'next-chip-position': (860, 924),
     'next-chip-delay': 2,
 
     #
@@ -270,7 +272,13 @@ SETTINGS = {
     'menu-bar-scale': 1.55,
 
     #
+    # Lobby etc button
+    'lobby-position': (1050, 928),
+    'new-game-position': (1050, 820),
+
+    #
     # Debug settings
+    'show-debug-buttons': False,
     'debug-auto-pick': False,
     'debug-restart-position': (1250, 120),
     'debug-next-ball-position': (1250, 200),
