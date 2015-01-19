@@ -12,13 +12,17 @@ def get_rect(data):
 
 def load_layout(state, filename):
     def handle_player_hand(data):
-        deck = Deck(get_rect(data), stacking=(12, 200))
+        rect = get_rect(data)
+        rect.x += 120
+        deck = Deck(rect, stacking=(140, 200))
         deck.auto_arrange = False
         state.player_hand = deck
         state.groups.append(deck)
 
     def handle_dealer_hand(data):
-        deck = Deck(get_rect(data), stacking=(12, 200))
+        rect = get_rect(data)
+        rect.x += 120
+        deck = Deck(rect, stacking=(140, 200))
         deck.auto_arrange = False
         state.dealer_hand = deck
         state.groups.append(deck)

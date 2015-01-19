@@ -163,14 +163,14 @@ class Card(Sprite):
 
     def __init__(self, value, suit, rect, face_up=False):
         super(Card, self).__init__()
-        self._rotation = 0
-        self._needs_update = True
         self.value = value
         self.suit = suit
         self.rect = pygame.Rect(rect)
         if self.face_cache is None:
             self.initialize_cache(self.rect.size)
         self._face_up = face_up
+        self._rotation = 0 if self._face_up else 180
+        self._needs_update = True
         self.front_face = self.get_front(self.name, self.rect.size)
         self.back_face = self.get_back(self.rect.size)
         self.update_image()
@@ -183,9 +183,9 @@ class Card(Sprite):
 
     def update_image(self):
         image = self.front_face if self._face_up else self.back_face
-        if self.rotation:
+        if self._rotation:
             width, height = image.get_size()
-            value = 180 * cos(two_pi * self.rotation / 180.) + 180
+            value = 180 * cos(two_pi * self._rotation / 180.) + 180
             width *= value / 360.0
             width = int(round(max(1, abs(width)), 0))
             image = smoothscale(image, (width, int(height)))
@@ -247,6 +247,7 @@ class Card(Sprite):
     def face_up(self, value):
         face_up = bool(value)
         if not self._face_up == face_up:
+            self.rotation = 0 if face_up else 180
             self._face_up = face_up
             self._needs_update = True
             self.update_image()
@@ -372,7 +373,7 @@ class Stacker(SpriteGroup):
                     y += oy
                 else:
                     y = ry
-                    x += ox + sprite.rect.width
+                    x += ox
 
         return x, y
 

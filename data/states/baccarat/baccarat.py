@@ -9,10 +9,11 @@ lose bet amount if bailing
 from collections import OrderedDict
 from random import choice
 from itertools import chain
+from functools import partial
 import pygame as pg
-from ... import tools, prepare
-from . import layout
 from .ui import *
+from . import layout
+from ... import tools, prepare
 from ...components.animation import Task, Animation
 from ...components.angles import get_midpoint
 import json
@@ -95,7 +96,7 @@ class Baccarat(tools._State):
             self.casino_player.stats['baccarat'] = stats
         self.stats = stats
 
-        # declared here to appease pycharm's syntax checking
+        # declared here to appease pycharm's syntax checking.
         # will be filled in when configuration is loaded
         self.betting_areas = dict()
         self.dealer_hand = None
@@ -103,6 +104,8 @@ class Baccarat(tools._State):
         self.player_chips = None
         self.shoe = None
 
+        names = ["cardshove{}".format(x) for x in (1, 3, 4)]
+        self.shove_sounds = [prepare.SFX[name] for name in names]
         names = ["cardplace{}".format(x) for x in (2, 3, 4)]
         self.deal_sounds = [prepare.SFX[name] for name in names]
         names = ["chipsstack{}".format(x) for x in (3, 5, 6)]
@@ -196,9 +199,23 @@ class Baccarat(tools._State):
         :param hand: Deck instance
         :return: Card instance, Animation instance
         """
-        choice(self.deal_sounds).play()
+        def flip(card):
+            transition = 'out_quint'
+            ani0 = Animation(rotation=0, duration=400, transition=transition)
+            ani0.start(card)
+            fx = card.rect.centerx - card.rect.width
+            ani1 = Animation(centerx=fx, duration=390, transition=transition)
+            ani1.start(card.rect)
+            self.animations.add(ani0, ani1)
+
+        sound = choice(self.deal_sounds)
+        sound.set_volume(1)
+        self.delay(100, sound.play)
+        sound = choice(self.shove_sounds)
+        sound.set_volume(.20)
+        sound.play()
         card = self.shoe.pop()
-        card.face_up = self.options['dealt_face_up']
+        card.face_up = False
         originals = {sprite: sprite.rect.topleft for sprite in hand.sprites()}
         originals[card] = card.rect.topleft
         hand.add(card)
@@ -206,11 +223,13 @@ class Baccarat(tools._State):
         fx, fy = card.rect.topleft
         for sprite in hand.sprites():
             sprite.rect.topleft = originals[sprite]
-        ani = Animation(x=fx, y=fy, duration=400.,
+        ani0 = Animation(x=fx, y=fy, duration=400.,
                         transition='in_out_quint', round_values=True)
-        ani.start(card.rect)
-        self.animations.add(ani)
-        return card, ani
+        ani0.start(card.rect)
+        if self.options['dealt_face_up']:
+            ani0.callback = partial(flip, card)
+        self.animations.add(ani0)
+        return card, ani0
 
     def place_bet(self, result, owner, amount):
         """Shortcut to place a bet
@@ -241,9 +260,9 @@ class Baccarat(tools._State):
     def deal_cards(self):
         self.stats['Hands Dealt'] += 1
         self.delay(0, self.deal_card, (self.player_hand,))
-        self.delay(200, self.deal_card, (self.player_hand,))
-        self.delay(600, self.deal_card, (self.dealer_hand,))
-        task = self.delay(800, self.deal_card, (self.dealer_hand,))
+        self.delay(700, self.deal_card, (self.player_hand,))
+        self.delay(2000, self.deal_card, (self.dealer_hand,))
+        task = self.delay(2700, self.deal_card, (self.dealer_hand,))
         task.chain(Task(self.count_naturals))
 
     def count_naturals(self):
@@ -358,23 +377,23 @@ class Baccarat(tools._State):
         msg = points_message(player_result)
         text = TextSprite(msg.format(player_result), self.font)
         text.rect.midtop = self.player_hand.bounding_rect.midbottom
-        text.rect.y += 50
+        text.rect.y += 35
         text.kill_me_on_clear = True
         self.hud.add(text)
 
         msg = points_message(dealer_result)
         text = TextSprite(msg.format(dealer_result), self.font)
         text.rect.midtop = self.dealer_hand.bounding_rect.midbottom
-        text.rect.y += 50
+        text.rect.y += 35
         text.kill_me_on_clear = True
         self.hud.add(text)
 
         text = OutlineTextSprite(status_text, self.large_font)
         if winner:
             midtop = winner.bounding_rect.midbottom
-        else:
-            midtop = get_midpoint(self.player_hand.rect.midbottom,
-                                  self.dealer_hand.rect.midbottom)
+        else:  # tie
+            midtop = get_midpoint(self.player_hand.bounding_rect.midbottom,
+                                  self.dealer_hand.bounding_rect.midbottom)
         text.rect.midtop = midtop
         text.rect.y += 170
         text.kill_me_on_clear = True
@@ -384,7 +403,9 @@ class Baccarat(tools._State):
 
     def clear_table(self):
         def clear_card(card):
-            choice(self.deal_sounds).play()
+            sound = choice(self.deal_sounds)
+            sound.set_volume(.6)
+            sound.play()
             fx, fy = card.rect.move(-1400, -200).topleft
             ani0 = Animation(x=fx, y=fy, duration=400,
                              transition='in_out_quint', round_values=True)
@@ -393,6 +414,12 @@ class Baccarat(tools._State):
             ani1.start(card)
             ani0.callback = card.kill
             self.animations.add(ani0, ani1)
+
+        def play_shove_sound():
+            self.shove_sounds[0].set_volume(1)
+            self.shove_sounds[0].play()
+
+        self.delay(20, play_shove_sound)
 
         cards = list(chain(self.player_hand, self.dealer_hand))
         for i, card in enumerate(reversed(cards)):
