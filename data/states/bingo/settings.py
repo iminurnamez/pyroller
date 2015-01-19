@@ -34,6 +34,7 @@ SETTINGS = {
     'square-number-scale': 1.0,
     'square-back-offset': (0, 70),
     'square-back-scale': 1.0,
+    'square-cache-size': (300, 700),
 
     'player-square-label-font': prepare.FONTS["Saniretro"],
     'player-square-label-font-size': 32,
@@ -109,7 +110,6 @@ SETTINGS = {
         2: [(-150, 0), (150, 0)],
         3: [(-300, 0), (0, 0), (300, 0)],
         4: [(-450, 0), (-150, 0), (150, 0), (450, 0)],
-        5: [(-560, 0), (-280, 0), (0, 0), (280, 0), (560, 0)],
     },
     'dealer-card-offset': (-58, 240),
 
@@ -190,13 +190,12 @@ SETTINGS = {
 
     #
     # Card selection
-    'card-selection-default': 2,
+    'card-selection-default': 4,
     'card-selection': [
         ('One', 1, (-70, -70)),
         ('Two', 2, (+70, -70)),
         ('Three', 3, (-70, 0)),
         ('Four', 4, (+70, 0)),
-        ('Five', 5, (-70, 70)),
         ('Random', None, (+70, 70)),
     ],
     'card-selection-position': (170, 920),
@@ -268,13 +267,41 @@ SETTINGS = {
 
     #
     # Menu bar
-    'menu-bar-position': (1400 / 2, 50),
+    'menu-bar-position': (1400 / 2, 770),
     'menu-bar-scale': 1.55,
 
     #
     # Lobby etc button
     'lobby-position': (1050, 928),
     'new-game-position': (1050, 820),
+
+    #
+    # Bonus light properties
+    'bonus-light-position': (10, 705),
+    'bonus-light-offset': (0, -38),
+    'bonus-light-number': 10,
+    'bonus-flash-repeat': 10,
+    'bonus-flash-on': 0.02,
+    'bonus-flash-off': 0.003,
+    'bonus-charge-delay': 0.02,
+
+    #
+    # Bonus buttons
+    'bonus-buttons-position': (1370, 705),
+    'bonus-buttons-offsets': (0, -76),
+    'bonus-buttons': [
+        ('Pause', lambda state: state.pause_machine()),
+        ('Slow', None),
+        ('Pick', None),
+        ('x2', None),
+        ('Win!', None),
+    ],
+    'bonus-button-text-font': prepare.FONTS["Saniretro"],
+    'bonus-button-text-font-size': 24,
+    'bonus-button-text-font-color': 'black',
+    'bonus-randomize-button-number': 45,
+    'bonus-randomize-button-delay': 16,
+    'bonus-randomize-button-speed-up': 1.06,
 
     #
     # Debug settings
