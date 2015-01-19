@@ -290,7 +290,7 @@ SETTINGS = {
     'bonus-buttons-position': (1370, 705),
     'bonus-buttons-offsets': (0, -76),
     'bonus-buttons': [
-        ('Pause', None),
+        ('Pause', lambda state: state.pause_machine()),
         ('Slow', None),
         ('Pick', None),
         ('x2', None),

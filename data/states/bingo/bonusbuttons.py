@@ -22,13 +22,14 @@ class BonusButtonsDisplay(common.ClickableGroup, loggable.Loggable, events.Event
         x, y = S['bonus-buttons-position']
         dx, dy = S['bonus-buttons-offsets']
         for i, item in enumerate(S['bonus-buttons']):
-            button_name, code = item
+            button_name, action = item
             button = common.ImageOnOffButton(
                 'bonus-button-{0}'.format(button_name), (x + i * dx, y + i * dy),
                 'bingo-bonus-on', 'bingo-bonus-off', 'bonus-button-text',
                 button_name, False, S,
             )
             button.linkEvent(common.E_MOUSE_CLICK, self.button_click)
+            button.action = action
             self.buttons.append(button)
             self.append(button)
 
@@ -56,3 +57,5 @@ class BonusButtonsDisplay(common.ClickableGroup, loggable.Loggable, events.Event
         """A button was clicked"""
         if button.state:
             self.log.info('Clicked on button {0}'.format(button.name))
+            if button.action:
+                button.action(self.state)
