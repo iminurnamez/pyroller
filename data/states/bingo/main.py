@@ -12,7 +12,6 @@ from ...components import common
 from ...prepare import BROADCASTER as B
 
 from . import statemachine
-from . import states
 from . import playercard
 from . import dealercard
 from . import patterns
@@ -21,6 +20,8 @@ from . import cardselector
 from . import events
 from . import bingocard
 from . import moneydisplay
+from . import bonusdisplay
+from . import bonusbuttons
 from .settings import SETTINGS as S
 
 
@@ -109,6 +110,7 @@ class Bingo(statemachine.StateMachine):
         elif event.type in (pg.MOUSEBUTTONDOWN, pg.MOUSEMOTION):
             #
             self.ui.process_events(event, scale)
+            self.bonus_buttons.process_events(event, scale)
             #
             pos = tools.scaled_mouse_pos(scale, event.pos)
         elif event.type == pg.KEYUP:
@@ -147,7 +149,8 @@ class Bingo(statemachine.StateMachine):
         self.buttons.draw(surface)
         self.card_selector.draw(surface)
         self.money_display.draw(surface)
-        #
+        self.bonus_display.draw(surface)
+        self.bonus_buttons.draw(surface)
 
     def initUI(self):
         """Initialise the UI display"""
@@ -193,6 +196,17 @@ class Bingo(statemachine.StateMachine):
             'bingo-menu-bar', S['menu-bar-position'], scale=S['menu-bar-scale']
         )
         self.buttons.append(self.menu_bar)
+        #
+        self.bonus_display = bonusdisplay.BonusDisplay(
+            'bonus-display', S['bonus-light-position'], self)
+        #
+        self.bonus_buttons = bonusbuttons.BonusButtonsDisplay(
+            'bonus-buttons', S['bonus-buttons-position'], self
+        )
+        self.bonus_display.linkEvent(
+            events.E_BONUS_REACHED,
+            lambda o, a: self.bonus_buttons.pick_new_button()
+        )
         #
         # Debugging buttons
         if prepare.DEBUG and S['show-debug-buttons']:
@@ -363,9 +377,11 @@ class Bingo(statemachine.StateMachine):
         for squares in pattern.get_matches(card):
             for square in squares:
                 square.highlighted_state = bingocard.S_GOOD
+            card.set_dirty()
             yield 100
             for square in squares:
                 square.highlighted_state = bingocard.S_NONE
+            card.set_dirty()
             yield 10
         #
         if not one_shot:
@@ -392,6 +408,8 @@ class Bingo(statemachine.StateMachine):
         """The player picked a square"""
         if not square.card.is_active:
             return
+        #
+        self.bonus_display.add_bonus()
         #
         # Check to see if we created a new potentially winning square
         called_squares = list(square.card.called_squares)
@@ -425,8 +443,11 @@ class Bingo(statemachine.StateMachine):
         while True:
             for state, delay in S['card-focus-flash-timing']:
                 for card in self.all_cards:
-                    for square in card.potential_winning_squares:
-                        square.is_focused = state
+                    potential_squares = card.potential_winning_squares
+                    if potential_squares:
+                        for square in potential_squares:
+                            square.is_focused = state
+                        card.set_dirty()
                 yield delay * 1000
 
     def play_sound(self, name):
@@ -455,10 +476,11 @@ class Bingo(statemachine.StateMachine):
             for item in self.cards:
                 self.add_generator('flash-labels', item.flash_labels())
 
-    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback):
+    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback, speed_up=None):
         """Randomly highlight buttons in a group and then call the callback when complete"""
         last_chosen = None
-        source_button.state = True
+        if source_button:
+            source_button.state = True
         #
         # Turn all buttons off
         for button in buttons:
@@ -485,9 +507,10 @@ class Bingo(statemachine.StateMachine):
                 yield delay
             #
             # Shortern delay
-            delay *= S['randomize-button-speed-up']
+            delay *= speed_up if speed_up else S['randomize-button-speed-up']
         #
-        source_button.state = False
+        if source_button:
+            source_button.state = False
         #
         final_callback(chosen)
 

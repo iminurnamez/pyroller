@@ -1,5 +1,6 @@
 """Classes that manage and display bingo cards"""
 
+import pygame as pg
 import random
 
 from ...prepare import BROADCASTER as B
@@ -77,6 +78,16 @@ class BingoLabel(common.Clickable):
         """Reset the label"""
         self.highlighted_state = S_NONE
 
+    def handle_mouse_enter(self):
+        """Handle when the mouse enters"""
+        if self.show_mouse_over:
+            self.card.set_dirty()
+
+    def handle_mouse_leave(self):
+        """Handle when the mouse enters"""
+        if self.show_mouse_over:
+            self.card.set_dirty()
+
 
 class BingoSquare(BingoLabel):
     """A square on a bingo card"""
@@ -138,6 +149,7 @@ class BingoCard(common.Clickable):
     style_name = 'card-square'
     card_success_sound = 'unknown'
     card_back = None
+    use_cache = False
 
     def __init__(self, name, position, state, index):
         """Initialise the bingo card"""
@@ -188,6 +200,10 @@ class BingoCard(common.Clickable):
         #
         self.potential_winning_squares = []
         self.is_active = True
+        #
+        self.cache = None
+        self.w, self.h = S['square-cache-size']
+        self.cached_rect = pg.Rect(position[0] - self.w / 2, position[1] - self.h / 2, self.w, self.h)
 
     def set_new_numbers(self, numbers=None):
         """Draw new numbers for this card"""
@@ -222,7 +238,11 @@ class BingoCard(common.Clickable):
 
     def draw(self, surface):
         """Draw the square"""
-        self.drawables.draw(surface)
+        if not self.cache or not self.use_cache:
+            self.drawables.draw(surface)
+            self.cache = surface.subsurface(self.cached_rect).copy()
+        else:
+            surface.blit(self.cache, (self.x - self.w / 2, self.y - self.h / 2))
 
     def process_events(self, event, scale=(1, 1)):
         """Process clicking events"""
@@ -237,6 +257,7 @@ class BingoCard(common.Clickable):
                 square.is_called = True
         self.called_squares.append(number)
         self.update_squares_to_go()
+        self.set_dirty()
 
     def reset_square(self, number):
         """Reset a particular square"""
@@ -247,6 +268,7 @@ class BingoCard(common.Clickable):
                 square.is_called = False
         self.called_squares.remove(number)
         self.update_squares_to_go()
+        self.set_dirty()
 
     def reset(self):
         """Reset the card"""
@@ -258,6 +280,7 @@ class BingoCard(common.Clickable):
         self.update_squares_to_go()
         self.active = True
         self.card_state = S_NONE
+        self.set_dirty()
 
     def update_squares_to_go(self):
         """Update a card with the number of squares to go"""
@@ -284,6 +307,7 @@ class BingoCard(common.Clickable):
         if self.label_class and (self.active or column is None):
             for letter, label in self.labels.items():
                 label.highlighted_state = S_NONE if letter != column else S_GOOD
+        self.set_dirty()
 
     def flash_squares(self, squares, on_state, end_state):
         """Flash a set of squares"""
@@ -291,10 +315,12 @@ class BingoCard(common.Clickable):
             for square in squares:
                 square.highlighted_state = on_state if state else S_NONE
                 square.is_focused = False
+            self.set_dirty()
             yield delay * 1000
         #
         for square in squares:
             square.highlighted_state = end_state
+        self.set_dirty()
 
     @property
     def active(self):
@@ -316,12 +342,17 @@ class BingoCard(common.Clickable):
         for letters in S['label-flash-states']:
             for letter in 'BINGO':
                 self.labels[letter].highlighted_state = letter in letters
+            self.set_dirty()
             yield on_time
 
     def set_card_state(self, state):
         """Set the card state"""
         self.card_state = state
         self.highlight_column(None)
+
+    def set_dirty(self):
+        """Mark the card as dirty"""
+        self.cache = None
 
 
 class CardCollection(common.ClickableGroup, common.DrawableGroup):
