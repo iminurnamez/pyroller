@@ -75,25 +75,8 @@ class Baccarat(tools._State):
 
         stats = self.casino_player.stats.get('baccarat', None)
         if stats is None:
-            stats = OrderedDict([
-                ('Hands Dealt', 0),
-                ('Bets Won', 0),
-                ('Bets Tied', 0),
-                ('Bets Lost', 0),
-                ('Bets Won by Naturals', 0),
-                ('Bets Lost by Naturals', 0),
-                ('Player Wins', 0),
-                ('Player Naturals', 0),
-                ('Dealer Wins', 0),
-                ('Dealer Naturals', 0),
-                ('Tie Result', 0),
-                ('Largest Win', 0),
-                ('Largest Loss', 0),
-                ('Declined Third Card', 0),
-                ('Earned', 0),
-                ('Paid in Commission', 0)
-            ])
-            self.casino_player.stats['baccarat'] = stats
+            stats = self.initialize_stats()
+        self.casino_player.stats['baccarat'] = stats
         self.stats = stats
 
         # declared here to appease pycharm's syntax checking.
@@ -102,6 +85,7 @@ class Baccarat(tools._State):
         self.dealer_hand = None
         self.player_hand = None
         self.player_chips = None
+        self.house_chips = None
         self.shoe = None
 
         names = ["cardshove{}".format(x) for x in (1, 3, 4)]
@@ -120,11 +104,37 @@ class Baccarat(tools._State):
         self.groups = list()
         self.animations = pg.sprite.Group()
         self.hud = pg.sprite.RenderUpdates()
-        self.hud.add(NeonButton('lobby', (960, 920, 0, 0), self.goto_lobby))
+        self.hud.add(NeonButton('lobby', (540, 938, 0, 0), self.goto_lobby))
         self.groups.append(self.hud)
         self.reload_config()
         self.cash_in()
         self.new_round()
+
+    @staticmethod
+    def initialize_stats():
+        """Return OrderedDict suitable for use in game stats
+
+        :return: collections.OrderedDict
+        """
+        stats = OrderedDict([
+            ('Hands Dealt', 0),
+            ('Bets Won', 0),
+            ('Bets Tied', 0),
+            ('Bets Lost', 0),
+            ('Bets Won by Naturals', 0),
+            ('Bets Lost by Naturals', 0),
+            ('Player Wins', 0),
+            ('Player Naturals', 0),
+            ('Dealer Wins', 0),
+            ('Dealer Naturals', 0),
+            ('Tie Result', 0),
+            ('Largest Win', 0),
+            ('Largest Loss', 0),
+            ('Declined Third Card', 0),
+            ('Earned', 0),
+            ('Paid in Commission', 0)
+        ])
+        return stats
 
     def cleanup(self):
         self.casino_player.stats['baccarat'] = self.stats
@@ -142,6 +152,8 @@ class Baccarat(tools._State):
         layout.load_layout(self, filename)
 
     def get_event(self, event, scale=(1, 1)):
+        self.player_chips.get_event(event, scale)
+
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 self.goto_lobby()
@@ -200,43 +212,46 @@ class Baccarat(tools._State):
         :return: Card instance, Animation instance
         """
         def flip(card):
-            transition = 'out_quint'
-            ani0 = Animation(rotation=0, duration=400, transition=transition)
-            ani0.start(card)
             fx = card.rect.centerx - card.rect.width
-            ani1 = Animation(centerx=fx, duration=390, transition=transition)
+            ani0 = Animation(rotation=0, duration=350, transition='out_quint')
+            ani0.start(card)
+            ani1 = Animation(centerx=fx, duration=340, transition='out_quint')
             ani1.start(card.rect)
             self.animations.add(ani0, ani1)
 
         sound = choice(self.deal_sounds)
         sound.set_volume(1)
         self.delay(100, sound.play)
+
         sound = choice(self.shove_sounds)
         sound.set_volume(.20)
         sound.play()
+
         card = self.shoe.pop()
-        card.face_up = False
         originals = {sprite: sprite.rect.topleft for sprite in hand.sprites()}
         originals[card] = card.rect.topleft
         hand.add(card)
         hand.arrange()
+
         fx, fy = card.rect.topleft
         for sprite in hand.sprites():
             sprite.rect.topleft = originals[sprite]
-        ani0 = Animation(x=fx, y=fy, duration=400.,
+        ani = Animation(x=fx, y=fy, duration=400.,
                         transition='in_out_quint', round_values=True)
-        ani0.start(card.rect)
+        ani.start(card.rect)
+
         if self.options['dealt_face_up']:
-            ani0.callback = partial(flip, card)
-        self.animations.add(ani0)
-        return card, ani0
+            card.face_up = False
+            ani.callback = partial(flip, card)
+        self.animations.add(ani)
+        return card, ani
 
     def place_bet(self, result, owner, amount):
         """Shortcut to place a bet
 
         :param result: "player", "dealer", or "tie"
         :param owner: ChipsPile instance
-        :param amount: amount to wager
+        :param amount: amount to wager in cash (not chips)
         :return: ChipsPile instance
         """
         choice(self.chip_sounds).play()
@@ -248,12 +263,19 @@ class Baccarat(tools._State):
         return bet
 
     def new_round(self):
+        """Start new round of baccarat.
+
+        Also:
+              forcibly clears card hands in case animations bugged out
+              refills the house's chip rack
+        """
         def force_empty():
             self.player_hand.empty()
             self.dealer_hand.empty()
             self.show_bet_confirm_button()
 
         self.bets = list()
+        self.house_chips.fill()
         self.clear_table()
         self.delay(500, force_empty)
 
@@ -307,72 +329,105 @@ class Baccarat(tools._State):
         self.delay(800, self.final_count_hands)
 
     def final_count_hands(self):
-        stats = self.stats
         player_result = count_deck(self.player_hand)
         dealer_result = count_deck(self.dealer_hand)
-        player_natural = natural(self.player_hand)
-        dealer_natural = natural(self.dealer_hand)
+        stats = self.stats
 
         if player_result > dealer_result:
             winner = self.player_hand
             stats['Player Wins'] += 1
-            status_text = "Player Wins"
-            result = "player"
 
         elif player_result < dealer_result:
             winner = self.dealer_hand
             stats['Dealer Wins'] += 1
-            status_text = "Dealer Wins"
-            result = "dealer"
 
         else:
             winner = None
             stats['Tie Result'] += 1
-            status_text = "Tie"
-            result = "tie"
 
         for bet in self.bets:
-            is_player = bet.owner is self.player_chips
+            self.process_bet(bet, winner)
 
-            if bet.result == result:
-                winnings = bet.value
-                if result == 'tie':
-                    winnings *= self.options['tie_payout']
+        self.display_scores()
+        self.show_winner_text(winner)
+        self.show_finish_round_button()
 
-                fee = 0
-                commission = self.options['commission']
-                if result == "dealer" and commission:
-                    fee = int(math.ceil(bet.value * commission))
-                    winnings -= fee
+    def show_winner_text(self, winner):
+        """Display a label under the winning hand
+        """
+        if winner is None:
+            status_text = "Tie"
+            midtop = get_midpoint(self.player_hand.bounding_rect.midbottom,
+                                  self.dealer_hand.bounding_rect.midbottom)
+        else:
+            status_text = "Dealer" if winner is self.dealer_hand else "Player"
+            status_text += " Wins"
+            midtop = winner.bounding_rect.midbottom
 
-                bet.owner.add(cash_to_chips(winnings))
-                bet.owner.add(bet.sprites())
+        text = OutlineTextSprite(status_text, self.large_font)
+        text.rect.midtop = midtop
+        text.rect.y += 170
+        text.kill_me_on_clear = True
+        self.hud.add(text)
 
-                if is_player:
-                    pn_win = result == 'player' and player_natural
-                    bn_win = result == 'dealer' and dealer_natural
-                    record = stats['Largest Win']
-                    stats['Largest Win'] = max(record, winnings)
-                    stats['Earned'] += winnings
-                    stats['Paid in Commission'] += fee
-                    if result == 'tie':
-                        stats['Bets Tied'] += 1
-                    else:
-                        stats['Bets Won'] += 1
-                    if pn_win or bn_win:
-                        stats['Bets Won by Naturals'] += 1
+    def process_bet(self, bet, winner):
+        """Calculate winnings for the bet, apply the winnings, and clear it
 
-            elif is_player:
-                pn_loss = bet.result == 'player' and dealer_natural
-                bn_loss = bet.result == 'dealer' and player_natural
-                record = stats['Largest Loss']
-                stats['Largest Loss'] = max(record, bet.value)
-                stats['Bets Lost'] += 1
-                stats['Earned'] -= bet.value
-                if pn_loss or bn_loss:
-                    stats['Bets Lost by Naturals'] += 1
+        :param bet: ChipsPile instance
+        :param winner: Deck instance
+        :return: None
+        """
+        player_natural = natural(self.player_hand)
+        dealer_natural = natural(self.dealer_hand)
+        is_player = bet.owner is self.player_chips
+        stats = self.stats
 
-            bet.empty()
+        if bet.result is winner:
+            winnings = bet.value
+
+            if winner is None:   # Tie
+                winnings *= self.options['tie_payout']
+
+            fee = 0
+            commission = self.options['commission']
+            if winner is self.dealer_hand and commission:
+                fee = int(math.ceil(bet.value * commission))
+                winnings -= fee
+
+            bet.owner.add(cash_to_chips(winnings))
+            bet.owner.add(bet.sprites())
+
+            if is_player:
+                pn_win = winner is self.player_hand and player_natural
+                bn_win = winner is self.dealer_hand and dealer_natural
+                record = stats['Largest Win']
+                stats['Largest Win'] = max(record, winnings)
+                stats['Earned'] += winnings
+                stats['Paid in Commission'] += fee
+                if winner is None:
+                    stats['Bets Tied'] += 1
+                else:
+                    stats['Bets Won'] += 1
+                if pn_win or bn_win:
+                    stats['Bets Won by Naturals'] += 1
+
+        elif is_player:
+            pn_loss = bet.result is self.player_hand and dealer_natural
+            bn_loss = bet.result is self.dealer_hand and player_natural
+            record = stats['Largest Loss']
+            stats['Largest Loss'] = max(record, bet.value)
+            stats['Bets Lost'] += 1
+            stats['Earned'] -= bet.value
+            if pn_loss or bn_loss:
+                stats['Bets Lost by Naturals'] += 1
+
+        bet.empty()
+
+    def display_scores(self):
+        """Create and add TextSprites with score under each card hand
+        """
+        player_result = count_deck(self.player_hand)
+        dealer_result = count_deck(self.dealer_hand)
 
         msg = points_message(player_result)
         text = TextSprite(msg.format(player_result), self.font)
@@ -388,20 +443,9 @@ class Baccarat(tools._State):
         text.kill_me_on_clear = True
         self.hud.add(text)
 
-        text = OutlineTextSprite(status_text, self.large_font)
-        if winner:
-            midtop = winner.bounding_rect.midbottom
-        else:  # tie
-            midtop = get_midpoint(self.player_hand.bounding_rect.midbottom,
-                                  self.dealer_hand.bounding_rect.midbottom)
-        text.rect.midtop = midtop
-        text.rect.y += 170
-        text.kill_me_on_clear = True
-        self.hud.add(text)
-
-        self.show_finish_round_button()
-
     def clear_table(self):
+        """Remove all cards from the table.  Animated.
+        """
         def clear_card(card):
             sound = choice(self.deal_sounds)
             sound.set_volume(.6)
@@ -409,10 +453,10 @@ class Baccarat(tools._State):
             fx, fy = card.rect.move(-1400, -200).topleft
             ani0 = Animation(x=fx, y=fy, duration=400,
                              transition='in_out_quint', round_values=True)
-            ani1 = Animation(rotation=180, duration=400, transition='out_quart')
-            ani0.start(card.rect)
-            ani1.start(card)
             ani0.callback = card.kill
+            ani0.start(card.rect)
+            ani1 = Animation(rotation=180, duration=400, transition='out_quart')
+            ani1.start(card)
             self.animations.add(ani0, ani1)
 
         def play_shove_sound():
@@ -423,7 +467,7 @@ class Baccarat(tools._State):
 
         cards = list(chain(self.player_hand, self.dealer_hand))
         for i, card in enumerate(reversed(cards)):
-            self.delay(i * 100, clear_card, (card,))
+            self.delay(i * 115, clear_card, (card,))
 
         for sprite in self.hud.sprites():
             if hasattr(sprite, 'kill_me_on_clear'):
@@ -435,11 +479,15 @@ class Baccarat(tools._State):
         self.next = 'LOBBYSCREEN'
 
     def cash_in(self):
+        """Change player's cash to chips
+        """
         chips = cash_to_chips(self.casino_player.stats['cash'])
         self.casino_player.stats['cash'] = 0
         self.player_chips.add(chips)
 
     def cash_out(self):
+        """Change player's chips to cash.  Includes any bets on table.
+        """
         cash = self.player_chips.value
         for bet in list(self.bets):
             if bet.owner == self.player_chips:
@@ -450,6 +498,11 @@ class Baccarat(tools._State):
         self.player_chips.empty()
 
     def show_deal_player_third_card_buttons(self):
+        """Give the player option to draw third card or not
+
+        Some game rules allow this option, while others will force
+        the player to draw card based on a rule.
+        """
         def f0(sprite):
             b0.kill()
             b1.kill()
@@ -480,7 +533,9 @@ class Baccarat(tools._State):
             self.new_round()
 
         text = TextSprite('Again?', self.button_font)
-        self.hud.add(Button(text, (960, 800, 300, 75), f))
+        rect = pg.Rect(0, 0, 300, 75)
+        rect.center = self.player_chips.rect.move(0, 75).midbottom
+        self.hud.add(Button(text, rect, f))
 
     def show_bet_confirm_button(self):
         def f(sprite):
@@ -488,23 +543,35 @@ class Baccarat(tools._State):
             self.deal_cards()
 
         text = TextSprite('Confirm Bet', self.button_font)
-        self.hud.add(Button(text, (960, 800, 300, 75), f))
+        rect = pg.Rect(0, 0, 300, 75)
+        rect.center = self.player_chips.rect.move(0, 75).midbottom
+        self.hud.add(Button(text, rect, f))
+
+    def render_background(self, size):
+        """Render the background
+
+        :param size: (width, height) in pixels
+        :return: pygame.surface.Surface
+        """
+        background = pg.Surface(size)
+        background.fill(prepare.FELT_GREEN)
+        if hasattr(self, 'background_filename'):
+            im = prepare.GFX[self.background_filename]
+            background.blit(im, (0, 0))
+        label = TextSprite('', self.font, bg=prepare.FELT_GREEN)
+        for name, rect in self.betting_areas.items():
+            label.text = name
+            label.rect.center = rect.center
+            image = label.draw()
+            image.set_alpha(128)
+            background.blit(image, label.rect)
+        return background
 
     def update(self, surface, keys, current_time, dt, scale):
         if self._background is None:
-            self._background = pg.Surface(surface.get_size())
-            self._background.fill(prepare.FELT_GREEN)
-            if hasattr(self, 'background_filename'):
-                im = prepare.GFX[self.background_filename]
-                self._background.blit(im, (0, 0))
-            label = TextSprite('', self.font, bg=prepare.FELT_GREEN)
-            for name, rect in self.betting_areas.items():
-                label.text = name
-                label.rect.center = rect.center
-                image = label.draw()
-                image.set_alpha(128)
-                self._background.blit(image, label.rect)
-            surface.blit(self._background, (0, 0))
+            image = self.render_background(surface.get_size())
+            surface.blit(image, (0, 0))
+            self._background = image
 
         self.animations.update(dt)
         for group in chain(self.bets, self.groups):

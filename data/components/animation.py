@@ -108,6 +108,10 @@ class Animation(pygame.sprite.Sprite):
     animation finishes:
         ani.callback = my_function
 
+    Another optional callback is available that is called after
+    each update:
+        ani.update_callback = post_update_function
+
     Animations must be added to a sprite group in order for them
     to be updated.  If the sprite group that contains them is
     drawn, then an exception will be raised, so you should create
@@ -159,6 +163,9 @@ class Animation(pygame.sprite.Sprite):
                 if self._round_values:
                     value = int(round(value, 0))
                 setattr(target, name, value)
+
+        if hasattr(self, 'update_callback'):
+            self.update_callback()
 
         if p >= 1.:
             self._targets = None

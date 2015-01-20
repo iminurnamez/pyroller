@@ -87,7 +87,7 @@
                  "y":128
                 }, 
                 {
-                 "height":272,
+                 "height":320,
                  "name":"",
                  "properties":
                     {
@@ -96,9 +96,9 @@
                  "rotation":0,
                  "type":"player_chips",
                  "visible":true,
-                 "width":544,
+                 "width":464,
                  "x":48,
-                 "y":752
+                 "y":592
                 }, 
                 {
                  "height":144,
@@ -113,6 +113,20 @@
                  "width":96,
                  "x":624,
                  "y":-192
+                }, 
+                {
+                 "height":224,
+                 "name":"",
+                 "properties":
+                    {
+
+                    },
+                 "rotation":0,
+                 "type":"house_chips",
+                 "visible":true,
+                 "width":304,
+                 "x":1072,
+                 "y":784
                 }],
          "opacity":1,
          "type":"objectgroup",

@@ -8,27 +8,53 @@ blending of the two.
 """
 
 import random
-from math import sin, pi, cos, radians
+import collections
+from math import pi, cos
 from itertools import product, groupby
 from operator import attrgetter
 import pygame
 from pygame.transform import smoothscale
-from ... import prepare
+from ... import tools, prepare
+from ...components.angles import *
+from ...components.animation import *
 
 __all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck', 'Chip',
-           'ChipPile', 'SpriteGroup', 'cash_to_chips', 'OutlineTextSprite']
+           'ChipPile', 'ChipRack', 'SpriteGroup', 'cash_to_chips',
+           'OutlineTextSprite']
 
 
 two_pi = pi * 2
+denominations = [100, 25, 10, 5, 1]
+
+
+def make_change(value, break_down=False):
+    """Return list of numbers whose sum equals value passed
+
+    Optionally, passing True to break_down will prevent it from
+    passing back the value if it is a common denomination.  In
+    other words, it will break down value into smaller values.
+
+    :param value: Value to be broken down
+    :param break_down: If True, will break down common denominations
+    :return: List
+    """
+    retval = list()
+    if value == 1:
+        return [1]
+    if break_down:
+        break_down = value
+    for d in denominations:
+        if break_down == d:
+            continue
+        i, value = divmod(value, d)
+        retval.extend([d] * i)
+    return retval
+
 
 def cash_to_chips(value):
-    retval = list()
-    demoninations = [100, 25, 10, 5, 1]
-    for d in demoninations:
-        number, value = divmod(value, d)
-        for i in range(number):
-            retval.append(Chip(d))
-    return retval
+    """Return a list of chips whose sum equals the value passed
+    """
+    return [Chip(i) for i in make_change(value)]
 
 
 def cut_sheet(surface, dim, margin=0, spacing=0, subsurface=True):
@@ -452,23 +478,83 @@ class Chip(Sprite):
     def __init__(self, value, chip_size=None):
         super(Chip, self).__init__()
         self.value = value
+        self.dirty = 1
+        self.image = None
+        self._flat = False
+        self.color = Chip.chip_values[value]
         if chip_size is not None:
             self.chip_size = chip_size
+        self.rect = pygame.Rect((0, 0), self.chip_size)
+        self.update_image()
+
+    def update_image(self):
+        if self._flat:
+            self.image = Chip.flat_images[self.chip_size][self.color]
+        else:
+            self.image = Chip.images[self.chip_size][self.color]
+        self.rect = self.image.get_rect(center=self.rect.center)
         self.dirty = 1
 
-        color = Chip.chip_values[value]
-        self.image = Chip.images[self.chip_size][color]
-        self.flat_image = Chip.flat_images[self.chip_size][color]
-        self.rect = self.image.get_rect()
+    @property
+    def flat(self):
+        return self._flat
+
+    @flat.setter
+    def flat(self, value):
+        value = bool(value)
+        if not value == self._flat:
+            self._flat = value
+            self.update_image()
 
 
 class ChipPile(Stacker):
-    """Represents a player's pile of chips."""
-
-    def __init__(self, rect, value=0):
-        super(ChipPile, self).__init__(rect, (0, -7))
+    """Represents a player's pile of chips
+    """
+    def __init__(self, rect, value=0, **kwargs):
+        super(ChipPile, self).__init__(rect, **kwargs)
+        self.stacking = 80, -7
+        self._clicked_sprite = None
+        self.followed_sprite = None
+        self.previous_followed_sprite = None
+        self.animations = pygame.sprite.Group()
         if value:
             self.add(*cash_to_chips(value))
+
+    def update(self, *args):
+        super(ChipPile, self).update(*args)
+        self.animations.update(*args)
+
+    def get_nearest_sprites(self, point, limit=None):
+        sprites = self.sprites()
+        l = [(get_distance(point, sprite.rect.center), sprite, i)
+             for i, sprite in enumerate(sprites)]
+        if limit is not None:
+            l = [i for i in l if i[0] <= limit]
+        l.sort()
+        l = [i[:2] for i in l]
+        return l
+
+    def get_event(self, event, scale):
+        if event.type == pygame.MOUSEMOTION:
+            pos = tools.scaled_mouse_pos(scale)
+
+            closest_sprite = None
+            for dist, sprite in self.get_nearest_sprites(pos, 50):
+                if sprite is not self.followed_sprite:
+                    closest_sprite = sprite
+                    break
+
+            if closest_sprite is not None:
+                self.previous_followed_sprite = self.followed_sprite
+                self.followed_sprite = closest_sprite
+
+            if self.followed_sprite:
+                self.animations.empty()
+                ani = Animation(bottom=pos[1] + 10, duration=500,
+                                transition='out_quint')
+                ani.start(self.followed_sprite.rect)
+                self.animations.add(ani)
+                self._needs_arrange = True
 
     @property
     def value(self):
@@ -479,7 +565,8 @@ class ChipPile(Stacker):
         self._spritelist.sort(key=attrgetter('value'), reverse=True)
 
     def withdraw_chips(self, amount):
-        """Withdraw chips totalling amount"""
+        """Withdraw chips totalling amount
+        """
         self.sort()
         withdraw = list()
         for chip in self.sprites():
@@ -496,10 +583,64 @@ class ChipPile(Stacker):
 
     def arrange(self, sprites=None, offset=(0, 0)):
         self.sort()
-        x = 0
+        ox, oy = offset
+        arrange = super(ChipPile, self).arrange
         for k, g in groupby(self.sprites(), attrgetter('value')):
-            x, y = super(ChipPile, self).arrange(list(g), (x, 0))
-            x += 30
+            if self.followed_sprite in g:
+                arrange(list(g), (ox, oy))
+            else:
+                arrange(list(g), (ox, oy))
+            ox += self.stacking[0]
+
+
+class ChipRack(ChipPile):
+    """Class to represent a dealer/teller's rack of chips
+    """
+    def __init__(self, rect):
+        super(ChipRack, self).__init__(rect)
+        self.stacking = 57, 6
+        self.draw_offset = 9, -6
+        self.row_size = 30
+        self.background = prepare.GFX["chip_rack_medium"]
+        self.front = prepare.GFX["rack_front_medium"]
+        rect = self.background.get_rect(topleft=self.rect.topleft)
+        self.front_rect = self.front.get_rect(bottomleft=rect.bottomleft)
+
+    def add(self, *items):
+        """Add chips to the rack.
+
+        Chips will have their flat attribute set to True
+        and resized to fit the rack graphic
+        """
+        for chip in items:
+            chip.chip_size = 48, 30
+            chip.flat = True
+        super(ChipRack, self).add(*items)
+
+    def fill(self):
+        """Add enough chips of each value to fill the rack completely
+        """
+        d = collections.defaultdict(int)
+        for chip in self.sprites():
+            d[chip.value] += 1
+        for value in denominations:
+            for i in range(self.row_size - d[value]):
+                self.add(Chip(value))
+
+    def clear(self, surface, background):
+        super(ChipRack, self).clear(surface, self.background)
+
+    def draw(self, surface):
+        redraw = self._needs_arrange
+        if redraw:
+            surface.blit(self.background, self.rect)
+        dirty = super(ChipRack, self).draw(surface)
+        # HACK: will draw rack front every frame.  :(
+        surface.blit(self.front, self.front_rect)
+        return dirty
+
+    def arrange(self, *args, **kwargs):
+        return super(ChipRack, self).arrange(offset=self.draw_offset)
 
 
 class TextSprite(Sprite):
