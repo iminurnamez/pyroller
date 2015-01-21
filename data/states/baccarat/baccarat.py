@@ -108,14 +108,15 @@ class Baccarat(tools._State):
         self.font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
         self.large_font = pg.font.Font(prepare.FONTS["Saniretro"], 120)
         self.button_font = pg.font.Font(prepare.FONTS["Saniretro"], 48)
-        self.bets = list()
-        self.groups = list()
+        self.hud = SpriteGroup()
+        self.bets = MetaGroup()
+        self.metagroup = MetaGroup()
         self.animations = pg.sprite.Group()
-        self.hud = pg.sprite.RenderUpdates()
         self.hud.add(NeonButton('lobby', (540, 938, 0, 0), self.goto_lobby))
-        self.groups.append(self.hud)
         self.link_events()
         self.reload_config()
+        self.metagroup.add(self.bets)
+        self.metagroup.add(self.hud)
         self.cash_in()
         self.new_round()
 
@@ -180,13 +181,15 @@ class Baccarat(tools._State):
 
     def on_hover_stack(self, *args):
         chips, pos = args[0]
-        if self._chips_value_label is None:
-            self._chips_value_label = TextSprite('', self.large_font)
-            self.hud.add(self._chips_value_label)
+        sprite = self._chips_value_label
+        if sprite is None:
+            sprite = TextSprite('', self.large_font)
+            self._chips_value_label = sprite
+            self.hud.add(sprite, layer=100)
         value = str(chips_to_cash(chips._popped_chips))
-        self._chips_value_label.text = "${}".format(value)
-        self._chips_value_label.rect.midleft = pos
-        self._chips_value_label.rect.x += 30
+        sprite.text = "${}".format(value)
+        sprite.rect.midleft = pos
+        sprite.rect.x += 30
 
     def on_return_stack(self, *args):
         if self._chips_value_label is not None:
@@ -271,7 +274,7 @@ class Baccarat(tools._State):
 
         if self._enable_chips:
             self.player_chips.get_event(event, scale)
-            for bet in self.bets:
+            for bet in self.bets.groups():
                 bet.get_event(event, scale)
 
     def delay(self, amount, callback, args=None, kwargs=None):
@@ -294,10 +297,13 @@ class Baccarat(tools._State):
         :return: Card instance, Animation instance
         """
         def flip(card):
+            set_dirty = lambda: setattr(card, 'dirty', 1)
             fx = card.rect.centerx - card.rect.width
             ani0 = Animation(rotation=0, duration=350, transition='out_quint')
+            ani0.update_callback = set_dirty
             ani0.start(card)
             ani1 = Animation(centerx=fx, duration=340, transition='out_quint')
+            ani1.update_callback = set_dirty
             ani1.start(card.rect)
             self.animations.add(ani0, ani1)
 
@@ -320,6 +326,7 @@ class Baccarat(tools._State):
             sprite.rect.topleft = originals[sprite]
         ani = Animation(x=fx, y=fy, duration=400.,
                         transition='in_out_quint', round_values=True)
+        ani.update_callback = lambda: setattr(sprite, 'dirty', 1)
         ani.start(card.rect)
 
         if self.options['dealt_face_up']:
@@ -341,7 +348,7 @@ class Baccarat(tools._State):
         bet.add(owner.withdraw_chips(amount))
         bet.owner = owner
         bet.result = result
-        self.bets.append(bet)
+        self.bets.add(bet)
         return bet
 
     def make_bet(self, result, owner, chips):
@@ -352,7 +359,7 @@ class Baccarat(tools._State):
         bet.add(chips)
         bet.owner = owner
         bet.result = result
-        self.bets.append(bet)
+        self.bets.add(bet)
         return bet
 
     def new_round(self):
@@ -368,7 +375,7 @@ class Baccarat(tools._State):
             self.show_bet_confirm_button()
 
         self._enable_chips = True
-        self.bets = list()
+        self.bets.empty()
         self.house_chips.fill()
         self.clear_table()
         self.delay(500, force_empty)
@@ -439,7 +446,7 @@ class Baccarat(tools._State):
             winner = None
             stats['Tie Result'] += 1
 
-        for bet in self.bets:
+        for bet in self.bets.groups():
             self.process_bet(bet, winner)
 
         self.display_scores()
@@ -544,12 +551,15 @@ class Baccarat(tools._State):
             sound = choice(self.deal_sounds)
             sound.set_volume(.6)
             sound.play()
+            set_dirty = lambda: setattr(card, 'dirty', 1)
             fx, fy = card.rect.move(-1400, -200).topleft
             ani0 = Animation(x=fx, y=fy, duration=400,
                              transition='in_out_quint', round_values=True)
+            ani0.update_callback = set_dirty
             ani0.callback = card.kill
             ani0.start(card.rect)
             ani1 = Animation(rotation=180, duration=400, transition='out_quart')
+            ani1.update_callback = set_dirty
             ani1.start(card)
             self.animations.add(ani0, ani1)
 
@@ -575,7 +585,8 @@ class Baccarat(tools._State):
     def cash_in(self):
         """Change player's cash to chips
         """
-        chips = cash_to_chips(self.casino_player.stats['cash'])
+        # chips = cash_to_chips(self.casino_player.stats['cash'])
+        chips = cash_to_chips(1469)
         self.casino_player.stats['cash'] = 0
         self.player_chips.add(chips)
 
@@ -583,7 +594,7 @@ class Baccarat(tools._State):
         """Change player's chips to cash.  Includes any bets on table.
         """
         cash = self.player_chips.value
-        for bet in self.bets:
+        for bet in self.bets.groups():
             if bet.owner == self.player_chips:
                 bet.kill_me = True
                 bet.empty()
@@ -670,11 +681,11 @@ class Baccarat(tools._State):
             self._background = image
 
         self.animations.update(dt)
-        for groups in (self.bets, self.groups):
-            for group in list(groups):
-                group.update(dt)
-                group.clear(surface, self._background)
-                if hasattr(group, 'kill_me'):
-                    groups.remove(group)
-                    continue
-                group.draw(surface)
+        for group in self.metagroup.groups():
+            group.update(dt)
+            group.clear(surface, self._background)
+            group.draw(surface)
+
+        # self.metagroup.update(dt)
+        # self.metagroup.clear(surface, self._background)
+        # self.metagroup.draw(surface)

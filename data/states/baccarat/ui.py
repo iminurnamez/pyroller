@@ -21,7 +21,7 @@ from ...prepare import BROADCASTER as B
 
 __all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck', 'Chip',
            'ChipPile', 'ChipRack', 'SpriteGroup', 'cash_to_chips',
-           'chips_to_cash', 'OutlineTextSprite', 'BettingArea']
+           'chips_to_cash', 'OutlineTextSprite', 'BettingArea', 'MetaGroup']
 
 
 two_pi = pi * 2
@@ -125,30 +125,12 @@ class Sprite(pygame.sprite.DirtySprite):
     pass
 
 
-class SpriteGroup(pygame.sprite.OrderedUpdates):
+class SpriteGroup(pygame.sprite.LayeredUpdates):
     """Like OrderedUpdates, but supports visible/invisible sprites
     """
-    def draw(self, surface):
-        spritedict = self.spritedict
-        surface_blit = surface.blit
-        dirty = self.lostsprites
-        self.lostsprites = list()
-        dirty_append = dirty.append
-        for s in self.sprites():
-            if not s.visible:
-                continue
-            r = spritedict[s]
-            newrect = surface_blit(s.image, s.rect)
-            if r:
-                if newrect.colliderect(r):
-                    dirty_append(newrect.union(r))
-                else:
-                    dirty_append(newrect)
-                    dirty_append(r)
-            else:
-                dirty_append(newrect)
-            spritedict[s] = newrect
-        return dirty
+    def __init__(self, *args, **kwargs):
+        super(SpriteGroup, self).__init__(*args, **kwargs)
+        self._animations = pygame.sprite.Group()
 
     @property
     def bounding_rect(self):
@@ -159,6 +141,71 @@ class SpriteGroup(pygame.sprite.OrderedUpdates):
             return pygame.Rect(sprites[0].rect)
         else:
             return sprites[0].rect.unionall([s.rect for s in sprites[1:]])
+
+    def update(self, *args):
+        super(SpriteGroup, self).update(*args)
+        self._animations.update(*args)
+
+    def delay(self, amount, callback, args=None, kwargs=None):
+        """Convenience function to delay a function call
+
+        :param amount: milliseconds to wait until callback is called
+        :param callback: function to call
+        :param args: arguments to pass to callback
+        :param kwargs: keywords to pass to callback
+        :return: Task instance
+        """
+        task = Task(callback, amount, 1, args, kwargs)
+        self._animations.add(task)
+        return task
+
+
+class MetaGroup(object):
+    """Capable of correctly rendering a bunch of groups
+    """
+    def __init__(self):
+        self._groups = list()
+
+    def __len__(self):
+        return len(self._groups)
+
+    def sprites(self):
+        retval = list()
+        for group in self.groups():
+            for sprite in group.sprites():
+                retval.append(sprite)
+        return retval
+
+    def groups(self):
+        return list(self._groups)
+
+    def empty(self):
+        for group in self.groups():
+            group.empty()
+        self._groups = list()
+
+    def add(self, *groups):
+        for group in groups:
+            self._groups.append(group)
+
+    def remove(self, *groups):
+        for group in groups:
+            try:
+                self._groups.remove(group)
+            except ValueError:
+                pass
+
+    def update(self, *args):
+        for group in self.groups():
+            group.update(*args)
+
+    def clear(self, surface, background):
+        for group in self.groups():
+            group.clear(surface, background)
+
+    def draw(self, surface):
+        for group in self.groups():
+            group.draw(surface)
 
 
 class EventButton(Sprite):
@@ -211,6 +258,7 @@ class Card(Sprite):
         self._needs_update = True
         self.front_face = self.get_front(self.name, self.rect.size)
         self.back_face = self.get_back(self.rect.size)
+        self.dirty = 1
         self.update_image()
 
     @property
@@ -352,19 +400,6 @@ class Stacker(SpriteGroup):
                 self._origin = 'bottomleft'
                 self._sprite_anchor = 'bottomleft'
 
-    def delay(self, amount, callback, args=None, kwargs=None):
-        """Convenience function to delay a function call
-
-        :param amount: milliseconds to wait until callback is called
-        :param callback: function to call
-        :param args: arguments to pass to callback
-        :param kwargs: keywords to pass to callback
-        :return: Task instance
-        """
-        task = Task(callback, amount, 1, args, kwargs)
-        self._animations.add(task)
-        return task
-
     def add(self, *items):
         super(Stacker, self).add(*items)
         self._needs_arrange = True
@@ -387,10 +422,6 @@ class Stacker(SpriteGroup):
             self.arrange()
             self._needs_arrange = False
         super(Stacker, self).draw(surface)
-
-    def update(self, *args):
-        super(Stacker, self).update(*args)
-        self._animations.update(*args)
 
     def arrange(self, sprites=None, offset=(0, 0), animate=None, noclip=False):
         """ position sprites into piles.
@@ -664,6 +695,7 @@ class ChipPile(Stacker):
             fx, fy = final
             ani = Animation(x=fx, y=fy, duration=300, transition='out_quint')
             ani.callback = cleanup_animation
+            ani.update_callback = lambda: setattr(sprite, 'dirty', 1)
             ani.start(sprite.rect)
             self.delay((index - 1) * 10, self._animations.add, (ani, ))
             return ani
@@ -691,6 +723,7 @@ class ChipPile(Stacker):
         """
         fx, fy = final
         ani = Animation(x=fx, y=fy, duration=200, transition='out_quint')
+        ani.update_callback = lambda: setattr(sprite, 'dirty', 1)
         ani.start(sprite.rect)
         self._animations.add(ani)
         return ani

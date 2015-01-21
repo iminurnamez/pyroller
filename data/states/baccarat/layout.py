@@ -15,14 +15,14 @@ def load_layout(state, filename):
         deck = Deck(rect, stacking=(140, 500))
         deck.auto_arrange = False
         state.player_hand = deck
-        state.groups.append(deck)
+        state.metagroup.add(deck)
 
     def handle_dealer_hand(data):
         rect = get_rect(data).move(120, 0)
         deck = Deck(rect, stacking=(140, 500))
         deck.auto_arrange = False
         state.dealer_hand = deck
-        state.groups.append(deck)
+        state.metagroup.add(deck)
 
     def handle_player_bet(data):
         area = BettingArea('player', get_rect(data))
@@ -39,17 +39,17 @@ def load_layout(state, filename):
     def handle_shoe(data):
         shoe = Deck(get_rect(data), decks=state.options['decks'])
         state.shoe = shoe
-        state.groups.append(shoe)
+        state.metagroup.add(shoe)
 
     def handle_player_chips(data):
         chips = ChipPile(get_rect(data))
         state.player_chips = chips
-        state.groups.append(chips)
+        state.metagroup.add(chips)
 
     def handle_house_chips(data):
         chips = ChipRack(get_rect(data))
         state.house_chips = chips
-        state.groups.append(chips)
+        state.metagroup.add(chips)
 
     def handle_imagelayer(layer):
         fn = os.path.splitext(os.path.basename(layer['image']))[0]
