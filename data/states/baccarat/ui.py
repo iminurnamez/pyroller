@@ -8,27 +8,58 @@ blending of the two.
 """
 
 import random
-from math import sin, pi, cos, radians
+import collections
+from math import pi, cos
 from itertools import product, groupby
 from operator import attrgetter
 import pygame
 from pygame.transform import smoothscale
-from ... import prepare
+from ... import tools, prepare
+from ...components.angles import *
+from ...components.animation import *
+from ...prepare import BROADCASTER as B
 
 __all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck', 'Chip',
-           'ChipPile', 'SpriteGroup', 'cash_to_chips', 'OutlineTextSprite']
+           'ChipPile', 'ChipRack', 'SpriteGroup', 'cash_to_chips',
+           'chips_to_cash', 'OutlineTextSprite', 'BettingArea']
 
 
 two_pi = pi * 2
+denominations = [100, 25, 10, 5, 1]
+
+
+def make_change(value, break_down=False):
+    """Return list of numbers whose sum equals value passed
+
+    Optionally, passing True to break_down will prevent it from
+    passing back the value if it is a common denomination.  In
+    other words, it will break down value into smaller values.
+
+    :param value: Value to be broken down
+    :param break_down: If True, will break down common denominations
+    :return: List
+    """
+    retval = list()
+    if value == 1:
+        return [1]
+    if break_down:
+        break_down = value
+    for d in denominations:
+        if break_down == d:
+            continue
+        i, value = divmod(value, d)
+        retval.extend([d] * i)
+    return retval
+
 
 def cash_to_chips(value):
-    retval = list()
-    demoninations = [100, 25, 10, 5, 1]
-    for d in demoninations:
-        number, value = divmod(value, d)
-        for i in range(number):
-            retval.append(Chip(d))
-    return retval
+    """Return a list of chips whose sum equals the value passed
+    """
+    return [Chip(i) for i in make_change(value)]
+
+
+def chips_to_cash(chips):
+    return sum(i.value for i in chips)
 
 
 def cut_sheet(surface, dim, margin=0, spacing=0, subsurface=True):
@@ -79,6 +110,13 @@ def make_cards(decks, card_size, shuffle=False):
         random.shuffle(cards)
 
     return cards
+
+
+class BettingArea(object):
+    def __init__(self, name, rect, hand=None):
+        self.name = name
+        self.rect = rect
+        self.hand = hand
 
 
 class Sprite(pygame.sprite.DirtySprite):
@@ -294,7 +332,9 @@ class Stacker(SpriteGroup):
         self._needs_arrange = True
         self._constraint = 'height'
         self._origin = None
+        self._origin_offset = (0, 0)
         self._sprite_anchor = None
+        self._animations = pygame.sprite.Group()
         self.stacking = stacking
 
     @property
@@ -311,6 +351,19 @@ class Stacker(SpriteGroup):
             else:
                 self._origin = 'bottomleft'
                 self._sprite_anchor = 'bottomleft'
+
+    def delay(self, amount, callback, args=None, kwargs=None):
+        """Convenience function to delay a function call
+
+        :param amount: milliseconds to wait until callback is called
+        :param callback: function to call
+        :param args: arguments to pass to callback
+        :param kwargs: keywords to pass to callback
+        :return: Task instance
+        """
+        task = Task(callback, amount, 1, args, kwargs)
+        self._animations.add(task)
+        return task
 
     def add(self, *items):
         super(Stacker, self).add(*items)
@@ -335,7 +388,11 @@ class Stacker(SpriteGroup):
             self._needs_arrange = False
         super(Stacker, self).draw(surface)
 
-    def arrange(self, sprites=None, offset=(0, 0)):
+    def update(self, *args):
+        super(Stacker, self).update(*args)
+        self._animations.update(*args)
+
+    def arrange(self, sprites=None, offset=(0, 0), animate=None, noclip=False):
         """ position sprites into piles.
 
         Constraint can be "width" or "height".
@@ -347,7 +404,7 @@ class Stacker(SpriteGroup):
             sprites = list(self.sprites())
 
         if not sprites:
-            return
+            return 0, 0
 
         if self.stacking is None:
             pos = self.rect.topleft
@@ -356,26 +413,41 @@ class Stacker(SpriteGroup):
             for sprite in sprites[:-1]:
                 sprite.visible = 0
                 sprite.rect.topleft = pos
-            return
+            return 0, 0
 
+        anchor = self._sprite_anchor
+        constraint = self._constraint
         x, y = getattr(self.rect, self._origin)
-        x += offset[0]
-        y += offset[1]
-        rx, ry = x, y
+        x += self._origin_offset[0] + offset[0]
+        y += self._origin_offset[1] + offset[1]
         ox, oy = self.stacking
-        for sprite in sprites:
-            sprite.visible = 1
-            setattr(sprite.rect, self._sprite_anchor, (x, y))
+        xx = 0
+        yy = 0
+        for index, sprite in enumerate(sprites):
+            rect = sprite.rect
+
             if hasattr(sprite, 'dirty'):
                 sprite.dirty = 1
-            if self._constraint == "height":
-                if self.rect.contains(sprite.rect.move(0, oy)):
-                    y += oy
-                else:
-                    y = ry
-                    x += ox
+                sprite.visible = 1
 
-        return x, y
+            original_value = getattr(rect, anchor)
+
+            if constraint == "height":
+                setattr(rect, anchor, (x + xx, y + yy))
+
+                if self.rect.colliderect(rect) or noclip:
+                    yy += oy
+                else:
+                    xx += ox
+                    yy = oy
+                    setattr(rect, anchor, (x + xx, y))
+
+            if animate is not None:
+                final_value = getattr(rect, 'topleft')
+                setattr(rect, anchor, original_value)
+                animate(sprite, original_value, final_value, index)
+
+        return xx, yy
 
 
 class Deck(Stacker):
@@ -452,54 +524,281 @@ class Chip(Sprite):
     def __init__(self, value, chip_size=None):
         super(Chip, self).__init__()
         self.value = value
+        self.dirty = 1
+        self.image = None
+        self._flat = False
+        self.color = Chip.chip_values[value]
         if chip_size is not None:
             self.chip_size = chip_size
+        self.rect = pygame.Rect((0, 0), self.chip_size)
+        self.update_image()
+
+    def update_image(self):
+        if self._flat:
+            self.image = Chip.flat_images[self.chip_size][self.color]
+        else:
+            self.image = Chip.images[self.chip_size][self.color]
+        self.rect = self.image.get_rect(center=self.rect.center)
         self.dirty = 1
 
-        color = Chip.chip_values[value]
-        self.image = Chip.images[self.chip_size][color]
-        self.flat_image = Chip.flat_images[self.chip_size][color]
-        self.rect = self.image.get_rect()
+    @property
+    def flat(self):
+        return self._flat
+
+    @flat.setter
+    def flat(self, value):
+        value = bool(value)
+        if not value == self._flat:
+            self._flat = value
+            self.update_image()
 
 
 class ChipPile(Stacker):
-    """Represents a player's pile of chips."""
+    """Represents a player's pile of chips
+    """
+    chip_sounds = [prepare.SFX[name] for name in
+                   ["chipsstack{}".format(x) for x in (3, 5, 6)]]
 
-    def __init__(self, rect, value=0):
-        super(ChipPile, self).__init__(rect, (0, -7))
+    _initial_snapping = 50
+    _fine_snapping = 30
+
+    def __init__(self, rect, value=0, **kwargs):
+        super(ChipPile, self).__init__(rect, **kwargs)
+        self.stacking = 80, -10
+        self._clicked_sprite = None
+        self._followed_sprite = None
+        self._popped_chips = list()
+        self._initial_snap_x = None
+        self._desired_pos = None
+        self._selected_stack = False
         if value:
             self.add(*cash_to_chips(value))
+
+    def get_event(self, event, scale):
+        if event.type == pygame.MOUSEMOTION:
+            self.handle_pointer(tools.scaled_mouse_pos(scale))
+
+        elif event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                pos = tools.scaled_mouse_pos(scale)
+                self.handle_select(True, pos)
+
+        elif event.type == pg.MOUSEBUTTONUP:
+            if event.button == 1:
+                pos = tools.scaled_mouse_pos(scale)
+                self.handle_select(False, pos)
+
+    def handle_select(self, value, pos=None):
+        value = bool(value)
+        if not self._selected_stack == value:
+            self._selected_stack = value
+
+            if value:
+                B.processEvent(('PICKUP_STACK', self))
+            else:
+                d = {'object': self,
+                     'position': pos,
+                     'chips': list(self._popped_chips)}
+                drop = self.handle_drop(B.processEvent(('DROP_STACK', d)))
+                if drop:
+                    self.return_stack()
+                    return
+
+            self.handle_pointer(pos)
+
+    def handle_drop(self, results):
+        """Collect results from the 'DROP_STACK' event
+
+        If anyone was interested in the stack, then return True
+        """
+        for i in results:
+            junk, chips_pile = i
+
+        return True
+
+    def handle_pointer(self, pos):
+        if self._followed_sprite:
+            distance = self._initial_snapping
+        else:
+            distance = self._fine_snapping
+
+        if not self._selected_stack:
+            closest_sprite = None
+            nearest_sprites = self.get_nearest_sprites(pos, distance)
+            for dist, sprite in nearest_sprites:
+                if sprite not in self._popped_chips:
+                    closest_sprite = sprite
+                    break
+
+            if closest_sprite is not None:
+                if self._followed_sprite is not closest_sprite:
+                    random.choice(self.chip_sounds).play()
+                    self._followed_sprite = closest_sprite
+                    self._initial_snap_x = closest_sprite.rect.centerx
+
+        if self._followed_sprite:
+            close_enough = abs(pos[0] - self._initial_snap_x) < 100
+
+            if close_enough or self._selected_stack:
+                B.processEvent(('HOVER_STACK', (self, pos)))
+                self._needs_arrange = True
+                if self._selected_stack:
+                    self._desired_pos = pos[0], pos[1] - 20
+                else:
+                    self._desired_pos = pos[0], pos[1] + 15
+
+            elif not self._selected_stack:
+                self.return_stack()
+
+    def return_stack(self):
+        def animate_return_to_pile(sprite, initial, final, index=1):
+            """Used to animate chips returning to the pile
+            """
+            def cleanup_animation():
+                random.choice(self.chip_sounds).play()
+                try:
+                    self._popped_chips.remove(sprite)
+                except ValueError:
+                    pass
+
+            fx, fy = final
+            ani = Animation(x=fx, y=fy, duration=300, transition='out_quint')
+            ani.callback = cleanup_animation
+            ani.start(sprite.rect)
+            self.delay((index - 1) * 10, self._animations.add, (ani, ))
+            return ani
+
+        B.processEvent(('RETURN_STACK', self))
+        self._animations.empty()
+        self._selected_stack = False
+        self._needs_arrange = False
+        self._initial_snap_x = None
+        self._followed_sprite = None
+        self.arrange(animate=animate_return_to_pile)
+
+    def get_nearest_sprites(self, point, limit=None):
+        sprites = self.sprites()
+        l = [(get_distance(point, sprite.rect.center), sprite, i)
+             for i, sprite in enumerate(sprites)]
+        if limit is not None:
+            l = [i for i in l if i[0] <= limit]
+        l.sort()
+        l = [i[:2] for i in l]
+        return l
+
+    def animate_pop(self, sprite, initial, final, index=1):
+        """Animate chips moving to popped stack
+        """
+        fx, fy = final
+        ani = Animation(x=fx, y=fy, duration=200, transition='out_quint')
+        ani.start(sprite.rect)
+        self._animations.add(ani)
+        return ani
 
     @property
     def value(self):
         """"Returns total cash value of self.chips."""
-        return sum(chip.value for chip in self.sprites())
+        return chips_to_cash(self.sprites())
 
     def sort(self):
         self._spritelist.sort(key=attrgetter('value'), reverse=True)
 
     def withdraw_chips(self, amount):
-        """Withdraw chips totalling amount"""
+        """Withdraw chips totalling amount
+        """
         self.sort()
         withdraw = list()
         for chip in self.sprites():
             if chip.value <= amount:
                 amount -= chip.value
-                self.remove(chip)
                 withdraw.append(chip)
                 if amount == 0:
                     break
         else:
             raise ValueError
 
+        self.remove(withdraw)
         return withdraw
 
-    def arrange(self, sprites=None, offset=(0, 0)):
+    def arrange(self, sprites=None, offset=(0, 0), animate=None, noclip=False):
         self.sort()
-        x = 0
+        ox, oy = offset
+        arrange = super(ChipPile, self).arrange
         for k, g in groupby(self.sprites(), attrgetter('value')):
-            x, y = super(ChipPile, self).arrange(list(g), (x, 0))
-            x += 30
+            sprites = list(g)
+            if self._followed_sprite in sprites:
+
+                # arrange sprites lower than the followed one
+                i = sprites.index(self._followed_sprite)
+                self._popped_chips = list(sprites[i:])
+
+                # arrange sprites over the followed one
+                if i > 0:
+                    xx, yy = arrange(sprites[:i], (ox, oy))
+                    rect = sprites[i-1].rect
+                else:
+                    original_pos = sprites[0].rect.topleft
+                    xx, yy = arrange(sprites[:1], (ox, oy))
+                    rect = pygame.Rect(sprites[0].rect)
+                    sprites[0].rect.topleft = original_pos
+
+                xx += self._desired_pos[0] - rect.centerx
+                yy += self._desired_pos[1] - rect.bottom
+                self._animations.empty()
+                arrange(self._popped_chips, (ox + xx, yy),
+                        animate=self.animate_pop, noclip=True)
+
+            else:
+                arrange(sprites, (ox, oy), animate)
+
+            ox += self.stacking[0]
+
+
+class ChipRack(ChipPile):
+    """Class to represent a dealer/teller's rack of chips
+    """
+    def __init__(self, rect):
+        super(ChipRack, self).__init__(rect)
+        self._origin_offset = 9, -6
+        self.stacking = 57, 6
+        self.row_size = 30
+        self.background = prepare.GFX["chip_rack_medium"]
+        self.front = prepare.GFX["rack_front_medium"]
+        rect = self.background.get_rect(topleft=self.rect.topleft)
+        self.front_rect = self.front.get_rect(bottomleft=rect.bottomleft)
+
+    def add(self, *items):
+        """Add chips to the rack.
+
+        Chips will have their flat attribute set to True
+        and resized to fit the rack graphic
+        """
+        for chip in items:
+            chip.chip_size = 48, 30
+            chip.flat = True
+        super(ChipRack, self).add(*items)
+
+    def fill(self):
+        """Add enough chips of each value to fill the rack completely
+        """
+        d = collections.defaultdict(int)
+        for chip in self.sprites():
+            d[chip.value] += 1
+        for value in denominations:
+            for i in range(self.row_size - d[value]):
+                self.add(Chip(value))
+
+    def clear(self, surface, background):
+        super(ChipRack, self).clear(surface, self.background)
+
+    def draw(self, surface):
+        redraw = self._needs_arrange
+        if redraw:
+            surface.blit(self.background, self.rect)
+        dirty = super(ChipRack, self).draw(surface)
+        # HACK: will draw rack front every frame.  :(
+        surface.blit(self.front, self.front_rect)
+        return dirty
 
 
 class TextSprite(Sprite):
