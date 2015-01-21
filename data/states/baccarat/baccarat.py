@@ -7,12 +7,14 @@ add cards when deck is low
 import json
 import os
 import math
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from random import choice
 from itertools import chain
 from functools import partial
 import pygame as pg
 from .ui import *
+from .cards import *
+from .chips import *
 from . import layout
 from ... import tools, prepare
 from ...components.animation import Task, Animation
@@ -59,6 +61,13 @@ def points_message(value):
     return '{} point' if value == 1 else '{} points'
 
 
+class BettingArea(object):
+    def __init__(self, name, rect, hand=None):
+        self.name = name
+        self.rect = rect
+        self.hand = hand
+
+
 class Baccarat(tools._State):
     """Baccarat game.  rules are configured in baccarat.json
 
@@ -80,7 +89,7 @@ class Baccarat(tools._State):
 
         # declared here to appease pycharm's syntax checking.
         # will be filled in when configuration is loaded
-        self.betting_areas = list()
+        self.betting_areas = dict()
         self.dealer_hand = None
         self.player_hand = None
         self.player_chips = None
@@ -101,6 +110,7 @@ class Baccarat(tools._State):
         names = ["chipsstack{}".format(x) for x in (3, 5, 6)]
         self.chip_sounds = [prepare.SFX[name] for name in names]
 
+        self._highlight_areas = False
         self._chips_value_label = None
         self._enable_chips = False
         self._background = None
@@ -176,7 +186,7 @@ class Baccarat(tools._State):
             'dealer': self.dealer_hand,
             'tie': None
         }
-        for area in self.betting_areas:
+        for name, area in self.betting_areas.items():
             area.hand = hands[area.name]
 
     def on_hover_stack(self, *args):
@@ -197,7 +207,7 @@ class Baccarat(tools._State):
             self._chips_value_label = None
 
     def on_pickup_stack(self, *args):
-        pass
+        self._highlight_areas = True
 
     def on_drop_stack(self, *args):
         def remove(owner, chips):
@@ -206,6 +216,7 @@ class Baccarat(tools._State):
                 if owner.value == 0:
                     owner.kill_me = True
 
+        self._highlight_areas = False
         bet = None
         d = args[0]
         position = d['position']
@@ -215,20 +226,24 @@ class Baccarat(tools._State):
         if not hasattr(owner, 'original_chips_pile'):
             owner.original_chips_pile = owner
 
-        for area in self.betting_areas:
+        for area in self.betting_areas.values():
             if area.rect.collidepoint(position):
+                self._background = None
                 remove(owner, chips)
                 hand = area.hand
-                bet = self.make_bet(hand, owner.original_chips_pile, chips)
+                bet = self.place_bet(hand, owner.original_chips_pile, chips)
                 bet.original_chips_pile = owner.original_chips_pile
                 bet.rect.bottomleft = position
+                # HACK: should not be hardcoded
+                bet.rect.x -= 32
                 break
 
         if self.player_chips.rect.collidepoint(position):
+            self._background = None
             remove(owner, chips)
             self.player_chips.add(chips)
 
-        # This tuple is needed to prevert the event handler from dropping
+        # This tuple is needed to prevent the event handler from dropping
         # the return value when the ChipPile is evaluated as False when empty
         if bet is not None:
             return True, bet
@@ -335,24 +350,26 @@ class Baccarat(tools._State):
         self.animations.add(ani)
         return card, ani
 
-    def place_bet(self, result, owner, amount):
-        """Shortcut to place a bet
+    def place_bet_with_amount(self, result, owner, amount):
+        """Shortcut to place a bet with amount of wager
 
-        :param result: "player", "dealer", or "tie"
+        :param result: Deck or None
         :param owner: ChipsPile instance
         :param amount: amount to wager in cash (not chips)
         :return: ChipsPile instance
         """
-        choice(self.chip_sounds).play()
-        bet = ChipPile((600, 800, 200, 200))
-        bet.add(owner.withdraw_chips(amount))
-        bet.owner = owner
-        bet.result = result
-        self.bets.add(bet)
-        return bet
+        chips = owner.withdraw_chips(amount)
+        return self.place_bet(result, owner, chips)
 
-    def make_bet(self, result, owner, chips):
-        """make a bet using chips
+    def place_bet(self, result, owner, chips):
+        """Shortcut to place a bet with chips
+
+        Be sure to move the bet to a sensible area after placing it
+
+        :param result: Deck or None
+        :param owner: ChipsPile instance
+        :param amount: amount to wager in cash (not chips)
+        :return: ChipsPile instance
         """
         choice(self.chip_sounds).play()
         bet = ChipPile((600, 800, 200, 200))
@@ -654,24 +671,60 @@ class Baccarat(tools._State):
         rect.center = self.player_chips.rect.move(0, 75).midbottom
         self.hud.add(Button(text, rect, f))
 
+    def get_bet_totals(self):
+        """Get totals of all bets on the table
+
+        :return: Totals of all bets on the table
+        :rtype: Dict
+        """
+        totals = defaultdict(int)
+        for name, area in self.betting_areas.items():
+            for bet in self.bets.groups():
+                if bet.result is area.hand:
+                    result = bet.result
+                    if result is None:
+                        result = 'tie'
+                    else:
+                        result = name
+                    totals[result] += bet.value
+        return totals
+
     def render_background(self, size):
         """Render the background
 
         :param size: (width, height) in pixels
         :return: pygame.surface.Surface
         """
+        def render_text(text):
+            label.text = text
+            return label.draw()
+
         background = pg.Surface(size)
         background.fill(prepare.FELT_GREEN)
         if hasattr(self, 'background_filename'):
             im = prepare.GFX[self.background_filename]
             background.blit(im, (0, 0))
+
         label = TextSprite('', self.font, bg=prepare.FELT_GREEN)
-        for area in self.betting_areas:
-            label.text = area.name
-            label.rect.center = area.rect.center
-            image = label.draw()
-            image.set_alpha(128)
-            background.blit(image, label.rect)
+        totals = self.get_bet_totals()
+        for name, area in self.betting_areas.items():
+            total = totals[name]
+            if total:
+                image = render_text(area.name)
+                image.set_alpha(128)
+                label.rect.midbottom = area.rect.center
+                background.blit(image, label.rect)
+
+                image = render_text('${}'.format(totals[name]))
+                image.set_alpha(192)
+                label.rect.midtop = area.rect.center
+                background.blit(image, label.rect)
+            else:
+                image = render_text(area.name)
+                image.set_alpha(128)
+                label.rect.center = area.rect.center
+                background.blit(image, label.rect)
+
         return background
 
     def update(self, surface, keys, current_time, dt, scale):
@@ -685,7 +738,3 @@ class Baccarat(tools._State):
             group.update(dt)
             group.clear(surface, self._background)
             group.draw(surface)
-
-        # self.metagroup.update(dt)
-        # self.metagroup.clear(surface, self._background)
-        # self.metagroup.draw(surface)

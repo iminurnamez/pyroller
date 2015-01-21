@@ -2,7 +2,8 @@ import pygame
 import json
 import os.path
 from operator import itemgetter
-from .ui import *
+from .cards import *
+from .chips import *
 
 
 def get_rect(data):
@@ -24,17 +25,19 @@ def load_layout(state, filename):
         state.dealer_hand = deck
         state.metagroup.add(deck)
 
+    def add_betting_area(name, rect):
+        from .baccarat import BettingArea
+        area = BettingArea(name, rect)
+        state.betting_areas[name] = area
+
     def handle_player_bet(data):
-        area = BettingArea('player', get_rect(data))
-        state.betting_areas.append(area)
+        add_betting_area('player', get_rect(data))
 
     def handle_dealer_bet(data):
-        area = BettingArea('dealer', get_rect(data))
-        state.betting_areas.append(area)
+        add_betting_area('dealer', get_rect(data))
 
     def handle_tie_bet(data):
-        area = BettingArea('tie', get_rect(data))
-        state.betting_areas.append(area)
+        add_betting_area('tie', get_rect(data))
 
     def handle_shoe(data):
         shoe = Deck(get_rect(data), decks=state.options['decks'])
