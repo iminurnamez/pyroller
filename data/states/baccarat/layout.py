@@ -25,13 +25,16 @@ def load_layout(state, filename):
         state.groups.append(deck)
 
     def handle_player_bet(data):
-        state.betting_areas['player'] = get_rect(data)
+        area = BettingArea('player', get_rect(data))
+        state.betting_areas.append(area)
 
     def handle_dealer_bet(data):
-        state.betting_areas['dealer'] = get_rect(data)
+        area = BettingArea('dealer', get_rect(data))
+        state.betting_areas.append(area)
 
     def handle_tie_bet(data):
-        state.betting_areas['tie'] = get_rect(data)
+        area = BettingArea('tie', get_rect(data))
+        state.betting_areas.append(area)
 
     def handle_shoe(data):
         shoe = Deck(get_rect(data), decks=state.options['decks'])

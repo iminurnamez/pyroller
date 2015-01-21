@@ -17,10 +17,11 @@ from pygame.transform import smoothscale
 from ... import tools, prepare
 from ...components.angles import *
 from ...components.animation import *
+from ...prepare import BROADCASTER as B
 
 __all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck', 'Chip',
            'ChipPile', 'ChipRack', 'SpriteGroup', 'cash_to_chips',
-           'OutlineTextSprite']
+           'chips_to_cash', 'OutlineTextSprite', 'BettingArea']
 
 
 two_pi = pi * 2
@@ -55,6 +56,10 @@ def cash_to_chips(value):
     """Return a list of chips whose sum equals the value passed
     """
     return [Chip(i) for i in make_change(value)]
+
+
+def chips_to_cash(chips):
+    return sum(i.value for i in chips)
 
 
 def cut_sheet(surface, dim, margin=0, spacing=0, subsurface=True):
@@ -105,6 +110,13 @@ def make_cards(decks, card_size, shuffle=False):
         random.shuffle(cards)
 
     return cards
+
+
+class BettingArea(object):
+    def __init__(self, name, rect, hand=None):
+        self.name = name
+        self.rect = rect
+        self.hand = hand
 
 
 class Sprite(pygame.sprite.DirtySprite):
@@ -380,7 +392,7 @@ class Stacker(SpriteGroup):
         super(Stacker, self).update(*args)
         self._animations.update(*args)
 
-    def arrange(self, sprites=None, offset=(0, 0), animate=False):
+    def arrange(self, sprites=None, offset=(0, 0), animate=None, noclip=False):
         """ position sprites into piles.
 
         Constraint can be "width" or "height".
@@ -423,20 +435,17 @@ class Stacker(SpriteGroup):
             if constraint == "height":
                 setattr(rect, anchor, (x + xx, y + yy))
 
-                if self.rect.colliderect(rect):
+                if self.rect.colliderect(rect) or noclip:
                     yy += oy
                 else:
                     xx += ox
-                    yy = 0
+                    yy = oy
                     setattr(rect, anchor, (x + xx, y))
 
-            if animate:
-                fx, fy = rect.topleft
+            if animate is not None:
+                final_value = getattr(rect, 'topleft')
                 setattr(rect, anchor, original_value)
-                ani = Animation(x=fx, y=fy, duration=200,
-                                transition='out_quint')
-                ani.start(rect)
-                self.delay((index - 1) * 20, self._animations.add, (ani, ))
+                animate(sprite, original_value, final_value, index)
 
         return xx, yy
 
@@ -547,15 +556,125 @@ class Chip(Sprite):
 class ChipPile(Stacker):
     """Represents a player's pile of chips
     """
+    chip_sounds = [prepare.SFX[name] for name in
+                   ["chipsstack{}".format(x) for x in (3, 5, 6)]]
+
+    _initial_snapping = 50
+    _fine_snapping = 30
+
     def __init__(self, rect, value=0, **kwargs):
         super(ChipPile, self).__init__(rect, **kwargs)
-        self.stacking = 80, -7
+        self.stacking = 80, -10
         self._clicked_sprite = None
         self._followed_sprite = None
-        self.popped_chips = list()
-        self._initial_snap_x = 0
+        self._popped_chips = list()
+        self._initial_snap_x = None
+        self._desired_pos = None
+        self._selected_stack = False
         if value:
             self.add(*cash_to_chips(value))
+
+    def get_event(self, event, scale):
+        if event.type == pygame.MOUSEMOTION:
+            self.handle_pointer(tools.scaled_mouse_pos(scale))
+
+        elif event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                pos = tools.scaled_mouse_pos(scale)
+                self.handle_select(True, pos)
+
+        elif event.type == pg.MOUSEBUTTONUP:
+            if event.button == 1:
+                pos = tools.scaled_mouse_pos(scale)
+                self.handle_select(False, pos)
+
+    def handle_select(self, value, pos=None):
+        value = bool(value)
+        if not self._selected_stack == value:
+            self._selected_stack = value
+
+            if value:
+                B.processEvent(('PICKUP_STACK', self))
+            else:
+                d = {'object': self,
+                     'position': pos,
+                     'chips': list(self._popped_chips)}
+                drop = self.handle_drop(B.processEvent(('DROP_STACK', d)))
+                if drop:
+                    self.return_stack()
+                    return
+
+            self.handle_pointer(pos)
+
+    def handle_drop(self, results):
+        """Collect results from the 'DROP_STACK' event
+
+        If anyone was interested in the stack, then return True
+        """
+        for i in results:
+            junk, chips_pile = i
+
+        return True
+
+    def handle_pointer(self, pos):
+        if self._followed_sprite:
+            distance = self._initial_snapping
+        else:
+            distance = self._fine_snapping
+
+        if not self._selected_stack:
+            closest_sprite = None
+            nearest_sprites = self.get_nearest_sprites(pos, distance)
+            for dist, sprite in nearest_sprites:
+                if sprite not in self._popped_chips:
+                    closest_sprite = sprite
+                    break
+
+            if closest_sprite is not None:
+                if self._followed_sprite is not closest_sprite:
+                    random.choice(self.chip_sounds).play()
+                    self._followed_sprite = closest_sprite
+                    self._initial_snap_x = closest_sprite.rect.centerx
+
+        if self._followed_sprite:
+            close_enough = abs(pos[0] - self._initial_snap_x) < 100
+
+            if close_enough or self._selected_stack:
+                B.processEvent(('HOVER_STACK', (self, pos)))
+                self._needs_arrange = True
+                if self._selected_stack:
+                    self._desired_pos = pos[0], pos[1] - 20
+                else:
+                    self._desired_pos = pos[0], pos[1] + 15
+
+            elif not self._selected_stack:
+                self.return_stack()
+
+    def return_stack(self):
+        def animate_return_to_pile(sprite, initial, final, index=1):
+            """Used to animate chips returning to the pile
+            """
+            def cleanup_animation():
+                random.choice(self.chip_sounds).play()
+                try:
+                    self._popped_chips.remove(sprite)
+                except ValueError:
+                    pass
+
+            fx, fy = final
+            ani = Animation(x=fx, y=fy, duration=300, transition='out_quint')
+            ani.callback = cleanup_animation
+            ani.start(sprite.rect)
+            self.delay((index - 1) * 10, self._animations.add, (ani, ))
+            return ani
+
+        B.processEvent(('RETURN_STACK', self))
+        self._animations.empty()
+        self._selected_stack = False
+        self._needs_arrange = False
+        self._initial_snap_x = None
+        self._followed_sprite = None
+        self.arrange(animate=animate_return_to_pile)
 
     def get_nearest_sprites(self, point, limit=None):
         sprites = self.sprites()
@@ -567,46 +686,19 @@ class ChipPile(Stacker):
         l = [i[:2] for i in l]
         return l
 
-    def get_event(self, event, scale):
-        if event.type == pygame.MOUSEMOTION:
-            pos = tools.scaled_mouse_pos(scale)
-
-            dist = 30 if self._followed_sprite else 80
-            closest_sprite = None
-            nearest_sprites = self.get_nearest_sprites(pos, dist)
-            for dist, sprite in nearest_sprites:
-                if sprite not in self.popped_chips:
-                    closest_sprite = sprite
-                    break
-
-            if closest_sprite is not None:
-                if self._followed_sprite is not closest_sprite:
-                    self._followed_sprite = closest_sprite
-                    self._initial_snap_x = closest_sprite.rect.centerx
-
-            if self._followed_sprite:
-                if abs(pos[0] - self._initial_snap_x) < 80:
-                    def f():
-                        self._needs_arrange = True
-
-                    ani = Animation(bottom=pos[1] + 5, centerx=pos[0],
-                                    duration=400, transition='out_quint')
-                    ani.update_callback = f
-                    ani.start(self._followed_sprite.rect)
-                    self._animations.empty()
-                    self._animations.add(ani)
-                else:
-                    #self._needs_arrange = True
-                    self._needs_arrange = False
-                    self._followed_sprite = None
-                    self.popped_chips = list()
-                    self._animations.empty()
-                    self.arrange(animate=True)
+    def animate_pop(self, sprite, initial, final, index=1):
+        """Animate chips moving to popped stack
+        """
+        fx, fy = final
+        ani = Animation(x=fx, y=fy, duration=200, transition='out_quint')
+        ani.start(sprite.rect)
+        self._animations.add(ani)
+        return ani
 
     @property
     def value(self):
         """"Returns total cash value of self.chips."""
-        return sum(chip.value for chip in self.sprites())
+        return chips_to_cash(self.sprites())
 
     def sort(self):
         self._spritelist.sort(key=attrgetter('value'), reverse=True)
@@ -628,22 +720,37 @@ class ChipPile(Stacker):
         self.remove(withdraw)
         return withdraw
 
-    def arrange(self, sprites=None, offset=(0, 0), animate=False):
+    def arrange(self, sprites=None, offset=(0, 0), animate=None, noclip=False):
         self.sort()
         ox, oy = offset
         arrange = super(ChipPile, self).arrange
         for k, g in groupby(self.sprites(), attrgetter('value')):
             sprites = list(g)
             if self._followed_sprite in sprites:
-                fx, fy = self._followed_sprite.rect.topleft
+
+                # arrange sprites lower than the followed one
                 i = sprites.index(self._followed_sprite)
-                xx, yy = arrange(sprites[:i], (ox, oy))
-                yy += fy - sprites[i-1].rect.top
-                xx += fx - sprites[i-1].rect.left
-                self.popped_chips = sprites[i:]
-                arrange(sprites[i+1:], (ox + xx, yy))
+                self._popped_chips = list(sprites[i:])
+
+                # arrange sprites over the followed one
+                if i > 0:
+                    xx, yy = arrange(sprites[:i], (ox, oy))
+                    rect = sprites[i-1].rect
+                else:
+                    original_pos = sprites[0].rect.topleft
+                    xx, yy = arrange(sprites[:1], (ox, oy))
+                    rect = pygame.Rect(sprites[0].rect)
+                    sprites[0].rect.topleft = original_pos
+
+                xx += self._desired_pos[0] - rect.centerx
+                yy += self._desired_pos[1] - rect.bottom
+                self._animations.empty()
+                arrange(self._popped_chips, (ox + xx, yy),
+                        animate=self.animate_pop, noclip=True)
+
             else:
                 arrange(sprites, (ox, oy), animate)
+
             ox += self.stacking[0]
 
 

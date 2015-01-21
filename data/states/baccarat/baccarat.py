@@ -2,10 +2,11 @@
 todo:
 exchange chips
 add cards when deck is low
-clicking stacks
-lose bet amount if bailing
 """
 
+import json
+import os
+import math
 from collections import OrderedDict
 from random import choice
 from itertools import chain
@@ -16,9 +17,7 @@ from . import layout
 from ... import tools, prepare
 from ...components.animation import Task, Animation
 from ...components.angles import get_midpoint
-import json
-import os
-import math
+from ...prepare import BROADCASTER as B
 from pygame.compat import *
 
 
@@ -81,12 +80,19 @@ class Baccarat(tools._State):
 
         # declared here to appease pycharm's syntax checking.
         # will be filled in when configuration is loaded
-        self.betting_areas = dict()
+        self.betting_areas = list()
         self.dealer_hand = None
         self.player_hand = None
         self.player_chips = None
         self.house_chips = None
         self.shoe = None
+
+        self.interested_events = [
+            ('PICKUP_STACK', self.on_pickup_stack),
+            ('DROP_STACK', self.on_drop_stack),
+            ('HOVER_STACK', self.on_hover_stack),
+            ('RETURN_STACK', self.on_return_stack)
+        ]
 
         names = ["cardshove{}".format(x) for x in (1, 3, 4)]
         self.shove_sounds = [prepare.SFX[name] for name in names]
@@ -95,6 +101,8 @@ class Baccarat(tools._State):
         names = ["chipsstack{}".format(x) for x in (3, 5, 6)]
         self.chip_sounds = [prepare.SFX[name] for name in names]
 
+        self._chips_value_label = None
+        self._enable_chips = False
         self._background = None
         self._clicked_sprite = None
         self.font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
@@ -106,6 +114,7 @@ class Baccarat(tools._State):
         self.hud = pg.sprite.RenderUpdates()
         self.hud.add(NeonButton('lobby', (540, 938, 0, 0), self.goto_lobby))
         self.groups.append(self.hud)
+        self.link_events()
         self.reload_config()
         self.cash_in()
         self.new_round()
@@ -136,7 +145,16 @@ class Baccarat(tools._State):
         ])
         return stats
 
+    def link_events(self):
+        for name, f in self.interested_events:
+            B.linkEvent(name, f)
+
+    def unlink_events(self):
+        for name, f in self.interested_events:
+            B.unlinkEvent(name, f)
+
     def cleanup(self):
+        self.unlink_events()
         self.casino_player.stats['baccarat'] = self.stats
         return super(Baccarat, self).cleanup()
 
@@ -151,9 +169,68 @@ class Baccarat(tools._State):
         filename = os.path.join('resources', 'baccarat-layout.json')
         layout.load_layout(self, filename)
 
-    def get_event(self, event, scale=(1, 1)):
-        self.player_chips.get_event(event, scale)
+        # set the hands.  needed since loading may have been out of order
+        hands = {
+            'player': self.player_hand,
+            'dealer': self.dealer_hand,
+            'tie': None
+        }
+        for area in self.betting_areas:
+            area.hand = hands[area.name]
 
+    def on_hover_stack(self, *args):
+        chips, pos = args[0]
+        if self._chips_value_label is None:
+            self._chips_value_label = TextSprite('', self.large_font)
+            self.hud.add(self._chips_value_label)
+        value = str(chips_to_cash(chips._popped_chips))
+        self._chips_value_label.text = "${}".format(value)
+        self._chips_value_label.rect.midleft = pos
+        self._chips_value_label.rect.x += 30
+
+    def on_return_stack(self, *args):
+        if self._chips_value_label is not None:
+            self.hud.remove(self._chips_value_label)
+            self._chips_value_label = None
+
+    def on_pickup_stack(self, *args):
+        pass
+
+    def on_drop_stack(self, *args):
+        def remove(owner, chips):
+            owner.remove(chips)
+            if owner is not self.player_chips:
+                if owner.value == 0:
+                    owner.kill_me = True
+
+        bet = None
+        d = args[0]
+        position = d['position']
+        owner = d['object']
+        chips = d['chips']
+
+        if not hasattr(owner, 'original_chips_pile'):
+            owner.original_chips_pile = owner
+
+        for area in self.betting_areas:
+            if area.rect.collidepoint(position):
+                remove(owner, chips)
+                hand = area.hand
+                bet = self.make_bet(hand, owner.original_chips_pile, chips)
+                bet.original_chips_pile = owner.original_chips_pile
+                bet.rect.bottomleft = position
+                break
+
+        if self.player_chips.rect.collidepoint(position):
+            remove(owner, chips)
+            self.player_chips.add(chips)
+
+        # This tuple is needed to prevert the event handler from dropping
+        # the return value when the ChipPile is evaluated as False when empty
+        if bet is not None:
+            return True, bet
+
+    def get_event(self, event, scale=(1, 1)):
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 self.goto_lobby()
@@ -191,6 +268,11 @@ class Baccarat(tools._State):
                     sprite.pressed = False
                     sprite.on_mouse_click(pos)
                 self._clicked_sprite = None
+
+        if self._enable_chips:
+            self.player_chips.get_event(event, scale)
+            for bet in self.bets:
+                bet.get_event(event, scale)
 
     def delay(self, amount, callback, args=None, kwargs=None):
         """Convenience function to delay a function call
@@ -262,6 +344,17 @@ class Baccarat(tools._State):
         self.bets.append(bet)
         return bet
 
+    def make_bet(self, result, owner, chips):
+        """make a bet using chips
+        """
+        choice(self.chip_sounds).play()
+        bet = ChipPile((600, 800, 200, 200))
+        bet.add(chips)
+        bet.owner = owner
+        bet.result = result
+        self.bets.append(bet)
+        return bet
+
     def new_round(self):
         """Start new round of baccarat.
 
@@ -274,6 +367,7 @@ class Baccarat(tools._State):
             self.dealer_hand.empty()
             self.show_bet_confirm_button()
 
+        self._enable_chips = True
         self.bets = list()
         self.house_chips.fill()
         self.clear_table()
@@ -489,11 +583,11 @@ class Baccarat(tools._State):
         """Change player's chips to cash.  Includes any bets on table.
         """
         cash = self.player_chips.value
-        for bet in list(self.bets):
+        for bet in self.bets:
             if bet.owner == self.player_chips:
-                self.bets.remove(bet)
+                bet.kill_me = True
+                bet.empty()
                 cash += bet.value
-                bet.kill()
         self.casino_player.stats['cash'] = cash
         self.player_chips.empty()
 
@@ -539,8 +633,10 @@ class Baccarat(tools._State):
 
     def show_bet_confirm_button(self):
         def f(sprite):
-            sprite.kill()
-            self.deal_cards()
+            if len(self.bets) > 0:
+                self._enable_chips = False
+                sprite.kill()
+                self.deal_cards()
 
         text = TextSprite('Confirm Bet', self.button_font)
         rect = pg.Rect(0, 0, 300, 75)
@@ -559,9 +655,9 @@ class Baccarat(tools._State):
             im = prepare.GFX[self.background_filename]
             background.blit(im, (0, 0))
         label = TextSprite('', self.font, bg=prepare.FELT_GREEN)
-        for name, rect in self.betting_areas.items():
-            label.text = name
-            label.rect.center = rect.center
+        for area in self.betting_areas:
+            label.text = area.name
+            label.rect.center = area.rect.center
             image = label.draw()
             image.set_alpha(128)
             background.blit(image, label.rect)
@@ -574,7 +670,11 @@ class Baccarat(tools._State):
             self._background = image
 
         self.animations.update(dt)
-        for group in chain(self.bets, self.groups):
-            group.update(dt)
-            group.clear(surface, self._background)
-            group.draw(surface)
+        for groups in (self.bets, self.groups):
+            for group in list(groups):
+                group.update(dt)
+                group.clear(surface, self._background)
+                if hasattr(group, 'kill_me'):
+                    groups.remove(group)
+                    continue
+                group.draw(surface)
