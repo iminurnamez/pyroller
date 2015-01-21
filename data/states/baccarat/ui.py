@@ -320,7 +320,9 @@ class Stacker(SpriteGroup):
         self._needs_arrange = True
         self._constraint = 'height'
         self._origin = None
+        self._origin_offset = (0, 0)
         self._sprite_anchor = None
+        self._animations = pygame.sprite.Group()
         self.stacking = stacking
 
     @property
@@ -337,6 +339,19 @@ class Stacker(SpriteGroup):
             else:
                 self._origin = 'bottomleft'
                 self._sprite_anchor = 'bottomleft'
+
+    def delay(self, amount, callback, args=None, kwargs=None):
+        """Convenience function to delay a function call
+
+        :param amount: milliseconds to wait until callback is called
+        :param callback: function to call
+        :param args: arguments to pass to callback
+        :param kwargs: keywords to pass to callback
+        :return: Task instance
+        """
+        task = Task(callback, amount, 1, args, kwargs)
+        self._animations.add(task)
+        return task
 
     def add(self, *items):
         super(Stacker, self).add(*items)
@@ -361,7 +376,11 @@ class Stacker(SpriteGroup):
             self._needs_arrange = False
         super(Stacker, self).draw(surface)
 
-    def arrange(self, sprites=None, offset=(0, 0)):
+    def update(self, *args):
+        super(Stacker, self).update(*args)
+        self._animations.update(*args)
+
+    def arrange(self, sprites=None, offset=(0, 0), animate=False):
         """ position sprites into piles.
 
         Constraint can be "width" or "height".
@@ -373,7 +392,7 @@ class Stacker(SpriteGroup):
             sprites = list(self.sprites())
 
         if not sprites:
-            return
+            return 0, 0
 
         if self.stacking is None:
             pos = self.rect.topleft
@@ -382,26 +401,44 @@ class Stacker(SpriteGroup):
             for sprite in sprites[:-1]:
                 sprite.visible = 0
                 sprite.rect.topleft = pos
-            return
+            return 0, 0
 
+        anchor = self._sprite_anchor
+        constraint = self._constraint
         x, y = getattr(self.rect, self._origin)
-        x += offset[0]
-        y += offset[1]
-        rx, ry = x, y
+        x += self._origin_offset[0] + offset[0]
+        y += self._origin_offset[1] + offset[1]
         ox, oy = self.stacking
-        for sprite in sprites:
-            sprite.visible = 1
-            setattr(sprite.rect, self._sprite_anchor, (x, y))
+        xx = 0
+        yy = 0
+        for index, sprite in enumerate(sprites):
+            rect = sprite.rect
+
             if hasattr(sprite, 'dirty'):
                 sprite.dirty = 1
-            if self._constraint == "height":
-                if self.rect.contains(sprite.rect.move(0, oy)):
-                    y += oy
-                else:
-                    y = ry
-                    x += ox
+                sprite.visible = 1
 
-        return x, y
+            original_value = getattr(rect, anchor)
+
+            if constraint == "height":
+                setattr(rect, anchor, (x + xx, y + yy))
+
+                if self.rect.colliderect(rect):
+                    yy += oy
+                else:
+                    xx += ox
+                    yy = 0
+                    setattr(rect, anchor, (x + xx, y))
+
+            if animate:
+                fx, fy = rect.topleft
+                setattr(rect, anchor, original_value)
+                ani = Animation(x=fx, y=fy, duration=200,
+                                transition='out_quint')
+                ani.start(rect)
+                self.delay((index - 1) * 20, self._animations.add, (ani, ))
+
+        return xx, yy
 
 
 class Deck(Stacker):
@@ -514,15 +551,11 @@ class ChipPile(Stacker):
         super(ChipPile, self).__init__(rect, **kwargs)
         self.stacking = 80, -7
         self._clicked_sprite = None
-        self.followed_sprite = None
-        self.previous_followed_sprite = None
-        self.animations = pygame.sprite.Group()
+        self._followed_sprite = None
+        self.popped_chips = list()
+        self._initial_snap_x = 0
         if value:
             self.add(*cash_to_chips(value))
-
-    def update(self, *args):
-        super(ChipPile, self).update(*args)
-        self.animations.update(*args)
 
     def get_nearest_sprites(self, point, limit=None):
         sprites = self.sprites()
@@ -538,23 +571,37 @@ class ChipPile(Stacker):
         if event.type == pygame.MOUSEMOTION:
             pos = tools.scaled_mouse_pos(scale)
 
+            dist = 30 if self._followed_sprite else 80
             closest_sprite = None
-            for dist, sprite in self.get_nearest_sprites(pos, 50):
-                if sprite is not self.followed_sprite:
+            nearest_sprites = self.get_nearest_sprites(pos, dist)
+            for dist, sprite in nearest_sprites:
+                if sprite not in self.popped_chips:
                     closest_sprite = sprite
                     break
 
             if closest_sprite is not None:
-                self.previous_followed_sprite = self.followed_sprite
-                self.followed_sprite = closest_sprite
+                if self._followed_sprite is not closest_sprite:
+                    self._followed_sprite = closest_sprite
+                    self._initial_snap_x = closest_sprite.rect.centerx
 
-            if self.followed_sprite:
-                self.animations.empty()
-                ani = Animation(bottom=pos[1] + 10, duration=500,
-                                transition='out_quint')
-                ani.start(self.followed_sprite.rect)
-                self.animations.add(ani)
-                self._needs_arrange = True
+            if self._followed_sprite:
+                if abs(pos[0] - self._initial_snap_x) < 80:
+                    def f():
+                        self._needs_arrange = True
+
+                    ani = Animation(bottom=pos[1] + 5, centerx=pos[0],
+                                    duration=400, transition='out_quint')
+                    ani.update_callback = f
+                    ani.start(self._followed_sprite.rect)
+                    self._animations.empty()
+                    self._animations.add(ani)
+                else:
+                    #self._needs_arrange = True
+                    self._needs_arrange = False
+                    self._followed_sprite = None
+                    self.popped_chips = list()
+                    self._animations.empty()
+                    self.arrange(animate=True)
 
     @property
     def value(self):
@@ -572,24 +619,31 @@ class ChipPile(Stacker):
         for chip in self.sprites():
             if chip.value <= amount:
                 amount -= chip.value
-                self.remove(chip)
                 withdraw.append(chip)
                 if amount == 0:
                     break
         else:
             raise ValueError
 
+        self.remove(withdraw)
         return withdraw
 
-    def arrange(self, sprites=None, offset=(0, 0)):
+    def arrange(self, sprites=None, offset=(0, 0), animate=False):
         self.sort()
         ox, oy = offset
         arrange = super(ChipPile, self).arrange
         for k, g in groupby(self.sprites(), attrgetter('value')):
-            if self.followed_sprite in g:
-                arrange(list(g), (ox, oy))
+            sprites = list(g)
+            if self._followed_sprite in sprites:
+                fx, fy = self._followed_sprite.rect.topleft
+                i = sprites.index(self._followed_sprite)
+                xx, yy = arrange(sprites[:i], (ox, oy))
+                yy += fy - sprites[i-1].rect.top
+                xx += fx - sprites[i-1].rect.left
+                self.popped_chips = sprites[i:]
+                arrange(sprites[i+1:], (ox + xx, yy))
             else:
-                arrange(list(g), (ox, oy))
+                arrange(sprites, (ox, oy), animate)
             ox += self.stacking[0]
 
 
@@ -598,8 +652,8 @@ class ChipRack(ChipPile):
     """
     def __init__(self, rect):
         super(ChipRack, self).__init__(rect)
+        self._origin_offset = 9, -6
         self.stacking = 57, 6
-        self.draw_offset = 9, -6
         self.row_size = 30
         self.background = prepare.GFX["chip_rack_medium"]
         self.front = prepare.GFX["rack_front_medium"]
@@ -638,9 +692,6 @@ class ChipRack(ChipPile):
         # HACK: will draw rack front every frame.  :(
         surface.blit(self.front, self.front_rect)
         return dirty
-
-    def arrange(self, *args, **kwargs):
-        return super(ChipRack, self).arrange(offset=self.draw_offset)
 
 
 class TextSprite(Sprite):

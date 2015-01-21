@@ -12,14 +12,14 @@ def get_rect(data):
 def load_layout(state, filename):
     def handle_player_hand(data):
         rect = get_rect(data).move(120, 0)
-        deck = Deck(rect, stacking=(140, 200))
+        deck = Deck(rect, stacking=(140, 500))
         deck.auto_arrange = False
         state.player_hand = deck
         state.groups.append(deck)
 
     def handle_dealer_hand(data):
         rect = get_rect(data).move(120, 0)
-        deck = Deck(rect, stacking=(140, 200))
+        deck = Deck(rect, stacking=(140, 500))
         deck.auto_arrange = False
         state.dealer_hand = deck
         state.groups.append(deck)
