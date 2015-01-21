@@ -204,7 +204,7 @@ class Blackjack(tools._State):
             chip_total = player.chip_pile.get_chip_total()
             bet = hand.bet.get_chip_total()
             if chip_total < bet:
-                text = "You don't have enough cover that bet!"
+                text = "You don't have enough to cover that bet!"
                 center = self.screen_rect.center
                 self.window = NoticeWindow(center, text)
                 return
