@@ -154,6 +154,10 @@ class MetaGroup(object):
         for group in self.groups():
             group.draw(surface)
 
+            # HACK:
+            if hasattr(group, 'kill_me'):
+                self._groups.remove(group)
+
 
 class EventButton(Sprite):
     def __init__(self, callback, args=None, kwargs=None):

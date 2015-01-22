@@ -134,7 +134,7 @@ class Chip(Sprite):
 
 
 class ChipPile(Stacker):
-    """Represents a player's pile of chips
+    """Represents a pile of chips
     """
     chip_sounds = [prepare.SFX[name] for name in
                    ["chipsstack{}".format(x) for x in (3, 5, 6)]]
@@ -185,29 +185,20 @@ class ChipPile(Stacker):
         value = bool(value)
         if not self._selected_stack == value:
             self._selected_stack = value
-
-            if value:
-                B.processEvent(('PICKUP_STACK', self))
-            else:
-                d = {'object': self,
-                     'position': pos,
-                     'chips': list(self._popped_chips)}
-                drop = self.handle_drop(B.processEvent(('DROP_STACK', d)))
-                if drop:
-                    self.return_stack()
-                    return
-
             self.handle_pointer(pos)
 
     def handle_drop(self, results):
         """Collect results from the 'DROP_STACK' event
 
+        NOTE: needs work
+
         If anyone was interested in the stack, then return True
         """
         for i in results:
-            junk, chips_pile = i
+            # junk, chips_pile = i
+            return True
 
-        return True
+        return False
 
     def handle_pointer(self, pos):
         if self._followed_sprite:
@@ -237,18 +228,31 @@ class ChipPile(Stacker):
                 B.processEvent(('HOVER_STACK', (self, pos)))
                 self._needs_arrange = True
                 if self._selected_stack:
+                    B.processEvent(('PICKUP_STACK', self))
                     self._desired_pos = pos[0], pos[1] - 20
                 else:
                     self._desired_pos = pos[0], pos[1] + 15
 
             elif not self._selected_stack:
+                # called to return snapped stack to the pile
                 self.return_stack()
+
+                d = {'object': self,
+                     'position': pos,
+                     'chips': list(self._popped_chips)}
+
+                # drop will be true when somebody
+                # has accepted the dropped stack
+                drop = self.handle_drop(B.processEvent(('DROP_STACK', d)))
+                if drop:
+                    self.return_stack()
+                    return
+
 
     def return_stack(self):
         def animate_return_to_pile(sprite, initial, final, index=1):
             """Used to animate chips returning to the pile
             """
-
             def cleanup_animation():
                 choice(self.chip_sounds).play()
                 try:
@@ -271,6 +275,7 @@ class ChipPile(Stacker):
         self._initial_snap = None
         self._followed_sprite = None
         self.arrange(animate=animate_return_to_pile)
+        print "ret"
 
     def get_nearest_sprites(self, point, limit=None):
         sprites = self.sprites()
@@ -349,6 +354,7 @@ class ChipPile(Stacker):
                 arrange(sprites, (ox, oy), animate)
 
             ox += self.stacking[0]
+        self._needs_arrange = False
 
 
 class ChipRack(ChipPile):

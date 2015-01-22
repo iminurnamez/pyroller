@@ -14,7 +14,8 @@ two_pi = pi * 2
 
 
 def make_cards(decks, card_size, shuffle=False):
-    """Return a list of Cards."""
+    """Return a list of Cards
+    """
 
     def build_decks():
         suits = ("Clubs", "Hearts", "Diamonds", "Spades")
@@ -38,19 +39,20 @@ class Card(Sprite):
 
     face_cache = None
     card_suits = 'clubs', 'spades', 'hearts', 'diamonds'
-    card_names = {1: "Ace",
-                  2: "Two",
-                  3: "Three",
-                  4: "Four",
-                  5: "Five",
-                  6: "Six",
-                  7: "Seven",
-                  8: "Eight",
-                  9: "Nine",
-                  10: "Ten",
-                  11: "Jack",
-                  12: "Queen",
-                  13: "King"}
+    card_names = {
+        1: "Ace",
+        2: "Two",
+        3: "Three",
+        4: "Four",
+        5: "Five",
+        6: "Six",
+        7: "Seven",
+        8: "Eight",
+        9: "Nine",
+        10: "Ten",
+        11: "Jack",
+        12: "Queen",
+        13: "King"}
 
     def __init__(self, value, suit, rect, face_up=False):
         super(Card, self).__init__()
@@ -179,8 +181,10 @@ class Card(Sprite):
 
 
 class Deck(Stacker):
-    """Class to represent a deck of playing cards. If default_shuffle is True
-    the deck will be shuffled upon creation.
+    """Class to represent a deck of playing cards.
+
+    If default_shuffle is True the deck will be
+    shuffled upon creation.
     """
 
     def __init__(self, rect, card_size=prepare.CARD_SIZE, shuffle=True,

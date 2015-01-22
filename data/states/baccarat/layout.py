@@ -2,6 +2,7 @@ import pygame
 import json
 import os.path
 from operator import itemgetter
+from .table import BettingArea
 from .cards import *
 from .chips import *
 
@@ -26,7 +27,6 @@ def load_layout(state, filename):
         state.metagroup.add(deck)
 
     def add_betting_area(name, rect):
-        from .baccarat import BettingArea
         area = BettingArea(name, rect)
         state.betting_areas[name] = area
 
