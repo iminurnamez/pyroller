@@ -54,6 +54,9 @@ def load_layout(state, filename):
         state.house_chips = chips
         state.metagroup.add(chips)
 
+    def handle_confirm_button(data):
+        state.confirm_button_rect = get_rect(data)
+
     def handle_imagelayer(layer):
         fn = os.path.splitext(os.path.basename(layer['image']))[0]
         state.background_filename = fn

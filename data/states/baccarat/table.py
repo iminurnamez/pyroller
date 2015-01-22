@@ -44,6 +44,9 @@ class TableGame(tools._State):
         self.house_chips = None
         self.shoe = None
 
+        # baccarat only: move out later
+        self.confirm_button_rect = None
+
         self.interested_events = [
             ('PICKUP_STACK', self.on_pickup_stack),
             ('DROP_STACK', self.on_drop_stack),
@@ -189,10 +192,25 @@ class TableGame(tools._State):
                 bet.rect.x -= 32
                 break
 
+        # place bet in player chips
         if self.player_chips.rect.collidepoint(position):
             remove(owner, chips)
-            self.player_chips.add(chips)
+            # this pattern shoudld be make into a function:
+            # get current position of all items
+            # add new items
+            # arrange
+            # store new item positions
+            # set original positions
+            # start animations
+            for chip in chips:
+                originals = {sprite: sprite.rect.topleft
+                             for sprite in self.player_chips.sprites()}
+                originals[chip] = chip.rect.topleft
+                self.player_chips.add(chips)
+
+
             self.clear_background()
+            self.player_chips._ignore_until_away = True
             return None
 
         # This tuple is needed to prevent the event handler from dropping

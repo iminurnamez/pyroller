@@ -364,8 +364,7 @@ class Baccarat(TableGame):
             self.new_round()
 
         text = TextSprite('Again?', self.button_font)
-        rect = pg.Rect(0, 0, 300, 75)
-        rect.center = self.player_chips.rect.move(0, 75).midbottom
+        rect = self.confirm_button_rect
         self.hud.add(Button(text, rect, f))
 
     def show_bet_confirm_button(self):
@@ -376,8 +375,7 @@ class Baccarat(TableGame):
                 self.deal_cards()
 
         text = TextSprite('Confirm Bet', self.button_font)
-        rect = pg.Rect(0, 0, 300, 75)
-        rect.center = self.player_chips.rect.move(0, 75).midbottom
+        rect = self.confirm_button_rect
         self.hud.add(Button(text, rect, f))
 
     def render_background(self, size):
