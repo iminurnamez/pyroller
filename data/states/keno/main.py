@@ -5,6 +5,7 @@ from ...components.loggable import getLogger
 from ...components.warning_window import NoticeWindow
 from ...components.labels import Label, MultiLineLabel, NeonButton, ButtonGroup
 from ... import tools, prepare
+from .model import Wallet, Pot
 
 # Utilize the logger along with the following functions to print to console instead of prints.
 log = getLogger("KENO")
@@ -303,10 +304,6 @@ class Keno(tools._State):
         self.buttons = ButtonGroup()
         NeonButton((w, h), "Lobby", self.back_to_lobby, None, self.buttons)
 
-        self.bet = 0
-        self.is_paid = False
-        self.winnings = 0
-
         self.turns = 16
         self.play_max_active = False
 
@@ -383,7 +380,7 @@ class Keno(tools._State):
         log.debug("betting activated")
         self.make_bet(1)
         spot_count = self.keno_card.spot_count
-        self.pay_table.update(spot_count, self.bet)
+        self.pay_table.update(spot_count, self.pot._balance)
         
     def activate_clear(self):
         log.debug("clear activated")
@@ -392,7 +389,10 @@ class Keno(tools._State):
         self.round_history.clear()
         
     def validate_configuration(self):
-        if self.bet <= 0:
+        if not self.pot.paid and self.pot._balance > 0:
+            self.pot.repeat_bet()
+            return True
+        elif not self.pot.paid:
             self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
             return False
 
@@ -404,7 +404,6 @@ class Keno(tools._State):
         return True
     
     def activate_play(self):
-        self.winnings = 0
         
         if not self.validate_configuration():
             return
@@ -421,7 +420,6 @@ class Keno(tools._State):
     
     def activate_playmax(self):
         self.round_history.clear()
-        self.winnings = 0
         
         if not self.validate_configuration():
             return
@@ -431,6 +429,7 @@ class Keno(tools._State):
     
     def continue_playmax(self):
         log.debug("turns={0}".format(self.turns))
+        self.pot.repeat_bet()
         self.play_max_active = True
         numbers = pick_numbers(20)
 
@@ -448,21 +447,17 @@ class Keno(tools._State):
         #unsafe - can end up withdrawing beyond zero...
         #issue #75 (must cast to integer):
         log.debug("betting={0}".format(amount))
-        self.casino_player.stats["cash"] -= int(amount)
-        self.bet += amount
-        self.is_paid = True
+        #self.casino_player.stats["cash"] -= int(amount)
+        #self.bet += amount
+        #self.is_paid = True
+        
+        self.pot.change_bet(amount)
         
     def clear_bet(self):
-        self.is_paid = False
-        self.bet = 0
-        self.winnings = 0
+        self.pot.clear_bet()
         
     def result(self, spot, hit):
-        if not self.is_paid:
-            bet = self.bet
-            self.bet = 0
-            self.make_bet(bet)
-
+            
         paytable = PAYTABLE[spot]
         payment = 0.0
         for entry in paytable:
@@ -472,14 +467,8 @@ class Keno(tools._State):
             if payment > 0.0:
                 break
 
-        won = payment * self.bet
-        self.winnings += won
-        #issue #75 (must cast to integer):
-        self.casino_player.stats["cash"] += int(won)
-        #self.bet = 0
-        log.info("Won: {0}".format(self.winnings))
-
-        self.is_paid = False
+        self.pot.payout(payment)
+        self.casino_player.stats["cash"] = self.wallet.balance
 
     def back_to_lobby(self, *args):
         self.game_started = False
@@ -491,9 +480,11 @@ class Keno(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
-        #self.bet_action = Bet(self.casino_player)
         self.gui_widgets['bet_action'] = self.betting
         self.gui_widgets['clear'] = self.clearing
+
+        self.wallet = Wallet(self.casino_player.stats["cash"])
+        self.pot    = Pot(self.wallet)
 
         self.casino_player.stats["Keno"]["games played"] += 1
 
@@ -523,7 +514,7 @@ class Keno(tools._State):
 
             spot_count = self.keno_card.spot_count
             if spot_count != self.prev_spot_count:
-                self.pay_table.update(spot_count, self.bet)
+                self.pay_table.update(spot_count, self.pot._balance)
                 self.prev_spot_count = spot_count
 
         if not self.alert:
@@ -558,16 +549,16 @@ class Keno(tools._State):
             self.play_game()
             #pg.time.wait(5000)
 
-        total_text = "Balance:  ${}".format(self.casino_player.stats["cash"])
+        total_text = "Balance:  ${}".format(self.wallet.balance)
 
         self.gui_widgets['balance'] = Label(self.font, 48, total_text, "gold3",
                                {"topleft": (24, 760)})
 
-        bet_text = "Bet: ${}".format(self.bet)
+        bet_text = "Bet: ${}".format(self.pot._balance)
         self.gui_widgets['bet'] = Label(self.font, 48, bet_text, "gold3",
                                {"topleft": (24, 760+48)})
 
-        won_text = "Won: ${}".format(self.winnings)
+        won_text = "Won: ${}".format(self.pot.won)
         self.gui_widgets['won'] = Label(self.font, 48, won_text, "gold3",
                                {"topleft": (24, 760+48+48)})
 
