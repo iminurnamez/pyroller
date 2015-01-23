@@ -545,3 +545,8 @@ class Bingo(statemachine.StateMachine):
             self.ball_machine.unpause()
 
         self.add_generator('un-pause', unpause())
+
+    def double_up(self):
+        """Double up all cards"""
+        for card in self.cards:
+            card.double_down()
