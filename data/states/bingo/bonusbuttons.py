@@ -59,3 +59,4 @@ class BonusButtonsDisplay(common.ClickableGroup, loggable.Loggable, events.Event
             self.log.info('Clicked on button {0}'.format(button.name))
             if button.action:
                 button.action(self.state)
+            button.state = False

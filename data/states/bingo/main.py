@@ -535,3 +535,13 @@ class Bingo(statemachine.StateMachine):
         stat_name = 'cards {0}'.format(result)
         self.log.info('Updating stat {0}'.format(stat_name))
         self.casino_player.stats['Bingo'][stat_name] = self.casino_player.stats['Bingo'].get(stat_name, 0) + 1
+
+    def pause_machine(self, delay):
+        """Pause the ball machine for a certain length of time"""
+        self.ball_machine.pause()
+
+        def unpause():
+            yield delay * 1000
+            self.ball_machine.unpause()
+
+        self.add_generator('un-pause', unpause())
