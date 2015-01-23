@@ -29,7 +29,11 @@ class CasinoPlayer(object):
                                                      ('total winnings', 0)])),
                                              ("Bingo", OrderedDict(
                                                     [("games played", 0),
-                                                    ("games won", 0),
+                                                    ("cards won", 0),
+                                                    ("cards lost", 0),
+                                                    ("total bets", 0),
+                                                    ("total winnings", 0),
+                                                    ("time played", 0),
                                                     ("_last squares", [])])),
                                              ("Keno", OrderedDict(
                                                     [("games played", 0)])),
@@ -48,9 +52,8 @@ class CasinoPlayer(object):
             self.stats["cash"] = stats["cash"]
             for game in self.stats:
                 if game != "cash":
-
-                    for stat in self.stats[game]:
-                        self.stats[game][stat] = stats[game][stat]
+                    for stat, default in self.stats[game].items():
+                        self.stats[game][stat] = stats[game].get(stat, default)
 
 
 
