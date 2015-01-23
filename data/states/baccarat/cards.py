@@ -1,9 +1,11 @@
 import random
 import pygame
+from functools import partial
 from pygame.transform import smoothscale
 from math import pi, cos
 from .ui import Stacker, Sprite
 from ... import prepare
+from ...components.animation import Animation
 
 
 __all__ = [
@@ -193,6 +195,7 @@ class Deck(Stacker):
         if rect.size == (0, 0):
             rect = pygame.Rect(rect.topleft, card_size)
         super(Deck, self).__init__(rect, stacking)
+        self.arrange_function = self.animate_deal
         self.card_size = card_size
         self.shuffle = shuffle
         self.decks = decks
@@ -200,7 +203,7 @@ class Deck(Stacker):
 
     def add_decks(self, decks):
         cards = make_cards(decks, self.card_size, self.shuffle)
-        self.add(*cards)
+        self.extend(cards)
 
     def draw_cards(self, cards=5):
         """Remove top cards and return them
@@ -210,3 +213,32 @@ class Deck(Stacker):
                 yield self.pop()
         else:
             yield None
+
+    def flip(self, sprite):
+        set_dirty = lambda: setattr(sprite, 'dirty', 1)
+        fx = sprite.rect.centerx - sprite.rect.width
+        ani0 = Animation(rotation=0, duration=350, transition='out_quint')
+        ani0.update_callback = set_dirty
+        ani0.start(sprite)
+        ani1 = Animation(centerx=fx, duration=340, transition='out_quint')
+        ani1.update_callback = set_dirty
+        ani1.start(sprite.rect)
+        self._animations.add(ani0, ani1)
+
+    def animate_deal(self, sprite, initial, final, index):
+        if hasattr(sprite, '_already_animated'):
+            return None
+
+        sprite._already_animated = True
+        fx, fy = final
+        ani = Animation(x=fx, y=fy, duration=400.,
+                        transition='in_out_quint', round_values=True)
+        ani.update_callback = lambda: setattr(sprite, 'dirty', 1)
+
+        # HACK
+        if 1:
+            sprite.face_up = False
+            ani.callback = partial(self.flip, sprite)
+
+        ani.start(sprite.rect)
+        return ani

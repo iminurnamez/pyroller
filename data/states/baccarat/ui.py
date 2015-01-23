@@ -6,7 +6,7 @@ the built in types because I feel these are a little easier to use.
 Perhaps we could look at the existing classes and these and make some new
 blending of the two.
 """
-from itertools import product
+from itertools import product, chain
 from ... import prepare
 from ...components.animation import *
 
@@ -56,12 +56,13 @@ def make_shadow_surface(surface):
 
     slow.  use once and cache the result
     image must have alpha channel or results are undefined
+
+    not implemented
     """
     shad = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
 
     for x, y in product(*(range(i) for i in surface.get_size())):
         print x, y
-
 
 
 class Sprite(pygame.sprite.DirtySprite):
@@ -71,11 +72,44 @@ class Sprite(pygame.sprite.DirtySprite):
 
 
 class SpriteGroup(pygame.sprite.LayeredUpdates):
-    """Enhanced pygame sprite group
+    """Enhanced pygame sprite group.  s
     """
     def __init__(self, *args, **kwargs):
-        super(SpriteGroup, self).__init__(*args, **kwargs)
+        self._spritelayers = {}
+        self._spritelist = []
+        pygame.sprite.AbstractGroup.__init__(self)
+        self._default_layer = kwargs.get('default_layer', 0)
         self._animations = pygame.sprite.Group()
+
+    def extend(self, sprites, **kwargs):
+        if '_index' in kwargs.keys():
+            raise KeyError
+        for index, sprite in enumerate(sprites):
+            kwargs['_index'] = index
+            self.add(sprite, **kwargs)
+
+    def add(self, sprite, **kwargs):
+        """add a sprite to group.  do not pass a sequence or iterator
+
+        LayeredUpdates.add(*sprites, **kwargs): return None
+
+        If the sprite you add has an attribute _layer, then that layer will be
+        used. If **kwarg contains 'layer', then the passed sprites will be
+        added to that layer (overriding the sprite._layer attribute). If
+        neither the sprite nor **kwarg has a 'layer', then the default layer is
+        used to add the sprites.
+        """
+        if not sprite:
+            return
+
+        layer = kwargs.get('layer', None)
+        if isinstance(sprite, Sprite):
+            if not self.has_internal(sprite):
+                self.add_internal(sprite, layer)
+                sprite.add_internal(self)
+        else:
+            print sprite
+            raise ValueError
 
     @property
     def bounding_rect(self):
@@ -180,6 +214,7 @@ class EventButton(Sprite):
 
 class Stacker(SpriteGroup):
     def __init__(self, rect, stacking=None):
+        self.arrange_function = None
         super(Stacker, self).__init__()
         self.rect = pygame.Rect(rect)
         self.auto_arrange = True
@@ -188,7 +223,7 @@ class Stacker(SpriteGroup):
         self._origin = None
         self._origin_offset = (0, 0)
         self._sprite_anchor = None
-        self._animations = pygame.sprite.Group()
+        self.iter_delay = 10
         self.stacking = stacking
 
     @property
@@ -206,8 +241,15 @@ class Stacker(SpriteGroup):
                 self._origin = 'bottomleft'
                 self._sprite_anchor = 'bottomleft'
 
-    def add(self, *items):
-        super(Stacker, self).add(*items)
+    def add(self, item, **kwargs):
+        """Add something to the stacker
+
+        do not add iterables to this function.  use 'extend'
+
+        :param item: stuff to add
+        :return: None
+        """
+        super(Stacker, self).add(item, **kwargs)
         self._needs_arrange = True
 
     def remove(self, *items):
@@ -229,7 +271,7 @@ class Stacker(SpriteGroup):
             self._needs_arrange = False
         super(Stacker, self).draw(surface)
 
-    def arrange(self, sprites=None, offset=(0, 0), animate=None, noclip=False):
+    def arrange(self, sprites=None, offset=(0, 0), noclip=False, animate=True):
         """ position sprites into piles.
 
         Constraint can be "width" or "height".
@@ -260,6 +302,7 @@ class Stacker(SpriteGroup):
         ox, oy = self.stacking
         xx = 0
         yy = 0
+
         for index, sprite in enumerate(sprites):
             rect = sprite.rect
 
@@ -279,10 +322,16 @@ class Stacker(SpriteGroup):
                     yy = oy
                     setattr(rect, anchor, (x + xx, y))
 
-            if animate is not None:
+            f = self.arrange_function
+            if f is not None and animate:
                 final_value = getattr(rect, 'topleft')
                 setattr(rect, anchor, original_value)
-                animate(sprite, original_value, final_value, index)
+                ani = f(sprite, original_value, final_value, index)
+                if ani is not None:
+                    ani.delay = float(index) * self.iter_delay
+                    self._animations.add(ani)
+                else:
+                    setattr(rect, anchor, original_value)
 
         return xx, yy
 

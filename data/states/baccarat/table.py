@@ -139,7 +139,7 @@ class TableGame(tools._State):
             sprite = TextSprite('', self.large_font)
             self._chips_value_label = sprite
             self.hud.add(sprite, layer=100)
-        value = str(chips_to_cash(chips._popped_chips))
+        value = str(chips_to_cash(chips))
         sprite.text = "${}".format(value)
         sprite.rect.midleft = pos
         sprite.rect.x += 30
@@ -159,8 +159,6 @@ class TableGame(tools._State):
     def on_drop_stack(self, *args):
         """When a stack of chips is dropped anywhere
         """
-        print(len(self.bets))
-
         # this is a hack until i have a proper metagroup
         def remove(owner, chips):
             owner.remove(chips)
@@ -169,7 +167,6 @@ class TableGame(tools._State):
                     self.bets.remove(owner)
 
         self._highlight_areas = False
-        bet = None
         d = args[0]
         position = d['position']
         owner = d['object']
@@ -180,38 +177,26 @@ class TableGame(tools._State):
         if not hasattr(owner, 'origin'):
             owner.origin = owner
 
-        # place the bet somewhere
+        # place chips in player chips
+        if self.player_chips.rect.collidepoint(position):
+            remove(owner, chips)
+            self.player_chips.extend(chips)
+            self.player_chips._ignore_until_away = True
+            self.clear_background()
+            return None
+
+        # place chips in betting area
+        bet = None
         for area in self.betting_areas.values():
             if area.rect.collidepoint(position):
-                self.clear_background()
                 remove(owner, chips)
                 bet = self.place_bet(area.hand, owner.origin, chips)
                 bet.origin = owner.origin
                 bet.rect.bottomleft = position
                 # HACK: should not be hardcoded
                 bet.rect.x -= 32
+                self.clear_background()
                 break
-
-        # place bet in player chips
-        if self.player_chips.rect.collidepoint(position):
-            remove(owner, chips)
-            # this pattern shoudld be make into a function:
-            # get current position of all items
-            # add new items
-            # arrange
-            # store new item positions
-            # set original positions
-            # start animations
-            for chip in chips:
-                originals = {sprite: sprite.rect.topleft
-                             for sprite in self.player_chips.sprites()}
-                originals[chip] = chip.rect.topleft
-                self.player_chips.add(chips)
-
-
-            self.clear_background()
-            self.player_chips._ignore_until_away = True
-            return None
 
         # This tuple is needed to prevent the event handler from dropping
         # the return value when the ChipPile is evaluated as False when empty
@@ -279,19 +264,8 @@ class TableGame(tools._State):
         """Shortcut to draw card from shoe and add to a hand
 
         :param hand: Deck instance
-        :return: Card instance, Animation instance
+        :return: Card instance
         """
-        def flip(card):
-            set_dirty = lambda: setattr(card, 'dirty', 1)
-            fx = card.rect.centerx - card.rect.width
-            ani0 = Animation(rotation=0, duration=350, transition='out_quint')
-            ani0.update_callback = set_dirty
-            ani0.start(card)
-            ani1 = Animation(centerx=fx, duration=340, transition='out_quint')
-            ani1.update_callback = set_dirty
-            ani1.start(card.rect)
-            self.animations.add(ani0, ani1)
-
         sound = choice(self.deal_sounds)
         sound.set_volume(1)
         self.delay(100, sound.play)
@@ -301,24 +275,9 @@ class TableGame(tools._State):
         sound.play()
 
         card = self.shoe.pop()
-        originals = {sprite: sprite.rect.topleft for sprite in hand.sprites()}
-        originals[card] = card.rect.topleft
         hand.add(card)
-        hand.arrange()
 
-        fx, fy = card.rect.topleft
-        for sprite in hand.sprites():
-            sprite.rect.topleft = originals[sprite]
-        ani = Animation(x=fx, y=fy, duration=400.,
-                        transition='in_out_quint', round_values=True)
-        ani.update_callback = lambda: setattr(sprite, 'dirty', 1)
-        ani.start(card.rect)
-
-        if self.options['dealt_face_up']:
-            card.face_up = False
-            ani.callback = partial(flip, card)
-        self.animations.add(ani)
-        return card, ani
+        return card
 
     def place_bet_with_amount(self, result, owner, amount):
         """Shortcut to place a bet with amount of wager
@@ -343,7 +302,7 @@ class TableGame(tools._State):
         """
         choice(self.chip_sounds).play()
         bet = ChipPile((600, 800, 200, 200))
-        bet.add(chips)
+        bet.extend(chips)
         bet.owner = owner
         bet.result = result
         self.bets.add(bet)
@@ -364,7 +323,7 @@ class TableGame(tools._State):
         # chips = cash_to_chips(self.casino_player.stats['cash'])
         chips = cash_to_chips(1469)
         self.casino_player.stats['cash'] = 0
-        self.player_chips.add(chips)
+        self.player_chips.extend(chips)
 
     def cash_out(self):
         """Change player's chips to cash.  Includes any bets on table.

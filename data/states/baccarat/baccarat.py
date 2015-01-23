@@ -246,8 +246,8 @@ class Baccarat(TableGame):
                 fee = int(math.ceil(bet.value * commission))
                 winnings -= fee
 
-            bet.owner.add(cash_to_chips(winnings))
-            bet.owner.add(bet.sprites())
+            bet.owner.extend(cash_to_chips(winnings))
+            bet.owner.extend(bet.sprites())
 
             if is_player:
                 pn_win = winner is self.player_hand and player_natural
