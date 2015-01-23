@@ -289,10 +289,11 @@ class BingoCard(common.Clickable):
         # Check if a line completed
         if self.active and number_to_go == 0:
             for squares in self.state.winning_pattern.get_winning_squares(self, self.called_squares):
+                state = None
                 missing_squares = self.state.get_missing_squares(squares)
                 if not missing_squares:
                     self.state.add_generator('flash-squares', self.flash_squares(squares, S_GOOD, S_GOOD))
-                    self.state.play_sound(self.card_success_sound )
+                    self.state.play_sound(self.card_success_sound)
                     self.set_card_state(S_WON)
                 else:
                     self.state.add_generator('flash-squares', self.flash_squares(missing_squares, S_BAD, S_BAD))
@@ -347,6 +348,7 @@ class BingoCard(common.Clickable):
 
     def set_card_state(self, state):
         """Set the card state"""
+        self.log.info('Set card state {0} {1}'.format(self, state))
         self.card_state = state
         self.highlight_column(None)
 

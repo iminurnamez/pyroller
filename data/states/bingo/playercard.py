@@ -119,6 +119,7 @@ class PlayerCard(bingocard.BingoCard):
 
     def set_card_state(self, state):
         """Set the card state and flash it a bit"""
+        super(PlayerCard, self).set_card_state(state)
         self.state.add_generator('flash-card-state', self.flash_card_state(self.card_state, state))
         self.double_down_button.state = False
         self.set_dirty()
