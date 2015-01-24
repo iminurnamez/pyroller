@@ -2,7 +2,9 @@ import pygame
 import json
 import os.path
 from operator import itemgetter
-from .ui import *
+from .table import BettingArea
+from .cards import *
+from .chips import *
 
 
 def get_rect(data):
@@ -13,43 +15,45 @@ def load_layout(state, filename):
     def handle_player_hand(data):
         rect = get_rect(data).move(120, 0)
         deck = Deck(rect, stacking=(140, 500))
-        deck.auto_arrange = False
         state.player_hand = deck
-        state.groups.append(deck)
+        state.metagroup.add(deck)
 
     def handle_dealer_hand(data):
         rect = get_rect(data).move(120, 0)
         deck = Deck(rect, stacking=(140, 500))
-        deck.auto_arrange = False
         state.dealer_hand = deck
-        state.groups.append(deck)
+        state.metagroup.add(deck)
+
+    def add_betting_area(name, rect):
+        area = BettingArea(name, rect)
+        state.betting_areas[name] = area
 
     def handle_player_bet(data):
-        area = BettingArea('player', get_rect(data))
-        state.betting_areas.append(area)
+        add_betting_area('player', get_rect(data))
 
     def handle_dealer_bet(data):
-        area = BettingArea('dealer', get_rect(data))
-        state.betting_areas.append(area)
+        add_betting_area('dealer', get_rect(data))
 
     def handle_tie_bet(data):
-        area = BettingArea('tie', get_rect(data))
-        state.betting_areas.append(area)
+        add_betting_area('tie', get_rect(data))
 
     def handle_shoe(data):
         shoe = Deck(get_rect(data), decks=state.options['decks'])
         state.shoe = shoe
-        state.groups.append(shoe)
+        state.metagroup.add(shoe)
 
     def handle_player_chips(data):
         chips = ChipPile(get_rect(data))
         state.player_chips = chips
-        state.groups.append(chips)
+        state.metagroup.add(chips)
 
     def handle_house_chips(data):
         chips = ChipRack(get_rect(data))
         state.house_chips = chips
-        state.groups.append(chips)
+        state.metagroup.add(chips)
+
+    def handle_confirm_button(data):
+        state.confirm_button_rect = get_rect(data)
 
     def handle_imagelayer(layer):
         fn = os.path.splitext(os.path.basename(layer['image']))[0]

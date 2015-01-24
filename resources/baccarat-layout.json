@@ -17,8 +17,7 @@
          "name":"Object Layer 1",
          "objects":[
                 {
-                 "height":192,
-                 "id":1,
+                 "height":224,
                  "name":"",
                  "properties":
                     {
@@ -27,13 +26,12 @@
                  "rotation":0,
                  "type":"player_bet",
                  "visible":true,
-                 "width":432,
-                 "x":496,
-                 "y":704
+                 "width":512,
+                 "x":448,
+                 "y":688
                 }, 
                 {
-                 "height":144,
-                 "id":2,
+                 "height":160,
                  "name":"",
                  "properties":
                     {
@@ -42,13 +40,12 @@
                  "rotation":0,
                  "type":"dealer_bet",
                  "visible":true,
-                 "width":400,
-                 "x":512,
+                 "width":512,
+                 "x":448,
                  "y":528
                 }, 
                 {
-                 "height":112,
-                 "id":3,
+                 "height":128,
                  "name":"",
                  "properties":
                     {
@@ -57,13 +54,12 @@
                  "rotation":0,
                  "type":"tie_bet",
                  "visible":true,
-                 "width":336,
-                 "x":544,
+                 "width":512,
+                 "x":448,
                  "y":400
                 }, 
                 {
                  "height":208,
-                 "id":4,
                  "name":"",
                  "properties":
                     {
@@ -78,7 +74,6 @@
                 }, 
                 {
                  "height":208,
-                 "id":5,
                  "name":"",
                  "properties":
                     {
@@ -93,7 +88,6 @@
                 }, 
                 {
                  "height":368,
-                 "id":6,
                  "name":"",
                  "properties":
                     {
@@ -102,13 +96,12 @@
                  "rotation":0,
                  "type":"player_chips",
                  "visible":true,
-                 "width":464,
-                 "x":48,
-                 "y":528
+                 "width":400,
+                 "x":32,
+                 "y":544
                 }, 
                 {
                  "height":144,
-                 "id":7,
                  "name":"",
                  "properties":
                     {
@@ -123,7 +116,6 @@
                 }, 
                 {
                  "height":224,
-                 "id":8,
                  "name":"",
                  "properties":
                     {
@@ -135,6 +127,20 @@
                  "width":304,
                  "x":1072,
                  "y":784
+                }, 
+                {
+                 "height":128,
+                 "name":"",
+                 "properties":
+                    {
+
+                    },
+                 "rotation":0,
+                 "type":"confirm_button",
+                 "visible":true,
+                 "width":240,
+                 "x":592,
+                 "y":160
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -143,7 +149,6 @@
          "x":0,
          "y":0
         }],
- "nextobjectid":9,
  "orientation":"orthogonal",
  "properties":
     {

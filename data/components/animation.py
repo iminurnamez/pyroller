@@ -129,11 +129,11 @@ class Animation(pygame.sprite.Sprite):
     """
     def __init__(self, **kwargs):
         super(Animation, self).__init__()
-        self._targets = None
+        self.targets = None
+        self.delay = kwargs.get('delay', 0)
         self._started = False
         self._round_values = kwargs.get('round_values', False)
         self._duration = float(kwargs.get('duration', 1000.))
-        self._delay = kwargs.get('delay', 0)
         self._transition = kwargs.get('transition', 'linear')
         if isinstance(self._transition, string_types):
             self._transition = getattr(AnimationTransition, self._transition)
@@ -151,12 +151,16 @@ class Animation(pygame.sprite.Sprite):
         :param dt: Time passed since last update.
         """
         self._elapsed += dt
-        if self._elapsed < self._delay:
-            return
+        if self.delay > 0:
+            if self._elapsed < self.delay:
+                return
+            else:
+                self._elapsed -= self.delay
+                self.delay = 0
 
         p = min(1., self._elapsed / self._duration)
         t = self._transition(p)
-        for target, props in self._targets:
+        for target, props in self.targets:
             for name, values in props.items():
                 a, b = values
                 value = (a * (1. - t)) + (b * t)
@@ -167,11 +171,25 @@ class Animation(pygame.sprite.Sprite):
         if hasattr(self, 'update_callback'):
             self.update_callback()
 
-        if p >= 1.:
-            self._targets = None
-            self.kill()
-            if hasattr(self, 'callback'):
-                self.callback()
+        if p >= 1:
+            self.finish()
+
+    def finish(self):
+        """Force the animation to finish
+
+        Final values will be applied
+
+        :return: None
+        """
+        for target, props in self.targets:
+            for name, values in props.items():
+                a, b = values
+                setattr(target, name, b)
+
+        self.targets = None
+        self.kill()
+        if hasattr(self, 'callback'):
+            self.callback()
 
     def start(self, sprite):
         """Start the animation on a target sprite/object
@@ -181,8 +199,10 @@ class Animation(pygame.sprite.Sprite):
 
         :param sprite: Any valid python object
         """
-        self._targets = [(sprite, dict())]
-        for target, props in self._targets:
+        self.targets = [(sprite, dict())]
+        for target, props in self.targets:
+            if isinstance(target, pygame.Rect):
+                logger.debug('pass "round_values=True" when using Rects')
             for name, value in self.props.items():
                 props[name] = getattr(target, name), value
 

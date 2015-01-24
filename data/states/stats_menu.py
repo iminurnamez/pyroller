@@ -16,7 +16,7 @@ class StatsMenu(tools._State):
         self.title = Label(self.font, 64, "Statistics", "darkred",
                           {"midtop":(screen_rect.centerx, screen_rect.top+10)})
         self.games = ["Blackjack", "Bingo", "Craps", "Keno", "Video Poker",
-                      "Pachinko"]
+                      "Pachinko", "Guts"]
         self.buttons = self.make_buttons(screen_rect)
         self.use_music_handler = False
 
