@@ -70,11 +70,11 @@ class CasinoPlayer(loggable.Loggable):
                                             ])
 
         if stats is not None:
-            self.stats["cash"] = stats["cash"]
-            for game in self.stats:
-                if game != "cash":
-                    for stat, default in self.stats[game].items():
-                        self.stats[game][stat] = stats[game].get(stat, default)
+            self.cash = stats["cash"]
+            for game in self.game_names():
+                self.current_game = game
+                for stat_name in self.get_stat_names():
+                    self.set(stat_name, stats[game].get(stat_name, self.get(stat_name)))
 
     @property
     def stats(self):
@@ -155,3 +155,14 @@ class CasinoPlayer(loggable.Loggable):
             raise NoGameSet('No current game has been set (when trying to access stat "{0}")'.format(name))
         #
         return self._stats[self.current_game].get(name, default)
+
+    def game_names(self):
+        """Return the names of all the stats"""
+        return [name for name in self._stats.keys() if name != 'cash']
+
+    def get_stat_names(self):
+        """Return the names of the stats for a game"""
+        if self.current_game is None:
+            raise NoGameSet('No current game has been set (when trying to access stat "{0}")'.format(name))
+        #
+        return self._stats[self.current_game].keys()
