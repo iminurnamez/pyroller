@@ -75,4 +75,12 @@ class CasinoPlayer(loggable.Loggable):
         #
         return self._stats
 
+    @property
+    def cash(self):
+        """The current cash for the player"""
+        return self._stats['cash']
 
+    @cash.setter
+    def cash(self, value):
+        """Set the cash value"""
+        self._stats['cash'] = value
