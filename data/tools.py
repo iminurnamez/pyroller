@@ -79,6 +79,7 @@ class Control(object):
         """
         previous,self.state_name = self.state_name, self.state.next
         persist = self.state.cleanup()
+        persist['casino_player'].current_game = self.state_name
         self.state = self.state_dict[self.state_name]
         self.state.startup(self.now, persist)
         self.state.previous = previous

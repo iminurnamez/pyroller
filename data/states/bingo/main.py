@@ -90,7 +90,7 @@ class Bingo(statemachine.StateMachine):
                 ('_last squares', []),
                 ])
         #
-        self.casino_player.stats['Bingo']['games played'] += 1
+        self.casino_player.increase('games played')
         self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
         self.money_display.set_money(self.casino_player.cash)
 

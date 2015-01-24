@@ -6,6 +6,14 @@ from .. import prepare
 from . import loggable
 
 
+class NoGameSet(Exception):
+    """There is no current game defined for the player"""
+
+
+class GameNotFound(Exception):
+    """The game was not defined in the stats collection"""
+
+
 class CasinoPlayer(loggable.Loggable):
     """Class to represent the player/user. A new
     CasinoPlayer will be instantiated each time the
@@ -13,8 +21,14 @@ class CasinoPlayer(loggable.Loggable):
     allows persistence of player statistics between
     sessions."""
 
+    # Game states for which no statistics are collected
+    no_stats_stats = [
+        'LOBBYSCREEN', 'STATSMENU', 'STATSSCREEN',
+    ]
+
     def __init__(self, stats=None):
         self.addLogger()
+        self._current_game = None
         self._stats = OrderedDict([("cash", prepare.MONEY),
                                              ("Blackjack", OrderedDict(
                                                     [("games played", 0),
@@ -85,3 +99,36 @@ class CasinoPlayer(loggable.Loggable):
     def cash(self, value):
         """Set the cash value"""
         self._stats['cash'] = value
+
+    @property
+    def current_game(self):
+        """The current game for storing stats"""
+        return self._current_game
+
+    @current_game.setter
+    def current_game(self, value):
+        """Set the current game"""
+        if value in self.no_stats_stats:
+            self._current_game = None
+        else:
+            #
+            # The case of the the current game is not handled very consistently so
+            # the following code makes sure this works whatever the case is
+            # TODO: remove case inconsistencies and then remove this code
+            for name in self._stats:
+                if name.lower() == value.lower():
+                    self._current_game = name
+                    break
+            else:
+                raise GameNotFound('There was no game called "{0}" in the stats collection'.format(value))
+
+    def increase(self, name, amount=1):
+        """Increase the value of a stat"""
+        if self.current_game is None:
+            raise NoGameSet('No current game has been set (when trying to access stat "{0}")'.format(name))
+        #
+        self._stats[self.current_game][name] = self._stats[self.current_game].get(name, 0) + amount
+
+    def decrease(self, name, amount=1):
+        """Decrease the value of a stat"""
+        self.increase(name, -amount)
