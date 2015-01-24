@@ -6,10 +6,10 @@ the built in types because I feel these are a little easier to use.
 Perhaps we could look at the existing classes and these and make some new
 blending of the two.
 """
-from itertools import product, chain
+from itertools import product, groupby, chain
 from ... import prepare
 from ...components.animation import *
-
+import pygame.gfxdraw
 
 __all__ = [
     'SpriteGroup',
@@ -18,6 +18,15 @@ __all__ = [
     'NeonButton',
     'TextSprite',
     'OutlineTextSprite']
+
+
+def reduce_rect_list(rect, others):
+    hits = rect.collidelistall(others)
+    for index in hits:
+        others[index].union_ip(rect)
+
+
+    return others
 
 
 def cut_sheet(surface, dim, margin=0, spacing=0, subsurface=True):
@@ -72,7 +81,7 @@ class Sprite(pygame.sprite.DirtySprite):
 
 
 class SpriteGroup(pygame.sprite.LayeredUpdates):
-    """Enhanced pygame sprite group.  s
+    """Enhanced pygame sprite group.
     """
     def __init__(self, *args, **kwargs):
         self._spritelayers = {}
@@ -111,6 +120,39 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
             print sprite
             raise ValueError
 
+    def draw(self, surface):
+        """draw all sprites in the right order onto the passed surface
+
+        LayeredUpdates.draw(surface): return Rect_list
+
+        """
+        spritedict = self.spritedict
+        surface_blit = surface.blit
+        dirty = self.lostsprites
+        self.lostsprites = []
+        dirty_append = dirty.append
+        init_rect = self._init_rect
+        for sprite in self.sprites():
+            if not sprite.dirty:
+                continue
+            if not sprite.dirty == 2:
+                sprite.dirty -= 1
+            rect = spritedict[sprite]
+            newrect = surface_blit(sprite.image, sprite.rect)
+            if rect is init_rect:
+                dirty_append((newrect, sprite.dirty))
+            else:
+                if newrect == rect:
+                    dirty_append((newrect, sprite.dirty))
+                elif newrect.colliderect(rect):
+                    sprite.dirty = 1
+                    dirty_append((newrect.union(rect), 1))
+                else:
+                    dirty_append((newrect, sprite.dirty))
+                    dirty_append((rect, 1))
+            spritedict[sprite] = newrect
+        return dirty
+
     @property
     def bounding_rect(self):
         sprites = self.sprites()
@@ -145,7 +187,12 @@ class MetaGroup(object):
     Don't use dirty groups
     """
     def __init__(self):
+        self.master = False
+        self._buffer = None
         self._groups = list()
+        self.lostareas = list()
+        self.spritedict = dict()
+        self.dirty = list()
 
     def __len__(self):
         return len(self._groups)
@@ -153,8 +200,7 @@ class MetaGroup(object):
     def sprites(self):
         retval = list()
         for group in self.groups():
-            for sprite in group.sprites():
-                retval.append(sprite)
+            retval.extend(group.sprites())
         return retval
 
     def groups(self):
@@ -181,16 +227,52 @@ class MetaGroup(object):
             group.update(*args)
 
     def clear(self, surface, background):
-        for group in self.groups():
-            group.clear(surface, background)
+        surface_blit = surface.blit
+        print len(self.dirty)
+        for rect in self.dirty:
+            for sprite in self.sprites():
+                if sprite.rect.collidelist(self.dirty):
+                    sprite.dirty = 1
+
+            surface_blit(background, rect, rect)
 
     def draw(self, surface):
-        for group in self.groups():
-            group.draw(surface)
+        """draw all sprites in the right order onto the given surface
+        """
+        sprites = self.sprites
+        spritedict = self.spritedict
+        surface_blit = surface.blit
+        pygame_rect = pygame.Rect
 
-            # HACK:
-            if hasattr(group, 'kill_me'):
-                self._groups.remove(group)
+        # dirty = self.lostsprites
+        # self.lostsprites = []
+        dirty = list()
+        dirty_append = dirty.append
+
+        for group in self.groups():
+            for rect in group.draw(surface):
+                try:
+                    rect, clear_flag = rect
+                except ValueError:
+                    clear_flag = True
+
+                if clear_flag:
+                    index = rect.collidelist(dirty)
+                    if index == -1:
+                        dirty_append(rect)
+                    else:
+                        dirty = reduce_rect_list(rect, dirty)
+
+        # remove duplicates
+        dirty.sort()
+        dirty = [k for k, v in groupby(dirty)]
+
+        # # debugging to show overdraw
+        # for rect in dirty:
+        #     pygame.gfxdraw.box(surface, rect, (255, 32, 32, 64))
+
+        self.dirty = dirty
+        return dirty
 
 
 class EventButton(Sprite):
@@ -269,7 +351,7 @@ class Stacker(SpriteGroup):
         if self.auto_arrange and self._needs_arrange:
             self.arrange()
             self._needs_arrange = False
-        super(Stacker, self).draw(surface)
+        return super(Stacker, self).draw(surface)
 
     def arrange(self, sprites=None, offset=(0, 0), noclip=False, animate=True):
         """ position sprites into piles.

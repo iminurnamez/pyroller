@@ -183,7 +183,7 @@ class TableGame(tools._State):
             self.player_chips.extend(chips)
             self.player_chips._ignore_until_away = True
             self.clear_background()
-            return None
+            return True, None
 
         # place chips in betting area
         bet = None
@@ -367,7 +367,6 @@ class TableGame(tools._State):
             self._background = image
 
         self.animations.update(dt)
-        for group in self.metagroup.groups():
-            group.update(dt)
-            group.clear(surface, self._background)
-            group.draw(surface)
+        self.metagroup.update(dt)
+        self.metagroup.clear(surface, self._background)
+        self.metagroup.draw(surface)

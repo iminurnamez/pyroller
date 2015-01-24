@@ -90,6 +90,7 @@ class Card(Sprite):
         self.rect.size = rect.size
         self.rect.center = rect.center
         self.dirty = 1
+        self._needs_update = False
 
     @classmethod
     def initialize_cache(cls, size):
