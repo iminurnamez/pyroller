@@ -82,14 +82,6 @@ class Bingo(statemachine.StateMachine):
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
         #
-        # Make sure the player has stat markers
-        if 'Bingo' not in self.casino_player.stats:
-            self.casino_player.stats['Bingo'] = OrderedDict([
-                ('games played', 0),
-                ('games won', 0),
-                ('_last squares', []),
-                ])
-        #
         self.casino_player.increase('games played')
         self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
         self.money_display.set_money(self.casino_player.cash)
