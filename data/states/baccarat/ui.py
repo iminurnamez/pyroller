@@ -82,7 +82,7 @@ def make_shadow_surface(surface):
     shad = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
 
     for x, y in product(*(range(i) for i in surface.get_size())):
-        print x, y
+        print(x, y)
 
 
 class Sprite(pygame.sprite.DirtySprite):
@@ -130,7 +130,7 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
                 self.add_internal(sprite, layer)
                 sprite.add_internal(self)
         else:
-            print sprite
+            print(sprite)
             raise ValueError
 
     # def draw(self, surface):
