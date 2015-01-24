@@ -567,11 +567,12 @@ class Bingo(statemachine.StateMachine):
 
         self.add_generator('un-auto', unauto())
 
-    def win_cards(self):
-        """Win all the cards"""
-        for idx, card in enumerate(self.cards):
+    def win_card(self):
+        """Win one of the cards"""
+        possible_cards = [card for card in self.cards if card.active]
+        if possible_cards:
+            card = random.choice(possible_cards)
             card.set_card_state(bingocard.S_WON)
-            if idx == 0:
-                self.play_sound(card.card_success_sound)
+            self.play_sound(card.card_success_sound)
             B.processEvent((events.E_CARD_COMPLETE, card))
             card.active = False

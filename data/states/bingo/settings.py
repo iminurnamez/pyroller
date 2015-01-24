@@ -294,7 +294,7 @@ SETTINGS = {
         ('Slow', 1, lambda state: state.slow_machine()),
         ('Auto', 5, lambda state: state.start_auto_pick(5)),
         ('x2', 1, lambda state: state.double_up()),
-        ('Win!', 1, lambda state: state.win_cards()),
+        ('Win!', 1, lambda state: state.win_card()),
     ],
     'bonus-button-text-font': prepare.FONTS["Saniretro"],
     'bonus-button-text-font-size': 24,
