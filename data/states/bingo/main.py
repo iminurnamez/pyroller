@@ -83,9 +83,8 @@ class Bingo(statemachine.StateMachine):
         self.casino_player = self.persist["casino_player"]
         #
         self.casino_player.increase('games played')
-        self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
+        self.cards.set_card_numbers(self.casino_player.get('_last squares', []))
         self.money_display.set_money(self.casino_player.cash)
-        self.money_display.set_money(self.casino_player.stats['cash'])
         self.time_started = time.time()
 
     def get_event(self, event, scale=(1,1)):
@@ -125,13 +124,9 @@ class Bingo(statemachine.StateMachine):
         self.game_started = False
         self.done = True
         self.next = "LOBBYSCREEN"
-        self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
+        self.casino_player.set('_last squares', self.cards.get_card_numbers())
         self.casino_player.cash = self.money_display.amount
-        self.casino_player.stats['Bingo']['_time played seconds'] = self.casino_player.stats['Bingo'].get(
-            '_time played seconds', 0) + (time.time() - self.time_started)
-        t = int(self.casino_player.stats['Bingo']['_time played seconds'])
-        self.casino_player.stats['Bingo']['time played'] = \
-            '{0:02d}:{1:02d}:{2:02d}'.format(t // 3600, (t % 3600) // 60, t % 60)
+        self.casino_player.increase_time('time played', time.time() - self.time_started)
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
@@ -249,11 +244,9 @@ class Bingo(statemachine.StateMachine):
         self.money_display.add_money(amount)
         if amount < 0:
             self.play_sound('bingo-pay-money')
-            self.casino_player.stats['Bingo']['total lost'] = \
-                self.casino_player.stats['Bingo'].get('total lost', 0) - amount
+            self.casino_player.increase('total lost', -amount)
         else:
-            self.casino_player.stats['Bingo']['total won'] = \
-                self.casino_player.stats['Bingo'].get('total won', 0) + amount
+            self.casino_player.increase('total won', amount)
 
     def change_pattern(self, obj, pattern):
         """Change the winning pattern"""
@@ -299,7 +292,7 @@ class Bingo(statemachine.StateMachine):
         self.dealer_cards.reset()
         self.current_pick_sound = 0
         self.last_pick_time = 0
-        self.casino_player.stats['Bingo']['games played'] = self.casino_player.stats['Bingo'].get('games played', 0) + 1
+        self.casino_player.increase('games played')
 
     def next_ball(self, obj, arg):
         """Move on to the next ball
@@ -350,7 +343,7 @@ class Bingo(statemachine.StateMachine):
         self.log.info('Changing the number of cards to {0}'.format(number))
         #
         # Store off the old card number to reuse
-        self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
+        self.casino_player.set('_last squares', self.cards.get_card_numbers())
         #
         # Remove old cards
         for card in self.cards:
@@ -361,7 +354,7 @@ class Bingo(statemachine.StateMachine):
         #
         # Create new cards
         self.create_card_collection()
-        self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
+        self.cards.set_card_numbers(self.casino_player.get('_last squares', []))
         #
         self.all_cards.extend(self.cards)
         self.all_cards.extend(self.dealer_cards)
@@ -469,9 +462,9 @@ class Bingo(statemachine.StateMachine):
         self.log.info('Card {0} owned by {1} was completed'.format(card.index, card.card_owner))
         #
         if card.card_owner == bingocard.T_PLAYER:
-            self.card_result('won' if card.card_state == bingocard.S_WON else 'lost')
+            self.casino_player.increase('cards won' if card.card_state == bingocard.S_WON else 'cards lost')
         else:
-            self.card_result('won' if card.card_state == bingocard.S_LOST else 'lost')
+            self.casino_player.incease('cards won' if card.card_state == bingocard.S_LOST else 'cards lost')
         #
         # Find the matching card from the dealer or player and deactivate it
         other_card = self.cards[card.index] if card.card_owner == bingocard.T_DEALER else self.dealer_cards[card.index]
@@ -525,12 +518,6 @@ class Bingo(statemachine.StateMachine):
             source_button.state = false_state
         #
         final_callback(chosen)
-
-    def card_result(self, result):
-        """Record the card result"""
-        stat_name = 'cards {0}'.format(result)
-        self.log.info('Updating stat {0}'.format(stat_name))
-        self.casino_player.stats['Bingo'][stat_name] = self.casino_player.stats['Bingo'].get(stat_name, 0) + 1
 
     def pause_machine(self, delay):
         """Pause the ball machine for a certain length of time"""

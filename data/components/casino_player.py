@@ -1,6 +1,6 @@
 import inspect
 import os
-import warnings
+import datetime
 from collections import OrderedDict
 from .. import prepare
 from . import loggable
@@ -125,11 +125,33 @@ class CasinoPlayer(loggable.Loggable):
 
     def increase(self, name, amount=1):
         """Increase the value of a stat"""
-        if self.current_game is None:
-            raise NoGameSet('No current game has been set (when trying to access stat "{0}")'.format(name))
-        #
-        self._stats[self.current_game][name] = self._stats[self.current_game].get(name, 0) + amount
+        self.set(name, self.get(name) + amount)
 
     def decrease(self, name, amount=1):
         """Decrease the value of a stat"""
         self.increase(name, -amount)
+
+    def increase_time(self, name, seconds):
+        """Increase a value, interpreted as a time"""
+        initial_text = self.get(name, '00:00:00')
+        dt = datetime.datetime.strptime(initial_text, '%H:%M:%S')
+        new = dt + datetime.timedelta(seconds=seconds)
+        self.set(name, new.strftime('%H:%M:%S'))
+
+    def decrease_time(self, name, seconds):
+        """Decrease a value, interpreted as a time"""
+        self.increase(name, -seconds)
+
+    def set(self, name, value):
+        """Set the value of a stat"""
+        if self.current_game is None:
+            raise NoGameSet('No current game has been set (when trying to access stat "{0}")'.format(name))
+        #
+        self._stats[self.current_game][name] = value
+
+    def get(self, name, default=0):
+        """Return the value of a stat"""
+        if self.current_game is None:
+            raise NoGameSet('No current game has been set (when trying to access stat "{0}")'.format(name))
+        #
+        return self._stats[self.current_game].get(name, default)
