@@ -81,6 +81,7 @@ class Bingo(statemachine.StateMachine):
         """This method will be called each time the state resumes."""
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
+        self.casino_player.current_game = 'Bingo'
         #
         self.casino_player.increase('games played')
         self.cards.set_card_numbers(self.casino_player.get('_last squares', []))
