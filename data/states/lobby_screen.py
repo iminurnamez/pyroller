@@ -30,7 +30,7 @@ class LobbyScreen(tools._State):
         self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
                       ("Craps", "CRAPS"), ("Keno", "KENO"),
                       ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO"),
-                      ("Baccarat", "BACCARAT")]
+                      ("Baccarat", "BACCARAT"), ("Guts", "GUTS")]
         per_page = 6
         number_of_pages = int(ceil(len(self.games)/float(per_page)))
         self.loop_length = prepare.RENDER_SIZE[0]*number_of_pages

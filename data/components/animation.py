@@ -158,7 +158,7 @@ class Animation(pygame.sprite.Sprite):
                 self._elapsed -= self.delay
                 self.delay = 0
 
-        p = min(1., (self._elapsed - self._delay) / self._duration)
+        p = min(1., self._elapsed / self._duration)
         t = self._transition(p)
         for target, props in self.targets:
             for name, values in props.items():
