@@ -227,14 +227,7 @@ class MetaGroup(object):
             group.update(*args)
 
     def clear(self, surface, background):
-        surface_blit = surface.blit
-        print len(self.dirty)
-        for rect in self.dirty:
-            for sprite in self.sprites():
-                if sprite.rect.collidelist(self.dirty):
-                    sprite.dirty = 1
-
-            surface_blit(background, rect, rect)
+        [surface.blit(background, rect, rect) for rect in self.dirty]
 
     def draw(self, surface):
         """draw all sprites in the right order onto the given surface
@@ -249,6 +242,7 @@ class MetaGroup(object):
         dirty = list()
         dirty_append = dirty.append
 
+        self._needs_update = False
         for group in self.groups():
             for rect in group.draw(surface):
                 try:
@@ -270,6 +264,10 @@ class MetaGroup(object):
         # # debugging to show overdraw
         # for rect in dirty:
         #     pygame.gfxdraw.box(surface, rect, (255, 32, 32, 64))
+
+        for sprite in self.sprites():
+            if sprite.rect.collidelist(dirty):
+                sprite.dirty = 1
 
         self.dirty = dirty
         return dirty

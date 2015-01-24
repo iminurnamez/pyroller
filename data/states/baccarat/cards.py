@@ -75,6 +75,7 @@ class Card(Sprite):
     def image(self):
         if self._needs_update:
             self.update_image()
+            self._needs_update = False
         return self._image
 
     def update_image(self):
@@ -90,7 +91,6 @@ class Card(Sprite):
         self.rect.size = rect.size
         self.rect.center = rect.center
         self.dirty = 1
-        self._needs_update = False
 
     @classmethod
     def initialize_cache(cls, size):
