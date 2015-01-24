@@ -182,7 +182,7 @@ class ShowCards(GutsState):
                 if p.stayed:
                     for card in p.cards:
                         card.face_up = True
-        if self.timer > 5000:
+        if self.timer > 3000:
           self.done = True
         self.timer += dt
         
