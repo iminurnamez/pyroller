@@ -146,7 +146,7 @@ class PhysicsSprite(pygame.sprite.DirtySprite):
         self.shapes = None
         self.image = None
         self.rect = None
-        self.dirty = 0
+        self.dirty = 1
         self.visible = 1
 
     @property
@@ -269,6 +269,7 @@ class PlungerAssembly(PhysicsSprite):
     def __init__(self, space, rect, playfield=None):
         super(PlungerAssembly, self).__init__()
         self.chute_counter = 0
+        self.rect = pygame.Rect(0, 0, 0, 0)
 
         spring_strength = 100 * plunger_mass
         chute_opening = playfield.position + rect.center - (rect.width / 2 - ball_radius * 4, 0)
@@ -329,7 +330,7 @@ class PlungerAssembly(PhysicsSprite):
         return abs(anchor0.get_distance(anchor1))
 
 
-class Playfield(pygame.sprite.LayeredUpdates):
+class Playfield(pygame.sprite.LayeredDirty):
     def __init__(self, *args, **kwargs):
         super(Playfield, self).__init__(*args, **kwargs)
         self._depress = False
@@ -410,28 +411,6 @@ class Playfield(pygame.sprite.LayeredUpdates):
 
             else:
                 self._space.add(item)
-
-    def draw(self, surface):
-        spritedict = self.spritedict
-        surface_blit = surface.blit
-        dirty = self.lostsprites
-        self.lostsprites = list()
-        dirty_append = dirty.append
-        for s in self.sprites():
-            if not s.visible:
-                continue
-            r = spritedict[s]
-            newrect = surface_blit(s.image, s.rect)
-            if r:
-                if newrect.colliderect(r):
-                    dirty_append(newrect.union(r))
-                else:
-                    dirty_append(newrect)
-                    dirty_append(r)
-            else:
-                dirty_append(newrect)
-            spritedict[s] = newrect
-        return dirty
 
     def update(self, surface, dt):
         self.timers.update(dt)

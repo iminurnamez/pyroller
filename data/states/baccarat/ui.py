@@ -5,30 +5,39 @@ the built in types because I feel these are a little easier to use.
 
 Perhaps we could look at the existing classes and these and make some new
 blending of the two.
+
+performance:
+since the scenes are always scaled to the screen, there is marginal
+performance gains to dirty rect animation.
+
+i have a very quick method for dirty rect animation here, but
+it is commented out.  perhaps on very low end hardware, such as
+the raspberry pi, it can be enabled again, along with proper
+display updates.
+
 """
-
-import random
-from math import sin, pi, cos, radians
-from itertools import product, groupby
-from operator import attrgetter
-import pygame
-from pygame.transform import smoothscale
+from itertools import product, groupby, chain
 from ... import prepare
+from ...components.animation import *
+import pygame.gfxdraw
 
-__all__ = ['TextSprite', 'Button', 'NeonButton', 'Card', 'Deck', 'Chip',
-           'ChipPile', 'SpriteGroup', 'cash_to_chips', 'OutlineTextSprite']
+__all__ = [
+    'SpriteGroup',
+    'MetaGroup',
+    'Button',
+    'NeonButton',
+    'TextSprite',
+    'OutlineTextSprite']
 
 
-two_pi = pi * 2
-
-def cash_to_chips(value):
-    retval = list()
-    demoninations = [100, 25, 10, 5, 1]
-    for d in demoninations:
-        number, value = divmod(value, d)
-        for i in range(number):
-            retval.append(Chip(d))
-    return retval
+def reduce_rect_list(rect, others):
+    """Quick, unoptimized way to reduce screen blits
+    Areas that overlap will be merged together.
+    """
+    hits = rect.collidelistall(others)
+    for index in hits:
+        others[index].union_ip(rect)
+    return others
 
 
 def cut_sheet(surface, dim, margin=0, spacing=0, subsurface=True):
@@ -62,23 +71,18 @@ def cut_sheet(surface, dim, margin=0, spacing=0, subsurface=True):
             yield x, y, tile
 
 
-def make_cards(decks, card_size, shuffle=False):
-    """Return a list of Cards."""
+def make_shadow_surface(surface):
+    """create a surface suitable to be used as a shadow
 
-    def build_decks():
-        suits = ("Clubs", "Hearts", "Diamonds", "Spades")
-        rect = ((0, 0), card_size)
-        for deck in range(decks):
-            for suit in suits:
-                for value in range(1, 14):
-                    yield Card(value, suit, rect)
+    slow.  use once and cache the result
+    image must have alpha channel or results are undefined
 
-    cards = list(c for c in build_decks())
+    not implemented
+    """
+    shad = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
 
-    if shuffle:
-        random.shuffle(cards)
-
-    return cards
+    for x, y in product(*(range(i) for i in surface.get_size())):
+        print(x, y)
 
 
 class Sprite(pygame.sprite.DirtySprite):
@@ -87,30 +91,80 @@ class Sprite(pygame.sprite.DirtySprite):
     pass
 
 
-class SpriteGroup(pygame.sprite.OrderedUpdates):
-    """Like OrderedUpdates, but supports visible/invisible sprites
+class SpriteGroup(pygame.sprite.LayeredUpdates):
+    """Enhanced pygame sprite group.
     """
-    def draw(self, surface):
-        spritedict = self.spritedict
-        surface_blit = surface.blit
-        dirty = self.lostsprites
-        self.lostsprites = list()
-        dirty_append = dirty.append
-        for s in self.sprites():
-            if not s.visible:
-                continue
-            r = spritedict[s]
-            newrect = surface_blit(s.image, s.rect)
-            if r:
-                if newrect.colliderect(r):
-                    dirty_append(newrect.union(r))
-                else:
-                    dirty_append(newrect)
-                    dirty_append(r)
-            else:
-                dirty_append(newrect)
-            spritedict[s] = newrect
-        return dirty
+    _init_rect = pygame.Rect(0, 0, 0, 0)
+
+    def __init__(self, *args, **kwargs):
+        self._spritelayers = {}
+        self._spritelist = []
+        pygame.sprite.AbstractGroup.__init__(self)
+        self._default_layer = kwargs.get('default_layer', 0)
+        self._animations = pygame.sprite.Group()
+
+    def extend(self, sprites, **kwargs):
+        if '_index' in kwargs.keys():
+            raise KeyError
+        for index, sprite in enumerate(sprites):
+            kwargs['_index'] = index
+            self.add(sprite, **kwargs)
+
+    def add(self, sprite, **kwargs):
+        """add a sprite to group.  do not pass a sequence or iterator
+
+        LayeredUpdates.add(*sprites, **kwargs): return None
+
+        If the sprite you add has an attribute _layer, then that layer will be
+        used. If **kwarg contains 'layer', then the passed sprites will be
+        added to that layer (overriding the sprite._layer attribute). If
+        neither the sprite nor **kwarg has a 'layer', then the default layer is
+        used to add the sprites.
+        """
+        if not sprite:
+            return
+
+        layer = kwargs.get('layer', None)
+        if isinstance(sprite, Sprite):
+            if not self.has_internal(sprite):
+                self.add_internal(sprite, layer)
+                sprite.add_internal(self)
+        else:
+            print(sprite)
+            raise ValueError
+
+    # def draw(self, surface):
+    #     """draw all sprites in the right order onto the passed surface
+    #
+    #     LayeredUpdates.draw(surface): return Rect_list
+    #
+    #     """
+    #     spritedict = self.spritedict
+    #     surface_blit = surface.blit
+    #     dirty = self.lostsprites
+    #     self.lostsprites = []
+    #     dirty_append = dirty.append
+    #     init_rect = self._init_rect
+    #     for sprite in self.sprites():
+    #         if not sprite.dirty:
+    #             continue
+    #         if not sprite.dirty == 2:
+    #             sprite.dirty -= 1
+    #         rect = spritedict[sprite]
+    #         newrect = surface_blit(sprite.image, sprite.rect)
+    #         if rect is init_rect:
+    #             dirty_append((newrect, sprite.dirty))
+    #         else:
+    #             if newrect == rect:
+    #                 dirty_append((newrect, sprite.dirty))
+    #             elif newrect.colliderect(rect):
+    #                 sprite.dirty = 1
+    #                 dirty_append((newrect.union(rect), 1))
+    #             else:
+    #                 dirty_append((newrect, sprite.dirty))
+    #                 dirty_append((rect, 1))
+    #         spritedict[sprite] = newrect
+    #     return dirty
 
     @property
     def bounding_rect(self):
@@ -121,6 +175,105 @@ class SpriteGroup(pygame.sprite.OrderedUpdates):
             return pygame.Rect(sprites[0].rect)
         else:
             return sprites[0].rect.unionall([s.rect for s in sprites[1:]])
+
+    def update(self, *args):
+        self._animations.update(*args)
+        super(SpriteGroup, self).update(*args)
+
+    def delay(self, amount, callback, args=None, kwargs=None):
+        """Convenience function to delay a function call
+
+        :param amount: milliseconds to wait until callback is called
+        :param callback: function to call
+        :param args: arguments to pass to callback
+        :param kwargs: keywords to pass to callback
+        :return: Task instance
+        """
+        task = Task(callback, amount, 1, args, kwargs)
+        self._animations.add(task)
+        return task
+
+
+class MetaGroup(object):
+    """Capable of correctly rendering a bunch of groups
+
+    Don't use dirty groups
+    """
+    def __init__(self):
+        self._groups = list()
+        self._dirty = list()
+
+    def __len__(self):
+        return len(self._groups)
+
+    def sprites(self):
+        retval = list()
+        for group in self.groups():
+            retval.extend(group.sprites())
+        return retval
+
+    def groups(self):
+        return list(self._groups)
+
+    def empty(self):
+        for group in self.groups():
+            group.empty()
+        self._groups = list()
+
+    def add(self, *groups):
+        for group in groups:
+            self._groups.append(group)
+
+    def remove(self, *groups):
+        for group in groups:
+            try:
+                self._groups.remove(group)
+            except ValueError:
+                pass
+
+    def update(self, *args):
+        for group in self.groups():
+            group.update(*args)
+
+    def clear(self, surface, background):
+        [surface.blit(background, rect, rect) for rect in self._dirty]
+
+    def draw(self, surface):
+        """draw all sprites in the right order onto the given surface
+        """
+        dirty = list()
+        dirty_append = dirty.append
+
+        self._needs_update = False
+        for group in self.groups():
+            for rect in group.draw(surface):
+                # try:
+                #     rect, clear_flag = rect
+                # except ValueError:
+                #     clear_flag = True
+
+                clear_flag = 1
+                if clear_flag:
+                    index = rect.collidelist(dirty)
+                    if index == -1:
+                        dirty_append(rect)
+                    else:
+                        dirty = reduce_rect_list(rect, dirty)
+
+        # remove duplicates
+        dirty.sort()
+        dirty = [k for k, v in groupby(dirty)]
+
+        # # debugging to show overdraw
+        # for rect in dirty:
+        #     pygame.gfxdraw.box(surface, rect, (255, 32, 32, 64))
+
+        # for sprite in self.sprites():
+        #     if sprite.rect.collidelist(dirty):
+        #         sprite.dirty = 1
+
+        self._dirty = dirty
+        return dirty
 
 
 class EventButton(Sprite):
@@ -142,159 +295,18 @@ class EventButton(Sprite):
         pass
 
 
-class Card(Sprite):
-    """pretty much components.cards.Card that is also pygame sprite"""
-
-    face_cache = None
-    card_suits = 'clubs', 'spades', 'hearts', 'diamonds'
-    card_names = {1: "Ace",
-                  2: "Two",
-                  3: "Three",
-                  4: "Four",
-                  5: "Five",
-                  6: "Six",
-                  7: "Seven",
-                  8: "Eight",
-                  9: "Nine",
-                  10: "Ten",
-                  11: "Jack",
-                  12: "Queen",
-                  13: "King"}
-
-    def __init__(self, value, suit, rect, face_up=False):
-        super(Card, self).__init__()
-        self.value = value
-        self.suit = suit
-        self.rect = pygame.Rect(rect)
-        if self.face_cache is None:
-            self.initialize_cache(self.rect.size)
-        self._face_up = face_up
-        self._rotation = 0 if self._face_up else 180
-        self._needs_update = True
-        self.front_face = self.get_front(self.name, self.rect.size)
-        self.back_face = self.get_back(self.rect.size)
-        self.update_image()
-
-    @property
-    def image(self):
-        if self._needs_update:
-            self.update_image()
-        return self._image
-
-    def update_image(self):
-        image = self.front_face if self._face_up else self.back_face
-        if self._rotation:
-            width, height = image.get_size()
-            value = 180 * cos(two_pi * self._rotation / 180.) + 180
-            width *= value / 360.0
-            width = int(round(max(1, abs(width)), 0))
-            image = smoothscale(image, (width, int(height)))
-        rect = image.get_rect(center=self.rect.center)
-        self._image = image
-        self.rect.size = rect.size
-        self.rect.center = rect.center
-        self.dirty = 1
-
-    @classmethod
-    def initialize_cache(cls, size):
-        cls.face_cache = dict()
-        for suit in cls.card_suits:
-            for value, name in cls.card_names.items():
-                Card(value, suit, ((0, 0), size))
-
-    def get_front(self, name, size):
-        try:
-            return Card.face_cache[name]
-        except KeyError:
-            image = self.render_front(name, size)
-            Card.face_cache[size] = image
-            return image
-
-    def get_back(self, size):
-        try:
-            return Card.face_cache["back"]
-        except KeyError:
-            image = self.render_back(size)
-            Card.face_cache["back"] = image
-            return image
-
-    @staticmethod
-    def render_front(name, size):
-        front = prepare.GFX[name.lower().replace(" ", "_")]
-        if not size == front.get_size():
-            front = smoothscale(front, size).convert_alpha()
-        return front
-
-    @staticmethod
-    def render_back(size):
-        snake = prepare.GFX["pysnakeicon"]
-        rect = pygame.Rect((0, 0), size)
-        back = pygame.Surface(size)
-        back.fill(pygame.Color("dodgerblue"))
-        s_rect = snake.get_rect().fit(rect)
-        s_rect.midbottom = rect.midbottom
-        snake = smoothscale(snake, s_rect.size)
-        back.blit(snake, s_rect)
-        pygame.draw.rect(back, pygame.Color("gray95"), rect, 4)
-        pygame.draw.rect(back, pygame.Color("gray20"), rect, 1)
-        return back
-
-    @property
-    def face_up(self):
-        return self._face_up
-
-    @face_up.setter
-    def face_up(self, value):
-        face_up = bool(value)
-        if not self._face_up == face_up:
-            self.rotation = 0 if face_up else 180
-            self._face_up = face_up
-            self._needs_update = True
-            self.update_image()
-
-    @property
-    def rotation(self):
-        return self._rotation
-
-    @rotation.setter
-    def rotation(self, value):
-        value %= 360
-        if not value == self._rotation:
-            face = value < 90
-            if not face:
-                face = value > 270
-            self._face_up = face
-            self._rotation = value
-            self._needs_update = True
-
-    @property
-    def name(self):
-        if 1 < self.value < 11:
-            return "{} of {}".format(self.value, self.suit)
-        else:
-            return self.long_name
-
-    @property
-    def short_name(self):
-        if 1 < self.value < 11:
-            return "{}{}".format(self.value, self.suit[0])
-        else:
-            return "{}{}".format(self.card_names[self.value][0], self.suit[0])
-
-    @property
-    def long_name(self):
-        return "{} of {}".format(self.card_names[self.value], self.suit)
-
-
 class Stacker(SpriteGroup):
     def __init__(self, rect, stacking=None):
+        self.arrange_function = None
         super(Stacker, self).__init__()
         self.rect = pygame.Rect(rect)
         self.auto_arrange = True
         self._needs_arrange = True
         self._constraint = 'height'
         self._origin = None
+        self._origin_offset = (0, 0)
         self._sprite_anchor = None
+        self.iter_delay = 10
         self.stacking = stacking
 
     @property
@@ -312,8 +324,15 @@ class Stacker(SpriteGroup):
                 self._origin = 'bottomleft'
                 self._sprite_anchor = 'bottomleft'
 
-    def add(self, *items):
-        super(Stacker, self).add(*items)
+    def add(self, item, **kwargs):
+        """Add something to the stacker
+
+        do not add iterables to this function.  use 'extend'
+
+        :param item: stuff to add
+        :return: None
+        """
+        super(Stacker, self).add(item, **kwargs)
         self._needs_arrange = True
 
     def remove(self, *items):
@@ -333,9 +352,9 @@ class Stacker(SpriteGroup):
         if self.auto_arrange and self._needs_arrange:
             self.arrange()
             self._needs_arrange = False
-        super(Stacker, self).draw(surface)
+        return super(Stacker, self).draw(surface)
 
-    def arrange(self, sprites=None, offset=(0, 0)):
+    def arrange(self, sprites=None, offset=(0, 0), noclip=False, animate=True):
         """ position sprites into piles.
 
         Constraint can be "width" or "height".
@@ -347,7 +366,7 @@ class Stacker(SpriteGroup):
             sprites = list(self.sprites())
 
         if not sprites:
-            return
+            return 0, 0
 
         if self.stacking is None:
             pos = self.rect.topleft
@@ -356,150 +375,48 @@ class Stacker(SpriteGroup):
             for sprite in sprites[:-1]:
                 sprite.visible = 0
                 sprite.rect.topleft = pos
-            return
+            return 0, 0
 
+        anchor = self._sprite_anchor
+        constraint = self._constraint
         x, y = getattr(self.rect, self._origin)
-        x += offset[0]
-        y += offset[1]
-        rx, ry = x, y
+        x += self._origin_offset[0] + offset[0]
+        y += self._origin_offset[1] + offset[1]
         ox, oy = self.stacking
-        for sprite in sprites:
-            sprite.visible = 1
-            setattr(sprite.rect, self._sprite_anchor, (x, y))
+        xx = 0
+        yy = 0
+
+        for index, sprite in enumerate(sprites):
+            rect = sprite.rect
+
             if hasattr(sprite, 'dirty'):
                 sprite.dirty = 1
-            if self._constraint == "height":
-                if self.rect.contains(sprite.rect.move(0, oy)):
-                    y += oy
+                sprite.visible = 1
+
+            original_value = getattr(rect, anchor)
+
+            if constraint == "height":
+                setattr(rect, anchor, (x + xx, y + yy))
+
+                if self.rect.colliderect(rect) or noclip:
+                    yy += oy
                 else:
-                    y = ry
-                    x += ox
+                    xx += ox
+                    yy = oy
+                    setattr(rect, anchor, (x + xx, y))
 
-        return x, y
+            f = self.arrange_function
+            if f is not None and animate:
+                final_value = getattr(rect, 'topleft')
+                setattr(rect, anchor, original_value)
+                ani = f(sprite, original_value, final_value, index)
+                if ani is not None:
+                    ani.delay = float(index) * self.iter_delay
+                    self._animations.add(ani)
+                else:
+                    setattr(rect, anchor, original_value)
 
-
-class Deck(Stacker):
-    """Class to represent a deck of playing cards. If default_shuffle is True
-    the deck will be shuffled upon creation.
-    """
-    def __init__(self, rect, card_size=prepare.CARD_SIZE, shuffle=True,
-                 decks=0, stacking=None):
-        rect = pygame.Rect(rect)
-        if rect.size == (0, 0):
-            rect = pygame.Rect(rect.topleft, card_size)
-        super(Deck, self).__init__(rect, stacking)
-        self.card_size = card_size
-        self.shuffle = shuffle
-        self.decks = decks
-        self.add_decks(decks)
-
-    def add_decks(self, decks):
-        cards = make_cards(decks, self.card_size, self.shuffle)
-        self.add(*cards)
-
-    def draw_cards(self, cards=5):
-        """Remove top cards and return them"""
-        if len(self) >= cards:
-            for i in range(cards):
-                yield self.pop()
-        else:
-            yield None
-
-
-CHIP_Y = {"blue"  : 0,
-          "red"   : 64,
-          "black" : 128,
-          "green" : 192,
-          "white" : 256}
-
-
-def get_chip_images():
-    image = prepare.GFX["chips"]
-    sub = image.subsurface
-    scale = pygame.transform.smoothscale
-    # small_dim = 32, 32
-    # dim = 2, 4
-    # images = dict()
-    # flat_images = dict()
-    # colors = ['blue', 'red', 'black', 'green', 'white']
-    # for x, y, surface in cut_sheet(image, dim):
-    #     if not x:
-    #         color = colors.pop(0)
-    #     images['large'] = surface
-    #     images['small'] = scale(surface, small_dim).convert_alpha()
-    #
-    #
-
-    images = {(32, 19): {col: sub(64, CHIP_Y[col], 64, 38) for col in CHIP_Y}}
-    images[(48, 30)] = {col: scale(images[(32, 19)][col], (48, 30)) for col in CHIP_Y}
-    flat_images = {(32, 19): {col: sub(0, CHIP_Y[col], 64, 64) for col in CHIP_Y}}
-    flat_images[(48, 30)] = {col: scale(flat_images[(32,19)][col], (48, 48)) for col in CHIP_Y}
-    return images, flat_images
-
-
-class Chip(Sprite):
-    """Class to represent a single casino chip."""
-    chip_values = {100: 'black',
-                   25: 'blue',
-                   10: 'green',
-                   5: 'red',
-                   1: 'white'}
-
-    images, flat_images = get_chip_images()
-    thicknesses = {19: 5, 30: 7}
-    chip_size = prepare.CHIP_SIZE
-
-    def __init__(self, value, chip_size=None):
-        super(Chip, self).__init__()
-        self.value = value
-        if chip_size is not None:
-            self.chip_size = chip_size
-        self.dirty = 1
-
-        color = Chip.chip_values[value]
-        self.image = Chip.images[self.chip_size][color]
-        self.flat_image = Chip.flat_images[self.chip_size][color]
-        self.rect = self.image.get_rect()
-
-
-class ChipPile(Stacker):
-    """Represents a player's pile of chips."""
-
-    def __init__(self, rect, value=0):
-        super(ChipPile, self).__init__(rect, (0, -7))
-        if value:
-            self.add(*cash_to_chips(value))
-
-    @property
-    def value(self):
-        """"Returns total cash value of self.chips."""
-        return sum(chip.value for chip in self.sprites())
-
-    def sort(self):
-        self._spritelist.sort(key=attrgetter('value'), reverse=True)
-
-    def withdraw_chips(self, amount):
-        """Withdraw chips totalling amount"""
-        self.sort()
-        withdraw = list()
-        for chip in self.sprites():
-            if chip.value <= amount:
-                amount -= chip.value
-                self.remove(chip)
-                withdraw.append(chip)
-                if amount == 0:
-                    break
-        else:
-            raise ValueError
-
-        return withdraw
-
-    def arrange(self, sprites=None, offset=(0, 0)):
-        self.sort()
-        x = 0
-        for k, g in groupby(self.sprites(), attrgetter('value')):
-            x, y = super(ChipPile, self).arrange(list(g), (x, 0))
-            x += 30
+        return xx, yy
 
 
 class TextSprite(Sprite):
