@@ -127,7 +127,7 @@ class Baccarat(TableGame):
         self._enable_chips = True
         self.clear_background()
         self.bets.empty()
-        self.house_chips.fill()
+        self.house_chips.normalize()
         self.clear_table()
         self.delay(500, force_empty)
 
@@ -207,6 +207,7 @@ class Baccarat(TableGame):
     def show_winner_text(self, winner):
         """Display a label under the winning hand
         """
+        return
         if winner is None:
             status_text = "Tie"
             midtop = get_midpoint(self.player_hand.bounding_rect.midbottom,
@@ -246,8 +247,23 @@ class Baccarat(TableGame):
                 fee = int(math.ceil(bet.value * commission))
                 winnings -= fee
 
-            bet.owner.extend(cash_to_chips(winnings))
+            new_chips = cash_to_chips(winnings)
+            for chip in new_chips:
+                chip.rect.center = (0, 0)
+
+            pre_value = bet.owner.value
             bet.owner.extend(bet.sprites())
+            self.delay(800, bet.owner.extend, (new_chips, ))
+            bet.empty()
+
+            print 'win:', winnings
+            print 'bet', bet.value
+            print 'fee', fee
+            print 'total', winnings + bet.value
+
+            print 'before', pre_value
+            print 'after', bet.owner.value
+            print 'diff', bet.owner.value - pre_value
 
             if is_player:
                 pn_win = winner is self.player_hand and player_natural
@@ -263,17 +279,19 @@ class Baccarat(TableGame):
                 if pn_win or bn_win:
                     stats['Bets Won by Naturals'] += 1
 
-        elif is_player:
-            pn_loss = bet.result is self.player_hand and dealer_natural
-            bn_loss = bet.result is self.dealer_hand and player_natural
-            record = stats['Largest Loss']
-            stats['Largest Loss'] = max(record, bet.value)
-            stats['Bets Lost'] += 1
-            stats['Earned'] -= bet.value
-            if pn_loss or bn_loss:
-                stats['Bets Lost by Naturals'] += 1
+        else:
+            self.house_chips.extend(bet.sprites())
+            bet.empty()
 
-        bet.empty()
+            if is_player:
+                pn_loss = bet.result is self.player_hand and dealer_natural
+                bn_loss = bet.result is self.dealer_hand and player_natural
+                record = stats['Largest Loss']
+                stats['Largest Loss'] = max(record, bet.value)
+                stats['Bets Lost'] += 1
+                stats['Earned'] -= bet.value
+                if pn_loss or bn_loss:
+                    stats['Bets Lost by Naturals'] += 1
 
     def display_scores(self):
         """Create and add TextSprites with score under each card hand

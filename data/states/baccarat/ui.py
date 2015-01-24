@@ -82,7 +82,7 @@ def make_shadow_surface(surface):
     shad = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
 
     for x, y in product(*(range(i) for i in surface.get_size())):
-        print(x, y)
+        print x, y
 
 
 class Sprite(pygame.sprite.DirtySprite):
@@ -130,7 +130,6 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
                 self.add_internal(sprite, layer)
                 sprite.add_internal(self)
         else:
-            print(sprite)
             raise ValueError
 
     # def draw(self, surface):
@@ -196,8 +195,6 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
 
 class MetaGroup(object):
     """Capable of correctly rendering a bunch of groups
-
-    Don't use dirty groups
     """
     def __init__(self):
         self._groups = list()
@@ -389,14 +386,12 @@ class Stacker(SpriteGroup):
         for index, sprite in enumerate(sprites):
             rect = sprite.rect
 
-            if hasattr(sprite, 'dirty'):
-                sprite.dirty = 1
-                sprite.visible = 1
-
-            original_value = getattr(rect, anchor)
+            original_anchor = getattr(rect, anchor)
 
             if constraint == "height":
-                setattr(rect, anchor, (x + xx, y + yy))
+                new_anchor = x + xx, y + yy
+
+                setattr(rect, anchor, new_anchor)
 
                 if self.rect.colliderect(rect) or noclip:
                     yy += oy
@@ -405,16 +400,20 @@ class Stacker(SpriteGroup):
                     yy = oy
                     setattr(rect, anchor, (x + xx, y))
 
+            if hasattr(sprite, 'dirty'):
+                sprite.dirty = 1
+                sprite.visible = 1
+
             f = self.arrange_function
             if f is not None and animate:
                 final_value = getattr(rect, 'topleft')
-                setattr(rect, anchor, original_value)
-                ani = f(sprite, original_value, final_value, index)
+                setattr(rect, anchor, original_anchor)
+                ani = f(sprite, original_anchor, final_value, index)
                 if ani is not None:
                     ani.delay = float(index) * self.iter_delay
                     self._animations.add(ani)
                 else:
-                    setattr(rect, anchor, original_value)
+                    setattr(rect, anchor, original_anchor)
 
         return xx, yy
 

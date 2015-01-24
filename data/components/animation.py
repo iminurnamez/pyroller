@@ -181,10 +181,11 @@ class Animation(pygame.sprite.Sprite):
 
         :return: None
         """
-        for target, props in self.targets:
-            for name, values in props.items():
-                a, b = values
-                setattr(target, name, b)
+        if self.targets is not None:
+            for target, props in self.targets:
+                for name, values in props.items():
+                    a, b = values
+                    setattr(target, name, b)
 
         self.targets = None
         self.kill()

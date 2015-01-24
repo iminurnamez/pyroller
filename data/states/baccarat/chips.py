@@ -142,6 +142,7 @@ class ChipPile(Stacker):
     _initial_snapping = 50
     _fine_snapping = 30
     _maximum_distance_until_drop = 250
+    animation_time = 300
 
     def __init__(self, rect, value=0, **kwargs):
         super(ChipPile, self).__init__(rect, **kwargs)
@@ -158,16 +159,15 @@ class ChipPile(Stacker):
         if value:
             self.add(*cash_to_chips(value))
 
-    def remove(self, *items):
-        super(ChipPile, self).remove(*items)
-        for item in items:
-            for name in ('_clicked_sprite', '_followed_sprite'):
-                if getattr(self, name) is item:
-                    setattr(self, name, None)
-            try:
-                self._popped_chips.remove(item)
-            except ValueError:
-                pass
+    def remove_internal(self, sprite):
+        super(ChipPile, self).remove_internal(sprite)
+        for name in ('_clicked_sprite', '_followed_sprite'):
+            if getattr(self, name) is sprite:
+                setattr(self, name, None)
+        try:
+            self._popped_chips.remove(sprite)
+        except ValueError:
+            pass
 
     def get_event(self, event, scale):
         if event.type == pygame.MOUSEMOTION:
@@ -313,13 +313,14 @@ class ChipPile(Stacker):
     def animate_pop(self, sprite, initial, final, index=1):
         """Animate chips moving to popped stack
         """
+        # cancel animation that is already running on this sprite
         old = self._running_animations.get(sprite, None)
         if old is not None:
             old.kill()
 
         fx, fy = final
         sound = choice(self.chip_sounds)
-        ani = Animation(x=fx, y=fy, duration=200,
+        ani = Animation(x=fx, y=fy, duration=self.animation_time,
                         transition='out_quint', round_values=True)
         ani.update_callback = lambda: setattr(sprite, 'dirty', 1)
         ani.callback = sound.play
@@ -400,13 +401,13 @@ class ChipRack(ChipPile):
         super(ChipRack, self).__init__(rect)
         self._origin_offset = 9, -6
         self.stacking = 57, 6
-        self.row_size = 30
+        self.row_size = 10
         self.background = prepare.GFX["chip_rack_medium"]
         self.front = prepare.GFX["rack_front_medium"]
         rect = self.background.get_rect(topleft=self.rect.topleft)
         self.front_rect = self.front.get_rect(bottomleft=rect.bottomleft)
 
-    def add(self, *items):
+    def add(self, *items, **kwargs):
         """Add chips to the rack.
 
         Chips will have their flat attribute set to True
@@ -415,17 +416,7 @@ class ChipRack(ChipPile):
         for chip in items:
             chip.chip_size = 48, 30
             chip.flat = True
-        super(ChipRack, self).add(*items)
-
-    def fill(self):
-        """Add enough chips of each value to fill the rack completely
-        """
-        d = defaultdict(int)
-        for chip in self.sprites():
-            d[chip.value] += 1
-        for value in denominations:
-            for i in range(self.row_size - d[value]):
-                self.add(Chip(value))
+        super(ChipRack, self).add(*items, **kwargs)
 
     def clear(self, surface, background):
         super(ChipRack, self).clear(surface, self.background)
@@ -434,7 +425,25 @@ class ChipRack(ChipPile):
         redraw = self._needs_arrange
         if redraw:
             surface.blit(self.background, self.rect)
-        dirty = super(ChipRack, self).draw(surface)
         # HACK: will draw rack front every frame.  :(
+        surface.blit(self.background, self.rect)
+        dirty = super(ChipRack, self).draw(surface)
         surface.blit(self.front, self.front_rect)
         return dirty
+
+    def normalize(self):
+        """Make sure all rows have same number of chips
+        """
+        d = defaultdict(int)
+        chips = defaultdict(list)
+        for chip in self.sprites():
+            d[chip.value] += 1
+            chips[chip.value].append(chip)
+        for value in denominations:
+            current = d[value]
+            if current < self.row_size:
+                for i in range(current, self.row_size):
+                    self.add(Chip(value))
+            elif current > self.row_size:
+                for i in range(self.row_size, current):
+                    self.remove(chips[value].pop())
