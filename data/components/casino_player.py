@@ -51,9 +51,10 @@ class CasinoPlayer(loggable.Loggable):
                                                     [("games played", 0),
                                                     ("cards won", 0),
                                                     ("cards lost", 0),
-                                                    ("total bets", 0),
-                                                    ("total winnings", 0),
+                                                    ("total lost", 0),
+                                                    ("total won", 0),
                                                     ("time played", 0),
+                                                    ("_time played seconds", 0),
                                                     ("_last squares", [])])),
                                              ("Keno", OrderedDict(
                                                     [("games played", 0)])),

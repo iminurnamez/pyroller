@@ -88,9 +88,13 @@ class CoverallPattern(Pattern):
 
     def get_square_offsets(self):
         """Return a sequence of matching square offsets"""
-        yield [
-            (row, col) for row in S['card-square-rows'] for col in S['card-square-cols']
-        ]
+        for row in S['card-square-rows']:
+            for col in S['card-square-cols']:
+                yield [(row, col)]
+        #
+        # yield [
+        #     (row, col) for row in S['card-square-rows'] for col in S['card-square-cols']
+        # ]
 
 
 class CenterPattern(Pattern):
