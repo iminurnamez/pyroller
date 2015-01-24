@@ -40,12 +40,13 @@ class StatsScreen(tools._State):
         left2 = screen.left + 500
         top = title.rect.bottom + 20
         for stat in stats:
-            label = GroupLabel(self.labels, self.font, 32, stat.title(),
-                               "gold3", {"topleft": (left1, top)})
-            label2 = GroupLabel(self.labels, self.font, 32,
-                                "{}".format(stats[stat]), "gold3",
-                                {"topleft": (left2, top)})
-            top += label.rect.height + 10
+            if not stat.startswith("_"):
+                label = GroupLabel(self.labels, self.font, 32, stat.title(),
+                                   "gold3", {"topleft": (left1, top)})
+                label2 = GroupLabel(self.labels, self.font, 32,
+                                    "{}".format(stats[stat]), "gold3",
+                                    {"topleft": (left2, top)})
+                top += label.rect.height + 10
 
 
     def get_event(self, event, scale=(1,1)):
