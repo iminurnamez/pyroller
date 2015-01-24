@@ -63,13 +63,9 @@ class GutsGame(object):
             if not best:
                 best.append(stayer)
             else:
-                print "Best: ", best
                 new_best = []
                 for b in best:
-                    print "b: ", b
-                    print "B's Hand: ", [x.value for x in b.cards]
                     new_best.extend(self.compare_hands(b, stayer))
-                print "New Best: ", new_best 
                 best = new_best
         return best
                 

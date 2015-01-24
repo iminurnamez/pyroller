@@ -101,10 +101,7 @@ class Guts(tools._State):
             except StopIteration:
                 pot = sum([x.lost for x in self.players])
                 self.player.cash -= self.player.lost
-                print "Won: ", self.player.won
-                print "CAsh: ", self.player.cash
                 self.player.cash += self.player.won
-                print "Cash: ",self.player.cash
                 if pot:
                     self.new_game(pot)
                 else:
