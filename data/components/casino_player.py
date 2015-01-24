@@ -160,9 +160,13 @@ class CasinoPlayer(loggable.Loggable):
         """Return the names of all the stats"""
         return [name for name in self._stats.keys() if name != 'cash']
 
-    def get_stat_names(self):
+    def get_stat_names(self, game=None):
         """Return the names of the stats for a game"""
-        if self.current_game is None:
-            raise NoGameSet('No current game has been set (when trying to access stat "{0}")'.format(name))
+        if not game and self.current_game is None:
+            raise NoGameSet('No current game has been set')
         #
-        return self._stats[self.current_game].keys()
+        return list(self._stats[game if game else self.current_game].keys())
+
+    def get_visible_stat_names(self, game=None):
+        """Return the names of the stats that should be visible to the player"""
+        return [name for name in self.get_stat_names(game) if not name.startswith('_')]
