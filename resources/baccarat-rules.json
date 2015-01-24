@@ -12,7 +12,7 @@
       "high_roller_advantage": false,
       "banker_rotates": false,
       "croupier_chooses_banker": false,
-      "commission": 0.5
+      "commission": 0.05
     }
   },
   "punto":{
@@ -28,7 +28,7 @@
       "high_roller_advantage": false,
       "banker_rotates": false,
       "croupier_chooses_banker": false,
-      "commission": 0.5
+      "commission": 0.05
     }
   },
   "chemin_de_fer":{
@@ -44,7 +44,7 @@
       "high_roller_advantage": true,
       "banker_rotates": true,
       "croupier_chooses_banker": false,
-      "commission": 0.5
+      "commission": 0.05
     }
   },
     "european":{
@@ -60,7 +60,7 @@
         "high_roller_advantage": true,
         "banker_rotates": true,
         "croupier_chooses_banker": false,
-        "commission": 0.5
+        "commission": 0.05
       }
   },
   "banque": {
@@ -76,6 +76,6 @@
       "high_roller_advantage": false,
       "banker_rotates": false,
       "croupier_chooses_banker": true,
-      "commission": 0.5
+      "commission": 0.05
     }
   }}}
