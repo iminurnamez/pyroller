@@ -146,7 +146,7 @@ class PhysicsSprite(pygame.sprite.DirtySprite):
         self.shapes = None
         self.image = None
         self.rect = None
-        self.dirty = 0
+        self.dirty = 1
         self.visible = 1
 
     @property
@@ -411,28 +411,6 @@ class Playfield(pygame.sprite.LayeredDirty):
 
             else:
                 self._space.add(item)
-
-    # def draw(self, surface):
-    #     spritedict = self.spritedict
-    #     surface_blit = surface.blit
-    #     dirty = self.lostsprites
-    #     self.lostsprites = list()
-    #     dirty_append = dirty.append
-    #     for s in self.sprites():
-    #         if not s.visible:
-    #             continue
-    #         r = spritedict[s]
-    #         newrect = surface_blit(s.image, s.rect)
-    #         if r:
-    #             if newrect.colliderect(r):
-    #                 dirty_append(newrect.union(r))
-    #             else:
-    #                 dirty_append(newrect)
-    #                 dirty_append(r)
-    #         else:
-    #             dirty_append(newrect)
-    #         spritedict[s] = newrect
-    #     return dirty
 
     def update(self, surface, dt):
         self.timers.update(dt)
