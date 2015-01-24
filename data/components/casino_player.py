@@ -1,5 +1,6 @@
 import inspect
 import os
+import warnings
 from collections import OrderedDict
 from .. import prepare
 from . import loggable
@@ -69,7 +70,7 @@ class CasinoPlayer(loggable.Loggable):
         frame, full_filename, line_number, function_name, lines, index = inspect.stack()[1]
         filename = os.path.split(full_filename)[1]
         component = os.path.split(os.path.split(full_filename)[0])[1]
-        self.log.warn(
+        self.warnOnce(
             'Direct access to stats is deprecated - please use helper methods: game {0}, file {1}:{3} - {2}'.format(
                 component, filename, function_name, line_number))
         #
