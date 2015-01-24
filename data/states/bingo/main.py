@@ -492,15 +492,17 @@ class Bingo(statemachine.StateMachine):
             for item in self.cards:
                 self.add_generator('flash-labels', item.flash_labels())
 
-    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback, speed_up=None):
+    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback, speed_up=None,
+                                   states=(False, True)):
         """Randomly highlight buttons in a group and then call the callback when complete"""
+        false_state, true_state = states
         last_chosen = None
         if source_button:
-            source_button.state = True
+            source_button.state = true_state
         #
         # Turn all buttons off
         for button in buttons:
-            button.state = False
+            button.state = false_state
         #
         for i in range(number_of_times):
             #
@@ -512,9 +514,9 @@ class Bingo(statemachine.StateMachine):
             #
             # Highlight it
             self.log.debug('Setting to button {0}, {1}'.format(buttons.index(chosen), chosen.name))
-            chosen.state = True
+            chosen.state = true_state
             if last_chosen:
-                last_chosen.state = False
+                last_chosen.state = false_state
             last_chosen = chosen
             #
             self.play_sound('bingo-beep')
@@ -526,7 +528,7 @@ class Bingo(statemachine.StateMachine):
             delay *= speed_up if speed_up else S['randomize-button-speed-up']
         #
         if source_button:
-            source_button.state = False
+            source_button.state = false_state
         #
         final_callback(chosen)
 
@@ -554,3 +556,13 @@ class Bingo(statemachine.StateMachine):
     def slow_machine(self):
         """Slow the machine down"""
         self.ball_machine.change_speed(None, self.ball_machine.speed_transitions[0])
+
+    def start_auto_pick(self, delay):
+        """Temporarily auto pick the numbers"""
+        self.auto_pick = True
+
+        def unauto():
+            yield delay * 1000
+            self.auto_pick = False
+
+        self.add_generator('un-auto', unauto())
