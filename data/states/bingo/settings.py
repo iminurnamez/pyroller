@@ -263,7 +263,7 @@ SETTINGS = {
     'next-chip-size': (180, 45),
     'next-chip-scale': 1.7,
     'next-chip-position': (860, 924),
-    'next-chip-delay': 2,
+    'next-chip-delay': .1, ## 2,
 
     #
     # Menu bar
@@ -279,7 +279,7 @@ SETTINGS = {
     # Bonus light properties
     'bonus-light-position': (10, 705),
     'bonus-light-offset': (0, -38),
-    'bonus-light-number': 2,  # 10,
+    'bonus-light-number': 2,  ## 10,
     'bonus-flash-repeat': 10,
     'bonus-flash-on': 0.02,
     'bonus-flash-off': 0.003,
@@ -291,16 +291,16 @@ SETTINGS = {
     'bonus-buttons-offsets': (0, -76),
     'bonus-buttons': [
         # ('Pause', lambda state: state.pause_machine(5)),
-        # ('Slow', None),
+        ('Slow', lambda state: state.slow_machine()),
+        ('Slow', lambda state: state.slow_machine()),
         # ('Pick', None),
-        ('x2', lambda state: state.double_up()),
-        ('x2', lambda state: state.double_up()),
+        # ('x2', lambda state: state.double_up()),
         # ('Win!', None),
     ],
     'bonus-button-text-font': prepare.FONTS["Saniretro"],
     'bonus-button-text-font-size': 24,
     'bonus-button-text-font-color': 'black',
-    'bonus-randomize-button-number': 10,  # 45,
+    'bonus-randomize-button-number': 10,  ## 45,
     'bonus-randomize-button-delay': 16,
     'bonus-randomize-button-speed-up': 1.06,
 

@@ -550,3 +550,7 @@ class Bingo(statemachine.StateMachine):
         """Double up all cards"""
         for card in self.cards:
             card.double_down()
+
+    def slow_machine(self):
+        """Slow the machine down"""
+        self.ball_machine.change_speed(None, self.ball_machine.speed_transitions[0])
