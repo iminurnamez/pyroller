@@ -112,6 +112,8 @@ class Baccarat(TableGame):
         for name, area in self.betting_areas.items():
             area.hand = hands[area.name]
 
+        self.build_image_cache()
+
     def new_round(self):
         """Start new round of baccarat.
 
@@ -204,10 +206,22 @@ class Baccarat(TableGame):
         self.show_winner_text(winner)
         self.show_finish_round_button()
 
+
+    def build_image_cache(self):
+        """certain surfaces/images are created here and cached
+        """
+        def create_text_sprite(text):
+            sprite = OutlineTextSprite(text, self.large_font)
+            sprite.kill_me_on_clear = True
+            return sprite
+
+        self.image_cache = dict()
+        for text in ['Player Wins', 'Dealer Wins', 'Tie']:
+            self.image_cache[text] = create_text_sprite(text)
+
     def show_winner_text(self, winner):
         """Display a label under the winning hand
         """
-        return
         if winner is None:
             status_text = "Tie"
             midtop = get_midpoint(self.player_hand.bounding_rect.midbottom,
@@ -217,11 +231,11 @@ class Baccarat(TableGame):
             status_text += " Wins"
             midtop = winner.bounding_rect.midbottom
 
-        text = OutlineTextSprite(status_text, self.large_font)
-        text.rect.midtop = midtop
-        text.rect.y += 170
-        text.kill_me_on_clear = True
-        self.hud.add(text)
+        sprite = self.image_cache[status_text]
+        sprite.rect.midtop = midtop
+        sprite.rect.y += 170
+        self.hud.add(sprite)
+        return sprite
 
     def process_bet(self, bet, winner):
         """Calculate winnings for the bet, apply the winnings, and clear it

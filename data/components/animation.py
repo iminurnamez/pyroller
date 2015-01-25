@@ -115,7 +115,9 @@ class Animation(pygame.sprite.Sprite):
     Animations must be added to a sprite group in order for them
     to be updated.  If the sprite group that contains them is
     drawn, then an exception will be raised, so you should create
-    a sprite group for only containing Animations.
+    a sprite group only for containing Animations.
+
+    You can cancel the animation by calling Animation.kill().
 
     When the Animation has finished, then it will remove itself
     from the sprite group that contains it.
@@ -186,6 +188,9 @@ class Animation(pygame.sprite.Sprite):
                 for name, values in props.items():
                     a, b = values
                     setattr(target, name, b)
+
+        if hasattr(self, 'update_callback'):
+            self.update_callback()
 
         self.targets = None
         self.kill()

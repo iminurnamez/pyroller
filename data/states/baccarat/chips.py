@@ -139,8 +139,8 @@ class ChipPile(Stacker):
     chip_sounds = [prepare.SFX[name] for name in
                    ["chipsstack{}".format(x) for x in (3, 5, 6)]]
 
-    _initial_snapping = 50
-    _fine_snapping = 30
+    _initial_snapping = 55
+    _fine_snapping = 25
     _maximum_distance_until_drop = 250
     animation_time = 300
 
@@ -266,9 +266,9 @@ class ChipPile(Stacker):
         :return: Closest sprite to pos, or None
         """
         if self._followed_sprite:
-            distance = self._initial_snapping
-        else:
             distance = self._fine_snapping
+        else:
+            distance = self._initial_snapping
 
         closest_sprite = None
         nearest_sprites = self.get_nearest_sprites(pos, distance)
@@ -302,12 +302,12 @@ class ChipPile(Stacker):
 
     def get_nearest_sprites(self, point, limit=None):
         sprites = self.sprites()
-        l = [(get_distance(point, sprite.rect.center), sprite, i)
+        l = [(get_distance(point, sprite.rect.center), i, sprite)
              for i, sprite in enumerate(sprites)]
         if limit is not None:
             l = [i for i in l if i[0] <= limit]
         l.sort()
-        l = [i[:2] for i in l]
+        l = [(i[0], i[2]) for i in l]
         return l
 
     def animate_pop(self, sprite, initial, final, index=1):
@@ -401,49 +401,54 @@ class ChipRack(ChipPile):
         super(ChipRack, self).__init__(rect)
         self._origin_offset = 9, -6
         self.stacking = 57, 6
-        self.row_size = 10
+        self.nominal_row_size = 10
+        self.max_row_size = 30
         self.background = prepare.GFX["chip_rack_medium"]
         self.front = prepare.GFX["rack_front_medium"]
         rect = self.background.get_rect(topleft=self.rect.topleft)
         self.front_rect = self.front.get_rect(bottomleft=rect.bottomleft)
 
-    def add(self, *items, **kwargs):
-        """Add chips to the rack.
+    def add(self, sprite, **kwargs):
+        """Add chip to the rack.
 
         Chips will have their flat attribute set to True
         and resized to fit the rack graphic
         """
-        for chip in items:
-            chip.chip_size = 48, 30
-            chip.flat = True
-        super(ChipRack, self).add(*items, **kwargs)
+        chips = self.get_groups()
+        if len(chips[sprite.value]) < self.max_row_size:
+            sprite.chip_size = 48, 30
+            sprite.flat = True
+            super(ChipRack, self).add(sprite, **kwargs)
 
     def clear(self, surface, background):
         super(ChipRack, self).clear(surface, self.background)
 
     def draw(self, surface):
-        redraw = self._needs_arrange
-        if redraw:
-            surface.blit(self.background, self.rect)
+        # redraw = self._needs_arrange
+        # if redraw:
+        #     surface.blit(self.background, self.rect)
         # HACK: will draw rack front every frame.  :(
         surface.blit(self.background, self.rect)
         dirty = super(ChipRack, self).draw(surface)
         surface.blit(self.front, self.front_rect)
         return dirty
 
+    def get_groups(self):
+        chips = defaultdict(list)
+        for chip in self.sprites():
+            chips[chip.value].append(chip)
+        return chips
+
     def normalize(self):
         """Make sure all rows have same number of chips
         """
-        d = defaultdict(int)
-        chips = defaultdict(list)
-        for chip in self.sprites():
-            d[chip.value] += 1
-            chips[chip.value].append(chip)
+        chips = self.get_groups()
+        row_size = self.nominal_row_size
         for value in denominations:
-            current = d[value]
-            if current < self.row_size:
-                for i in range(current, self.row_size):
+            current = len(chips[value])
+            if current < row_size:
+                for i in range(current, row_size):
                     self.add(Chip(value))
-            elif current > self.row_size:
-                for i in range(self.row_size, current):
+            elif current > row_size:
+                for i in range(row_size, current):
                     self.remove(chips[value].pop())
