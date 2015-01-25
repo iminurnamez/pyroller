@@ -81,8 +81,8 @@ def make_shadow_surface(surface):
     """
     shad = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
 
-    for x, y in product(*(range(i) for i in surface.get_size())):
-        print x, y
+    # for x, y in product(*(range(i) for i in surface.get_size())):
+    #     print x, y
 
 
 class Sprite(pygame.sprite.DirtySprite):
@@ -104,6 +104,11 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
         self._animations = pygame.sprite.Group()
 
     def extend(self, sprites, **kwargs):
+        """A a sequence of sprites to the SpriteGroup
+        :param sprites: Sequence (list, set, etc)
+        :param kwargs:
+        :return: None
+        """
         if '_index' in kwargs.keys():
             raise KeyError
         for index, sprite in enumerate(sprites):
@@ -111,7 +116,7 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
             self.add(sprite, **kwargs)
 
     def add(self, sprite, **kwargs):
-        """add a sprite to group.  do not pass a sequence or iterator
+        """Add a sprite to group.  do not pass a sequence or iterator
 
         LayeredUpdates.add(*sprites, **kwargs): return None
 
@@ -167,6 +172,8 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
 
     @property
     def bounding_rect(self):
+        """A rect object that contains all sprites of this group
+        """
         sprites = self.sprites()
         if len(sprites) == 0:
             return self.rect

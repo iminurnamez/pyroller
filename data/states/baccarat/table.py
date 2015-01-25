@@ -326,8 +326,7 @@ class TableGame(tools._State):
     def cash_in(self):
         """Change player's cash to chips
         """
-        # chips = cash_to_chips(self.casino_player.stats['cash'])
-        chips = cash_to_chips(1469)
+        chips = cash_to_chips(self.casino_player.stats['cash'])
         self.casino_player.stats['cash'] = 0
         self.player_chips.extend(chips)
 
@@ -336,10 +335,10 @@ class TableGame(tools._State):
         """
         cash = self.player_chips.value
         for bet in self.bets.groups():
-            if bet.owner == self.player_chips:
+            if bet.origin is self.player_chips:
                 bet.kill_me = True
-                bet.empty()
                 cash += bet.value
+                bet.empty()
         self.casino_player.stats['cash'] = cash
         self.player_chips.empty()
 

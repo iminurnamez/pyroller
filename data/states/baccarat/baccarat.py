@@ -206,7 +206,6 @@ class Baccarat(TableGame):
         self.show_winner_text(winner)
         self.show_finish_round_button()
 
-
     def build_image_cache(self):
         """certain surfaces/images are created here and cached
         """
@@ -265,19 +264,9 @@ class Baccarat(TableGame):
             for chip in new_chips:
                 chip.rect.center = (0, 0)
 
-            pre_value = bet.owner.value
             bet.owner.extend(bet.sprites())
             self.delay(800, bet.owner.extend, (new_chips, ))
             bet.empty()
-
-            print 'win:', winnings
-            print 'bet', bet.value
-            print 'fee', fee
-            print 'total', winnings + bet.value
-
-            print 'before', pre_value
-            print 'after', bet.owner.value
-            print 'diff', bet.owner.value - pre_value
 
             if is_player:
                 pn_win = winner is self.player_hand and player_natural
