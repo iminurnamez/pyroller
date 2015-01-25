@@ -41,3 +41,15 @@ class Loggable(object):
         """Add a logger"""
         if 'log' not in self.__class__.__dict__:
             self.__class__.log = getLogger(self.__class__.__name__)
+
+    def warnOnce(self, text):
+        """Warn about some condition but only do this once regardless of how many times it occurs
+
+        This could be probably be done better by using the warnings
+
+        """
+        if text not in self.warnOnce._cache:
+            self.log.warn(text)
+            self.warnOnce._cache.add(text)
+
+    warnOnce._cache = set()

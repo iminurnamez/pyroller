@@ -32,7 +32,9 @@ class StatsScreen(tools._State):
         self.persist = persistent
         screen = pg.display.get_surface().get_rect()
         game = self.persist["current_game_stats"]
-        stats = self.persist["casino_player"].stats[game]
+        player_stats = self.persist["casino_player"]
+        player_stats.current_game = game
+        stats = player_stats.get_visible_stat_names()
         self.labels = []
         title = GroupLabel(self.labels, self.font, 64, game, "darkred",
                            {"midtop": (screen.centerx, screen.top + 10)})
@@ -40,13 +42,12 @@ class StatsScreen(tools._State):
         left2 = screen.left + 500
         top = title.rect.bottom + 20
         for stat in stats:
-            if not stat.startswith("_"):
-                label = GroupLabel(self.labels, self.font, 32, stat.title(),
-                                   "gold3", {"topleft": (left1, top)})
-                label2 = GroupLabel(self.labels, self.font, 32,
-                                    "{}".format(stats[stat]), "gold3",
-                                    {"topleft": (left2, top)})
-                top += label.rect.height + 10
+            label = GroupLabel(self.labels, self.font, 32, stat.title(),
+                               "gold3", {"topleft": (left1, top)})
+            label2 = GroupLabel(self.labels, self.font, 32,
+                                "{}".format(player_stats.get(stat)), "gold3",
+                                {"topleft": (left2, top)})
+            top += label.rect.height + 10
 
 
     def get_event(self, event, scale=(1,1)):
