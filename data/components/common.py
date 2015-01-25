@@ -251,3 +251,27 @@ class ImageOnOffButton(Clickable):
         else:
             self.off_image.draw(surface)
         self.label.draw(surface)
+
+
+class MultiStateButton(Clickable):
+    """A button with multiple states
+
+    To receive events call the linkEvent method as described in the Clickable
+    documentation.
+
+    """
+
+    def __init__(self, name, position, filenames, text_properties, text, state,
+                 settings, scale=1.0):
+        """Initialise the button"""
+        self.state = state
+        #
+        self.images = [NamedSprite(name, position, filename, scale=scale) for filename in filenames]
+        self.label = getLabel(text_properties, position, text, settings)
+        #
+        super(MultiStateButton, self).__init__(name, self.images[0].rect)
+
+    def draw(self, surface):
+        """Draw the button"""
+        self.images[self.state].draw(surface)
+        self.label.draw(surface)
