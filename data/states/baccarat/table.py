@@ -1,6 +1,7 @@
 from collections import defaultdict
 from random import choice
-from functools import partial
+from itertools import groupby
+from operator import attrgetter
 import pygame as pg
 from .ui import *
 from .cards import *
@@ -186,7 +187,6 @@ class TableGame(tools._State):
             return True, None
 
         # place chips in betting area
-        bet = None
         for area in self.betting_areas.values():
             if area.rect.collidepoint(position):
                 remove(owner, chips)
@@ -196,12 +196,18 @@ class TableGame(tools._State):
                 # HACK: should not be hardcoded
                 bet.rect.x -= 32
                 self.clear_background()
-                break
+                return True, bet
 
-        # This tuple is needed to prevent the event handler from dropping
-        # the return value when the ChipPile is evaluated as False when empty
-        if bet is not None:
-            return True, bet
+        # place chips in the house chips
+        if self.house_chips.rect.collidepoint(position):
+            remove(owner, chips)
+            new_chips = list()
+            for chip in chips:
+                for value in make_change(chip.value, break_down=True):
+                    chip = Chip(value)
+                    chip.rect.center = self.house_chips.rect.center
+                    new_chips.append(chip)
+            self.player_chips.extend(new_chips)
 
     def get_event(self, event, scale=(1, 1)):
         if event.type == pg.KEYDOWN:
@@ -320,8 +326,7 @@ class TableGame(tools._State):
     def cash_in(self):
         """Change player's cash to chips
         """
-        # chips = cash_to_chips(self.casino_player.stats['cash'])
-        chips = cash_to_chips(1469)
+        chips = cash_to_chips(self.casino_player.stats['cash'])
         self.casino_player.stats['cash'] = 0
         self.player_chips.extend(chips)
 
@@ -330,10 +335,10 @@ class TableGame(tools._State):
         """
         cash = self.player_chips.value
         for bet in self.bets.groups():
-            if bet.owner == self.player_chips:
+            if bet.origin is self.player_chips:
                 bet.kill_me = True
-                bet.empty()
                 cash += bet.value
+                bet.empty()
         self.casino_player.stats['cash'] = cash
         self.player_chips.empty()
 

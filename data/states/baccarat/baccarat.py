@@ -112,6 +112,8 @@ class Baccarat(TableGame):
         for name, area in self.betting_areas.items():
             area.hand = hands[area.name]
 
+        self.build_image_cache()
+
     def new_round(self):
         """Start new round of baccarat.
 
@@ -127,7 +129,7 @@ class Baccarat(TableGame):
         self._enable_chips = True
         self.clear_background()
         self.bets.empty()
-        self.house_chips.fill()
+        self.house_chips.normalize()
         self.clear_table()
         self.delay(500, force_empty)
 
@@ -204,6 +206,18 @@ class Baccarat(TableGame):
         self.show_winner_text(winner)
         self.show_finish_round_button()
 
+    def build_image_cache(self):
+        """certain surfaces/images are created here and cached
+        """
+        def create_text_sprite(text):
+            sprite = OutlineTextSprite(text, self.large_font)
+            sprite.kill_me_on_clear = True
+            return sprite
+
+        self.image_cache = dict()
+        for text in ['Player Wins', 'Dealer Wins', 'Tie']:
+            self.image_cache[text] = create_text_sprite(text)
+
     def show_winner_text(self, winner):
         """Display a label under the winning hand
         """
@@ -216,11 +230,11 @@ class Baccarat(TableGame):
             status_text += " Wins"
             midtop = winner.bounding_rect.midbottom
 
-        text = OutlineTextSprite(status_text, self.large_font)
-        text.rect.midtop = midtop
-        text.rect.y += 170
-        text.kill_me_on_clear = True
-        self.hud.add(text)
+        sprite = self.image_cache[status_text]
+        sprite.rect.midtop = midtop
+        sprite.rect.y += 170
+        self.hud.add(sprite)
+        return sprite
 
     def process_bet(self, bet, winner):
         """Calculate winnings for the bet, apply the winnings, and clear it
@@ -246,8 +260,13 @@ class Baccarat(TableGame):
                 fee = int(math.ceil(bet.value * commission))
                 winnings -= fee
 
-            bet.owner.extend(cash_to_chips(winnings))
+            new_chips = cash_to_chips(winnings)
+            for chip in new_chips:
+                chip.rect.center = (0, 0)
+
             bet.owner.extend(bet.sprites())
+            self.delay(800, bet.owner.extend, (new_chips, ))
+            bet.empty()
 
             if is_player:
                 pn_win = winner is self.player_hand and player_natural
@@ -263,17 +282,19 @@ class Baccarat(TableGame):
                 if pn_win or bn_win:
                     stats['Bets Won by Naturals'] += 1
 
-        elif is_player:
-            pn_loss = bet.result is self.player_hand and dealer_natural
-            bn_loss = bet.result is self.dealer_hand and player_natural
-            record = stats['Largest Loss']
-            stats['Largest Loss'] = max(record, bet.value)
-            stats['Bets Lost'] += 1
-            stats['Earned'] -= bet.value
-            if pn_loss or bn_loss:
-                stats['Bets Lost by Naturals'] += 1
+        else:
+            self.house_chips.extend(bet.sprites())
+            bet.empty()
 
-        bet.empty()
+            if is_player:
+                pn_loss = bet.result is self.player_hand and dealer_natural
+                bn_loss = bet.result is self.dealer_hand and player_natural
+                record = stats['Largest Loss']
+                stats['Largest Loss'] = max(record, bet.value)
+                stats['Bets Lost'] += 1
+                stats['Earned'] -= bet.value
+                if pn_loss or bn_loss:
+                    stats['Bets Lost by Naturals'] += 1
 
     def display_scores(self):
         """Create and add TextSprites with score under each card hand
