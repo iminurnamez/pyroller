@@ -5,7 +5,7 @@ from ...components.loggable import getLogger
 from ...components.warning_window import NoticeWindow
 from ...components.labels import Label, MultiLineLabel, NeonButton, ButtonGroup
 from ... import tools, prepare
-from .model import Wallet, Pot
+from .model import Wallet, Pot, InsufficientFundsException
 
 # Utilize the logger along with the following functions to print to console instead of prints.
 log = getLogger("KENO")
@@ -378,7 +378,12 @@ class Keno(tools._State):
 
     def activate_bet(self):
         log.debug("betting activated")
-        self.make_bet(1)
+        
+        try:
+            self.make_bet(1)
+        except InsufficientFundsException:
+            self.handle_insufficient_funds()
+            
         spot_count = self.keno_card.spot_count
         self.pay_table.update(spot_count, self.pot._balance)
         
@@ -390,8 +395,14 @@ class Keno(tools._State):
         
     def validate_configuration(self):
         if not self.pot.paid and self.pot._balance > 0:
-            self.pot.repeat_bet()
-            return True
+            
+            try:
+                self.pot.repeat_bet()
+                return True
+            except InsufficientFundsException:
+                self.handle_insufficient_funds()
+                return False
+                
         elif not self.pot.paid:
             self.alert = NoticeWindow(self.screen_rect.center, "Please place your bet.")
             return False
@@ -402,6 +413,15 @@ class Keno(tools._State):
             return False
             
         return True
+    
+    def handle_insufficient_funds(self):
+        self.pot.clear_bet(with_payout=False)
+        self.play_max_active = False
+        self.turns = 0
+        self.alert_insufficient_funds()
+    
+    def alert_insufficient_funds(self):
+        self.alert = NoticeWindow(self.screen_rect.center, "You cannot afford that bet.")
     
     def activate_play(self):
         
@@ -429,29 +449,32 @@ class Keno(tools._State):
     
     def continue_playmax(self):
         log.debug("turns={0}".format(self.turns))
-        self.pot.repeat_bet()
-        self.play_max_active = True
-        numbers = pick_numbers(20)
-
-        self.keno_card.ready_play()
-        self.keno_card.current_pick = numbers
-        for number in numbers:
-            self.keno_card.toggle_hit(number)
-
-        self.turns -= 1
-        if self.turns <= 0:
-            self.play_max_active = False
-            self.turns = 16
-
-    def make_bet(self, amount):
-        #unsafe - can end up withdrawing beyond zero...
-        #issue #75 (must cast to integer):
-        log.debug("betting={0}".format(amount))
-        #self.casino_player.stats["cash"] -= int(amount)
-        #self.bet += amount
-        #self.is_paid = True
         
-        self.pot.change_bet(amount)
+        try:
+            self.pot.repeat_bet()
+            self.play_max_active = True
+            numbers = pick_numbers(20)
+
+            self.keno_card.ready_play()
+            self.keno_card.current_pick = numbers
+            for number in numbers:
+                self.keno_card.toggle_hit(number)
+
+            self.turns -= 1
+            if self.turns <= 0:
+                self.play_max_active = False
+                self.turns = 16
+                
+        except InsufficientFundsException:
+            self.turns = 0
+            self.handle_insufficient_funds()
+            self.play_max_active = False
+
+    def make_bet(self, amount):        
+        try:
+            self.pot.change_bet(amount)
+        except InsufficientFundsException:
+            self.handle_insufficient_funds()
         
     def clear_bet(self):
         self.pot.clear_bet()
@@ -547,7 +570,6 @@ class Keno(tools._State):
         if self.play_max_active:
             self.continue_playmax()
             self.play_game()
-            #pg.time.wait(5000)
 
         total_text = "Balance:  ${}".format(self.wallet.balance)
 
