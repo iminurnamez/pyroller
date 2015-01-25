@@ -137,20 +137,22 @@ class StateExecutor(loggable.Loggable):
         self.last_delay = self.delay = delay
         self.done = False
         self.verbose = False
+        self.paused = False
         #
         self.state_clock = pygame.time.Clock()
 
     def update(self, dt):
         """Update the state"""
         self.state_clock.tick(dt)
-        self.delay -= self.state_clock.get_time()
-        if not self.done and self.delay < 0:
-            if self.verbose:
-                self.log.debug('{0} {1} doing action'.format(self.name, id(self)))
-            try:
-                self.last_delay = self.delay = next(self.generator)
-            except StopIteration:
-                self.done = True
+        if not self.paused:
+            self.delay -= self.state_clock.get_time()
+            if not self.done and self.delay < 0:
+                if self.verbose:
+                    self.log.debug('{0} {1} doing action'.format(self.name, id(self)))
+                try:
+                    self.last_delay = self.delay = next(self.generator)
+                except StopIteration:
+                    self.done = True
 
     def next_step(self):
         """Immediately make the generator go to the next step"""

@@ -160,8 +160,9 @@ class BallMachine(common.Drawable, loggable.Loggable):
     def draw(self, surface):
         """Draw the machine"""
         self.ui.draw(surface)
-        self.called_balls_ui.update(self.state.dt * S['conveyor-speed'] / self.interval)
-        self.cog.update(self.state.dt * S['machine-cog-speed'] / self.interval)
+        if not self.timer.paused:
+            self.called_balls_ui.update(self.state.dt * S['conveyor-speed'] / self.interval)
+            self.cog.update(self.state.dt * S['machine-cog-speed'] / self.interval)
         #
         # Calculate how close we are to choosing a new ball
         fraction = 1.0 - self.timer.get_fraction_to_go()
@@ -173,6 +174,14 @@ class BallMachine(common.Drawable, loggable.Loggable):
     def call_next_ball(self):
         """Immediately call the next ball"""
         self.timer.next_step()
+
+    def pause(self):
+        """Pause the machine"""
+        self.timer.paused = True
+
+    def unpause(self):
+        """Unpause the machine"""
+        self.timer.paused = False
 
 
 class CalledBallTray(common.Drawable, loggable.Loggable):

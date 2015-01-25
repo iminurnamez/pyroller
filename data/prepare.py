@@ -91,7 +91,9 @@ FONTS = tools.load_all_fonts(os.path.join("resources", "fonts"))
 MUSIC = tools.load_all_music(os.path.join("resources", "music"))
 SFX   = tools.load_all_sfx(os.path.join("resources", "sound"))
 GFX   = _load_graphics()
-
+#temporary hack to get guts working
+GFX["neon_button_on_guts"] = GFX["neon_button_on_blackjack"]
+GFX["neon_button_off_guts"] = GFX["neon_button_off_blackjack"]
 
 #It's time to start the music, it's time to light the lights
 pg.mixer.music.load(MUSIC["main_stem"])

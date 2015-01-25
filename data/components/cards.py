@@ -5,7 +5,7 @@ from .. import prepare
 from ..components.angles import get_angle, project
 
 
-class Card(object):
+class Card(pg.sprite.Sprite):
     """Class to represent a single playing card."""
     card_names = {1: "Ace",
                            2: "Two",
@@ -22,6 +22,7 @@ class Card(object):
                            13: "King"}
 
     def __init__(self, value, suit, card_size, speed):
+        super(Card, self).__init__()
         self.card_size = card_size
         self.speed = speed
         self.value = value
@@ -37,6 +38,8 @@ class Card(object):
         self.rect = self.image.get_rect()
         self.pos = self.rect.center
         self.face_up = False
+        
+        
 
     def load_images(self):
         img_name = self.name.lower().replace(" ", "_")

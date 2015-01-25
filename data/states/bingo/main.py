@@ -81,18 +81,12 @@ class Bingo(statemachine.StateMachine):
         """This method will be called each time the state resumes."""
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
+        self.casino_player.current_game = 'Bingo'
         #
-        # Make sure the player has stat markers
-        if 'Bingo' not in self.casino_player.stats:
-            self.casino_player.stats['Bingo'] = OrderedDict([
-                ('games played', 0),
-                ('games won', 0),
-                ('_last squares', []),
-                ])
-        #
-        self.casino_player.stats['Bingo']['games played'] += 1
-        self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
-        self.money_display.set_money(self.casino_player.stats['cash'])
+        self.casino_player.increase('games played')
+        self.cards.set_card_numbers(self.casino_player.get('_last squares', []))
+        self.money_display.set_money(self.casino_player.cash)
+        self.time_started = time.time()
 
     def get_event(self, event, scale=(1,1)):
         """Check for events"""
@@ -131,8 +125,9 @@ class Bingo(statemachine.StateMachine):
         self.game_started = False
         self.done = True
         self.next = "LOBBYSCREEN"
-        self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
-        self.casino_player.stats['cash'] = self.money_display.amount
+        self.casino_player.set('_last squares', self.cards.get_card_numbers())
+        self.casino_player.cash = self.money_display.amount
+        self.casino_player.increase_time('time played', time.time() - self.time_started)
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
@@ -250,6 +245,9 @@ class Bingo(statemachine.StateMachine):
         self.money_display.add_money(amount)
         if amount < 0:
             self.play_sound('bingo-pay-money')
+            self.casino_player.increase('total lost', -amount)
+        else:
+            self.casino_player.increase('total won', amount)
 
     def change_pattern(self, obj, pattern):
         """Change the winning pattern"""
@@ -295,6 +293,7 @@ class Bingo(statemachine.StateMachine):
         self.dealer_cards.reset()
         self.current_pick_sound = 0
         self.last_pick_time = 0
+        self.casino_player.increase('games played')
 
     def next_ball(self, obj, arg):
         """Move on to the next ball
@@ -345,7 +344,7 @@ class Bingo(statemachine.StateMachine):
         self.log.info('Changing the number of cards to {0}'.format(number))
         #
         # Store off the old card number to reuse
-        self.casino_player.stats['Bingo']['_last squares'] = self.cards.get_card_numbers()
+        self.casino_player.set('_last squares', self.cards.get_card_numbers())
         #
         # Remove old cards
         for card in self.cards:
@@ -356,7 +355,7 @@ class Bingo(statemachine.StateMachine):
         #
         # Create new cards
         self.create_card_collection()
-        self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
+        self.cards.set_card_numbers(self.casino_player.get('_last squares', []))
         #
         self.all_cards.extend(self.cards)
         self.all_cards.extend(self.dealer_cards)
@@ -463,6 +462,11 @@ class Bingo(statemachine.StateMachine):
         """A card was completed"""
         self.log.info('Card {0} owned by {1} was completed'.format(card.index, card.card_owner))
         #
+        if card.card_owner == bingocard.T_PLAYER:
+            self.casino_player.increase('cards won' if card.card_state == bingocard.S_WON else 'cards lost')
+        else:
+            self.casino_player.incease('cards won' if card.card_state == bingocard.S_LOST else 'cards lost')
+        #
         # Find the matching card from the dealer or player and deactivate it
         other_card = self.cards[card.index] if card.card_owner == bingocard.T_DEALER else self.dealer_cards[card.index]
         other_card.active = False
@@ -476,15 +480,17 @@ class Bingo(statemachine.StateMachine):
             for item in self.cards:
                 self.add_generator('flash-labels', item.flash_labels())
 
-    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback, speed_up=None):
+    def randomly_highlight_buttons(self, source_button, buttons, number_of_times, delay, final_callback, speed_up=None,
+                                   states=(False, True)):
         """Randomly highlight buttons in a group and then call the callback when complete"""
+        false_state, true_state = states
         last_chosen = None
         if source_button:
-            source_button.state = True
+            source_button.state = true_state
         #
         # Turn all buttons off
         for button in buttons:
-            button.state = False
+            button.state = false_state
         #
         for i in range(number_of_times):
             #
@@ -496,9 +502,9 @@ class Bingo(statemachine.StateMachine):
             #
             # Highlight it
             self.log.debug('Setting to button {0}, {1}'.format(buttons.index(chosen), chosen.name))
-            chosen.state = True
+            chosen.state = true_state
             if last_chosen:
-                last_chosen.state = False
+                last_chosen.state = false_state
             last_chosen = chosen
             #
             self.play_sound('bingo-beep')
@@ -510,7 +516,45 @@ class Bingo(statemachine.StateMachine):
             delay *= speed_up if speed_up else S['randomize-button-speed-up']
         #
         if source_button:
-            source_button.state = False
+            source_button.state = false_state
         #
         final_callback(chosen)
 
+    def pause_machine(self, delay):
+        """Pause the ball machine for a certain length of time"""
+        self.ball_machine.pause()
+
+        def unpause():
+            yield delay * 1000
+            self.ball_machine.unpause()
+
+        self.add_generator('un-pause', unpause())
+
+    def double_up(self):
+        """Double up all cards"""
+        for card in self.cards:
+            card.double_down()
+
+    def slow_machine(self):
+        """Slow the machine down"""
+        self.ball_machine.change_speed(None, self.ball_machine.speed_transitions[0])
+
+    def start_auto_pick(self, delay):
+        """Temporarily auto pick the numbers"""
+        self.auto_pick = True
+
+        def unauto():
+            yield delay * 1000
+            self.auto_pick = False
+
+        self.add_generator('un-auto', unauto())
+
+    def win_card(self):
+        """Win one of the cards"""
+        possible_cards = [card for card in self.cards if card.active]
+        if possible_cards:
+            card = random.choice(possible_cards)
+            card.set_card_state(bingocard.S_WON)
+            self.play_sound(card.card_success_sound)
+            B.processEvent((events.E_CARD_COMPLETE, card))
+            card.active = False
