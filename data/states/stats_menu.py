@@ -17,16 +17,20 @@ class StatsMenu(tools._State):
                           {"midtop":(screen_rect.centerx, screen_rect.top+10)})
         self.games = ["Blackjack", "Bingo", "Craps", "Keno", "Video Poker",
                       "Pachinko", "Guts"]
-        self.buttons = self.make_buttons(screen_rect)
+        self.buttons = self.make_buttons(screen_rect, 3)
         self.use_music_handler = False
 
-    def make_buttons(self, screen_rect):
-        top = self.title.rect.bottom+50
+    def make_buttons(self, screen_rect, col=2):
+        spacer_x = 20
+        spacer_y = 20
+        start_y = self.title.rect.bottom+50
+        start_x = (screen_rect.w-NeonButton.width*col-spacer_x*(col-1))//2
         buttons = ButtonGroup()
-        for game in self.games:
-            pos = (screen_rect.centerx-(NeonButton.width//2), top)
+        for i,game in enumerate(self.games):
+            y,x = divmod(i, col)
+            pos = (start_x+x*(NeonButton.width+spacer_x),
+                   start_y+y*(NeonButton.height+spacer_y))
             button = NeonButton(pos, game, self.view_game_stats, game, buttons)
-            top += button.rect.height+20
         pos = (screen_rect.centerx-(NeonButton.width//2),
                screen_rect.bottom-(NeonButton.height+10))
         NeonButton(pos, "Lobby", self.back_to_lobby, None, buttons)

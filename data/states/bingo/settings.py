@@ -290,11 +290,11 @@ SETTINGS = {
     'bonus-buttons-position': (1370, 705),
     'bonus-buttons-offsets': (0, -76),
     'bonus-buttons': [
-        ('Pause', lambda state: state.pause_machine()),
-        ('Slow', None),
-        ('Pick', None),
-        ('x2', None),
-        ('Win!', None),
+        ('Pause', 5, lambda state: state.pause_machine(5)),
+        ('Slow', 1, lambda state: state.slow_machine()),
+        ('Auto', 5, lambda state: state.start_auto_pick(5)),
+        ('x2', 1, lambda state: state.double_up()),
+        ('Win!', 1, lambda state: state.win_card()),
     ],
     'bonus-button-text-font': prepare.FONTS["Saniretro"],
     'bonus-button-text-font-size': 24,
@@ -302,6 +302,8 @@ SETTINGS = {
     'bonus-randomize-button-number': 45,
     'bonus-randomize-button-delay': 16,
     'bonus-randomize-button-speed-up': 1.06,
+    'bonus-active-flash-on': 0.1,
+    'bonus-active-flash-off': 0.1,
 
     #
     # Debug settings

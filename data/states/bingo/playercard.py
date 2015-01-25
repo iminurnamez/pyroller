@@ -88,7 +88,7 @@ class PlayerCard(bingocard.BingoCard):
         self.value = value
         self.value_label.set_text('${0}'.format(value))
 
-    def double_down(self, obj, arg):
+    def double_down(self, obj=None, arg=None):
         """Double down the card"""
         if self.double_down_button.state:
             self.log.info('Doubling down on the card')
@@ -119,6 +119,7 @@ class PlayerCard(bingocard.BingoCard):
 
     def set_card_state(self, state):
         """Set the card state and flash it a bit"""
+        super(PlayerCard, self).set_card_state(state)
         self.state.add_generator('flash-card-state', self.flash_card_state(self.card_state, state))
         self.double_down_button.state = False
         self.set_dirty()
