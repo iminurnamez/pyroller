@@ -34,12 +34,14 @@ class Pot(object):
         except InsufficientFundsException:
             raise
         
-    def clear_bet(self):
+    def clear_bet(self, with_payout=True):
         '''
         Execute payout(1) so whatever is in pot goes back to player. Set balance to zero
         Also set won to zero (ensure after calling payout so that player receives money back)
         '''
-        self.payout(1)
+        if with_payout:
+            self.payout(1)
+            
         self._balance = 0
         self.won = 0
         
