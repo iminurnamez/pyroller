@@ -491,7 +491,7 @@ class Keno(tools._State):
                 break
 
         self.pot.payout(payment)
-        self.casino_player.stats["cash"] = self.wallet.balance
+        self.casino_player.cash = self.wallet.balance
 
     def back_to_lobby(self, *args):
         self.game_started = False
@@ -503,13 +503,14 @@ class Keno(tools._State):
         self.persist = persistent
         #This is the object that represents the user.
         self.casino_player = self.persist["casino_player"]
+        self.casino_player.current_game = "Keno"
         self.gui_widgets['bet_action'] = self.betting
         self.gui_widgets['clear'] = self.clearing
 
-        self.wallet = Wallet(self.casino_player.stats["cash"])
+        self.wallet = Wallet(self.casino_player.cash)
         self.pot    = Pot(self.wallet)
 
-        self.casino_player.stats["Keno"]["games played"] += 1
+        self.casino_player.increase("games played", 1)
 
     def play_game(self):
         spot_count = self.keno_card.spot_count
