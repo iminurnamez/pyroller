@@ -124,7 +124,7 @@ class Blackjack(tools._State):
             chips = self.player.chip_pile.withdraw_chips(self.quick_bet)
             self.current_player_hand.bet.add_chips(chips)
             self.state = "Dealing"
-            self.casino_player.stats["Blackjack"]["games played"] += 1
+            self.casino_player.increase("games played")
             self.quick_bet = 0
 
 
@@ -132,10 +132,11 @@ class Blackjack(tools._State):
         """Get state ready to resume."""
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
+        self.casino_player.current_game = "Blackjack"
         if prepare.ARGS["bots"]:
             self.bot = BlackjackBot(self)
         if not self.game_started:
-            self.new_game(self.casino_player.stats["cash"])
+            self.new_game(self.casino_player.cash)
         self.window = None
         self.elapsed = 17.0
 
@@ -146,7 +147,7 @@ class Blackjack(tools._State):
                 self.last_bet = max(bets)
                 self.quick_bet = 0
                 self.state = "Dealing"
-                self.casino_player.stats["Blackjack"]["games played"] += 1
+                self.casino_player.increase("games played", 1)
             else:
                 text = "You need to make a bet first!"
                 center = self.screen_rect.center
@@ -275,31 +276,31 @@ class Blackjack(tools._State):
         cash = 0
         for hand in self.player.hands:
             bet = hand.bet.get_chip_total()
-            self.casino_player.stats["Blackjack"]["hands played"] += 1
-            self.casino_player.stats["Blackjack"]["total bets"] += bet
+            self.casino_player.increase("hands played")
+            self.casino_player.increase("total bets", bet)
             if hand.busted:
-                self.casino_player.stats["Blackjack"]["busts"] += 1
-                self.casino_player.stats["Blackjack"]["hands lost"] += 1
+                self.casino_player.increase("busts")
+                self.casino_player.increase("hands lost")
             elif hand.loser:
-                self.casino_player.stats["Blackjack"]["hands lost"] += 1
+                self.casino_player.increase("hands lost")
             elif hand.blackjack:
                 cash += int(bet + (bet * 1.5))
-                self.casino_player.stats["Blackjack"]["blackjacks"] += 1
-                self.casino_player.stats["Blackjack"]["hands won"] += 1
+                self.casino_player.increase("blackjacks")
+                self.casino_player.increase("hands won")
             elif hand.winner:
                 cash += bet * 2
-                self.casino_player.stats["Blackjack"]["hands won"] += 1
+                self.casino_player.increase("hands won")
             elif hand.push:
                 cash += bet
-                self.casino_player.stats["Blackjack"]["pushes"] += 1
+                self.casino_player.increase("pushes")
 
-        self.casino_player.stats["Blackjack"]["total winnings"] += cash
+        self.casino_player.increase("total winnings")
         chips = cash_to_chips(cash, self.chip_size)
         return chips
 
     def cash_out_player(self):
         """Convert player's chips to cash and update stats."""
-        self.casino_player.stats["cash"] = self.player.chip_pile.get_chip_total()
+        self.casino_player.cash = self.player.chip_pile.get_chip_total()
 
     def leave_state(self):
         """Prepare to exit game and return to lobby screen."""
