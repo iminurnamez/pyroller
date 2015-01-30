@@ -1,4 +1,4 @@
-from random import randint
+from random import randint, choice
 import pygame as pg
 from ... import prepare
 from ...components.labels import Label
@@ -76,6 +76,7 @@ class AIPlayer(object):
         self.won = 0
         self.lost = 0
         
+       
     def stay(self):
         self.stayed = True
         self.label = self.stay_label
@@ -104,16 +105,10 @@ class AIPlayer(object):
         card_vals.sort(reverse=True)
         vals = "{},{}".format(*card_vals)
 
-        #print self.name
-        #print [x.name for x in self.cards]
         if vals in STAY_PERCENTS:
-            #print "PERCENT"
             percent = STAY_PERCENTS[vals]
-            #print percent
             percent += self.guts
-            #print percent
-            percent -= stays * 5 
-            #print percent
+            percent -= stays * 5
             risk_it = randint(1, 100)
             if risk_it < percent:
                 self.stay()
@@ -130,7 +125,7 @@ class AIPlayer(object):
                 else:
                     self.stay_out()
             else:
-                self.stay_out()            
+                self.stay_out()
                     
     def draw(self, surface):
         self.name_label.draw(surface)
@@ -141,11 +136,12 @@ class AIPlayer(object):
             
     def draw_from_deck(self, deck):
         card = deck.draw_card()
-        card.rect.center = deck.rect.center
+        x, y = deck.rect.center
+        card.rect.center = (x + 16, y - 10)
         self.cards.append(card)
         return card
         
-    def align_cards(self):   
+    def align_cards(self):
         for card in self.cards:
             center = card.rect.center
             if self.orientation == "left":
@@ -157,3 +153,4 @@ class AIPlayer(object):
                 card.image = pg.transform.rotate(card.image, 90)
                 card.back_image = pg.transform.rotate(card.back_image, 90)
             card.rect.center = center
+            

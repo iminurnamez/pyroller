@@ -231,10 +231,8 @@ class CreditsScreen(tools._State):
             self.zipper_block = None
             self.title = None
             self.spinners.empty()
-            self.chip_curtain = ChipCurtain("chipcurtain_python",
-                                    spinner_settings={"frequency" : 45,
-                                                      "variable"  : False})
-
+            self.back_to_lobby()
+            
     def update(self, surface, keys, current_time, dt, scale):
         """Update all elements and then draw the state."""
         mouse_pos = tools.scaled_mouse_pos(scale)

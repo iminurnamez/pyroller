@@ -40,6 +40,16 @@ class CasinoPlayer(loggable.Loggable):
                                                     ("busts", 0),
                                                     ("total bets", 0),
                                                     ("total winnings", 0)])),
+                                            ("Guts", OrderedDict(
+                                                    [("games played", 0),
+                                                    ("hands played", 0),
+                                                    ("hands won", 0),
+                                                    ("hands lost", 0),
+                                                    ("stays", 0),
+                                                    ("passes", 0),
+                                                    ("total bets", 0),
+                                                    ("total losses", 0),
+                                                    ("total winnings", 0)])),
                                              ("Craps", OrderedDict(
                                                     [('times as shooter', 0),
                                                      ('bets placed', 0),

@@ -68,12 +68,13 @@ class Card(pg.sprite.Sprite):
 
 
 class Deck(object):
-    """Class to represent a deck of playing cards. If default_shuffle is True
-        the deck will be shuffled upon creation. If reuse_discards is True, the
-        discard pile will replenish the deck on exhaustion. If infinite is True, the
-        deck will replenish itself with a new deck upon exhaustion. Reusing
-        discards supersedes infinite replenishment."""
-
+    """
+    Class to represent a deck of playing cards. If default_shuffle is True
+    the deck will be shuffled upon creation. If reuse_discards is True, the
+    discard pile will replenish the deck on exhaustion. If infinite is True, the
+    deck will replenish itself with a new deck upon exhaustion. Reusing
+    discards supersedes infinite replenishment.
+    """
     def __init__(self, topleft, card_size=prepare.CARD_SIZE, card_speed=16.0,
                         default_shuffle=True, reuse_discards=True, infinite=False):
         self.topleft = topleft
@@ -113,8 +114,10 @@ class Deck(object):
         self.discards.append(self.cards.pop())
 
     def draw_card(self):
-        """Draw top card from deck. If deck is exhausted
-        deck will be replenished according to deck options."""
+        """
+        Draw top card from deck. If deck is exhausted
+        deck will be replenished according to deck options.
+        """
         try:
             return self.cards.pop()
         except IndexError:
@@ -138,9 +141,11 @@ class Deck(object):
 
     def draw_pile(self, surface, cards, lefttop, x_offset=2,
                            y_offset=-1, toggle_num=4):
-        """Draw a deck of cards to surface. Every toggle_num cards, the card
+        """
+        Draw a deck of cards to surface. Every toggle_num cards, the card
         drawing position will be offset by (x_offset, y_offset). This allows you
-        to limit the height of the deck."""
+        to limit the height of the deck.
+        """
         left, top = lefttop
         for i, card in enumerate(cards, start=1):
             card.rect.topleft = (left, top)

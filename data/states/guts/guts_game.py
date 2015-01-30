@@ -5,12 +5,13 @@ from ...components.labels import Label
 from .guts_helpers import DealerButton
 
 class GutsGame(object):
-    def __init__(self, players, dealer_index, player, bet, pot, free_ride):
+    def __init__(self, players, dealer_index, player, casino_player, bet, pot, free_ride):
         self.players = players 
         self.dealer_index = dealer_index
         self.dealer = self.players[self.dealer_index]
         self.dealer_button = DealerButton(self.dealer.dealer_button_topleft)
         self.player = player
+        self.casino_player = casino_player
         self.bet = bet
         self.pot = pot
         self.deal_queue = self.make_deal_queue()
