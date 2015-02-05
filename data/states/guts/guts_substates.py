@@ -2,6 +2,7 @@ from random import choice
 import pygame as pg
 from ... import prepare, tools
 from ...components.labels import Label, NeonButton, ButtonGroup
+from ...components.labels import MultiLineLabel
 from ...components.animation import Animation, Task
 
 
@@ -22,31 +23,92 @@ class GutsState(object):
         pass
 
     def draw(self, surface):
-        pass    
-
+        pass
+        
         
 class StartGame(GutsState):
     def __init__(self, game):
         super(StartGame, self).__init__(game)
         self.font = prepare.FONTS["Saniretro"]
         screen_rect = pg.Rect((0,0), prepare.RENDER_SIZE)
+        title = Label(self.font, 128, "Two-Card Guts", "gold3", 
+                          {"midtop": (screen_rect.centerx, 5)},
+                          bg=prepare.FELT_GREEN)
+        title.image.set_alpha(160)
+        title2 = Label(self.font, 96, "${} Ante".format(self.game.bet), "darkred", 
+                            {"midtop": (screen_rect.centerx, title.rect.bottom)},
+                            bg=prepare.FELT_GREEN)  
+        title2.image.set_alpha(140)
+        self.titles = [title, title2] 
         self.buttons = ButtonGroup()
         w, h = NeonButton.width, NeonButton.height
-        pos = screen_rect.centerx - (w//2), screen_rect.centery - (h//2) 
-        NeonButton(pos, "Again", self.start_game, None, self.buttons) #shoulde be "Play", not "Play Again"
+        pos = screen_rect.centerx - (w//2), screen_rect.centery - (h//2)
+        NeonButton(pos, "Again", self.start_game, None, self.buttons) #shoulde be "Ante Up", not "Play Again"
+        pos2 = screen_rect.centerx - (w//2), screen_rect.centery + (h//2) + 50
+        self.tutorial_button = NeonButton(pos2, "Credits", self.make_labels, None, self.buttons) #should be "Tutorial"
+        self.screen_rect = screen_rect
+        self.labels = []
+        self.label = None
+        self.animations = pg.sprite.Group()
+        
+    def make_labels(self, *args):
+        rules = [
+                "Players place their ante in the pot",
+                "Two cards are dealt to each player",
+                "Players choose whether to stay or pass",
+                "Players that stayed show their cards",
+                "The player with the best poker hand wins the pot",
+                "Players that stay and lose must match the pot",
+                "If two players lose, the pot doubles",
+                "If three players lose, the pot triples...",
+                "Ties split the pot",
+                "The game ends when there is nothing in the pot",
+                "Good Luck!"
+                ]
+        labels = []
+        for rule in rules:
+            label = MultiLineLabel(self.font, 72, rule, "gold3", 
+                                              {"center": self.screen_rect.center},
+                                              bg=prepare.FELT_GREEN, align="center",
+                                              char_limit=28)
+            label.alpha = 255
+            labels.append(label)
+        self.labels = iter(labels)
+        self.label = next(self.labels)
+        ani = Animation(alpha=0, delay=2000, duration=3500, round_values=True)
+        ani.start(self.label)
+        self.animations.add(ani)
         
     def start_game(self, *args):
         self.done = True
 
     def get_event(self, event):
-        self.buttons.get_event(event)
+        if not self.label:
+            self.buttons.get_event(event)
         
     def update(self, dt, scale):
-        self.buttons.update(tools.scaled_mouse_pos(scale))
+        if self.label:
+            self.label.image.set_alpha(self.label.alpha)
+            if self.label.alpha <= 0:
+                try:
+                    self.label = next(self.labels)
+                    ani = Animation(alpha=0, delay=2000, duration=3500, round_values=True)
+                    ani.start(self.label)
+                    self.animations.add(ani)
+                except StopIteration:
+                    self.label = None
+        self.animations.update(dt)
+        mouse_pos = tools.scaled_mouse_pos(scale)
+        self.buttons.update(mouse_pos)
         
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
-        self.buttons.draw(surface)
+        for title in self.titles:
+            title.draw(surface)
+        if self.label:
+            self.label.draw(surface)
+        else:
+            self.buttons.draw(surface)
         
     
 class Betting(GutsState):
@@ -108,6 +170,7 @@ class Betting(GutsState):
         if self.labels:
             for label in self.labels:
                 label.draw(surface)
+        
         
     
 class Dealing(GutsState):
@@ -306,3 +369,26 @@ class ShowResults(GutsState):
         if self.labels:
             for label in self.labels:
                 label.draw(surface)
+                
+   
+class BankruptScreen(object):
+    def __init__(self):
+        self.done = False
+        screen_rect = pg.Rect((0,0), prepare.RENDER_SIZE)
+        font = prepare.FONTS["Saniretro"]
+        lines = ["You can't afford to play", "You don't have enough money",
+                    "You're a bit short on funds"]
+        self.label = Label(font, 96, choice(lines), "darkred", 
+                                  {"center": screen_rect.center},
+                                  bg=prepare.FELT_GREEN)
+        self.label.image.set_alpha(200)
+        
+    def get_event(self, event):
+        pass
+        
+    def update(self, dt, scale):
+        pass
+        
+    def draw(self, surface):
+        surface.fill(prepare.FELT_GREEN)
+        self.label.draw(surface)

@@ -5,7 +5,7 @@ from .guts_player import GutsPlayer
 from .guts_ai_player import AIPlayer
 from .guts_game import GutsGame
 from .guts_substates import Dealing, PlayerTurn, AITurn, ShowCards
-from .guts_substates import ShowResults, Betting, StartGame
+from .guts_substates import ShowResults, Betting, StartGame, BankruptScreen
 
 class Guts(tools._State):
     def __init__(self):
@@ -38,7 +38,8 @@ class Guts(tools._State):
         self.dealer_index = 2
         self.new_game()
         self.make_dynamic_labels()
-
+        self.window = None
+        
     def make_dynamic_labels(self):
         self.dynamic_labels = [
                     Label(self.font, 48, "Cash: ${}".format(self.player.cash), "gold3",
@@ -54,7 +55,7 @@ class Guts(tools._State):
         if pot:
             pass
         elif self.player.cash < self.bet_amount:
-            #TODO Add warning window
+            self.sub_state = BankruptScreen()
             return
         free_ride = True if pot else False
         pot = pot if pot else self.bet_amount * len(self.players)
@@ -96,7 +97,9 @@ class Guts(tools._State):
         for button in self.buttons:
             button.get_event(event)
         self.sub_state.get_event(event)
-
+        if self.window:
+            self.window.get_event(event)
+        
     def update(self, surface, keys, current_time, dt, scale):
         if self.sub_state.done:
             try:
