@@ -22,6 +22,7 @@ from ...components.animation import *
 import pygame.gfxdraw
 
 __all__ = [
+    'Sprite',
     'SpriteGroup',
     'MetaGroup',
     'Button',

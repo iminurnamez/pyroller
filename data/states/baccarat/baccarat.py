@@ -112,8 +112,6 @@ class Baccarat(TableGame):
         for name, area in self.betting_areas.items():
             area.hand = hands[area.name]
 
-        self.build_image_cache()
-
     def new_round(self):
         """Start new round of baccarat.
 
@@ -207,30 +205,36 @@ class Baccarat(TableGame):
         self.show_finish_round_button()
 
     def build_image_cache(self):
-        """certain surfaces/images are created here and cached
+        """certain surfaces/images are created here.
+           saves generated files to game root
+           this is just a utility function, not needed for normal play
         """
         def create_text_sprite(text):
             sprite = OutlineTextSprite(text, self.large_font)
-            sprite.kill_me_on_clear = True
             return sprite
 
-        self.image_cache = dict()
-        for text in ['Player Wins', 'Dealer Wins', 'Tie']:
-            self.image_cache[text] = create_text_sprite(text)
+        for text, filename in [('Player Wins', 'baccarat-player-wins.png'),
+                               ('Dealer Wins', 'baccarat-dealer-wins.png'),
+                               ('Tie', 'baccarat-tie.png')]:
+            image = create_text_sprite(text)
+            pg.image.save(image.image, filename)
 
     def show_winner_text(self, winner):
         """Display a label under the winning hand
         """
         if winner is None:
-            status_text = "Tie"
+            image = prepare.GFX['baccarat-tie']
             midtop = get_midpoint(self.player_hand.bounding_rect.midbottom,
                                   self.dealer_hand.bounding_rect.midbottom)
         else:
-            status_text = "Dealer" if winner is self.dealer_hand else "Player"
-            status_text += " Wins"
+            text = "dealer" if winner is self.dealer_hand else "player"
+            image = prepare.GFX['baccarat-{}-wins'.format(text)]
             midtop = winner.bounding_rect.midbottom
 
-        sprite = self.image_cache[status_text]
+        sprite = Sprite()
+        sprite.kill_me_on_clear = True
+        sprite.image = image
+        sprite.rect = image.get_rect()
         sprite.rect.midtop = midtop
         sprite.rect.y += 170
         self.hud.add(sprite)
