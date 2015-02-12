@@ -85,7 +85,10 @@ class StartGame(GutsState):
     def get_event(self, event):
         if not self.label:
             self.buttons.get_event(event)
-        
+        else:
+            if event.type == pg.MOUSEBUTTONDOWN:
+                self.label = None
+                
     def update(self, dt, scale):
         if self.label:
             self.label.image.set_alpha(self.label.alpha)
