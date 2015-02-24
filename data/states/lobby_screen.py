@@ -89,6 +89,11 @@ class LobbyScreen(tools._State):
                screen_rect.bottom-(NeonButton.height+11))
         NeonButton(pos, "Exit", self.exit_game, None,
                    buttons, bindings=[pg.K_ESCAPE])
+        rect_style = (screen_rect.left, screen_rect.top, 150, 95)
+        b = Button(rect_style, idle_image=prepare.GFX["atm_dim"],
+                         hover_image=prepare.GFX["atm_bright"], call=self.change_state,
+                         args="ATMSCREEN")
+        buttons.add(b)
         return buttons
 
     def scroll_page(self, mag):

@@ -6,6 +6,63 @@ from .. import prepare
 from . import loggable
 
 
+class BankAccount(object):
+    """
+    Represents the player's bank account.
+    A positive balance earns interest. 
+    Cash advances incur a one time borrowing fee
+    added to the advance amount.
+    """    
+    def __init__(self, player, balance=0):
+        self.player = player
+        self.balance = balance
+        self.interest_rate = .02
+        self.lending_rate = .05
+        self.interest_period = 5 * 60 * 1000 #minutes * seconds * milliseconds
+        self.last_interest_time = 0
+        self.elapsed_interest_time = 0
+        self.transactions = []
+        
+    def update(self, current):
+        diff = current - self.last_interest_time
+        if diff >= self.interest_period:
+            self.last_interest_time += self.interest_period
+            self.update_interest()
+        self.player.account_balance = self.balance
+    
+    def update_interest(self):
+        if self.balance > 0:
+            amount = self.balance * self.interest_rate
+            self.balance += amount
+            self.log_transaction("Interest Received", amount)
+        elif self.balance < 0:
+            amount = self.balance * self.lending_rate
+            self.balance += amount
+            self.log_transaction("Interest Charged", amount)
+         
+    def cash_advance(self, amount):
+        fee = amount * self.lending_rate
+        total = amount + fee
+        self.balance -= total
+        self.log_transaction("Cash Advance", -total)
+        
+    def withdrawal(self, amount):
+        self.balance -= amount
+        self.log_transaction("Withdrawal", -amount)
+        
+    def deposit(self, amount):
+        self.balance += amount
+        self.log_transaction("Deposit", amount)
+    
+    def log_transaction(self, msg, amount):
+        if not amount:
+            return
+        if len(self.transactions) > 9:
+            indx = len(self.transactions) - 9
+            self.transactions = self.transactions[indx:]
+        self.transactions.append((msg, amount))
+        
+        
 class NoGameSet(Exception):
     """There is no current game defined for the player"""
 
@@ -30,6 +87,7 @@ class CasinoPlayer(loggable.Loggable):
         self.addLogger()
         self._current_game = None
         self._stats = OrderedDict([("cash", prepare.MONEY),
+                                             ("account balance", 0),
                                              ("Blackjack", OrderedDict(
                                                     [("games played", 0),
                                                     ("hands played", 0),
@@ -80,11 +138,14 @@ class CasinoPlayer(loggable.Loggable):
 
         if stats is not None:
             self.cash = stats["cash"]
+            self.account_balance = stats["account balance"]
+            
             for game in self.game_names():
                 self.current_game = game
                 for stat_name in self.get_stat_names():
                     self.set(stat_name, stats[game].get(stat_name, self.get(stat_name)))
-
+        self.account = BankAccount(self, self.account_balance)
+       
     @property
     def stats(self):
         """Access stats directly - left here for backwards compatibility"""
@@ -110,6 +171,16 @@ class CasinoPlayer(loggable.Loggable):
         """Set the cash value"""
         self._stats['cash'] = value
 
+    @property
+    def account_balance(self):
+        """The current cash for the player"""
+        return self._stats['account balance']
+
+    @account_balance.setter
+    def account_balance(self, value):
+        """Set the cash value"""
+        self._stats['account balance'] = value
+    
     @property
     def current_game(self):
         """The current game for storing stats"""
@@ -167,7 +238,7 @@ class CasinoPlayer(loggable.Loggable):
 
     def game_names(self):
         """Return the names of all the stats"""
-        return [name for name in self._stats.keys() if name != 'cash']
+        return [name for name in self._stats.keys() if name not in ('cash', 'account balance')]
 
     def get_stat_names(self, game=None):
         """Return the names of the stats for a game"""

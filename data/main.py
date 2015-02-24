@@ -13,6 +13,7 @@ from . import prepare, tools
 from .states import title_screen, lobby_screen, stats_menu
 from .states import stats_screen, blackjack, craps, bingo, keno, video_poker
 from .states import credits_screen, snake_splash, pachinko, baccarat, guts
+from .states import atm_screen
 from .components import music_handler
 
 
@@ -35,7 +36,8 @@ def main():
                   "VIDEOPOKER"  : video_poker.VideoPoker(),
                   "PACHINKO"    : pachinko.Pachinko(),
                   "BACCARAT"    : baccarat.Baccarat(),
-                  "GUTS": guts.Guts()
+                  "GUTS": guts.Guts(),
+                  "ATMSCREEN": atm_screen.ATMScreen()
     }
     if prepare.ARGS['straight']:
         run_it.setup_states(state_dict, "TITLESCREEN")
