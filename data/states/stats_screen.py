@@ -30,7 +30,7 @@ class StatsScreen(tools._State):
     def startup(self, current_time, persistent):
         self.start_time = current_time
         self.persist = persistent
-        screen = pg.display.get_surface().get_rect()
+        screen = pg.Rect((0,0), prepare.RENDER_SIZE)
         game = self.persist["current_game_stats"]
         player_stats = self.persist["casino_player"]
         player_stats.current_game = game
@@ -38,15 +38,15 @@ class StatsScreen(tools._State):
         self.labels = []
         title = GroupLabel(self.labels, self.font, 64, game, "darkred",
                            {"midtop": (screen.centerx, screen.top + 10)})
-        left1 = screen.left + 200
-        left2 = screen.left + 500
+        left = screen.left + 450
+        right = screen.left + 950
         top = title.rect.bottom + 20
         for stat in stats:
-            label = GroupLabel(self.labels, self.font, 32, stat.title(),
-                               "gold3", {"topleft": (left1, top)})
-            label2 = GroupLabel(self.labels, self.font, 32,
+            label = GroupLabel(self.labels, self.font, 36, stat.title(),
+                               "gold3", {"topleft": (left, top)})
+            label2 = GroupLabel(self.labels, self.font, 36,
                                 "{}".format(player_stats.get(stat)), "gold3",
-                                {"topleft": (left2, top)})
+                                {"topright": (right, top)})
             top += label.rect.height + 10
 
 

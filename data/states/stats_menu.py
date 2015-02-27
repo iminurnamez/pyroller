@@ -29,22 +29,22 @@ class StatsMenu(tools._State):
         assets = cash + balance
         starting_cash = prepare.MONEY
         profit = assets - starting_cash
-        label_info = [("Cash", cash, 90),
-                            ("Account", balance, 130),
-                            ("Assets", assets, 178),
-                            ("Starting Cash", -starting_cash, 218),
-                            ("Profit", profit, 263)]
+        label_info = [("Cash", cash, 110),
+                            ("Account", balance, 150),
+                            ("Assets", assets, 198),
+                            ("Starting Cash", -starting_cash, 238),
+                            ("Profit", profit, 283)]
         left = 500
         right = 900
         for name, value, topy in label_info:
             label1 = Label(self.font, 36, name, "white",
                                   {"topleft": (left, topy)})
             color = "darkgreen" if value >= 0 else "darkred"
-            label2 = Label(self.font, 36, "${:.2f}".format(value),
+            label2 = Label(self.font, 36, "{:.2f}".format(value),
                                   color, {"topright": (right, topy)})                                           
             self.labels.extend([label1, label2])
-        self.lines = [((left, 173), (right, 173)),    
-                          ((left, 260), (right, 260))]
+        self.lines = [((left, 193), (right, 193)),    
+                          ((left, 280), (right, 280))]
                           
     def make_buttons(self, screen_rect, col=2):
         spacer_x = 20
