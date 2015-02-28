@@ -347,13 +347,7 @@ class Blackjack(tools._State):
                         self.current_player_hand.bet.add_chips(stack.chips)
                 self.moving_stacks = []
         elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_a and not self.window:
-                test_text = ("This is a test string to simulate the advice "
-                             "that a blackjack advisor would give. The string "
-                             "should be broken up into shorter lines aligned "
-                             "to the left.")
-                self.window = AdvisorWindow((700, 500), test_text)
-            elif event.key == pg.K_SPACE:
+            if event.key == pg.K_SPACE:
                 if self.bot:
                     self.bot.active = not self.bot.active
         if self.state == "Player Turn" and not self.moving_cards:

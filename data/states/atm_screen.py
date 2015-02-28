@@ -64,9 +64,13 @@ class ATMState(object):
         self.screen_rect = pg.Rect((0,0), prepare.RENDER_SIZE)
         self.message = None
         self.persist = {}
+        self.beep_sound = prepare.SFX["atm_beep"]
         
     def startup(self, persistent):
         self.persist = persistent
+        
+    def beep(self):
+        self.beep_sound.play()
         
     def get_event(self, event, scale):
         pass
@@ -102,6 +106,7 @@ class MessageScreen(ATMState):
         self.draw(surface)
         
     def back_to_menu(self, *args):
+        self.beep()
         self.next = "MAINMENU"
         self.done = True
         
@@ -120,6 +125,7 @@ class ATMMenu(ATMState):
         self.make_buttons()
         
     def set_next(self, next_state):
+        self.beep()
         self.next = next_state
         self.done = True
         
@@ -150,6 +156,7 @@ class ATMMenu(ATMState):
         self.labels.append(title)
         
     def back_to_lobby(self, *args):
+        self.beep()
         self.quit = True
         
     def get_event(self, event, scale):
@@ -197,6 +204,7 @@ class DepositScreen(ATMState):
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
         if not self.textbox.active:
+            self.beep()
             try:
                 amount = int(self.textbox.final)
             except ValueError:
@@ -249,6 +257,7 @@ class WithdrawalScreen(ATMState):
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
         if not self.textbox.active:
+            self.beep()
             try:
                 amount = int(self.textbox.final)
             except ValueError:
@@ -299,6 +308,7 @@ class AdvanceScreen(ATMState):
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
         if not self.textbox.active:
+            self.beep()
             try:
                 amount = int(self.textbox.final)
             except ValueError:
@@ -311,6 +321,7 @@ class AdvanceScreen(ATMState):
 
     def draw(self, surface):
         surface.fill(pg.Color("blue2"))
+        self.title.draw(surface)
         self.dollar_sign.draw(surface)
         self.textbox.draw(surface)
 
@@ -323,6 +334,7 @@ class AccountScreen(ATMState):
                    call=self.back_to_menu)
         
     def back_to_menu(self, *args):
+        self.beep()
         self.next = "MAINMENU"
         self.done = True
         

@@ -43,6 +43,11 @@ Source URL: http://opengameart.org/content/equipment-clicks-iii
 Artist: http://opengameart.org/users/lfa
 License: CC-0
 
+Audio File: atm_beep.ogg
+Source URL: http://opengameart.org/content/gui-sound-effects
+Artist: http://opengameart.org/users/lokif
+License: CC-0
+
 The following recordings are believed to be in the public domain, but cannot be verified as such. These files may be copyrighted.
 If you are the copyright owner of any of these recordings, please contact easinerf@gmail.com.
 
