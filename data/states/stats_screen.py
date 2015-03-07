@@ -49,7 +49,6 @@ class StatsScreen(tools._State):
                                 {"topright": (right, top)})
             top += label.rect.height + 10
 
-
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
             self.back_to_x("LOBBYSCREEN")
