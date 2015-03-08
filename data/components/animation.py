@@ -125,9 +125,29 @@ class Animation(pygame.sprite.Sprite):
     You can optionally delay the start of the animation using the
     delay keyword.
 
-    Note: if you are using pygame rects are a target, you should
-    pass 'round_values=True' to the constructor to avoid jitter
-    caused by integer truncation.
+
+    Callable Attributes
+    ===================
+
+    Target values can also be callable.  In this case, there is
+    no way to determine the initial value unless it is specified
+    in the constructor.  If no initial value is specified, it will
+    default to 0.
+
+    Like target arguments, the initial value can also refer to a
+    callable.
+
+    NOTE: Specifying an initial value will set the initial value
+          for all target names in the constructor.  This
+          limitation won't be resolved for a while.
+
+
+    Pygame Rects
+    ============
+
+    If you are using pygame rects are a target, you should pass
+    'round_values=True' to the constructor to avoid jitter caused
+    by integer truncation.
     """
     def __init__(self, **kwargs):
         super(Animation, self).__init__()
@@ -137,12 +157,59 @@ class Animation(pygame.sprite.Sprite):
         self._round_values = kwargs.get('round_values', False)
         self._duration = float(kwargs.get('duration', 1000.))
         self._transition = kwargs.get('transition', 'linear')
+        self._initial = kwargs.get('initial', None)
         if isinstance(self._transition, string_types):
             self._transition = getattr(AnimationTransition, self._transition)
         self._elapsed = 0.
-        for key in ('duration', 'transition', 'round_values', 'delay'):
+        for key in ('duration', 'transition', 'round_values', 'delay',
+                    'initial'):
             kwargs.pop(key, None)
         self.props = kwargs
+
+    def _get_value(self, target, name):
+        """Get value of name, even if it is callable
+
+        :param target: object than contains attribute
+        :param name: name of attribute to get value from
+        :return: Any
+        """
+        if self._initial is None:
+            attr = getattr(target, name)
+            if callable(attr):
+                value = attr()
+                if value is None:
+                    return 0
+            else:
+                return getattr(target, name)
+        else:
+            if callable(self._initial):
+                return self._initial()
+            else:
+                return self._initial
+
+    @staticmethod
+    def _set_value(target, name, value):
+        """Set a value on some other object
+
+        If the name references a callable type, then
+        the object of that name will be called with 'value'
+        as the first and only argument.
+
+        Because callables are 'write only', there is no way
+        to determine the initial value.  you can supply
+        an initial value in the constructor as a value or
+        reference to a callable object.
+
+        :param target: object to be modified
+        :param name: name of attribute to be modified
+        :param value: value
+        :return: None
+        """
+        attr = getattr(target, name)
+        if callable(attr):
+            attr(value)
+        else:
+            setattr(target, name, value)
 
     def update(self, dt):
         """Update the animation
@@ -166,9 +233,11 @@ class Animation(pygame.sprite.Sprite):
             for name, values in props.items():
                 a, b = values
                 value = (a * (1. - t)) + (b * t)
+
                 if self._round_values:
                     value = int(round(value, 0))
-                setattr(target, name, value)
+
+                self._set_value(target, name, value)
 
         if hasattr(self, 'update_callback'):
             self.update_callback()
@@ -187,7 +256,7 @@ class Animation(pygame.sprite.Sprite):
             for target, props in self.targets:
                 for name, values in props.items():
                     a, b = values
-                    setattr(target, name, b)
+                    self._set_value(target, name, b)
 
         if hasattr(self, 'update_callback'):
             self.update_callback()
@@ -210,7 +279,8 @@ class Animation(pygame.sprite.Sprite):
             if isinstance(target, pygame.Rect):
                 logger.debug('pass "round_values=True" when using Rects')
             for name, value in self.props.items():
-                props[name] = getattr(target, name), value
+                initial = self._get_value(target, name)
+                props[name] = initial, value
 
 
 class AnimationTransition(object):
