@@ -1,20 +1,18 @@
 import json
 import os
 import math
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from random import choice
 from itertools import chain
-from functools import partial
+
 import pygame as pg
+
 from .ui import *
-from .cards import *
 from .chips import *
 from .table import TableGame
-from ... import tools, prepare
+from ... import prepare
 from ...components.animation import Task, Animation
 from ...components.angles import get_midpoint
-from ...prepare import BROADCASTER as B
-from pygame.compat import *
 
 
 __all__ = ['Baccarat']
@@ -95,6 +93,7 @@ class Baccarat(TableGame):
         """Read baccarat configuration, rules, and table layout
         """
         from . import layout
+
         filename = os.path.join('resources', 'baccarat-rules.json')
         with open(filename) as fp:
             data = json.load(fp)
@@ -119,10 +118,16 @@ class Baccarat(TableGame):
               forcibly clears card hands in case animations bugged out
               refills the house's chip rack
         """
+
         def force_empty():
             self.player_hand.empty()
             self.dealer_hand.empty()
-            self.show_bet_confirm_button()
+
+        if self.player_chips.value <= 0:
+            message = 'You need some chips to play'
+        else:
+            message = 'Place chips into a betting area to begin'
+        self.queue_advisor_message(message, 0)
 
         self._enable_chips = True
         self.clear_background()
@@ -197,10 +202,28 @@ class Baccarat(TableGame):
             winner = None
             stats['Tie Result'] += 1
 
+        player_total = 0
         for bet in self.bets.groups():
-            self.process_bet(bet, winner)
+            earnings = self.process_bet(bet, winner)
+            if bet.owner is self.player_chips:
+                player_total += earnings
 
-        self.display_scores()
+        # show advisor message and play sound
+        if player_total > 0:
+            message = 'You have won ${}'.format(player_total)
+            sound = prepare.SFX['positive']
+        elif player_total < 0:
+            message = 'You have lost ${}'.format(abs(player_total))
+            sound = prepare.SFX['negative']
+        else:
+            message = 'You have broke even'
+            sound = prepare.SFX['positive']
+        sound.set_volume(.3)
+        sound.play()
+        self.queue_advisor_message(message, 0)
+
+        self.delay(300, self.display_scores)
+
         self.show_winner_text(winner)
         self.show_finish_round_button()
 
@@ -209,6 +232,7 @@ class Baccarat(TableGame):
            saves generated files to game root
            this is just a utility function, not needed for normal play
         """
+
         def create_text_sprite(text):
             sprite = OutlineTextSprite(text, self.large_font)
             return sprite
@@ -236,8 +260,8 @@ class Baccarat(TableGame):
         sprite.image = image
         sprite.rect = image.get_rect()
         sprite.rect.midtop = midtop
-        sprite.rect.y += 170
-        self.hud.add(sprite)
+        sprite.rect.y += 200
+        self.hud.add(sprite, layer=100)
         return sprite
 
     def process_bet(self, bet, winner):
@@ -245,16 +269,15 @@ class Baccarat(TableGame):
 
         :param bet: ChipsPile instance
         :param winner: Deck instance
-        :return: None
+        :return: Amount of earnings, or negative will be loss
         """
         player_natural = natural(self.player_hand)
         dealer_natural = natural(self.dealer_hand)
         is_player = bet.owner is self.player_chips
         stats = self.stats
 
+        winnings = bet.value
         if bet.result is winner:
-            winnings = bet.value
-
             if winner is None:   # Tie
                 winnings *= self.options['tie_payout']
 
@@ -287,6 +310,7 @@ class Baccarat(TableGame):
                     stats['Bets Won by Naturals'] += 1
 
         else:
+            winnings = -bet.value
             self.house_chips.extend(bet.sprites())
             bet.empty()
 
@@ -300,6 +324,8 @@ class Baccarat(TableGame):
                 if pn_loss or bn_loss:
                     stats['Bets Lost by Naturals'] += 1
 
+        return winnings
+
     def display_scores(self):
         """Create and add TextSprites with score under each card hand
         """
@@ -309,20 +335,21 @@ class Baccarat(TableGame):
         msg = points_message(player_result)
         text = TextSprite(msg.format(player_result), self.font)
         text.rect.midtop = self.player_hand.bounding_rect.midbottom
-        text.rect.y += 35
+        text.rect.y += 25
         text.kill_me_on_clear = True
         self.hud.add(text)
 
         msg = points_message(dealer_result)
         text = TextSprite(msg.format(dealer_result), self.font)
         text.rect.midtop = self.dealer_hand.bounding_rect.midbottom
-        text.rect.y += 35
+        text.rect.y += 25
         text.kill_me_on_clear = True
         self.hud.add(text)
 
     def clear_table(self):
         """Remove all cards from the table.  Animated.
         """
+
         def clear_card(card):
             sound = choice(self.deal_sounds)
             sound.set_volume(.6)
@@ -359,6 +386,7 @@ class Baccarat(TableGame):
         Some game rules allow this option, while others will force
         the player to draw card based on a rule.
         """
+
         def f0(sprite):
             b0.kill()
             b1.kill()
@@ -386,22 +414,26 @@ class Baccarat(TableGame):
     def show_finish_round_button(self):
         def f(sprite):
             sprite.kill()
+            self.dismiss_advisor()
             self.new_round()
 
-        text = TextSprite('Again?', self.button_font)
+        text = TextSprite('Play Again', self.button_font)
         rect = self.confirm_button_rect
         self.hud.add(Button(text, rect, f))
 
     def show_bet_confirm_button(self):
         def f(sprite):
             if len(self.bets) > 0:
+                self.dismiss_advisor()
                 self._enable_chips = False
                 sprite.kill()
                 self.deal_cards()
 
-        text = TextSprite('Confirm Bet', self.button_font)
+        text = TextSprite('Confirm Bets', self.button_font)
         rect = self.confirm_button_rect
-        self.hud.add(Button(text, rect, f))
+        sprite = Button(text, rect, f)
+        self.hide_bet_confirm_button = sprite.kill
+        self.hud.add(sprite)
 
     def render_background(self, size):
         """Render the background
@@ -409,6 +441,7 @@ class Baccarat(TableGame):
         :param size: (width, height) in pixels
         :return: pygame.surface.Surface
         """
+
         def render_text(text):
             label.text = text
             return label.draw()

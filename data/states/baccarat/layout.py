@@ -1,7 +1,9 @@
-import pygame
 import json
 import os.path
 from operator import itemgetter
+
+import pygame
+
 from .table import BettingArea
 from .cards import *
 from .chips import *
@@ -67,7 +69,7 @@ def load_layout(state, filename):
 
         text = TextSprite('', state.font)
         text.rect = get_rect(data)
-        state.hud.add(text)
+        state.hud.add(text, layer=1)
 
     def handle_imagelayer(layer):
         fn = os.path.splitext(os.path.basename(layer['image']))[0]
