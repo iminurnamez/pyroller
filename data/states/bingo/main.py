@@ -465,7 +465,7 @@ class Bingo(statemachine.StateMachine):
         if card.card_owner == bingocard.T_PLAYER:
             self.casino_player.increase('cards won' if card.card_state == bingocard.S_WON else 'cards lost')
         else:
-            self.casino_player.incease('cards won' if card.card_state == bingocard.S_LOST else 'cards lost')
+            self.casino_player.increase('cards won' if card.card_state == bingocard.S_LOST else 'cards lost')
         #
         # Find the matching card from the dealer or player and deactivate it
         other_card = self.cards[card.index] if card.card_owner == bingocard.T_DEALER else self.dealer_cards[card.index]
