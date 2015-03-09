@@ -1,7 +1,9 @@
-import pygame
 import json
 import os.path
 from operator import itemgetter
+
+import pygame
+
 from .table import BettingArea
 from .cards import *
 from .chips import *

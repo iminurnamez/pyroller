@@ -1,10 +1,12 @@
-import pygame
 from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
 from random import choice
+
+import pygame
+
 from ... import prepare, tools
-from .ui import Stacker, Sprite, make_shadow_surface
+from .ui import Stacker, Sprite
 from ...components.angles import *
 from ...components.animation import Animation
 from ...prepare import BROADCASTER as B

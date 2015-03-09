@@ -2,7 +2,9 @@ from collections import defaultdict
 from random import choice
 from itertools import chain
 from functools import partial
+
 import pygame as pg
+
 from .ui import *
 from .chips import *
 from ... import tools, prepare
@@ -125,7 +127,7 @@ class TableGame(tools._State):
         # first estimate how wide the text will be
         text_rect = pg.Rect(margins, max_size)
         width, leftover_text = draw_text(None, text, text_rect, self.font)
-        assert(leftover_text == '')
+        assert (leftover_text == '')
 
         sprite = Sprite()
         sprite.rect = pg.Rect(position,

@@ -1,20 +1,18 @@
 import json
 import os
 import math
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from random import choice
 from itertools import chain
-from functools import partial
+
 import pygame as pg
+
 from .ui import *
-from .cards import *
 from .chips import *
 from .table import TableGame
-from ... import tools, prepare
+from ... import prepare
 from ...components.animation import Task, Animation
 from ...components.angles import get_midpoint
-from ...prepare import BROADCASTER as B
-from pygame.compat import *
 
 
 __all__ = ['Baccarat']
@@ -95,6 +93,7 @@ class Baccarat(TableGame):
         """Read baccarat configuration, rules, and table layout
         """
         from . import layout
+
         filename = os.path.join('resources', 'baccarat-rules.json')
         with open(filename) as fp:
             data = json.load(fp)
@@ -119,6 +118,7 @@ class Baccarat(TableGame):
               forcibly clears card hands in case animations bugged out
               refills the house's chip rack
         """
+
         def force_empty():
             self.player_hand.empty()
             self.dealer_hand.empty()
@@ -232,6 +232,7 @@ class Baccarat(TableGame):
            saves generated files to game root
            this is just a utility function, not needed for normal play
         """
+
         def create_text_sprite(text):
             sprite = OutlineTextSprite(text, self.large_font)
             return sprite
@@ -348,6 +349,7 @@ class Baccarat(TableGame):
     def clear_table(self):
         """Remove all cards from the table.  Animated.
         """
+
         def clear_card(card):
             sound = choice(self.deal_sounds)
             sound.set_volume(.6)
@@ -384,6 +386,7 @@ class Baccarat(TableGame):
         Some game rules allow this option, while others will force
         the player to draw card based on a rule.
         """
+
         def f0(sprite):
             b0.kill()
             b1.kill()
@@ -438,6 +441,7 @@ class Baccarat(TableGame):
         :param size: (width, height) in pixels
         :return: pygame.surface.Surface
         """
+
         def render_text(text):
             label.text = text
             return label.draw()
