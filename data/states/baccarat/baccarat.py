@@ -321,7 +321,6 @@ class Baccarat(TableGame):
                     stats['Bets Won by Naturals'] += 1
 
         else:
-            winnings = -bet.value
             self.house_chips.extend(bet.sprites())
             bet.empty()
 
@@ -329,11 +328,13 @@ class Baccarat(TableGame):
                 pn_loss = bet.result is self.player_hand and dealer_natural
                 bn_loss = bet.result is self.dealer_hand and player_natural
                 record = stats['Largest Loss']
-                stats['Largest Loss'] = max(record, bet.value)
+                stats['Largest Loss'] = max(record, winnings)
                 stats['Bets Lost'] += 1
-                stats['Earned'] -= bet.value
+                stats['Earned'] -= winnings
                 if pn_loss or bn_loss:
                     stats['Bets Lost by Naturals'] += 1
+
+            winnings = -winnings
 
         return winnings
 

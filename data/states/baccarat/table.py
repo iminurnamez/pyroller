@@ -151,12 +151,16 @@ class TableGame(tools._State):
         sound.play()
 
         if autodismiss:
-            self.delay(autodismiss, self.dismiss_advisor)
+            self.delay(autodismiss, self.dismiss_advisor, args=(sprite, ))
 
-    def dismiss_advisor(self):
+    def dismiss_advisor(self, target=None):
         sprite = self._current_advice
         if sprite is None:
             return
+
+        if target is not None:
+            if target is not self._current_advice:
+                return
 
         remove_animations_of(self.animations, sprite.rect)
         ani = Animation(y=-sprite.rect.height, round_values=True,
@@ -355,10 +359,22 @@ class TableGame(tools._State):
                 # TODO: should not be hardcoded
                 bet.rect.x -= 32
                 self.clear_background()
+
+                if bet.result is None:
+                    payout = self.options['tie_payout']
+                    msg = 'Ties pay {} to 1'.format(payout)
+                    self.queue_advisor_message(msg, 3000)
+
+                if bet.result is self.dealer_hand:
+                    com = int(self.options['commission'] * 100)
+                    msg = 'There is a {}% commission on dealer bets'.format(com)
+                    self.queue_advisor_message(msg, 3000)
+
                 if needs_advice:
                     # TODO: remove from baseclass
                     self.show_bet_confirm_button()
                     self.queue_advisor_message('Click "Confirm Bets" to play')
+
                 return True, bet
 
         # place chips in the house chips

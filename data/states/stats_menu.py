@@ -16,7 +16,7 @@ class StatsMenu(tools._State):
         self.title = Label(self.font, 64, "Statistics", "darkred",
                           {"midtop":(screen_rect.centerx, screen_rect.top+10)})
         self.games = ["Blackjack", "Bingo", "Craps", "Keno", "Video Poker",
-                      "Pachinko", "Guts"]
+                      "Pachinko", "Guts", "Baccarat"]
         self.buttons = self.make_buttons(screen_rect, 3)
         self.labels = []
         self.lines = []
@@ -41,11 +41,11 @@ class StatsMenu(tools._State):
                                   {"topleft": (left, topy)})
             color = "darkgreen" if value >= 0 else "darkred"
             label2 = Label(self.font, 36, "{:.2f}".format(value),
-                                  color, {"topright": (right, topy)})                                           
+                                  color, {"topright": (right, topy)})
             self.labels.extend([label1, label2])
-        self.lines = [((left, 193), (right, 193)),    
+        self.lines = [((left, 193), (right, 193)),
                           ((left, 280), (right, 280))]
-                          
+
     def make_buttons(self, screen_rect, col=2):
         spacer_x = 20
         spacer_y = 20
