@@ -75,7 +75,8 @@ def _get_neon_buttons(gfx):
                "general"  : ["Credits", "Exit", "Stats", "Lobby", "New",
                              "Load", "Back", "OK", "Cancel"],
                "specific" : ["Again", "Deal", "Hit", "Stand", "Split",
-                             "Double", "Roll", "Ride", "Change"]}
+                             "Double", "Roll", "Ride", "Change",
+                             "Tutorial", "Stay", "Pass", "Ante Up"]}
     for category in b_texts:
         sheet = gfx["neon_button_{}".format(category)]
         for i,text in enumerate(b_texts[category]):
