@@ -323,7 +323,6 @@ class TableGame(tools._State):
                 area.ignore_until_away = True
                 self.clear_background()
 
-                print len(self.bets.groups())
                 if not self.bets.groups():
                     self.hide_bet_confirm_button()
 
