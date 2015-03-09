@@ -71,6 +71,7 @@ class TableGame(tools._State):
         self._grabbed_stack = False
         self._current_advice = None
         self._stack_motion_advice = None
+        self._advisor_stack = list()
 
         # prepare dialog box for the advisor
         self._dialog_box = GraphicBox(
@@ -85,6 +86,8 @@ class TableGame(tools._State):
         self.metagroup = MetaGroup()
         self.metagroup.add(self.bets, self.hud)
         self.animations = pg.sprite.Group()
+
+        self.queue_advisor_message('Welcome to Baccarat', 3000)
 
         self.hud.add(NeonButton('lobby', (540, 938, 0, 0), self.goto_lobby))
 
@@ -105,9 +108,13 @@ class TableGame(tools._State):
         self.cash_in()
         self.new_round()
 
-        self.create_advisor_dialog('Welcome to Baccarat', 4500)
+    def queue_advisor_message(self, text, autodismiss=2000):
+        if self._current_advice is None:
+            self.create_advisor_message(text, autodismiss)
+        else:
+            self._advisor_stack.append((text, autodismiss))
 
-    def create_advisor_dialog(self, text, autodismiss=2000):
+    def create_advisor_message(self, text, autodismiss=2000):
         fg_color = 0, 0, 0
         bg_color = 255, 255, 255
         padding = 10, 0
@@ -152,6 +159,9 @@ class TableGame(tools._State):
         self.animations.add(ani)
 
         self._current_advice = None
+
+        if self._advisor_stack:
+            self.create_advisor_message(*self._advisor_stack.pop(0))
 
     def reload_config(self):
         raise NotImplementedError
@@ -221,7 +231,7 @@ class TableGame(tools._State):
 
         # do advice if not already shown
         elif self._current_advice is None:
-            self.create_advisor_dialog('Click to grab chips', 0)
+            self.queue_advisor_message('Click to grab chips', 0)
             self._stack_motion_advice = self._current_advice
 
         # quit if we have not grabbed a stack yet
@@ -341,7 +351,7 @@ class TableGame(tools._State):
                 if needs_advice:
                     # TODO: remove from baseclass
                     self.show_bet_confirm_button()
-                    self.create_advisor_dialog('Click "Confirm Bets" to play')
+                    self.queue_advisor_message('Click "Confirm Bets" to play')
                 return True, bet
 
         # place chips in the house chips
@@ -449,7 +459,7 @@ class TableGame(tools._State):
 
         :param result: Deck or None
         :param owner: ChipsPile instance
-        :param amount: amount to wager in cash (not chips)
+        :param chips: Chips to wager with
         :return: ChipsPile instance
         """
         choice(self.chip_sounds).play()

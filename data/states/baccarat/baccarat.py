@@ -123,7 +123,9 @@ class Baccarat(TableGame):
             self.player_hand.empty()
             self.dealer_hand.empty()
 
-        self.dismiss_advisor()
+        if self.player_chips.value <= 0:
+            self.queue_advisor_message('You need some chips to play', 0)
+
         self._enable_chips = True
         self.clear_background()
         self.bets.empty()
@@ -210,7 +212,7 @@ class Baccarat(TableGame):
             message = 'You have lost ${}'.format(abs(player_total))
         else:
             message = 'You have broke even'
-        self.create_advisor_dialog(message, 0)
+        self.queue_advisor_message(message, 0)
 
         # move cards down
         for card in chain(self.player_hand, self.dealer_hand):
@@ -408,6 +410,7 @@ class Baccarat(TableGame):
     def show_finish_round_button(self):
         def f(sprite):
             sprite.kill()
+            self.dismiss_advisor()
             self.new_round()
 
         text = TextSprite('Play Again', self.button_font)
