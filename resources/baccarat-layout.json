@@ -129,7 +129,7 @@
                  "y":784
                 }, 
                 {
-                 "height":128,
+                 "height":112,
                  "name":"confirm_button",
                  "properties":
                     {
@@ -138,9 +138,9 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":240,
-                 "x":592,
-                 "y":160
+                 "width":288,
+                 "x":96,
+                 "y":928
                 }, 
                 {
                  "height":64,

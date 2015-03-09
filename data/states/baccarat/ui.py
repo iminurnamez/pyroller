@@ -35,7 +35,8 @@ __all__ = [
 def remove_animations_of(group, target):
     """Find animations that target sprites and remove them
     """
-    to_remove = [ani for ani in group.sprites() if target in ani.targets]
+    animations = [ani for ani in group.sprites() if isinstance(ani, Animation)]
+    to_remove = [ani for ani in animations if target in ani.targets]
     group.remove(*to_remove)
 
 
