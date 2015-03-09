@@ -16,8 +16,8 @@ class GraphicBox(object):
     """
     def __init__(self, image, hollow=False):
         iw, ih = image.get_size()
-        self.tw = iw // 3
-        self.th = ih // 3
+        self.tw = int(iw / 3)
+        self.th = int(ih / 3)
         self.hollow = hollow
 
         tiles = [image.subsurface((x, y, self.tw, self.th))
@@ -42,12 +42,11 @@ class GraphicBox(object):
         th = self.th
 
         if not self.hollow:
-            p = product(
-                range(int(tw + ox), int(w - tw + ox), int(tw)),
-                range(int(th + oy), int(h - th + oy), int(th)))
+            p = product(range(tw + ox, w - tw + ox, tw),
+                        range(th + oy, h - th + oy, th))
             [surface_blit(tiles['c'], (x, y)) for x, y in p]
 
-        for x in range(int(tw + ox), int(w - tw + ox), int(tw)):
+        for x in range(tw + ox, w - tw + ox, tw):
             surface_blit(tiles['n'], (x, oy))
             surface_blit(tiles['s'], (x, h - th + oy))
 

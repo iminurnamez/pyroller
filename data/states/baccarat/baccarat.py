@@ -15,7 +15,7 @@ from ...components.animation import Task, Animation
 from ...components.angles import get_midpoint
 
 
-__all__ = ['Baccarat']
+__all__ = ('Baccarat', )
 
 font_size = 64
 
@@ -136,6 +136,15 @@ class Baccarat(TableGame):
         self.clear_table()
         self.delay(500, force_empty)
 
+    def goto_lobby(self, *args):
+        if not self._allow_exit:
+            msg = 'Please wait until the round is over'
+            queue = [i[0] for i in self._advisor_stack]
+            if msg not in queue:
+                self.queue_advisor_message(msg)
+        else:
+            self.do_quit()
+
     def deal_cards(self):
         self.stats['Hands Dealt'] += 1
         self.delay(0, self.deal_card, (self.player_hand,))
@@ -227,6 +236,8 @@ class Baccarat(TableGame):
         self.show_winner_text(winner)
         self.show_finish_round_button()
 
+        self._allow_exit = True
+
     def build_image_cache(self):
         """certain surfaces/images are created here.
            saves generated files to game root
@@ -260,7 +271,7 @@ class Baccarat(TableGame):
         sprite.image = image
         sprite.rect = image.get_rect()
         sprite.rect.midtop = midtop
-        sprite.rect.y += 200
+        sprite.rect.y += 120
         self.hud.add(sprite, layer=100)
         return sprite
 
@@ -310,7 +321,6 @@ class Baccarat(TableGame):
                     stats['Bets Won by Naturals'] += 1
 
         else:
-            winnings = -bet.value
             self.house_chips.extend(bet.sprites())
             bet.empty()
 
@@ -318,11 +328,13 @@ class Baccarat(TableGame):
                 pn_loss = bet.result is self.player_hand and dealer_natural
                 bn_loss = bet.result is self.dealer_hand and player_natural
                 record = stats['Largest Loss']
-                stats['Largest Loss'] = max(record, bet.value)
+                stats['Largest Loss'] = max(record, winnings)
                 stats['Bets Lost'] += 1
-                stats['Earned'] -= bet.value
+                stats['Earned'] -= winnings
                 if pn_loss or bn_loss:
                     stats['Bets Lost by Naturals'] += 1
+
+            winnings = -winnings
 
         return winnings
 
@@ -425,6 +437,7 @@ class Baccarat(TableGame):
         def f(sprite):
             if len(self.bets) > 0:
                 self.dismiss_advisor()
+                self._allow_exit = False
                 self._enable_chips = False
                 sprite.kill()
                 self.deal_cards()

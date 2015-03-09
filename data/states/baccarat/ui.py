@@ -18,13 +18,11 @@ display updates.
 """
 from itertools import product, groupby
 
-import pygame.gfxdraw
-
 from ... import prepare
 from ...components.animation import *
 
 
-__all__ = [
+__all__ = (
     'Sprite',
     'SpriteGroup',
     'MetaGroup',
@@ -32,7 +30,7 @@ __all__ = [
     'NeonButton',
     'TextSprite',
     'OutlineTextSprite',
-    'remove_animations_of']
+    'remove_animations_of')
 
 
 def remove_animations_of(group, target):
