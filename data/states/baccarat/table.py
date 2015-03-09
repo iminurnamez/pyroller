@@ -64,6 +64,7 @@ class TableGame(tools._State):
         names = ["chipsstack{}".format(x) for x in (3, 5, 6)]
         self.chip_sounds = [prepare.SFX[name] for name in names]
 
+        self._allow_exit = True
         self._highlight_areas = False
         self._mouse_tooltip = None
         self._enable_chips = False
@@ -119,8 +120,7 @@ class TableGame(tools._State):
     def create_advisor_message(self, text, autodismiss=2000):
         fg_color = 0, 0, 0
         bg_color = 255, 255, 255
-        padding = 10, 0
-        margins = 10, 55
+        margins = 25, 55
         max_size = 900, 150
         position = 10, 55
 
@@ -131,7 +131,7 @@ class TableGame(tools._State):
 
         sprite = Sprite()
         sprite.rect = pg.Rect(position,
-                              (width + margins[0] + padding[0], max_size[1]))
+                              (width + margins[0] * 2, max_size[1]))
 
         sprite.image = pg.Surface(sprite.rect.size, pg.SRCALPHA)
         self._dialog_box.draw(sprite.image)
@@ -158,6 +158,7 @@ class TableGame(tools._State):
         if sprite is None:
             return
 
+        remove_animations_of(self.animations, sprite.rect)
         ani = Animation(y=-sprite.rect.height, round_values=True,
                         duration=500, transition='out_quint')
         ani.callback = sprite.kill
@@ -477,9 +478,17 @@ class TableGame(tools._State):
         return bet
 
     def goto_lobby(self, *args):
-        """Force game to exit to the lobby
+        """Try to exit to the lobby
 
-        Player will be automatically cashed out
+        Player will be automatically cashed out if ok
+        """
+        if self._allow_exit:
+            self.quit()
+
+    def do_quit(self, *args):
+        """Try to exit to the lobby
+
+        Player will be automatically cashed out if ok
         """
         self.cash_out()
         self.done = True

@@ -150,16 +150,16 @@ class ChipPile(Stacker):
     def __init__(self, rect, value=0, **kwargs):
         super(ChipPile, self).__init__(rect, **kwargs)
         self.stacking = 80, -10
+        self.ignore_until_away = True
+        self.arrange_function = self.animate_pop
         self._clicked_sprite = None
         self._followed_sprite = None
         self._popped_chips = list()
         self._initial_snap = None
         self._desired_pos = None
         self._selected_stack = False
-        self.ignore_until_away = True
         self._grabbed = False
         self._running_animations = dict()
-        self.arrange_function = self.animate_pop
         if value:
             self.add(*cash_to_chips(value))
 
