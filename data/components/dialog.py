@@ -16,8 +16,8 @@ class GraphicBox(object):
     """
     def __init__(self, image, hollow=False):
         iw, ih = image.get_size()
-        self.tw = iw / 3
-        self.th = ih / 3
+        self.tw = iw // 3
+        self.th = ih // 3
         self.hollow = hollow
 
         tiles = [image.subsurface((x, y, self.tw, self.th))
