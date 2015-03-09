@@ -12,10 +12,10 @@ class GutsState(object):
         self.game = game
         self.players = game.players
         self.timer = 0.0
-        
+
     def startup(self):
         pass
-        
+
     def update(self, game):
         pass
 
@@ -24,33 +24,34 @@ class GutsState(object):
 
     def draw(self, surface):
         pass
-        
-        
+
+
 class StartGame(GutsState):
     def __init__(self, game):
         super(StartGame, self).__init__(game)
         self.font = prepare.FONTS["Saniretro"]
         screen_rect = pg.Rect((0,0), prepare.RENDER_SIZE)
-        title = Label(self.font, 128, "Two-Card Guts", "gold3", 
+        title = Label(self.font, 128, "Two-Card Guts", "gold3",
                           {"midtop": (screen_rect.centerx, 5)},
                           bg=prepare.FELT_GREEN)
         title.image.set_alpha(160)
-        title2 = Label(self.font, 96, "${} Ante".format(self.game.bet), "darkred", 
+        title2 = Label(self.font, 96, "${} Ante".format(self.game.bet), "darkred",
                             {"midtop": (screen_rect.centerx, title.rect.bottom)},
-                            bg=prepare.FELT_GREEN)  
+                            bg=prepare.FELT_GREEN)
         title2.image.set_alpha(140)
-        self.titles = [title, title2] 
+        self.titles = [title, title2]
         self.buttons = ButtonGroup()
         w, h = NeonButton.width, NeonButton.height
         pos = screen_rect.centerx - (w//2), screen_rect.centery - (h//2)
-        NeonButton(pos, "Again", self.start_game, None, self.buttons) #shoulde be "Ante Up", not "Play Again"
+        NeonButton(pos, "Ante Up", self.start_game, None, self.buttons)
         pos2 = screen_rect.centerx - (w//2), screen_rect.centery + (h//2) + 50
-        self.tutorial_button = NeonButton(pos2, "Credits", self.make_labels, None, self.buttons) #should be "Tutorial"
+        self.tutorial_button = NeonButton(pos2, "Tutorial", self.make_labels,
+                                          None, self.buttons)
         self.screen_rect = screen_rect
         self.labels = []
         self.label = None
         self.animations = pg.sprite.Group()
-        
+
     def make_labels(self, *args):
         rules = [
                 "Players place their ante in the pot",
@@ -67,7 +68,7 @@ class StartGame(GutsState):
                 ]
         labels = []
         for rule in rules:
-            label = MultiLineLabel(self.font, 72, rule, "gold3", 
+            label = MultiLineLabel(self.font, 72, rule, "gold3",
                                               {"center": self.screen_rect.center},
                                               bg=prepare.FELT_GREEN, align="center",
                                               char_limit=28)
@@ -78,7 +79,7 @@ class StartGame(GutsState):
         ani = Animation(alpha=0, delay=2000, duration=3500, round_values=True)
         ani.start(self.label)
         self.animations.add(ani)
-        
+
     def start_game(self, *args):
         self.done = True
 
@@ -88,7 +89,7 @@ class StartGame(GutsState):
         else:
             if event.type == pg.MOUSEBUTTONDOWN:
                 self.label = None
-                
+
     def update(self, dt, scale):
         if self.label:
             self.label.image.set_alpha(self.label.alpha)
@@ -103,7 +104,7 @@ class StartGame(GutsState):
         self.animations.update(dt)
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
-        
+
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
         for title in self.titles:
@@ -112,8 +113,8 @@ class StartGame(GutsState):
             self.label.draw(surface)
         else:
             self.buttons.draw(surface)
-        
-    
+
+
 class Betting(GutsState):
     def __init__(self, game):
         super(Betting, self).__init__(game)
@@ -128,7 +129,7 @@ class Betting(GutsState):
             label.image.set_colorkey(prepare.FELT_GREEN)
             self.labels.append(label)
             left, top = label.rect.topleft
-            ani = Animation(x=left, y=top-500, duration=2000, round_values=True)           
+            ani = Animation(x=left, y=top-500, duration=2000, round_values=True)
             fade = Animation(alpha=0, duration=2000, round_values=True)
             fade.start(self)
             ani.start(label.rect)
@@ -141,30 +142,30 @@ class Betting(GutsState):
                 label.image.set_colorkey(prepare.FELT_GREEN)
                 left, top = label.rect.topleft
                 self.labels.append(label)
-                ani = Animation(x=left, y=top-300, duration=1500, round_values=True)           
+                ani = Animation(x=left, y=top-300, duration=1500, round_values=True)
                 fade = Animation(alpha=0, duration=1500, round_values=True)
                 fade.start(self)
                 ani.start(label.rect)
                 self.animations.add(ani, fade)
-        
+
     def startup(self):
         if not self.game.free_ride:
             self.game.player.cash -= self.game.bet
             self.game.casino_player.increase("games played")
             self.game.casino_player.increase("total bets", self.game.bet)
-        self.game.casino_player.increase("hands played")    
-            
+        self.game.casino_player.increase("hands played")
+
     def get_event(self, event):
         pass
-        
+
     def update(self, dt, scale):
         self.timer += dt
         self.animations.update(dt)
-        if not self.animations:        
+        if not self.animations:
             self.done = True
         for label in self.labels:
             label.image.set_alpha(self.alpha)
-            
+
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
         self.game.draw(surface)
@@ -173,28 +174,28 @@ class Betting(GutsState):
         if self.labels:
             for label in self.labels:
                 label.draw(surface)
-        
-        
-    
+
+
+
 class Dealing(GutsState):
     def __init__(self, game):
         super(Dealing, self).__init__(game)
         self.make_dealing_animations()
         self.deal_sounds = [prepare.SFX["cardshove{}".format(x)] for x in (1,3,4)]
         self.flip_sounds = [prepare.SFX["cardplace{}".format(x)] for x in (2,3,4)]
-    
-    def make_dealing_animations(self):    
+
+    def make_dealing_animations(self):
         self.animations = pg.sprite.Group()
         delay_time = 100
         for player in self.game.deal_queue:
             toggle = 0
             for slot in player.card_slots:
                 card = player.draw_from_deck(self.game.deck)
-                fx, fy = slot.topleft          
+                fx, fy = slot.topleft
                 ani = Animation(x=fx, y=fy, duration=400,
                                         delay=delay_time, transition="in_out_quint",
                                         round_values=True)
-                
+
                 if toggle > 0:
                     if player is self.game.player:
                         ani.callback = player.flip_cards
@@ -211,10 +212,10 @@ class Dealing(GutsState):
 
     def play_deal_sound(self):
         choice(self.deal_sounds).play()
-        
+
     def play_flip_sound(self):
         choice(self.flip_sounds).play()
-        
+
     def update(self, dt, scale):
         self.animations.update(dt)
         if not self.animations:
@@ -234,64 +235,64 @@ class PlayerTurn(GutsState):
         self.player = player
         x,y = screen_rect.centerx -120, 620
         self.buttons = ButtonGroup()
-        NeonButton((x, y - 55), "Hit", self.stay, None, self.buttons) #"Stay"
-        NeonButton((x, y + 55), "Stand", self.stay_out, None, self.buttons) #"Pass"
-                
+        NeonButton((x, y - 55), "Stay", self.stay, None, self.buttons) #"Stay"
+        NeonButton((x, y + 55), "Pass", self.stay_out, None, self.buttons) #"Pass"
+
     def stay(self, *args):
         self.player.stay()
         self.done = True
         self.game.casino_player.increase("stays")
-        
+
     def stay_out(self, *args):
         self.player.stay_out()
         self.done = True
         self.game.casino_player.increase("passes")
-        
-    def update(self, dt, scale):            
+
+    def update(self, dt, scale):
         if self.player is self.game.dealer:
             stays = [x for x in self.game.players if x.stayed]
             if not stays:
                 self.stay()
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
-        
-        
+
+
     def draw(self, surface):
         self.game.draw(surface)
         self.buttons.draw(surface)
-        
+
     def get_event(self, event):
         self.buttons.get_event(event)
 
-            
+
 class AITurn(GutsState):
     def __init__(self, game, player):
         super(AITurn, self).__init__(game)
         self.timer = 0.0
         self.player = player
-        
+
     def update(self, dt, scale):
         self.timer += dt
         if self.timer > 500:
             self.player.play_hand(self.game)
             self.done = True
-            
+
     def get_event(self, event):
         pass
-        
+
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
         for player in self.game.players:
             player.draw(surface)
         self.game.draw(surface)
-    
-    
+
+
 class ShowCards(GutsState):
     def __init__(self, game):
         super(ShowCards, self).__init__(game)
-        
+
         self.timer = 0.0
-        
+
     def update(self, dt, scale):
         if self.timer == 0:
             for p in self.game.players:
@@ -301,14 +302,14 @@ class ShowCards(GutsState):
         if self.timer > 3000:
           self.done = True
         self.timer += dt
-        
+
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
         self.game.draw(surface)
         for player in self.game.players:
             player.draw(surface)
-            
-    
+
+
 class ShowResults(GutsState):
     def __init__(self, game):
         super(ShowResults, self).__init__(game)
@@ -320,15 +321,15 @@ class ShowResults(GutsState):
         self.labels = []
         self.calculated = False
         self.animations = pg.sprite.Group()
-        
+
     def fade_labels(self):
         self.alpha = max(0, self.alpha - 1)
         for label in self.labels:
             label.image.set_alpha(self.alpha)
-        
+
 
     def update(self, dt, scale):
-        self.timer += dt 
+        self.timer += dt
         self.animations.update(dt)
         if self.timer > 500 and not self.calculated:
             self.calculated = True
@@ -345,7 +346,7 @@ class ShowResults(GutsState):
                 else:
                     text = "+${}".format(share)
                     color = "darkgreen"
-                    stayer.won = share                    
+                    stayer.won = share
                 label = Label(self.font, 96, text, color,
                         {"center": pos}, bg=prepare.FELT_GREEN)
                 label.image.set_colorkey(prepare.FELT_GREEN)
@@ -355,7 +356,7 @@ class ShowResults(GutsState):
                                             round_values=True)
                 move.start(label.rect)
                 self.animations.add(move)
-                        
+
         if self.labels:
             self.fade_timer += dt
             while self.fade_timer >= self.fade_freq:
@@ -372,8 +373,8 @@ class ShowResults(GutsState):
         if self.labels:
             for label in self.labels:
                 label.draw(surface)
-                
-   
+
+
 class BankruptScreen(object):
     def __init__(self):
         self.done = False
@@ -381,17 +382,17 @@ class BankruptScreen(object):
         font = prepare.FONTS["Saniretro"]
         lines = ["You can't afford to play", "You don't have enough money",
                     "You're a bit short on funds"]
-        self.label = Label(font, 96, choice(lines), "darkred", 
+        self.label = Label(font, 96, choice(lines), "darkred",
                                   {"center": screen_rect.center},
                                   bg=prepare.FELT_GREEN)
         self.label.image.set_alpha(200)
-        
+
     def get_event(self, event):
         pass
-        
+
     def update(self, dt, scale):
         pass
-        
+
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
         self.label.draw(surface)
