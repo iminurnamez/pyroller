@@ -119,7 +119,7 @@ class TableGame(tools._State):
         bg_color = 255, 255, 255
         padding = 10, 0
         margins = 10, 55
-        max_size = 700, 150
+        max_size = 900, 150
         position = 10, 55
 
         # first estimate how wide the text will be
@@ -143,6 +143,10 @@ class TableGame(tools._State):
                         duration=500, transition='out_quint')
         ani.start(sprite.rect)
         self.animations.add(ani)
+
+        sound = prepare.SFX['misc_menu_4']
+        sound.set_volume(.2)
+        sound.play()
 
         if autodismiss:
             self.delay(autodismiss, self.dismiss_advisor)

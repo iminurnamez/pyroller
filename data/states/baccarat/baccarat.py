@@ -124,7 +124,10 @@ class Baccarat(TableGame):
             self.dealer_hand.empty()
 
         if self.player_chips.value <= 0:
-            self.queue_advisor_message('You need some chips to play', 0)
+            message = 'You need some chips to play'
+        else:
+            message = 'Place chips into a betting area to begin'
+        self.queue_advisor_message(message, 0)
 
         self._enable_chips = True
         self.clear_background()
@@ -205,21 +208,19 @@ class Baccarat(TableGame):
             if bet.owner is self.player_chips:
                 player_total += earnings
 
-        # show advisor message
+        # show advisor message and play sound
         if player_total > 0:
             message = 'You have won ${}'.format(player_total)
+            sound = prepare.SFX['positive']
         elif player_total < 0:
             message = 'You have lost ${}'.format(abs(player_total))
+            sound = prepare.SFX['negative']
         else:
             message = 'You have broke even'
+            sound = prepare.SFX['positive']
+        sound.set_volume(.3)
+        sound.play()
         self.queue_advisor_message(message, 0)
-
-        # move cards down
-        for card in chain(self.player_hand, self.dealer_hand):
-            ani = Animation(y=250, duration=300,
-                            round_values=True, transition='out_quint')
-            ani.start(card.rect)
-            self.animations.add(ani)
 
         self.delay(300, self.display_scores)
 
