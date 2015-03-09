@@ -12,14 +12,14 @@ from ...components.animation import Animation
 from ...prepare import BROADCASTER as B
 
 
-__all__ = [
+__all__ = (
     'denominations',
     'make_change',
     'cash_to_chips',
     'chips_to_cash',
     'Chip',
     'ChipPile',
-    'ChipRack']
+    'ChipRack')
 
 denominations = [100, 25, 10, 5, 1]
 

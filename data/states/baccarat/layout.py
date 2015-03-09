@@ -10,6 +10,9 @@ from .chips import *
 from .ui import *
 
 
+__all__ = ('load_layout', )
+
+
 def get_rect(data):
     return pygame.Rect(*itemgetter('x', 'y', 'width', 'height')(data))
 

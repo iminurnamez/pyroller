@@ -15,7 +15,7 @@ from ...components.animation import Task, Animation
 from ...components.angles import get_midpoint
 
 
-__all__ = ['Baccarat']
+__all__ = ('Baccarat', )
 
 font_size = 64
 

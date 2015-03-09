@@ -13,9 +13,7 @@ from ...components.animation import Task, Animation
 from ...prepare import BROADCASTER as B
 
 
-__all__ = [
-    'BettingArea',
-    'TableGame']
+__all__ = ('BettingArea', 'TableGame')
 
 font_size = 64
 

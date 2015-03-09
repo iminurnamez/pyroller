@@ -10,9 +10,7 @@ from ... import prepare
 from ...components.animation import Animation
 
 
-__all__ = [
-    'Card',
-    'Deck']
+__all__ = ('Card', 'Deck')
 
 two_pi = pi * 2
 
