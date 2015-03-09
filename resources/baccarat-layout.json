@@ -18,13 +18,13 @@
          "objects":[
                 {
                  "height":224,
-                 "name":"",
+                 "name":"player_bet",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"player_bet",
+                 "type":"",
                  "visible":true,
                  "width":512,
                  "x":448,
@@ -32,13 +32,13 @@
                 }, 
                 {
                  "height":160,
-                 "name":"",
+                 "name":"dealer_bet",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"dealer_bet",
+                 "type":"",
                  "visible":true,
                  "width":512,
                  "x":448,
@@ -46,13 +46,13 @@
                 }, 
                 {
                  "height":128,
-                 "name":"",
+                 "name":"tie_bet",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"tie_bet",
+                 "type":"",
                  "visible":true,
                  "width":512,
                  "x":448,
@@ -60,13 +60,13 @@
                 }, 
                 {
                  "height":208,
-                 "name":"",
+                 "name":"player_hand",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"player_hand",
+                 "type":"",
                  "visible":true,
                  "width":400,
                  "x":176,
@@ -74,13 +74,13 @@
                 }, 
                 {
                  "height":208,
-                 "name":"",
+                 "name":"dealer_hand",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"dealer_hand",
+                 "type":"",
                  "visible":true,
                  "width":400,
                  "x":848,
@@ -88,13 +88,13 @@
                 }, 
                 {
                  "height":368,
-                 "name":"",
+                 "name":"player_chips",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"player_chips",
+                 "type":"",
                  "visible":true,
                  "width":400,
                  "x":32,
@@ -102,13 +102,13 @@
                 }, 
                 {
                  "height":144,
-                 "name":"",
+                 "name":"shoe",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"shoe",
+                 "type":"",
                  "visible":true,
                  "width":96,
                  "x":624,
@@ -116,13 +116,13 @@
                 }, 
                 {
                  "height":224,
-                 "name":"",
+                 "name":"house_chips",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"house_chips",
+                 "type":"",
                  "visible":true,
                  "width":304,
                  "x":1072,
@@ -130,17 +130,31 @@
                 }, 
                 {
                  "height":128,
-                 "name":"",
+                 "name":"confirm_button",
                  "properties":
                     {
 
                     },
                  "rotation":0,
-                 "type":"confirm_button",
+                 "type":"",
                  "visible":true,
                  "width":240,
                  "x":592,
                  "y":160
+                }, 
+                {
+                 "height":64,
+                 "name":"money_display",
+                 "properties":
+                    {
+
+                    },
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":240,
+                 "x":592,
+                 "y":0
                 }],
          "opacity":1,
          "type":"objectgroup",

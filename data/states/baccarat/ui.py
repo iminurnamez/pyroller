@@ -28,7 +28,15 @@ __all__ = [
     'Button',
     'NeonButton',
     'TextSprite',
-    'OutlineTextSprite']
+    'OutlineTextSprite',
+    'remove_animations_of']
+
+
+def remove_animations_of(group, target):
+    """Find animations that target sprites and remove them
+    """
+    to_remove = [ani for ani in group.sprites() if target in ani.targets]
+    group.remove(*to_remove)
 
 
 def reduce_rect_list(rect, others):
