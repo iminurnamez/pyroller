@@ -25,6 +25,7 @@ from ...components.animation import *
 __all__ = (
     'Sprite',
     'SpriteGroup',
+    'Stacker',
     'MetaGroup',
     'Button',
     'NeonButton',
@@ -38,6 +39,8 @@ def remove_animations_of(group, target):
     """
     animations = [ani for ani in group.sprites() if isinstance(ani, Animation)]
     to_remove = [ani for ani in animations if target in ani.targets]
+    for ani in to_remove:
+        ani.kill()
     group.remove(*to_remove)
 
 

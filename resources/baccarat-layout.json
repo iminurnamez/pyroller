@@ -87,7 +87,7 @@
                  "y":224
                 }, 
                 {
-                 "height":512,
+                 "height":640,
                  "name":"player_chips",
                  "properties":
                     {
@@ -98,7 +98,7 @@
                  "visible":true,
                  "width":400,
                  "x":32,
-                 "y":400
+                 "y":272
                 }, 
                 {
                  "height":144,
