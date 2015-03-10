@@ -85,7 +85,7 @@ class TableGame(tools._State):
         self.hud = SpriteGroup()
         self.bets = MetaGroup()
         self.metagroup = MetaGroup()
-        self.metagroup.add(self.bets, self.hud)
+        self.metagroup.add(self.bets)
         self.animations = pg.sprite.Group()
 
         self.queue_advisor_message('Welcome to Baccarat', 3000)
@@ -103,6 +103,8 @@ class TableGame(tools._State):
         self.hud.add(spr, layer=-100)
 
         self.remove_animations = partial(remove_animations_of, self.animations)
+
+        self.metagroup.add(self.hud)
 
         self.reload_config()
         self.link_events()

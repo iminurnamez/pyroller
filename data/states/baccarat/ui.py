@@ -236,9 +236,14 @@ class MetaGroup(object):
             group.empty()
         self._groups = list()
 
-    def add(self, *groups):
-        for group in groups:
-            self._groups.append(group)
+    def add(self, *groups, **kwargs):
+        index = kwargs.get('index', None)
+        if index is None:
+            for group in groups:
+                self._groups.append(group)
+        else:
+            for group in groups:
+                self._groups.insert(index, group)
 
     def remove(self, *groups):
         for group in groups:
