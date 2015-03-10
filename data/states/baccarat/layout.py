@@ -53,12 +53,12 @@ def load_layout(state, filename):
         chips = ChipPile(get_rect(data))
         chips.drop_rect = chips.rect.copy()
         state.player_chips = chips
-        state.metagroup.add(chips)
+        state.metagroup.add(chips, index=0)
 
     def handle_house_chips(data):
         chips = ChipRack(get_rect(data))
         state.house_chips = chips
-        state.metagroup.add(chips)
+        state.metagroup.add(chips, index=0)
 
     def handle_confirm_button(data):
         state.confirm_button_rect = get_rect(data)

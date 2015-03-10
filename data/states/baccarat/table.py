@@ -85,7 +85,7 @@ class TableGame(tools._State):
         self.hud = SpriteGroup()
         self.bets = MetaGroup()
         self.metagroup = MetaGroup()
-        self.metagroup.add(self.bets, self.hud)
+        self.metagroup.add(self.bets)
         self.animations = pg.sprite.Group()
 
         self.queue_advisor_message('Welcome to Baccarat', 3000)
@@ -103,6 +103,8 @@ class TableGame(tools._State):
         self.hud.add(spr, layer=-100)
 
         self.remove_animations = partial(remove_animations_of, self.animations)
+
+        self.metagroup.add(self.hud)
 
         self.reload_config()
         self.link_events()
@@ -197,7 +199,7 @@ class TableGame(tools._State):
         raise NotImplementedError
 
     def set_stats(self):
-        """Get stats for game and set them.  Will set defaults if needed
+        """Get stats for game and set them.  Will set defaults if needed.
         """
         stats = self.casino_player.stats.get(self.name, None)
         if stats is None:
