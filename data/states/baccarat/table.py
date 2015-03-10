@@ -197,7 +197,7 @@ class TableGame(tools._State):
         raise NotImplementedError
 
     def set_stats(self):
-        """Get stats for game and set them.  Will set defaults if needed
+        """Get stats for game and set them.  Will set defaults if needed.
         """
         stats = self.casino_player.stats.get(self.name, None)
         if stats is None:

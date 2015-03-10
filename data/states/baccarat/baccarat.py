@@ -60,7 +60,7 @@ class Baccarat(TableGame):
     a considerable amount of variation on the stated rules, so artistic license
     was taken in determining what the rules should be.
     """
-    name = 'baccarat'
+    name = 'Baccarat'
     variation = "mini"
 
     @staticmethod
