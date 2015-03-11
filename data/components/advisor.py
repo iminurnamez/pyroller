@@ -1,6 +1,6 @@
 from .. import prepare
-from animation import *
-from dialog import *
+from .animation import *
+from .dialog import *
 
 import pygame as pg
 
