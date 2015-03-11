@@ -5,10 +5,10 @@ from functools import partial
 
 import pygame as pg
 
-from .advisor import Advisor
 from .ui import *
 from .chips import *
 from ... import tools, prepare
+from ...components.advisor import Advisor
 from ...components.animation import Task, Animation
 from ...prepare import BROADCASTER as B
 
@@ -176,7 +176,7 @@ class TableGame(tools._State):
 
         # do advice if not already shown
         elif self._stack_motion_advice is None:
-            self._advisor.clear()
+            self._advisor.empty()
             sprite = self._advisor.queue_text('Click to grab chips', 0)
             self._stack_motion_advice = sprite
 
@@ -228,10 +228,17 @@ class TableGame(tools._State):
         """
         self._grabbed_stack = False
 
+        # remove money tooltip
         if self._mouse_tooltip is not None:
             self.hud.remove(self._mouse_tooltip)
             self._mouse_tooltip = None
 
+        # remove 'click to grab chips' message
+        if self._stack_motion_advice is not None:
+            self._advisor.dismiss(self._stack_motion_advice)
+            self._stack_motion_advice = None
+
+        # clear the light areas under chips/betting areas
         if self._hovered_chip_area is not None:
             self.clear_drop_area_overlay()
 

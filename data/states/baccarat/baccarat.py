@@ -218,7 +218,7 @@ class Baccarat(TableGame):
                 player_total += earnings
 
         # show advisor message and play sound
-        self._advisor.clear()
+        self._advisor.empty()
         if player_total > 0:
             message = 'You have won ${}'.format(player_total)
             sound = prepare.SFX['positive']
@@ -441,7 +441,7 @@ class Baccarat(TableGame):
                 self._allow_exit = False
                 self._enable_chips = False
                 sprite.kill()
-                self._advisor.clear()
+                self._advisor.empty()
                 self.deal_cards()
                 B.processEvent(('DO_DROP_STACK', self))
 

@@ -18,9 +18,10 @@ display updates.
 """
 from itertools import product, groupby
 
+import pygame
+
 from ... import prepare
 from ...components.animation import *
-import pygame
 
 
 __all__ = (
