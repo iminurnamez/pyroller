@@ -13,7 +13,7 @@ from . import prepare, tools
 from .states import title_screen, lobby_screen, stats_menu
 from .states import stats_screen, blackjack, craps, bingo, keno, video_poker
 from .states import credits_screen, snake_splash, pachinko, baccarat, guts
-from .states import atm_screen
+from .states import slots, atm_screen
 from .components import music_handler
 
 
@@ -23,21 +23,22 @@ def main():
     run_it.show_fps = prepare.ARGS["FPS"]
     run_it.max_iterations = prepare.ARGS["iterations"]
     run_it.music_handler = music_handler.MusicHandler()
-    state_dict = {"SNAKESPLASH": snake_splash.SnakeSplash(),
-                  "TITLESCREEN" : title_screen.TitleScreen(),
-                  "LOBBYSCREEN" : lobby_screen.LobbyScreen(),
-                  "STATSMENU"   : stats_menu.StatsMenu(),
-                  "STATSSCREEN" : stats_screen.StatsScreen(),
-                  "CREDITSSCREEN": credits_screen.CreditsScreen(),
-                  "BLACKJACK"   : blackjack.Blackjack(),
-                  "CRAPS"       : craps.Craps(),
-                  "BINGO"       : bingo.Bingo(),
-                  "KENO"        : keno.Keno(),
-                  "VIDEOPOKER"  : video_poker.VideoPoker(),
-                  "PACHINKO"    : pachinko.Pachinko(),
-                  "BACCARAT"    : baccarat.Baccarat(),
-                  "GUTS": guts.Guts(),
-                  "ATMSCREEN": atm_screen.ATMScreen()
+    state_dict = {"SNAKESPLASH"   : snake_splash.SnakeSplash(),
+                  "TITLESCREEN"   : title_screen.TitleScreen(),
+                  "LOBBYSCREEN"   : lobby_screen.LobbyScreen(),
+                  "STATSMENU"     : stats_menu.StatsMenu(),
+                  "STATSSCREEN"   : stats_screen.StatsScreen(),
+                  "CREDITSSCREEN" : credits_screen.CreditsScreen(),
+                  "BLACKJACK"     : blackjack.Blackjack(),
+                  "CRAPS"         : craps.Craps(),
+                  "BINGO"         : bingo.Bingo(),
+                  "KENO"          : keno.Keno(),
+                  "VIDEOPOKER"    : video_poker.VideoPoker(),
+                  "PACHINKO"      : pachinko.Pachinko(),
+                  "BACCARAT"      : baccarat.Baccarat(),
+                  "GUTS"          : guts.Guts(),
+                  "SLOTS"         : slots.Slots(),
+                  "ATMSCREEN"     : atm_screen.ATMScreen()
     }
     if prepare.ARGS['straight']:
         run_it.setup_states(state_dict, "TITLESCREEN")

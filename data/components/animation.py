@@ -560,3 +560,11 @@ class AnimationTransition(object):
         if p < 1.:
             return AnimationTransition._in_bounce_internal(p, 1.) * .5
         return AnimationTransition._out_bounce_internal(p - 1., 1.) * .5 + .5
+
+
+def remove_animations_of(group, target):
+    """Find animations that target sprites and remove them
+    """
+    animations = [ani for ani in group.sprites() if isinstance(ani, Animation)]
+    to_remove = [ani for ani in animations if target in ani.targets]
+    group.remove(*to_remove)
