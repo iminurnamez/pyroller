@@ -18,6 +18,8 @@ display updates.
 """
 from itertools import product, groupby
 
+import pygame
+
 from ... import prepare
 from ...components.animation import *
 
@@ -144,7 +146,7 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
             return
 
         layer = kwargs.get('layer', None)
-        if isinstance(sprite, Sprite):
+        if isinstance(sprite, pygame.sprite.Sprite):
             if not self.has_internal(sprite):
                 self.add_internal(sprite, layer)
                 sprite.add_internal(self)

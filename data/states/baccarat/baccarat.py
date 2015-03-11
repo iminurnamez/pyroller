@@ -128,7 +128,7 @@ class Baccarat(TableGame):
             message = 'You need some chips to play'
         else:
             message = 'Place chips into a betting area to begin'
-        self.queue_advisor_message(message, 0)
+        self._advisor.queue_text(message, 0)
 
         self._enable_chips = True
         self.clear_background()
@@ -140,9 +140,8 @@ class Baccarat(TableGame):
     def goto_lobby(self, *args):
         if not self._allow_exit:
             msg = 'Please wait until the round is over'
-            queue = [i[0] for i in self._advisor_stack]
-            if msg not in queue:
-                self.queue_advisor_message(msg)
+            if msg not in self._advisor.queued_text:
+                self._advisor.queue_text(msg)
         else:
             self.do_quit()
 
@@ -219,6 +218,7 @@ class Baccarat(TableGame):
                 player_total += earnings
 
         # show advisor message and play sound
+        self._advisor.empty()
         if player_total > 0:
             message = 'You have won ${}'.format(player_total)
             sound = prepare.SFX['positive']
@@ -230,7 +230,7 @@ class Baccarat(TableGame):
             sound = prepare.SFX['positive']
         sound.set_volume(.3)
         sound.play()
-        self.queue_advisor_message(message, 0)
+        self._advisor.queue_text(message, 0)
 
         self.delay(300, self.display_scores)
 
@@ -244,6 +244,7 @@ class Baccarat(TableGame):
            saves generated files to game root
            this is just a utility function, not needed for normal play
         """
+
         def create_text_sprite(text):
             sprite = OutlineTextSprite(text, self.large_font)
             return sprite
@@ -426,7 +427,7 @@ class Baccarat(TableGame):
     def show_finish_round_button(self):
         def f(sprite):
             sprite.kill()
-            self.dismiss_advisor()
+            self._advisor.dismiss()
             self.new_round()
 
         text = TextSprite('Play Again', self.button_font)
@@ -436,11 +437,11 @@ class Baccarat(TableGame):
     def show_bet_confirm_button(self):
         def f(sprite):
             if len(self.bets) > 0:
-                self.dismiss_advisor()
+                self._advisor.dismiss()
                 self._allow_exit = False
                 self._enable_chips = False
                 sprite.kill()
-                self.clear_advisor_messages()
+                self._advisor.empty()
                 self.deal_cards()
                 B.processEvent(('DO_DROP_STACK', self))
 

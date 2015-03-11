@@ -195,7 +195,7 @@ class Pachinko(tools._State):
             self._needs_clear = False
 
         self.playfield.update(surface, dt)
-        self.hud.clear(surface, self._clear_surface)
+        self.hud.empty(surface, self._clear_surface)
         self.hud.draw(surface)
 
     @staticmethod

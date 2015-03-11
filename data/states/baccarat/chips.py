@@ -2,9 +2,9 @@ from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
 from random import choice
+import time
 
 import pygame
-import time
 
 from .ui import *
 from ... import prepare, tools

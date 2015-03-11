@@ -14,7 +14,8 @@ class Slots(tools._State):
         self.buttons = self.make_buttons(self.screen_rect)
         self.bar = prepare.GFX["baccarat-menu-back"].copy()
         self.hud = pg.sprite.Group()
-        self.messager = advisor.AdvisorMessage(self.hud)
+        self.animations = pg.sprite.Group()
+        self.messager = advisor.Advisor(self.hud, self.animations)
 
     def make_buttons(self, screen_rect):
         buttons = ButtonGroup()
@@ -32,16 +33,16 @@ class Slots(tools._State):
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
         self.casino_player.current_game = "Slots"
-        self.messager.queue_advisor_message("Welcome to PyRamid Slots!")
-        self.messager.queue_advisor_message("Let's get these slots rollin'!")
+        self.messager.queue_text("Welcome to PyRamid Slots!")
+        self.messager.queue_text("Let's get these slots rollin'!")
 
     def cleanup(self):
         self.done = False
-        self.messager.clear_advisor()
+        self.messager.empty()
         self.hud.empty()
         return self.persist
 
-    def get_event(self, event, scale=(1,1)):
+    def get_event(self, event, scale=(1, 1)):
         if event.type == pg.QUIT:
             self.back_to_lobby()
         self.buttons.get_event(event)
@@ -51,12 +52,12 @@ class Slots(tools._State):
 
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
-        surface.blit(self.bar, (0,0))
+        surface.blit(self.bar, (0, 0))
         self.hud.draw(surface)
         self.buttons.draw(surface)
 
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
-        self.messager.update(surface, keys, current_time, dt, scale)
+        self.messager.update(dt)
         self.draw(surface)

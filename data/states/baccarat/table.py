@@ -8,7 +8,7 @@ import pygame as pg
 from .ui import *
 from .chips import *
 from ... import tools, prepare
-from ...components.dialog import *
+from ...components.advisor import Advisor
 from ...components.animation import Task, Animation
 from ...prepare import BROADCASTER as B
 
@@ -70,13 +70,7 @@ class TableGame(tools._State):
         self._clicked_sprite = None
         self._hovered_chip_area = None
         self._grabbed_stack = False
-        self._current_advice = None
         self._stack_motion_advice = None
-        self._advisor_stack = list()
-
-        # prepare dialog box for the advisor
-        self._dialog_box = GraphicBox(
-            pg.transform.smoothscale(prepare.GFX['callout'], (300, 300)))
 
         self.font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
         self.large_font = pg.font.Font(prepare.FONTS["Saniretro"], 120)
@@ -88,7 +82,8 @@ class TableGame(tools._State):
         self.metagroup.add(self.bets)
         self.animations = pg.sprite.Group()
 
-        self.queue_advisor_message('Welcome to Baccarat', 3000)
+        self._advisor = Advisor(self.hud, self.animations)
+        self._advisor.queue_text('Welcome to Baccarat', 3000)
 
         self.hud.add(NeonButton('lobby', (540, 938, 0, 0), self.goto_lobby))
 
@@ -110,73 +105,6 @@ class TableGame(tools._State):
         self.link_events()
         self.cash_in()
         self.new_round()
-
-    def clear_advisor_messages(self):
-        self._advisor_stack = list()
-        self.dismiss_advisor()
-
-    def queue_advisor_message(self, text, autodismiss=2000):
-        if self._current_advice is None:
-            self.create_advisor_message(text, autodismiss)
-        else:
-            self._advisor_stack.append((text, autodismiss))
-
-    def create_advisor_message(self, text, autodismiss=2000):
-        fg_color = 0, 0, 0
-        bg_color = 255, 255, 255
-        margins = 25, 55
-        max_size = 900, 150
-        position = 10, 55
-
-        # first estimate how wide the text will be
-        text_rect = pg.Rect(margins, max_size)
-        width, leftover_text = draw_text(None, text, text_rect, self.font)
-        assert (leftover_text == '')
-
-        sprite = Sprite()
-        sprite.rect = pg.Rect(position,
-                              (width + margins[0] * 2, max_size[1]))
-
-        sprite.image = pg.Surface(sprite.rect.size, pg.SRCALPHA)
-        self._dialog_box.draw(sprite.image)
-        draw_text(sprite.image, text, text_rect, self.font,
-                  fg_color, bg_color, True)
-
-        self._current_advice = sprite
-        self.hud.add(sprite)
-
-        ani = Animation(y=position[1], initial=-max_size[1], round_values=True,
-                        duration=500, transition='out_quint')
-        ani.start(sprite.rect)
-        self.animations.add(ani)
-
-        sound = prepare.SFX['misc_menu_4']
-        sound.set_volume(.2)
-        sound.play()
-
-        if autodismiss:
-            self.delay(autodismiss, self.dismiss_advisor, args=(sprite, ))
-
-    def dismiss_advisor(self, target=None):
-        sprite = self._current_advice
-        if sprite is None:
-            return
-
-        if target is not None:
-            if target is not self._current_advice:
-                return
-
-        remove_animations_of(self.animations, sprite.rect)
-        ani = Animation(y=-sprite.rect.height, round_values=True,
-                        duration=500, transition='out_quint')
-        ani.callback = sprite.kill
-        ani.start(sprite.rect)
-        self.animations.add(ani)
-
-        self._current_advice = None
-
-        if self._advisor_stack:
-            self.create_advisor_message(*self._advisor_stack.pop(0))
 
     def reload_config(self):
         raise NotImplementedError
@@ -241,13 +169,16 @@ class TableGame(tools._State):
         value.rect.midleft = position
         value.rect.x += 30
 
+        # if a stack is grabbed, dismiss the advice to grab it
         if self._grabbed_stack:
-            self.dismiss_advisor()
+            self._advisor.dismiss(self._stack_motion_advice)
+            self._stack_motion_advice = None
 
         # do advice if not already shown
-        elif self._current_advice is None:
-            self.queue_advisor_message('Click to grab chips', 0)
-            self._stack_motion_advice = self._current_advice
+        elif self._stack_motion_advice is None:
+            self._advisor.empty()
+            sprite = self._advisor.queue_text('Click to grab chips', 0)
+            self._stack_motion_advice = sprite
 
         # quit if we have not grabbed a stack yet
         else:
@@ -297,10 +228,17 @@ class TableGame(tools._State):
         """
         self._grabbed_stack = False
 
+        # remove money tooltip
         if self._mouse_tooltip is not None:
             self.hud.remove(self._mouse_tooltip)
             self._mouse_tooltip = None
 
+        # remove 'click to grab chips' message
+        if self._stack_motion_advice is not None:
+            self._advisor.dismiss(self._stack_motion_advice)
+            self._stack_motion_advice = None
+
+        # clear the light areas under chips/betting areas
         if self._hovered_chip_area is not None:
             self.clear_drop_area_overlay()
 
@@ -367,17 +305,17 @@ class TableGame(tools._State):
                 if bet.result is None:
                     payout = self.options['tie_payout']
                     msg = 'Ties pay {} to 1'.format(payout)
-                    self.queue_advisor_message(msg, 3000)
+                    self._advisor.queue_text(msg, 3000)
 
                 if bet.result is self.dealer_hand:
                     com = int(self.options['commission'] * 100)
                     msg = 'There is a {}% commission on dealer bets'.format(com)
-                    self.queue_advisor_message(msg, 3000)
+                    self._advisor.queue_text(msg, 3000)
 
                 if needs_advice:
                     # TODO: remove from baseclass
                     self.show_bet_confirm_button()
-                    self.queue_advisor_message('Click "Confirm Bets" to play')
+                    self._advisor.queue_text('Click "Confirm Bets" to play')
 
                 return True, bet
 
