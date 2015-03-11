@@ -1,23 +1,25 @@
-import pygame
 from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
 from random import choice
+
+import pygame
+
 from ... import prepare, tools
-from .ui import Stacker, Sprite, make_shadow_surface
+from .ui import Stacker, Sprite
 from ...components.angles import *
 from ...components.animation import Animation
 from ...prepare import BROADCASTER as B
 
 
-__all__ = [
+__all__ = (
     'denominations',
     'make_change',
     'cash_to_chips',
     'chips_to_cash',
     'Chip',
     'ChipPile',
-    'ChipRack']
+    'ChipRack')
 
 denominations = [100, 25, 10, 5, 1]
 
@@ -139,23 +141,25 @@ class ChipPile(Stacker):
     chip_sounds = [prepare.SFX[name] for name in
                    ["chipsstack{}".format(x) for x in (3, 5, 6)]]
 
-    _initial_snapping = 55
-    _fine_snapping = 25
-    _maximum_distance_until_drop = 250
+    __current_stack = None
+    _initial_snapping = 45
+    _fine_snapping = 20
+    _maximum_distance_until_drop = 100
     animation_time = 300
 
     def __init__(self, rect, value=0, **kwargs):
         super(ChipPile, self).__init__(rect, **kwargs)
         self.stacking = 80, -10
+        self.ignore_until_away = True
+        self.arrange_function = self.animate_pop
         self._clicked_sprite = None
         self._followed_sprite = None
         self._popped_chips = list()
         self._initial_snap = None
         self._desired_pos = None
         self._selected_stack = False
-        self._ignore_until_away = True
+        self._grabbed = False
         self._running_animations = dict()
-        self.arrange_function = self.animate_pop
         if value:
             self.add(*cash_to_chips(value))
 
@@ -168,22 +172,27 @@ class ChipPile(Stacker):
             self._popped_chips.remove(sprite)
         except ValueError:
             pass
+        B.processEvent(('CHIPS_VALUE_CHANGE', self))
+
+    def add_internal(self, *args, **kwargs):
+        super(ChipPile, self).add_internal(*args, **kwargs)
+        B.processEvent(('CHIPS_VALUE_CHANGE', self))
 
     def get_event(self, event, scale):
         if event.type == pygame.MOUSEMOTION:
-            self.handle_pointer(tools.scaled_mouse_pos(scale))
+            self.handle_motion(tools.scaled_mouse_pos(scale))
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 pos = tools.scaled_mouse_pos(scale)
-                self.handle_select(True, pos)
+                self.handle_click(True, pos)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
                 pos = tools.scaled_mouse_pos(scale)
-                self.handle_select(False, pos)
+                self.handle_click(False, pos)
 
-    def handle_select(self, value, pos=None):
+    def handle_click(self, value, pos=None):
         value = bool(value)
         if not self._selected_stack == value:
 
@@ -191,19 +200,21 @@ class ChipPile(Stacker):
             # so we assume it is a pickup.
             followed = self._followed_sprite is not None
             if value and followed:
+                self._grabbed = True
                 B.processEvent(('PICKUP_STACK', self))
 
             # button is released and and we are followed, so
             # lets drop whatever is following up
             elif not value and followed:
-                self._ignore_until_away = True
+                self._grabbed = False
+                self.ignore_until_away = True
                 self.drop_followed(pos)
 
             # this triggers animation changes, essentially
             self._selected_stack = value
-            self.handle_pointer(pos)
+            self.handle_motion(pos)
 
-    def handle_pointer(self, pos):
+    def handle_motion(self, pos):
         """Do stuff with the mouse/touch pointer
 
         :param pos: Mouse/Touch position in screen coordinates
@@ -212,23 +223,35 @@ class ChipPile(Stacker):
         # check if mouse is close to a sprite, and snap to it
         closest_sprite = self.snap_sprite(pos)
 
-        # we are temp. ignore snaps until the cursor is far away
-        # this prevent chips from snapping right afrer they
-        # were dropped
-        if self._ignore_until_away:
+        if self.ignore_until_away:
             if closest_sprite is None:
-                self._ignore_until_away = False
+                self.ignore_until_away = False
+                return
 
-        else:
-            if closest_sprite is not None:
-                if self._followed_sprite is not closest_sprite:
-                    choice(self.chip_sounds).play()
-                    self._followed_sprite = closest_sprite
-                    self._popped_chips.append(closest_sprite)
-                    self._initial_snap = closest_sprite.rect.center
+        # this will snap chips to the cursor
+        elif not self._grabbed and closest_sprite is not None:
+
+            # prevent multiple stacks from being hovered at once
+            if ChipPile.__current_stack is not self:
+                if ChipPile.__current_stack is None:
+                    ChipPile.__current_stack = self
+
+                elif ChipPile.__current_stack._grabbed:
+                    return
+
+                else:
+                    ChipPile.__current_stack.return_stack()
+                    ChipPile.__current_stack = self
+
+            if self._followed_sprite is not closest_sprite:
+                choice(self.chip_sounds).play()
+                self._followed_sprite = closest_sprite
+                self._popped_chips.append(closest_sprite)
+                self._initial_snap = closest_sprite.rect.center
 
         # we have a sprite following the pointer
-        if self._followed_sprite is not None:
+        # if self._followed_sprite is not None:
+        if self._popped_chips:
             self.move_followed_sprite(pos)
 
             close_enough = (abs(get_distance(pos, self._initial_snap))
@@ -258,17 +281,21 @@ class ChipPile(Stacker):
         self._desired_pos = pos[0], pos[1] + offset
         self._needs_arrange = True
 
-    def snap_sprite(self, pos):
+    def snap_sprite(self, pos, distance=None):
         """Get closest sprite to pos, with snapping rules, and
         ignoring sprites that are in the popped stack
 
         :param pos: Mouse/Touch position in screen coordinates
+        :param distance: Optional distance to check
         :return: Closest sprite to pos, or None
         """
-        if self._followed_sprite:
-            distance = self._fine_snapping
-        else:
-            distance = self._initial_snapping
+        if distance is None:
+            if self.ignore_until_away:
+                distance = self._maximum_distance_until_drop
+            elif self._followed_sprite:
+                distance = self._fine_snapping
+            else:
+                distance = self._initial_snapping
 
         closest_sprite = None
         nearest_sprites = self.get_nearest_sprites(pos, distance)
@@ -292,12 +319,13 @@ class ChipPile(Stacker):
 
     def return_stack(self):
         B.processEvent(('RETURN_STACK', self))
+        self._grabbed = False
         self._selected_stack = False
         self._needs_arrange = False
         self._initial_snap = None
         self._followed_sprite = None
-        self._ignore_until_away = True
         self._popped_chips = list()
+        self.ignore_until_away = True
         self.arrange()
 
     def get_nearest_sprites(self, point, limit=None):

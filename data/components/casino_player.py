@@ -4,15 +4,16 @@ import datetime
 from collections import OrderedDict
 from .. import prepare
 from . import loggable
+from ..states.baccarat import Baccarat
 
 
 class BankAccount(object):
     """
     Represents the player's bank account.
-    A positive balance earns interest. 
+    A positive balance earns interest.
     Cash advances incur a one time borrowing fee
     added to the advance amount.
-    """    
+    """
     def __init__(self, player, balance=0):
         self.player = player
         self.balance = balance
@@ -22,14 +23,14 @@ class BankAccount(object):
         self.last_interest_time = 0
         self.elapsed_interest_time = 0
         self.transactions = []
-        
+
     def update(self, current):
         diff = current - self.last_interest_time
         if diff >= self.interest_period:
             self.last_interest_time += self.interest_period
             self.update_interest()
         self.player.account_balance = self.balance
-    
+
     def update_interest(self):
         if self.balance > 0:
             amount = self.balance * self.interest_rate
@@ -39,21 +40,21 @@ class BankAccount(object):
             amount = self.balance * self.lending_rate
             self.balance += amount
             self.log_transaction("Interest Charged", amount)
-         
+
     def cash_advance(self, amount):
         fee = amount * self.lending_rate
         total = amount + fee
         self.balance -= total
         self.log_transaction("Cash Advance", -total)
-        
+
     def withdrawal(self, amount):
         self.balance -= amount
         self.log_transaction("Withdrawal", -amount)
-        
+
     def deposit(self, amount):
         self.balance += amount
         self.log_transaction("Deposit", amount)
-    
+
     def log_transaction(self, msg, amount):
         if not amount:
             return
@@ -61,8 +62,8 @@ class BankAccount(object):
             indx = len(self.transactions) - 9
             self.transactions = self.transactions[indx:]
         self.transactions.append((msg, amount))
-        
-        
+
+
 class NoGameSet(Exception):
     """There is no current game defined for the player"""
 
@@ -133,19 +134,25 @@ class CasinoPlayer(loggable.Loggable):
                                                     ('earned', 0),
                                                     ('jackpots', 0),
                                                     ('gutters', 0),
-                                                    ]))
+                                                    ])),
+                                             ('Baccarat', Baccarat.initialize_stats()),
+                                             ("Slots", OrderedDict(
+                                                    [('spins', 0),
+                                                    ('total winnings', 0),
+                                                    ('jackpots', 0),
+                                                    ])),
                                             ])
 
         if stats is not None:
             self.cash = stats["cash"]
             self.account_balance = stats["account balance"]
-            
+
             for game in self.game_names():
                 self.current_game = game
                 for stat_name in self.get_stat_names():
                     self.set(stat_name, stats[game].get(stat_name, self.get(stat_name)))
         self.account = BankAccount(self, self.account_balance)
-       
+
     @property
     def stats(self):
         """Access stats directly - left here for backwards compatibility"""
@@ -180,7 +187,7 @@ class CasinoPlayer(loggable.Loggable):
     def account_balance(self, value):
         """Set the cash value"""
         self._stats['account balance'] = value
-    
+
     @property
     def current_game(self):
         """The current game for storing stats"""

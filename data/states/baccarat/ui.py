@@ -16,19 +16,29 @@ the raspberry pi, it can be enabled again, along with proper
 display updates.
 
 """
-from itertools import product, groupby, chain
+from itertools import product, groupby
+
 from ... import prepare
 from ...components.animation import *
-import pygame.gfxdraw
 
-__all__ = [
+
+__all__ = (
     'Sprite',
     'SpriteGroup',
     'MetaGroup',
     'Button',
     'NeonButton',
     'TextSprite',
-    'OutlineTextSprite']
+    'OutlineTextSprite',
+    'remove_animations_of')
+
+
+def remove_animations_of(group, target):
+    """Find animations that target sprites and remove them
+    """
+    animations = [ani for ani in group.sprites() if isinstance(ani, Animation)]
+    to_remove = [ani for ani in animations if target in ani.targets]
+    group.remove(*to_remove)
 
 
 def reduce_rect_list(rect, others):
@@ -204,6 +214,7 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
 class MetaGroup(object):
     """Capable of correctly rendering a bunch of groups
     """
+
     def __init__(self):
         self._groups = list()
         self._dirty = list()
@@ -225,9 +236,14 @@ class MetaGroup(object):
             group.empty()
         self._groups = list()
 
-    def add(self, *groups):
-        for group in groups:
-            self._groups.append(group)
+    def add(self, *groups, **kwargs):
+        index = kwargs.get('index', None)
+        if index is None:
+            for group in groups:
+                self._groups.append(group)
+        else:
+            for group in groups:
+                self._groups.insert(index, group)
 
     def remove(self, *groups):
         for group in groups:
@@ -284,7 +300,7 @@ class MetaGroup(object):
 class EventButton(Sprite):
     def __init__(self, callback, args=None, kwargs=None):
         super(EventButton, self).__init__()
-        assert(callable(callback))
+        assert (callable(callback))
         kwargs = kwargs if kwargs is not None else dict()
         args = args if args is not None else list()
         self._callback = callback, args, kwargs
@@ -476,11 +492,11 @@ class OutlineTextSprite(TextSprite):
         outline = self._font.render(self._text, 1, bg)
         inner = self._font.render(self._text, 1, self._fg)
         ww, hh = outline.get_size()
-        cx = w/2-ww/2
-        cy = h/2-hh/2
+        cx = w / 2 - ww / 2
+        cy = h / 2 - hh / 2
         for x in range(-6, 6):
             for y in range(-6, 6):
-                image.blit(outline, (x+cx, y+cy))
+                image.blit(outline, (x + cx, y + cy))
         image.blit(inner, (cx, cy))
         return image
 

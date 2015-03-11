@@ -1,19 +1,19 @@
 from collections import defaultdict
 from random import choice
-from itertools import groupby
-from operator import attrgetter
+from itertools import chain
+from functools import partial
+
 import pygame as pg
+
 from .ui import *
-from .cards import *
 from .chips import *
 from ... import tools, prepare
+from ...components.dialog import *
 from ...components.animation import Task, Animation
 from ...prepare import BROADCASTER as B
 
 
-__all__ = [
-    'BettingArea',
-    'TableGame']
+__all__ = ('BettingArea', 'TableGame')
 
 font_size = 64
 
@@ -51,7 +51,7 @@ class TableGame(tools._State):
         self.interested_events = [
             ('PICKUP_STACK', self.on_pickup_stack),
             ('DROP_STACK', self.on_drop_stack),
-            ('HOVER_STACK', self.on_hover_stack),
+            ('HOVER_STACK', self.on_stack_motion),
             ('RETURN_STACK', self.on_return_stack)
         ]
 
@@ -62,11 +62,21 @@ class TableGame(tools._State):
         names = ["chipsstack{}".format(x) for x in (3, 5, 6)]
         self.chip_sounds = [prepare.SFX[name] for name in names]
 
+        self._allow_exit = True
         self._highlight_areas = False
-        self._chips_value_label = None
+        self._mouse_tooltip = None
         self._enable_chips = False
         self._background = None
         self._clicked_sprite = None
+        self._hovered_chip_area = None
+        self._grabbed_stack = False
+        self._current_advice = None
+        self._stack_motion_advice = None
+        self._advisor_stack = list()
+
+        # prepare dialog box for the advisor
+        self._dialog_box = GraphicBox(
+            pg.transform.smoothscale(prepare.GFX['callout'], (300, 300)))
 
         self.font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
         self.large_font = pg.font.Font(prepare.FONTS["Saniretro"], 120)
@@ -75,15 +85,94 @@ class TableGame(tools._State):
         self.hud = SpriteGroup()
         self.bets = MetaGroup()
         self.metagroup = MetaGroup()
-        self.metagroup.add(self.bets, self.hud)
+        self.metagroup.add(self.bets)
         self.animations = pg.sprite.Group()
+
+        self.queue_advisor_message('Welcome to Baccarat', 3000)
 
         self.hud.add(NeonButton('lobby', (540, 938, 0, 0), self.goto_lobby))
 
-        self.link_events()
+        spr = Sprite()
+        spr.image = prepare.GFX['baccarat-menu-front']
+        spr.rect = spr.image.get_rect()
+        self.hud.add(spr, layer=1)
+
+        spr = Sprite()
+        spr.image = prepare.GFX['baccarat-menu-back']
+        spr.rect = spr.image.get_rect()
+        self.hud.add(spr, layer=-100)
+
+        self.remove_animations = partial(remove_animations_of, self.animations)
+
+        self.metagroup.add(self.hud)
+
         self.reload_config()
+        self.link_events()
         self.cash_in()
         self.new_round()
+
+    def queue_advisor_message(self, text, autodismiss=2000):
+        if self._current_advice is None:
+            self.create_advisor_message(text, autodismiss)
+        else:
+            self._advisor_stack.append((text, autodismiss))
+
+    def create_advisor_message(self, text, autodismiss=2000):
+        fg_color = 0, 0, 0
+        bg_color = 255, 255, 255
+        margins = 25, 55
+        max_size = 900, 150
+        position = 10, 55
+
+        # first estimate how wide the text will be
+        text_rect = pg.Rect(margins, max_size)
+        width, leftover_text = draw_text(None, text, text_rect, self.font)
+        assert (leftover_text == '')
+
+        sprite = Sprite()
+        sprite.rect = pg.Rect(position,
+                              (width + margins[0] * 2, max_size[1]))
+
+        sprite.image = pg.Surface(sprite.rect.size, pg.SRCALPHA)
+        self._dialog_box.draw(sprite.image)
+        draw_text(sprite.image, text, text_rect, self.font,
+                  fg_color, bg_color, True)
+
+        self._current_advice = sprite
+        self.hud.add(sprite)
+
+        ani = Animation(y=position[1], initial=-max_size[1], round_values=True,
+                        duration=500, transition='out_quint')
+        ani.start(sprite.rect)
+        self.animations.add(ani)
+
+        sound = prepare.SFX['misc_menu_4']
+        sound.set_volume(.2)
+        sound.play()
+
+        if autodismiss:
+            self.delay(autodismiss, self.dismiss_advisor, args=(sprite, ))
+
+    def dismiss_advisor(self, target=None):
+        sprite = self._current_advice
+        if sprite is None:
+            return
+
+        if target is not None:
+            if target is not self._current_advice:
+                return
+
+        remove_animations_of(self.animations, sprite.rect)
+        ani = Animation(y=-sprite.rect.height, round_values=True,
+                        duration=500, transition='out_quint')
+        ani.callback = sprite.kill
+        ani.start(sprite.rect)
+        self.animations.add(ani)
+
+        self._current_advice = None
+
+        if self._advisor_stack:
+            self.create_advisor_message(*self._advisor_stack.pop(0))
 
     def reload_config(self):
         raise NotImplementedError
@@ -110,7 +199,7 @@ class TableGame(tools._State):
         raise NotImplementedError
 
     def set_stats(self):
-        """Get stats for game and set them.  Will set defaults if needed
+        """Get stats for game and set them.  Will set defaults if needed.
         """
         stats = self.casino_player.stats.get(self.name, None)
         if stats is None:
@@ -131,31 +220,91 @@ class TableGame(tools._State):
         for name, f in self.interested_events:
             B.unlinkEvent(name, f)
 
-    def on_hover_stack(self, *args):
-        """When mouse is hovering over a stack
+    def on_stack_motion(self, *args):
+        """When mouse is hovering over a stack or moving it
         """
-        chips, pos = args[0]
-        sprite = self._chips_value_label
-        if sprite is None:
-            sprite = TextSprite('', self.large_font)
-            self._chips_value_label = sprite
-            self.hud.add(sprite, layer=100)
-        value = str(chips_to_cash(chips))
-        sprite.text = "${}".format(value)
-        sprite.rect.midleft = pos
-        sprite.rect.x += 30
+        chips, position = args[0]
+
+        if self._mouse_tooltip is None:
+            value = TextSprite('', self.large_font)
+            self._mouse_tooltip = value
+            self.hud.add(value, layer=100)
+        else:
+            value = self._mouse_tooltip
+
+        amount = str(chips_to_cash(chips))
+        value.text = "${}".format(amount)
+        value.rect.midleft = position
+        value.rect.x += 30
+
+        if self._grabbed_stack:
+            self.dismiss_advisor()
+
+        # do advice if not already shown
+        elif self._current_advice is None:
+            self.queue_advisor_message('Click to grab chips', 0)
+            self._stack_motion_advice = self._current_advice
+
+        # quit if we have not grabbed a stack yet
+        else:
+            return
+
+        # check if mouse is hovering over betting area
+        areas = chain(self.betting_areas.values(), [self.player_chips])
+        if self._hovered_chip_area is None:
+            for area in areas:
+                if area.drop_rect.collidepoint(position):
+                    self._hovered_chip_area = area
+                    sprite = getattr(area, 'sprite', None)
+                    if sprite is None:
+                        sprite = Sprite()
+                        sprite.rect = area.drop_rect.copy()
+                        sprite.image = pg.Surface(sprite.rect.size)
+                        sprite.image.fill((255, 255, 255))
+                        area.sprite = sprite
+
+                    self.hud.add(sprite)
+                    self.remove_animations(sprite.image)
+                    ani = Animation(set_alpha=48, initial=0,
+                                    duration=500, transition='out_quint')
+                    ani.start(sprite.image)
+                    self.animations.add(ani)
+
+        # handle when mouse moves outside previously hovered area
+        elif not self._hovered_chip_area.drop_rect.collidepoint(position):
+            self.clear_drop_area_overlay()
+
+    def clear_drop_area_overlay(self):
+        self.remove_animations(self._hovered_chip_area.sprite.image)
+
+        ani = Animation(
+            set_alpha=0,
+            initial=self._hovered_chip_area.sprite.image.get_alpha,
+            duration=500, transition='out_quint')
+
+        ani.callback = self._hovered_chip_area.sprite.kill
+        ani.start(self._hovered_chip_area.sprite.image)
+        self.animations.add(ani)
+
+        self._hovered_chip_area = None
 
     def on_return_stack(self, *args):
         """When a stack of chips is returned to pile
         """
-        if self._chips_value_label is not None:
-            self.hud.remove(self._chips_value_label)
-            self._chips_value_label = None
+        self._grabbed_stack = False
+
+        if self._mouse_tooltip is not None:
+            self.hud.remove(self._mouse_tooltip)
+            self._mouse_tooltip = None
+
+        if self._hovered_chip_area is not None:
+            self.clear_drop_area_overlay()
 
     def on_pickup_stack(self, *args):
         """When a stack of chips is picked up
         """
         self._highlight_areas = True
+        self._grabbed_stack = True
 
     def on_drop_stack(self, *args):
         """When a stack of chips is dropped anywhere
@@ -173,18 +322,32 @@ class TableGame(tools._State):
         owner = d['object']
         chips = d['chips']
 
+        needs_advice = not self.bets.groups()
+
         # this value is used to determine where to
         # return chips if this bet wins
         if not hasattr(owner, 'origin'):
             owner.origin = owner
 
-        # place chips in player chips
-        if self.player_chips.rect.collidepoint(position):
-            remove(owner, chips)
-            self.player_chips.extend(chips)
-            self.player_chips._ignore_until_away = True
-            self.clear_background()
-            return True, None
+        if self._hovered_chip_area is not None:
+            self.clear_drop_area_overlay()
+
+        # check if chip is dropped onto a bet pile or player chips
+        areas = chain(self.bets.groups(), [self.player_chips])
+        for area in areas:
+            if area is owner:
+                continue
+
+            if area.rect.collidepoint(position):
+                remove(owner, chips)
+                area.extend(chips)
+                area.ignore_until_away = True
+                self.clear_background()
+
+                if not self.bets.groups():
+                    self.hide_bet_confirm_button()
+
+                return True, area
 
         # place chips in betting area
         for area in self.betting_areas.values():
@@ -193,9 +356,25 @@ class TableGame(tools._State):
                 bet = self.place_bet(area.hand, owner.origin, chips)
                 bet.origin = owner.origin
                 bet.rect.bottomleft = position
-                # HACK: should not be hardcoded
+                # TODO: should not be hardcoded
                 bet.rect.x -= 32
                 self.clear_background()
+
+                if bet.result is None:
+                    payout = self.options['tie_payout']
+                    msg = 'Ties pay {} to 1'.format(payout)
+                    self.queue_advisor_message(msg, 3000)
+
+                if bet.result is self.dealer_hand:
+                    com = int(self.options['commission'] * 100)
+                    msg = 'There is a {}% commission on dealer bets'.format(com)
+                    self.queue_advisor_message(msg, 3000)
+
+                if needs_advice:
+                    # TODO: remove from baseclass
+                    self.show_bet_confirm_button()
+                    self.queue_advisor_message('Click "Confirm Bets" to play')
+
                 return True, bet
 
         # place chips in the house chips
@@ -303,7 +482,7 @@ class TableGame(tools._State):
 
         :param result: Deck or None
         :param owner: ChipsPile instance
-        :param amount: amount to wager in cash (not chips)
+        :param chips: Chips to wager with
         :return: ChipsPile instance
         """
         choice(self.chip_sounds).play()
@@ -315,9 +494,17 @@ class TableGame(tools._State):
         return bet
 
     def goto_lobby(self, *args):
-        """Force game to exit to the lobby
+        """Try to exit to the lobby
 
-        Player will be automatically cashed out
+        Player will be automatically cashed out if ok
+        """
+        if self._allow_exit:
+            self.quit()
+
+    def do_quit(self, *args):
+        """Try to exit to the lobby
+
+        Player will be automatically cashed out if ok
         """
         self.cash_out()
         self.done = True

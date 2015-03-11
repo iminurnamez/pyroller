@@ -70,11 +70,13 @@ def _get_neon_buttons(gfx):
     b_width = 318
     b_height = 101
     b_texts = {"games"    : ["Bingo", "Blackjack", "Craps", "Keno",
-                             "Video Poker", "Pachinko", "Slots"],
+                             "Video Poker", "Pachinko", "Slots", "Guts",
+                             "Baccarat"],
                "general"  : ["Credits", "Exit", "Stats", "Lobby", "New",
                              "Load", "Back", "OK", "Cancel"],
                "specific" : ["Again", "Deal", "Hit", "Stand", "Split",
-                             "Double", "Roll", "Ride", "Change"]}
+                             "Double", "Roll", "Ride", "Change",
+                             "Tutorial", "Stay", "Pass", "Ante Up"]}
     for category in b_texts:
         sheet = gfx["neon_button_{}".format(category)]
         for i,text in enumerate(b_texts[category]):
@@ -91,9 +93,7 @@ FONTS = tools.load_all_fonts(os.path.join("resources", "fonts"))
 MUSIC = tools.load_all_music(os.path.join("resources", "music"))
 SFX   = tools.load_all_sfx(os.path.join("resources", "sound"))
 GFX   = _load_graphics()
-#temporary hack to get guts working
-GFX["neon_button_on_guts"] = GFX["neon_button_on_blackjack"]
-GFX["neon_button_off_guts"] = GFX["neon_button_off_blackjack"]
+
 
 #It's time to start the music, it's time to light the lights
 pg.mixer.music.load(MUSIC["main_stem"])

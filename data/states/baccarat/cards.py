@@ -1,16 +1,16 @@
 import random
-import pygame
 from functools import partial
-from pygame.transform import smoothscale
 from math import pi, cos
+
+import pygame
+from pygame.transform import smoothscale
+
 from .ui import Stacker, Sprite
 from ... import prepare
 from ...components.animation import Animation
 
 
-__all__ = [
-    'Card',
-    'Deck']
+__all__ = ('Card', 'Deck')
 
 two_pi = pi * 2
 
