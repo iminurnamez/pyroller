@@ -3,6 +3,8 @@ from math import sqrt, cos, sin, pi
 import pygame
 import sys
 
+__all__ = ('Task', 'Animation', 'remove_animations_of')
+
 logger = getLogger('animation')
 
 
@@ -14,6 +16,18 @@ if PY2:
     text_type = unicode
 else:
     string_types = text_type = str
+
+
+def remove_animations_of(group, target):
+    """Find animations that target objects and remove those animations
+
+    :param group: pygame.sprite.Group
+    :param target: any
+    :return: None
+    """
+    animations = [ani for ani in group.sprites() if isinstance(ani, Animation)]
+    to_remove = [ani for ani in animations if target in ani.targets]
+    group.remove(*to_remove)
 
 
 class Task(pygame.sprite.Sprite):
@@ -561,10 +575,3 @@ class AnimationTransition(object):
             return AnimationTransition._in_bounce_internal(p, 1.) * .5
         return AnimationTransition._out_bounce_internal(p - 1., 1.) * .5 + .5
 
-
-def remove_animations_of(group, target):
-    """Find animations that target sprites and remove them
-    """
-    animations = [ani for ani in group.sprites() if isinstance(ani, Animation)]
-    to_remove = [ani for ani in animations if target in ani.targets]
-    group.remove(*to_remove)

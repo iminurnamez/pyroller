@@ -20,6 +20,7 @@ from itertools import product, groupby
 
 from ... import prepare
 from ...components.animation import *
+import pygame
 
 
 __all__ = (
@@ -144,7 +145,7 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
             return
 
         layer = kwargs.get('layer', None)
-        if isinstance(sprite, Sprite):
+        if isinstance(sprite, pygame.sprite.Sprite):
             if not self.has_internal(sprite):
                 self.add_internal(sprite, layer)
                 sprite.add_internal(self)
