@@ -13,6 +13,7 @@ from .table import TableGame
 from ... import prepare
 from ...components.animation import Task, Animation
 from ...components.angles import get_midpoint
+from ...prepare import BROADCASTER as B
 
 
 __all__ = ('Baccarat', )
@@ -243,7 +244,6 @@ class Baccarat(TableGame):
            saves generated files to game root
            this is just a utility function, not needed for normal play
         """
-
         def create_text_sprite(text):
             sprite = OutlineTextSprite(text, self.large_font)
             return sprite
@@ -440,7 +440,9 @@ class Baccarat(TableGame):
                 self._allow_exit = False
                 self._enable_chips = False
                 sprite.kill()
+                self.clear_advisor_messages()
                 self.deal_cards()
+                B.processEvent(('DO_DROP_STACK', self))
 
         text = TextSprite('Confirm Bets', self.button_font)
         rect = self.confirm_button_rect

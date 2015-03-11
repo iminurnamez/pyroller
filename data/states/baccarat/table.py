@@ -111,6 +111,10 @@ class TableGame(tools._State):
         self.cash_in()
         self.new_round()
 
+    def clear_advisor_messages(self):
+        self._advisor_stack = list()
+        self.dismiss_advisor()
+
     def queue_advisor_message(self, text, autodismiss=2000):
         if self._current_advice is None:
             self.create_advisor_message(text, autodismiss)
