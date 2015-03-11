@@ -135,7 +135,12 @@ class CasinoPlayer(loggable.Loggable):
                                                     ('jackpots', 0),
                                                     ('gutters', 0),
                                                     ])),
-                                             ('Baccarat', Baccarat.initialize_stats())
+                                             ('Baccarat', Baccarat.initialize_stats()),
+                                             ("Slots", OrderedDict(
+                                                    [('spins', 0),
+                                                    ('total winnings', 0),
+                                                    ('jackpots', 0),
+                                                    ])),
                                             ])
 
         if stats is not None:
