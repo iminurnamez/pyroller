@@ -35,9 +35,6 @@ class Advisor(object):
         """List of all text strings that are in the queue"""
         return [i[0] for i in self._message_queue]
 
-    def update(self, dt):
-        self._animations.update(dt)
-
     def queue_text(self, text, dismiss_after=2000, sound=None):
         """Queue some text to be displayed
 
@@ -65,6 +62,9 @@ class Advisor(object):
 
         If there are messages still in the queue, they will be
         displayed next.
+
+        :param target: Specific message to be removed
+        :return: None
         """
         show_next = True
 
@@ -93,6 +93,8 @@ class Advisor(object):
 
     def show_next(self):
         """Show the next message, if any
+
+        :return: None
         """
         if self._message_queue:
             self._show_message(*self._message_queue[0])

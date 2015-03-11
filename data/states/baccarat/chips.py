@@ -103,6 +103,7 @@ class Chip(Sprite):
     images, flat_images = get_chip_images()
     thicknesses = {19: 5, 30: 7}
     chip_size = prepare.CHIP_SIZE
+    shadow = make_shadow_surface(images[chip_size]['white'])
 
     def __init__(self, value, chip_size=None):
         super(Chip, self).__init__()
@@ -162,6 +163,9 @@ class ChipPile(Stacker):
         self._desired_pos = None
         self._selected_stack = False
         self._grabbed = False
+        self._shadows = SpriteGroup()
+        self._shadows_dict = dict()
+
         self._running_animations = dict()
         B.linkEvent('DO_DROP_STACK', self.return_stack)
         if value:
@@ -169,6 +173,12 @@ class ChipPile(Stacker):
 
     def __del__(self):
         B.unlinkEvent('DO_DROP_STACK', self.return_stack)
+
+    def draw(self, surface):
+        dirty0 = self._shadows.draw(surface)
+        dirty1 = super(ChipPile, self).draw(surface)
+        dirty0.extend(dirty1)
+        return dirty0
 
     def remove_internal(self, sprite):
         super(ChipPile, self).remove_internal(sprite)
@@ -301,10 +311,13 @@ class ChipPile(Stacker):
 
         return False
 
+    @property
+    def height_offset(self):
+        return -20 if self._selected_stack else 15
+
     def move_followed_sprite(self, pos):
         B.processEvent(('HOVER_STACK', (self._popped_chips, pos)))
-        offset = -20 if self._selected_stack else 15
-        self._desired_pos = pos[0], pos[1] + offset
+        self._desired_pos = pos[0], pos[1] + self.height_offset
         self._needs_arrange = True
 
     def snap_sprite(self, pos, distance=None):
@@ -374,6 +387,10 @@ class ChipPile(Stacker):
             self._animations.remove(ani)
             ani.kill()
 
+        shadow = self._shadows_dict.get(sprite, None)
+        if shadow is not None:
+            shadow.rect = sprite.rect.move(0, 5)
+
         d = get_distance(sprite.rect.topleft, final)
         if d == 0:
             return None
@@ -381,14 +398,22 @@ class ChipPile(Stacker):
         fx, fy = final
         ani = Animation(x=fx, y=fy, duration=self.animation_time,
                         transition='out_quint', round_values=True)
-        ani.update_callback = lambda: setattr(sprite, 'dirty', 1)
 
-        def f():
+        def update_sprite():
+            setattr(sprite, 'dirty', 1)
+            offset = 20 - self.height_offset
+            shadow = self._shadows_dict.get(sprite, None)
+            if shadow is not None:
+                shadow.rect = sprite.rect.move(0, offset)
+
+        ani.update_callback = update_sprite
+
+        def finalize():
             del self._running_animations[sprite]
             if d > 1:
                 self.play_chip_sound()
 
-        ani.callback = f
+        ani.callback = finalize
 
         ani.start(sprite.rect)
         self._running_animations[sprite] = ani
@@ -420,14 +445,34 @@ class ChipPile(Stacker):
         self.remove(withdraw)
         return withdraw
 
+    def get_shadow(self, sprite):
+        # reused a shadow object to place under a stack
+        try:
+            return self._shadows_dict[sprite]
+        except KeyError:
+            shadow = Sprite()
+            shadow.image = Chip.shadow
+            shadow.rect = shadow.image.get_rect()
+            self._shadows.add(shadow)
+            self._shadows_dict[sprite] = shadow
+
     def arrange(self, sprites=None, offset=(0, 0), noclip=False):
         self.sort()
+        needs_shadow = list()
         ox, oy = offset
         arrange = super(ChipPile, self).arrange
+
         for k, g in groupby(self.sprites(), attrgetter('value')):
             stack_offset = 0, 0
             sprites = list(g)
+
+            bottom_sprite = sprites[0]
+            self.get_shadow(bottom_sprite)
+            needs_shadow.append(bottom_sprite)
+
             if self._followed_sprite in sprites:
+                self.get_shadow(self._followed_sprite)
+                needs_shadow.append(self._followed_sprite)
 
                 # arrange sprites lower than the followed one
                 i = sprites.index(self._followed_sprite)
@@ -459,6 +504,13 @@ class ChipPile(Stacker):
                 stack_offset = arrange(sprites, (ox, oy))
 
             ox += self.stacking[0] + stack_offset[0]
+
+        # remove unused shadows
+        for sprite, shadow in list(self._shadows_dict.items()):
+            if sprite not in needs_shadow:
+                del self._shadows_dict[sprite]
+                self._shadows.remove(shadow)
+
         self._needs_arrange = False
 
 

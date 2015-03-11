@@ -424,8 +424,6 @@ class TableGame(tools._State):
     def place_bet(self, result, owner, chips):
         """Shortcut to place a bet with chips
 
-        Be sure to move the bet to a sensible area after placing it
-
         :param result: Deck or None
         :param owner: ChipsPile instance
         :param chips: Chips to wager with
