@@ -244,6 +244,7 @@ class Baccarat(TableGame):
            saves generated files to game root
            this is just a utility function, not needed for normal play
         """
+
         def create_text_sprite(text):
             sprite = OutlineTextSprite(text, self.large_font)
             return sprite
