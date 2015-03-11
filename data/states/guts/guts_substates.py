@@ -75,7 +75,7 @@ class StartGame(GutsState):
             labels.append(label)
         self.labels = iter(labels)
         self.label = next(self.labels)
-        ani = Animation(alpha=0, delay=2000, duration=3500, round_values=True)
+        ani = Animation(alpha=0, duration=3000, round_values=True)
         ani.start(self.label)
         self.animations.add(ani)
         
@@ -95,7 +95,7 @@ class StartGame(GutsState):
             if self.label.alpha <= 0:
                 try:
                     self.label = next(self.labels)
-                    ani = Animation(alpha=0, delay=2000, duration=3500, round_values=True)
+                    ani = Animation(alpha=0, duration=3000, round_values=True)
                     ani.start(self.label)
                     self.animations.add(ani)
                 except StopIteration:
