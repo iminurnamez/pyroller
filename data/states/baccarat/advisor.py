@@ -24,6 +24,7 @@ class Advisor(object):
 
     @property
     def current_message(self):
+        """Sprite that is currently being displayed"""
         try:
             return self._message_queue[0][1]
         except IndexError:
@@ -31,16 +32,17 @@ class Advisor(object):
 
     @property
     def queued_text(self):
+        """List of all text strings that are in the queue"""
         return [i[0] for i in self._message_queue]
 
     def update(self, dt):
         self._animations.update(dt)
 
-    def queue_message(self, text, dismiss_after=2000, sound=None):
-        """Queue a new message
+    def queue_text(self, text, dismiss_after=2000, sound=None):
+        """Queue some text to be displayed
 
         A unique sprite will be returned from this function.  That sprite
-        can be passed to Advisor.dismiss() to remove that specific message.
+        can be passed to Advisor.dismiss() to remove that specific sprite.
 
         :param text: Text to be displayed
         :param sound: Sound to be played when message is shown
@@ -50,7 +52,7 @@ class Advisor(object):
 
         :return: pygame.sprite.Sprite
         """
-        sprite = self.render_dialog(text)
+        sprite = self._render_message(text)
 
         self._message_queue.append((text, sprite, dismiss_after, sound))
         if len(self._message_queue) == 1:
@@ -81,7 +83,7 @@ class Advisor(object):
         remove_animations_of(self._animations, sprite.rect)
 
         # hide the sprite
-        ani = self.animate_hide_sprite(sprite)
+        ani = self._animate_hide_sprite(sprite)
         self._animations.add(ani)
 
         # show next sprite if there is one
@@ -90,10 +92,12 @@ class Advisor(object):
             self.show_next()
 
     def show_next(self):
+        """Show the next message, if any
+        """
         if self._message_queue:
-            self.show_message(*self._message_queue[0])
+            self._show_message(*self._message_queue[0])
 
-    def clear_queue(self):
+    def clear(self):
         """Clear all message and dismiss the current one
 
         :return: None
@@ -102,7 +106,7 @@ class Advisor(object):
             self._message_queue = [self._message_queue[0]]
             self.dismiss()
 
-    def show_message(self, text, sprite, dismiss_after=2000, sound=None):
+    def _show_message(self, text, sprite, dismiss_after=2000, sound=None):
         """Show a sprite, play sound, and set timer to remove it
 
         :param sprite: test to be displayed
@@ -112,7 +116,7 @@ class Advisor(object):
         :return: Unique sprite for the message
         """
         # animate the sprite showing
-        ani = self.animate_show_sprite(sprite)
+        ani = self._animate_show_sprite(sprite)
         self._animations.add(ani)
 
         # add the sprite to the group that contains the advisor
@@ -128,7 +132,7 @@ class Advisor(object):
             task = Task(self.dismiss, dismiss_after, args=(sprite, ))
             self._animations.add(task)
 
-    def animate_show_sprite(self, sprite):
+    def _animate_show_sprite(self, sprite):
         """Animate and show the sprite dropping down from advisor
 
         :param sprite: pygame.sprite.Sprite
@@ -139,7 +143,7 @@ class Advisor(object):
         ani.start(sprite.rect)
         return ani
 
-    def animate_hide_sprite(self, sprite):
+    def _animate_hide_sprite(self, sprite):
         """Animate and hide the sprite
 
         :param sprite: pygame.sprite.Sprite
@@ -151,7 +155,7 @@ class Advisor(object):
         ani.start(sprite.rect)
         return ani
 
-    def render_dialog(self, text):
+    def _render_message(self, text):
         """Render the sprite that will drop down from the advisor
 
         :param text: Test to be rendered

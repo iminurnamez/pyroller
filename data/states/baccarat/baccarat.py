@@ -128,7 +128,7 @@ class Baccarat(TableGame):
             message = 'You need some chips to play'
         else:
             message = 'Place chips into a betting area to begin'
-        self._advisor.queue_message(message, 0)
+        self._advisor.queue_text(message, 0)
 
         self._enable_chips = True
         self.clear_background()
@@ -141,7 +141,7 @@ class Baccarat(TableGame):
         if not self._allow_exit:
             msg = 'Please wait until the round is over'
             if msg not in self._advisor.queued_text:
-                self._advisor.queue_message(msg)
+                self._advisor.queue_text(msg)
         else:
             self.do_quit()
 
@@ -218,7 +218,7 @@ class Baccarat(TableGame):
                 player_total += earnings
 
         # show advisor message and play sound
-        self._advisor.clear_queue()
+        self._advisor.clear()
         if player_total > 0:
             message = 'You have won ${}'.format(player_total)
             sound = prepare.SFX['positive']
@@ -230,7 +230,7 @@ class Baccarat(TableGame):
             sound = prepare.SFX['positive']
         sound.set_volume(.3)
         sound.play()
-        self._advisor.queue_message(message, 0)
+        self._advisor.queue_text(message, 0)
 
         self.delay(300, self.display_scores)
 
@@ -441,7 +441,7 @@ class Baccarat(TableGame):
                 self._allow_exit = False
                 self._enable_chips = False
                 sprite.kill()
-                self._advisor.clear_queue()
+                self._advisor.clear()
                 self.deal_cards()
                 B.processEvent(('DO_DROP_STACK', self))
 

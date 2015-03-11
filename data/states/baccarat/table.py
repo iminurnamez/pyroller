@@ -83,7 +83,7 @@ class TableGame(tools._State):
         self.animations = pg.sprite.Group()
 
         self._advisor = Advisor(self.hud, self.animations)
-        self._advisor.queue_message('Welcome to Baccarat', 3000)
+        self._advisor.queue_text('Welcome to Baccarat', 3000)
 
         self.hud.add(NeonButton('lobby', (540, 938, 0, 0), self.goto_lobby))
 
@@ -176,8 +176,8 @@ class TableGame(tools._State):
 
         # do advice if not already shown
         elif self._stack_motion_advice is None:
-            self._advisor.clear_queue()
-            sprite = self._advisor.queue_message('Click to grab chips', 0)
+            self._advisor.clear()
+            sprite = self._advisor.queue_text('Click to grab chips', 0)
             self._stack_motion_advice = sprite
 
         # quit if we have not grabbed a stack yet
@@ -298,17 +298,17 @@ class TableGame(tools._State):
                 if bet.result is None:
                     payout = self.options['tie_payout']
                     msg = 'Ties pay {} to 1'.format(payout)
-                    self._advisor.queue_message(msg, 3000)
+                    self._advisor.queue_text(msg, 3000)
 
                 if bet.result is self.dealer_hand:
                     com = int(self.options['commission'] * 100)
                     msg = 'There is a {}% commission on dealer bets'.format(com)
-                    self._advisor.queue_message(msg, 3000)
+                    self._advisor.queue_text(msg, 3000)
 
                 if needs_advice:
                     # TODO: remove from baseclass
                     self.show_bet_confirm_button()
-                    self._advisor.queue_message('Click "Confirm Bets" to play')
+                    self._advisor.queue_text('Click "Confirm Bets" to play')
 
                 return True, bet
 
