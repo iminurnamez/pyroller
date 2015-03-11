@@ -2,11 +2,12 @@ from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
 from random import choice
+import time
 
 import pygame
 
+from .ui import *
 from ... import prepare, tools
-from .ui import Stacker, Sprite
 from ...components.angles import *
 from ...components.animation import Animation
 from ...prepare import BROADCASTER as B
@@ -145,11 +146,13 @@ class ChipPile(Stacker):
     _initial_snapping = 45
     _fine_snapping = 20
     _maximum_distance_until_drop = 100
+    _last_sound = 0
     animation_time = 300
+    sound_interval = .03
 
     def __init__(self, rect, value=0, **kwargs):
         super(ChipPile, self).__init__(rect, **kwargs)
-        self.stacking = 80, -10
+        self.stacking = 70, -10
         self.ignore_until_away = True
         self.arrange_function = self.animate_pop
         self._clicked_sprite = None
@@ -160,8 +163,12 @@ class ChipPile(Stacker):
         self._selected_stack = False
         self._grabbed = False
         self._running_animations = dict()
+        B.linkEvent('DO_DROP_STACK', self.return_stack)
         if value:
             self.add(*cash_to_chips(value))
+
+    def __del__(self):
+        B.unlinkEvent('DO_DROP_STACK', self.return_stack)
 
     def remove_internal(self, sprite):
         super(ChipPile, self).remove_internal(sprite)
@@ -177,6 +184,21 @@ class ChipPile(Stacker):
     def add_internal(self, *args, **kwargs):
         super(ChipPile, self).add_internal(*args, **kwargs)
         B.processEvent(('CHIPS_VALUE_CHANGE', self))
+
+    # def update(self, *args):
+    #     super(ChipPile, self).update(*args)
+    #     self._animations.update(*args)
+
+    def play_chip_sound(self):
+        """Play a sound, but limit it a bit
+
+        :return: None
+        """
+        elapsed = time.time() - self._last_sound
+        if elapsed > self.sound_interval:
+            self._last_sound = time.time()
+            sound = choice(self.chip_sounds)
+            sound.play()
 
     def get_event(self, event, scale):
         if event.type == pygame.MOUSEMOTION:
@@ -227,6 +249,10 @@ class ChipPile(Stacker):
             if closest_sprite is None:
                 self.ignore_until_away = False
                 return
+
+        # ignore chips in motion
+        if closest_sprite in self._running_animations.keys():
+            return
 
         # this will snap chips to the cursor
         elif not self._grabbed and closest_sprite is not None:
@@ -317,7 +343,7 @@ class ChipPile(Stacker):
         if drop:
             self.return_stack()
 
-    def return_stack(self):
+    def return_stack(self, *args):
         B.processEvent(('RETURN_STACK', self))
         self._grabbed = False
         self._selected_stack = False
@@ -342,19 +368,31 @@ class ChipPile(Stacker):
         """Animate chips moving to popped stack
         """
         # cancel animation that is already running on this sprite
-        old = self._running_animations.get(sprite, None)
-        if old is not None:
-            old.kill()
+        ani = self._running_animations.get(sprite, None)
+        if ani is not None:
+            del self._running_animations[sprite]
+            self._animations.remove(ani)
+            ani.kill()
+
+        d = get_distance(sprite.rect.topleft, final)
+        if d == 0:
+            return None
 
         fx, fy = final
-        sound = choice(self.chip_sounds)
         ani = Animation(x=fx, y=fy, duration=self.animation_time,
                         transition='out_quint', round_values=True)
         ani.update_callback = lambda: setattr(sprite, 'dirty', 1)
-        ani.callback = sound.play
-        ani.start(sprite.rect)
 
+        def f():
+            del self._running_animations[sprite]
+            if d > 1:
+                self.play_chip_sound()
+
+        ani.callback = f
+
+        ani.start(sprite.rect)
         self._running_animations[sprite] = ani
+
         return ani
 
     @property
@@ -387,6 +425,7 @@ class ChipPile(Stacker):
         ox, oy = offset
         arrange = super(ChipPile, self).arrange
         for k, g in groupby(self.sprites(), attrgetter('value')):
+            stack_offset = 0, 0
             sprites = list(g)
             if self._followed_sprite in sprites:
 
@@ -407,17 +446,19 @@ class ChipPile(Stacker):
                     rect = pygame.Rect(sprites[0].rect)
                     sprites[0].rect.topleft = original_pos
 
+                # TODO: fix this iter_delay nonsense
                 previous = self.iter_delay
                 self.iter_delay = 0
+                stack_offset = xx, yy
                 xx += self._desired_pos[0] - rect.centerx
                 yy += self._desired_pos[1] - rect.bottom
                 arrange(self._popped_chips, (ox + xx, yy), noclip=True)
                 self.iter_delay = previous
 
             else:
-                arrange(sprites, (ox, oy))
+                stack_offset = arrange(sprites, (ox, oy))
 
-            ox += self.stacking[0]
+            ox += self.stacking[0] + stack_offset[0]
         self._needs_arrange = False
 
 

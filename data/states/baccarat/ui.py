@@ -18,6 +18,8 @@ display updates.
 """
 from itertools import product, groupby
 
+import pygame
+
 from ... import prepare
 from ...components.animation import *
 
@@ -25,6 +27,7 @@ from ...components.animation import *
 __all__ = (
     'Sprite',
     'SpriteGroup',
+    'Stacker',
     'MetaGroup',
     'Button',
     'NeonButton',
@@ -38,6 +41,8 @@ def remove_animations_of(group, target):
     """
     animations = [ani for ani in group.sprites() if isinstance(ani, Animation)]
     to_remove = [ani for ani in animations if target in ani.targets]
+    for ani in to_remove:
+        ani.kill()
     group.remove(*to_remove)
 
 
@@ -141,7 +146,7 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
             return
 
         layer = kwargs.get('layer', None)
-        if isinstance(sprite, Sprite):
+        if isinstance(sprite, pygame.sprite.Sprite):
             if not self.has_internal(sprite):
                 self.add_internal(sprite, layer)
                 sprite.add_internal(self)
