@@ -4,8 +4,11 @@ import sys
 import random
 from math import degrees
 from operator import itemgetter
-import pymunkoptions
-pymunkoptions.options["debug"] = True
+try:
+    import pymunkoptions
+    pymunkoptions.options["debug"] = True
+except ImportError:
+    pass
 import pymunk
 import pymunk.pygame_util
 from pymunk import Body, Poly, Segment, Circle, GrooveJoint, DampedSpring
