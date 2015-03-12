@@ -2,18 +2,20 @@ import json
 import os
 import sys
 import random
-from math import degrees, pi
+from math import degrees
 from operator import itemgetter
+import pymunkoptions
+pymunkoptions.options["debug"] = True
 import pymunk
 import pymunk.pygame_util
 from pymunk import Body, Poly, Segment, Circle, GrooveJoint, DampedSpring
-from pymunk import moment_for_circle, PivotJoint, SimpleMotor, GearJoint
+from pymunk import moment_for_circle, PivotJoint, SimpleMotor
 import pygame
 import pygame.draw
 from pygame.transform import rotozoom, smoothscale
+from .rect import *
 from ... import prepare
 from ...prepare import BROADCASTER as B
-from pygame.compat import *
 
 __all__ = ['Playfield']
 
@@ -49,7 +51,7 @@ def load_json(space, filename):
 
     def get_rect(data):
         x, y, w, h = itemgetter('x', 'y', 'width', 'height')(data)
-        return pygame.Rect(x, y - ooy, w, h)
+        return Rect(x, y - ooy, w, h)
 
     def handle_polyline(data, body=None):
         def get_point(i):
@@ -197,7 +199,7 @@ class Handle(PhysicsSprite):
         body = Body()
         body.position = rect.center
         shape = Circle(body, radius)
-        rect2 = pygame.Rect(0, 0, rect.width, rect.width)
+        rect2 = Rect(0, 0, rect.width, rect.width)
         image = pygame.Surface(rect2.size, pygame.SRCALPHA)
         pygame.draw.circle(image, color, rect2.center, int(radius // 4))
         pygame.draw.line(image, (0, 0, 255), rect2.center, rect2.midtop, 8)
@@ -220,7 +222,7 @@ class Pocket(PhysicsSprite):
                 Segment(playfield, rect.bottomright, rect.topright, 1)))
         self._original_image = pygame.Surface(rect.size, pygame.SRCALPHA)
         pygame.draw.rect(self._original_image, color, rect)
-        self.rect = pygame.Rect(rect)
+        self.rect = Rect(rect)
         if win:
             self.shape.collision_type = pocket_win_type
         elif returns:
@@ -240,28 +242,32 @@ class Ball(PhysicsSprite):
         self.shape.friction = 0
         self.shape.layers = 1
         self.shape.collision_type = ball_type
-        self.rect = pygame.Rect(0, 0, rect.width, rect.width)
-        image = smoothscale(prepare.GFX.get('ball-bearing'), self.rect.size)
+        self.rect = Rect(0, 0, rect.width, rect.width)
+        size = map(int, self.rect.size)
+        image = smoothscale(prepare.GFX.get('ball-bearing'), size)
         self._original_image = image.convert_alpha()
 
 
 class Spinner(PhysicsSprite):
     def __init__(self, space, rect, playfield=None):
         super(Spinner, self).__init__()
-        r, cy = rect.width / 2, rect.height / 2
+        r, cy = rect.width / 2., rect.height / 2.
         assert (r == cy)
-        body = Body(.1, moment_for_circle(.1, 0, r))
+        body = Body(.1, moment_for_circle(.1, 0.0, r))
         body.position = rect.center
         top = Circle(body, r)
         top.layers = 2
-        rect2 = pygame.Rect((-r, -cy), rect.size)
+        rect2 = Rect((-r, -cy), rect.size)
         cross0 = Segment(body, rect2.midleft, rect2.midright, 1)
+        cross0.layers = 3
         cross1 = Segment(body, rect2.midtop, rect2.midbottom, 1)
+        cross1.layers = 4
+
         j0 = PivotJoint(playfield, body, body.position)
-        j1 = SimpleMotor(playfield, body, 0)
+        j1 = SimpleMotor(playfield, body, 0.0)
         j1.max_force = 200
         self.shapes = [top, cross0, cross1, j0, j1]
-        self.rect = pygame.Rect(rect)
+        self.rect = Rect(rect)
         self._original_image = prepare.GFX['pachinko-spinner']
 
 
@@ -269,33 +275,33 @@ class PlungerAssembly(PhysicsSprite):
     def __init__(self, space, rect, playfield=None):
         super(PlungerAssembly, self).__init__()
         self.chute_counter = 0
-        self.rect = pygame.Rect(0, 0, 0, 0)
+        self.rect = Rect(0, 0, 1, 1)
 
         spring_strength = 100 * plunger_mass
-        chute_opening = playfield.position + rect.center - (rect.width / 2 - ball_radius * 4, 0)
-        plunger_rect = pygame.Rect(0, 0, rect.width * .2, ball_radius / 2)
-        anchor0 = chute_opening - playfield.position - (ball_radius * 3, 0)
+        chute_opening = playfield.position + rect.center - (rect.width / 2. - ball_radius * 4, 0)
+        plunger_rect = Rect(0, 0, rect.width * .2, ball_radius / 2.)
+        anchor0 = chute_opening - playfield.position - (ball_radius * 3., 0)
         anchor1 = anchor0 + (rect.width * .8, 0)
-        anchor2 = -plunger_rect.width / 2, 0
+        anchor2 = -plunger_rect.width / 2., 0
 
         plunger_body = Body(plunger_mass, pymunk.inf)
         plunger_shape = Poly.create_box(plunger_body, plunger_rect.size)
         plunger_shape.layers = 1
-        plunger_shape.friction = 0
+        plunger_shape.friction = 0.1
         plunger_shape.elasticity = 1.0
         plunger_shape.collision_type = plunger_type
-        plunger_body.position = chute_opening + (plunger_rect.width / 2, 0)
+        plunger_body.position = chute_opening + (plunger_rect.width / 2., 0)
 
         j0 = GrooveJoint(playfield, plunger_body, anchor0, anchor1, anchor2)
         j1 = DampedSpring(playfield, plunger_body, anchor0, anchor2, 0, spring_strength, 5)
 
-        s0 = Circle(Body(), ball_radius / 2)
+        s0 = Circle(Body(), ball_radius / 2.)
         s0.layers = 1
         s0.sensor = True
         s0.collision_type = sensor0_type
-        s0.body.position = chute_opening + (ball_radius * 4, 0)
+        s0.body.position = chute_opening + (ball_radius * 4., 0.0)
 
-        s1 = Circle(Body(), ball_radius * 3)
+        s1 = Circle(Body(), ball_radius * 3.)
         s1.layers = 1
         s1.sensor = True
         s1.collision_type = sensor1_type
@@ -314,10 +320,10 @@ class PlungerAssembly(PhysicsSprite):
         self.playfield = playfield
         self.plunger_offset = playfield.position - plunger_body.position + (ball_radius * 3, 0)
         self.spring = j1
-        self.spring_length = rect.width / 2
+        self.spring_length = rect.width / 2.
         self.spring_strength = spring_strength
         self.plunger_body = plunger_body
-        self.ball_chute = pygame.Rect(0, 0, ball_radius * 2, ball_radius * 2)
+        self.ball_chute = Rect(0, 0, ball_radius * 2., ball_radius * 2.)
         self.ball_chute.center = chute_opening
         self._original_image = pygame.Surface(plunger_rect.size)
         self._original_image.fill((192, 255, 255))
@@ -351,7 +357,7 @@ class Playfield(pygame.sprite.LayeredDirty):
         for item in load_json(self._space, 'default.json'):
             self.add(item)
 
-        self.handle = Handle(self._space, pygame.Rect((1100, 700, 200, 200)))
+        self.handle = Handle(self._space, Rect(1100, 700, 200, 200))
         self.add(self.handle)
 
         def on_jackpot(space, arbiter):
@@ -416,7 +422,7 @@ class Playfield(pygame.sprite.LayeredDirty):
         self.timers.update(dt)
         if self._depress:
             self._plunger.plunger_body.apply_force((self._plunger_force, 0))
-
+        #
         # TODO: this calc is slightly wrong.   should give a complete circle?
         d = self._plunger.get_plunger_distance()
         self.handle.shape.body.angle = (d / self._plunger.spring_length) * 3

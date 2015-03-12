@@ -5,6 +5,7 @@ from collections import OrderedDict
 from random import choice
 from itertools import chain
 
+from pygame .gfxdraw import textured_polygon
 import pygame as pg
 
 from .ui import *
@@ -463,7 +464,10 @@ class Baccarat(TableGame):
             return label.draw()
 
         background = pg.Surface(size)
-        background.fill(prepare.FELT_GREEN)
+        points = (0, 0), (size[0], 0), (size[0], size[1]), (0, size[1])
+        texture = prepare.GFX['felt']
+        textured_polygon(background, points, texture, 1024, 1024)
+        # background.fill(prepare.FELT_GREEN)
         if hasattr(self, 'background_filename'):
             im = prepare.GFX[self.background_filename]
             background.blit(im, (0, 0))
@@ -481,7 +485,7 @@ class Baccarat(TableGame):
                 image = render_text('${}'.format(totals[name]))
                 image.set_alpha(192)
                 label.rect.midtop = area.rect.center
-                background.blit(image, label.rect)
+                background.blit(image, label.rect.move(0, -15))
             else:
                 image = render_text(area.name)
                 image.set_alpha(128)
