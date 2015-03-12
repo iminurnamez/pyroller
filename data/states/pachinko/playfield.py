@@ -243,7 +243,7 @@ class Ball(PhysicsSprite):
         self.shape.layers = 1
         self.shape.collision_type = ball_type
         self.rect = Rect(0, 0, rect.width, rect.width)
-        size = map(int, self.rect.size)
+        size = [int(i) for i in  self.rect.size]
         image = smoothscale(prepare.GFX.get('ball-bearing'), size)
         self._original_image = image.convert_alpha()
 
