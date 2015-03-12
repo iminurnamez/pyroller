@@ -485,7 +485,7 @@ class Baccarat(TableGame):
                 image = render_text('${}'.format(totals[name]))
                 image.set_alpha(192)
                 label.rect.midtop = area.rect.center
-                background.blit(image, label.rect)
+                background.blit(image, label.rect.move(0, -15))
             else:
                 image = render_text(area.name)
                 image.set_alpha(128)

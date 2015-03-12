@@ -189,6 +189,11 @@ class ChipPile(Stacker):
             self._popped_chips.remove(sprite)
         except ValueError:
             pass
+        try:
+            shadow = self._shadows_dict.pop(sprite)
+            self._shadows.remove(shadow)
+        except KeyError:
+            pass
         B.processEvent(('CHIPS_VALUE_CHANGE', self))
 
     def add_internal(self, *args, **kwargs):

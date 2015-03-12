@@ -59,5 +59,4 @@ class Slots(tools._State):
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.buttons.update(mouse_pos)
-        self.messager.update(dt)
         self.draw(surface)
