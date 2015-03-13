@@ -65,10 +65,11 @@ class TableGame(tools._State):
         self.chip_sounds = [prepare.SFX[name] for name in names]
 
         self._allow_exit = True
-        self._highlight_areas = False
-        self._mouse_tooltip = None
         self._enable_chips = False
+        self._enable_area_highlights = False
+        self._mouse_tooltip = None
         self._background = None
+        self._hovered_sprite = None
         self._clicked_sprite = None
         self._hovered_chip_area = None
         self._grabbed_stack = False
@@ -157,7 +158,7 @@ class TableGame(tools._State):
     def on_pickup_stack(self, *args):
         """When a stack of chips is picked up
         """
-        self._highlight_areas = True
+        self._enable_area_highlights = True
         self._grabbed_stack = True
 
         self._locked_advice = None
@@ -176,9 +177,9 @@ class TableGame(tools._State):
 
         # clear the light areas under chips/betting areas
         if self._hovered_chip_area is not None:
-            self.clear_drop_area_overlay()
+            self.clear_area_highlight()
 
-        self._highlight_areas = False
+        self._enable_area_highlights = False
         self._grabbed_stack = False
 
         d = args[0]
@@ -194,7 +195,7 @@ class TableGame(tools._State):
             owner.origin = owner
 
         if self._hovered_chip_area is not None:
-            self.clear_drop_area_overlay()
+            self.clear_area_highlight()
 
         self._advisor.empty()
 
@@ -284,7 +285,7 @@ class TableGame(tools._State):
 
         # handle when mouse moves outside previously hovered area
         elif not self._hovered_chip_area.drop_rect.collidepoint(position):
-            self.clear_drop_area_overlay()
+            self.clear_area_highlight()
 
     def on_snap_stack(self, *args):
         """When chips snap to cursor for first time
@@ -326,7 +327,7 @@ class TableGame(tools._State):
         sprite.rect.midleft = position
         sprite.rect.x += 30
 
-    def clear_drop_area_overlay(self):
+    def clear_area_highlight(self):
         self.remove_animations(self._hovered_chip_area.sprite.image)
 
         ani = Animation(
@@ -353,13 +354,17 @@ class TableGame(tools._State):
                 sprite.pressed = sprite.rect.collidepoint(pos)
 
             for sprite in self.hud.sprites():
-                if hasattr(sprite, 'on_mouse_enter'):
-                    if sprite.rect.collidepoint(pos):
-                        sprite.on_mouse_enter(pos)
+                if self._hovered_sprite is None:
+                    if hasattr(sprite, 'on_mouse_enter'):
+                        if sprite.rect.collidepoint(pos):
+                            self._hovered_sprite = sprite
+                            sprite.on_mouse_enter(pos)
 
-                elif hasattr(sprite, 'on_mouse_leave'):
-                    if not sprite.rect.collidepoint(pos):
-                        sprite.on_mouse_leave(pos)
+                elif sprite is self._hovered_sprite:
+                    if hasattr(sprite, 'on_mouse_leave'):
+                        if not sprite.rect.collidepoint(pos):
+                            self._hovered_sprite = None
+                            sprite.on_mouse_leave(pos)
 
         elif event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:

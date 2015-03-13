@@ -460,7 +460,6 @@ class Baccarat(TableGame):
         self.hide_bet_confirm_button = sprite.kill
         self.hud.add(sprite)
         sprite = self._advisor.queue_text('Click "Confirm Bets" to play', 0)
-        self._confirm_advice = sprite
 
     def render_background(self, size):
         """Render the background
