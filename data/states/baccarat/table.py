@@ -160,6 +160,7 @@ class TableGame(tools._State):
         self._highlight_areas = True
         self._grabbed_stack = True
 
+        self._locked_advice = None
         self._advisor.empty()
         self._advisor.queue_text('Place chips into a betting area', 0)
 
@@ -234,7 +235,7 @@ class TableGame(tools._State):
                 if bet.result is self.dealer_hand:
                     com = int(self.options['commission'] * 100)
                     msg = 'There is a {}% commission on dealer bets'.format(com)
-                    self._advisor.queue_text(msg, 3000)
+                    self._advisor.push_text(msg, 3000)
 
                 if needs_advice:
                     # TODO: remove from baseclass
@@ -295,9 +296,10 @@ class TableGame(tools._State):
         # essentially just updates the tool tip value
         self.on_snap_stack_motion(*args)
 
-        self._advisor.empty()
-        sprite = self._advisor.queue_text('Click to grab chips', 0)
-        self._locked_advice = sprite
+        if self._locked_advice is None:
+            self._advisor.empty()
+            sprite = self._advisor.queue_text('Click to grab chips', 0)
+            self._locked_advice = sprite
 
     def on_return_stack(self, *args):
         """When a stack of chips was previously snapped, but not any longer
