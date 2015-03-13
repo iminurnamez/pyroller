@@ -343,7 +343,7 @@ class Stacker(SpriteGroup):
         self._origin = None
         self._origin_offset = (0, 0)
         self._sprite_anchor = None
-        self.iter_delay = 10
+        self.iter_delay = 6
         self.stacking = stacking
 
     @property
@@ -422,6 +422,7 @@ class Stacker(SpriteGroup):
         ox, oy = self.stacking
         xx = 0
         yy = 0
+        delay_index = 0
 
         for index, sprite in enumerate(sprites):
             rect = sprite.rect
@@ -450,8 +451,9 @@ class Stacker(SpriteGroup):
                 setattr(rect, anchor, original_anchor)
                 ani = f(sprite, original_anchor, final_value, index)
                 if ani is not None:
-                    ani.delay = float(index) * self.iter_delay
+                    ani.delay = delay_index * float(self.iter_delay)
                     self._animations.add(ani)
+                    delay_index += 1
                 else:
                     setattr(rect, anchor, original_anchor)
 

@@ -66,7 +66,6 @@ class TableGame(tools._State):
 
         self._allow_exit = True
         self._enable_chips = False
-        self._enable_area_highlights = False
         self._mouse_tooltip = None
         self._background = None
         self._hovered_sprite = None
@@ -158,7 +157,6 @@ class TableGame(tools._State):
     def on_pickup_stack(self, *args):
         """When a stack of chips is picked up
         """
-        self._enable_area_highlights = True
         self._grabbed_stack = True
 
         self._locked_advice = None
@@ -179,7 +177,6 @@ class TableGame(tools._State):
         if self._hovered_chip_area is not None:
             self.clear_area_highlight()
 
-        self._enable_area_highlights = False
         self._grabbed_stack = False
 
         d = args[0]
