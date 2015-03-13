@@ -113,6 +113,13 @@ class Baccarat(TableGame):
         for name, area in self.betting_areas.items():
             area.hand = hands[area.name]
 
+    @property
+    def bets_ready(self):
+        """True if bets are placed and ready to deal cards
+        :return: bool
+        """
+        return bool(self.bets)
+
     def new_round(self):
         """Start new round of baccarat.
 
@@ -196,6 +203,7 @@ class Baccarat(TableGame):
         self.delay(800, self.final_count_hands)
 
     def final_count_hands(self):
+        """Count the hands and process all bets on the table"""
         player_result = count_deck(self.player_hand)
         dealer_result = count_deck(self.dealer_hand)
         stats = self.stats
@@ -212,6 +220,7 @@ class Baccarat(TableGame):
             winner = None
             stats['Tie Result'] += 1
 
+        # process bets
         player_total = 0
         for bet in self.bets.groups():
             earnings = self.process_bet(bet, winner)
@@ -428,7 +437,7 @@ class Baccarat(TableGame):
     def show_finish_round_button(self):
         def f(sprite):
             sprite.kill()
-            self._advisor.dismiss()
+            self._advisor.empty()
             self.new_round()
 
         text = TextSprite('Play Again', self.button_font)
@@ -438,7 +447,6 @@ class Baccarat(TableGame):
     def show_bet_confirm_button(self):
         def f(sprite):
             if len(self.bets) > 0:
-                self._advisor.dismiss()
                 self._allow_exit = False
                 self._enable_chips = False
                 sprite.kill()
@@ -451,6 +459,8 @@ class Baccarat(TableGame):
         sprite = Button(text, rect, f)
         self.hide_bet_confirm_button = sprite.kill
         self.hud.add(sprite)
+        sprite = self._advisor.push_text('Click "Confirm Bets" to play', 0)
+        self._confirm_advice = sprite
 
     def render_background(self, size):
         """Render the background

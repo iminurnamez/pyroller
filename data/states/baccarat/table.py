@@ -49,10 +49,12 @@ class TableGame(tools._State):
         self.confirm_button_rect = None
 
         self.interested_events = [
+            ('SNAP_STACK', self.on_snap_stack),
+            ('RETURN_STACK', self.on_return_stack),
+            ('SNAP_STACK_MOTION', self.on_snap_stack_motion),
             ('PICKUP_STACK', self.on_pickup_stack),
             ('DROP_STACK', self.on_drop_stack),
-            ('HOVER_STACK', self.on_stack_motion),
-            ('RETURN_STACK', self.on_return_stack)
+            ('PICKUP_STACK_MOTION', self.on_pickup_stack_motion),
         ]
 
         names = ["cardshove{}".format(x) for x in (1, 3, 4)]
@@ -70,7 +72,7 @@ class TableGame(tools._State):
         self._clicked_sprite = None
         self._hovered_chip_area = None
         self._grabbed_stack = False
-        self._stack_motion_advice = None
+        self._locked_advice = None
 
         self.font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
         self.large_font = pg.font.Font(prepare.FONTS["Saniretro"], 120)
@@ -152,39 +154,111 @@ class TableGame(tools._State):
         for name, f in self.interested_events:
             B.unlinkEvent(name, f)
 
-    def on_stack_motion(self, *args):
+    def on_pickup_stack(self, *args):
+        """When a stack of chips is picked up
+        """
+        self._highlight_areas = True
+        self._grabbed_stack = True
+
+        self._advisor.empty()
+        self._advisor.queue_text('Place chips into a betting area', 0)
+
+    def on_drop_stack(self, *args):
+        """When a stack of chips is dropped anywhere
+        """
+        # this is a hack until i have a proper metagroup
+        def remove(owner, chips):
+            owner.remove(chips)
+            if owner is not self.player_chips:
+                if owner.value == 0:
+                    self.bets.remove(owner)
+
+        # clear the light areas under chips/betting areas
+        if self._hovered_chip_area is not None:
+            self.clear_drop_area_overlay()
+
+        self._highlight_areas = False
+        self._grabbed_stack = False
+
+        d = args[0]
+        position = d['position']
+        owner = d['object']
+        chips = d['chips']
+
+        needs_advice = not self.bets.groups()
+
+        # this value is used to determine where to
+        # return chips if this bet wins
+        if not hasattr(owner, 'origin'):
+            owner.origin = owner
+
+        if self._hovered_chip_area is not None:
+            self.clear_drop_area_overlay()
+
+        self._advisor.empty()
+
+        # check if chip is dropped onto a bet pile or player chips
+        areas = chain(self.bets.groups(), [self.player_chips])
+        for area in areas:
+            if area is owner:
+                continue
+
+            if area.rect.collidepoint(position):
+                remove(owner, chips)
+                area.extend(chips)
+                area.ignore_until_away = True
+                self.clear_background()
+
+                if not self.bets.groups():
+                    self.hide_bet_confirm_button()
+
+                return True, area
+
+        # place chips in betting area
+        for area in self.betting_areas.values():
+            if area.rect.collidepoint(position):
+                remove(owner, chips)
+                bet = self.place_bet(area.hand, owner.origin, chips)
+                bet.origin = owner.origin
+                bet.rect.bottomleft = position
+
+                # TODO: should not be hardcoded
+                bet.rect.x -= 32
+                self.clear_background()
+
+                if bet.result is None:
+                    payout = self.options['tie_payout']
+                    msg = 'Ties pay {} to 1'.format(payout)
+                    self._advisor.queue_text(msg, 3000)
+
+                if bet.result is self.dealer_hand:
+                    com = int(self.options['commission'] * 100)
+                    msg = 'There is a {}% commission on dealer bets'.format(com)
+                    self._advisor.queue_text(msg, 3000)
+
+                if needs_advice:
+                    # TODO: remove from baseclass
+                    self.show_bet_confirm_button()
+
+                return True, bet
+
+        # place chips in the house chips
+        if self.house_chips.rect.collidepoint(position):
+            remove(owner, chips)
+            new_chips = list()
+            for chip in chips:
+                for value in make_change(chip.value, break_down=True):
+                    chip = Chip(value)
+                    chip.rect.center = self.house_chips.rect.center
+                    new_chips.append(chip)
+            self.player_chips.extend(new_chips)
+
+    def on_pickup_stack_motion(self, *args):
         """When mouse is hovering over a stack or moving it
         """
         chips, position = args[0]
 
-        if self._mouse_tooltip is None:
-            value = TextSprite('', self.large_font)
-            self._mouse_tooltip = value
-            self.hud.add(value, layer=100)
-        else:
-            value = self._mouse_tooltip
-
-        amount = str(chips_to_cash(chips))
-        value.text = "${}".format(amount)
-        value.rect.midleft = position
-        value.rect.x += 30
-
-        # if a stack is grabbed, dismiss the advice to grab it
-        if self._grabbed_stack:
-            if self._stack_motion_advice is not None:
-                self._advisor.dismiss(self._stack_motion_advice)
-                self._stack_motion_advice = None
-                self._advisor.queue_text('Place chips into a betting area', -1)
-
-        # do advice if not already shown
-        elif self._stack_motion_advice is None:
-            self._advisor.empty()
-            sprite = self._advisor.queue_text('Click to grab chips', 0)
-            self._stack_motion_advice = sprite
-
-        # quit if we have not grabbed a stack yet
-        else:
-            return
+        self.on_snap_stack_motion(*args)
 
         # check if mouse is hovering over betting area
         areas = chain(self.betting_areas.values(), [self.player_chips])
@@ -211,6 +285,45 @@ class TableGame(tools._State):
         elif not self._hovered_chip_area.drop_rect.collidepoint(position):
             self.clear_drop_area_overlay()
 
+    def on_snap_stack(self, *args):
+        """When chips snap to cursor for first time
+        """
+        value = TextSprite('', self.large_font)
+        self._mouse_tooltip = value
+        self.hud.add(value, layer=100)
+
+        # essentially just updates the tool tip value
+        self.on_snap_stack_motion(*args)
+
+        self._advisor.empty()
+        sprite = self._advisor.queue_text('Click to grab chips', 0)
+        self._locked_advice = sprite
+
+    def on_return_stack(self, *args):
+        """When a stack of chips was previously snapped, but not any longer
+        """
+        # remove money tooltip
+        self.hud.remove(self._mouse_tooltip)
+        self._mouse_tooltip = None
+
+        # remove 'click to grab chips' message
+        if self._locked_advice is not None:
+            self._advisor.dismiss(self._locked_advice)
+            self._locked_advice = None
+
+    def on_snap_stack_motion(self, *args):
+        """When snapped stack is moved around
+        """
+        chips, position = args[0]
+        amount = str(chips_to_cash(chips))
+        sprite = self._mouse_tooltip
+        sprite.text = "${}".format(amount)
+        self.update_tooltip(sprite, position)
+
+    def update_tooltip(self, sprite, position):
+        sprite.rect.midleft = position
+        sprite.rect.x += 30
+
     def clear_drop_area_overlay(self):
         self.remove_animations(self._hovered_chip_area.sprite.image)
 
@@ -224,115 +337,6 @@ class TableGame(tools._State):
         self.animations.add(ani)
 
         self._hovered_chip_area = None
-
-    def on_return_stack(self, *args):
-        """When a stack of chips is returned to pile
-        """
-        self._grabbed_stack = False
-
-        # remove money tooltip
-        if self._mouse_tooltip is not None:
-            self.hud.remove(self._mouse_tooltip)
-            self._mouse_tooltip = None
-
-        # remove 'click to grab chips' message
-        if self._stack_motion_advice is not None:
-            self._advisor.dismiss(self._stack_motion_advice)
-            self._stack_motion_advice = None
-        else:
-            self._advisor.empty()
-
-        # clear the light areas under chips/betting areas
-        if self._hovered_chip_area is not None:
-            self.clear_drop_area_overlay()
-
-    def on_pickup_stack(self, *args):
-        """When a stack of chips is picked up
-        """
-        self._highlight_areas = True
-        self._grabbed_stack = True
-
-    def on_drop_stack(self, *args):
-        """When a stack of chips is dropped anywhere
-        """
-        # this is a hack until i have a proper metagroup
-        def remove(owner, chips):
-            owner.remove(chips)
-            if owner is not self.player_chips:
-                if owner.value == 0:
-                    self.bets.remove(owner)
-
-        self._highlight_areas = False
-        d = args[0]
-        position = d['position']
-        owner = d['object']
-        chips = d['chips']
-
-        needs_advice = not self.bets.groups()
-
-        # this value is used to determine where to
-        # return chips if this bet wins
-        if not hasattr(owner, 'origin'):
-            owner.origin = owner
-
-        if self._hovered_chip_area is not None:
-            self.clear_drop_area_overlay()
-
-        # check if chip is dropped onto a bet pile or player chips
-        areas = chain(self.bets.groups(), [self.player_chips])
-        for area in areas:
-            if area is owner:
-                continue
-
-            if area.rect.collidepoint(position):
-                remove(owner, chips)
-                area.extend(chips)
-                area.ignore_until_away = True
-                self.clear_background()
-
-                if not self.bets.groups():
-                    self.hide_bet_confirm_button()
-
-                return True, area
-
-        # place chips in betting area
-        for area in self.betting_areas.values():
-            if area.rect.collidepoint(position):
-                remove(owner, chips)
-                bet = self.place_bet(area.hand, owner.origin, chips)
-                bet.origin = owner.origin
-                bet.rect.bottomleft = position
-                # TODO: should not be hardcoded
-                bet.rect.x -= 32
-                self.clear_background()
-
-                if bet.result is None:
-                    payout = self.options['tie_payout']
-                    msg = 'Ties pay {} to 1'.format(payout)
-                    self._advisor.queue_text(msg, 3000)
-
-                if bet.result is self.dealer_hand:
-                    com = int(self.options['commission'] * 100)
-                    msg = 'There is a {}% commission on dealer bets'.format(com)
-                    self._advisor.queue_text(msg, 3000)
-
-                if needs_advice:
-                    # TODO: remove from baseclass
-                    self.show_bet_confirm_button()
-                    self._advisor.queue_text('Click "Confirm Bets" to play')
-
-                return True, bet
-
-        # place chips in the house chips
-        if self.house_chips.rect.collidepoint(position):
-            remove(owner, chips)
-            new_chips = list()
-            for chip in chips:
-                for value in make_change(chip.value, break_down=True):
-                    chip = Chip(value)
-                    chip.rect.center = self.house_chips.rect.center
-                    new_chips.append(chip)
-            self.player_chips.extend(new_chips)
 
     def get_event(self, event, scale=(1, 1)):
         if event.type == pg.KEYDOWN:
