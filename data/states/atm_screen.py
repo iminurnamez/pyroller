@@ -139,15 +139,17 @@ class ATMMenu(ATMState):
                 ("Balance Inquiry", "ACCOUNTSCREEN", (34, 450)),  
                 ("Deposit", "DEPOSIT", (34, 580)), 
                 ("Withdrawal", "WITHDRAWAL", (1278, 450)),
-                ("Cash Advance", "ADVANCE", (1278, 580)), 
+                ("Cash Advance", "ADVANCE", (1278, 580)),
                 ("Exit", "", (1278, 840))
                 ]
         for text, next_state_name, topleft in buttons:
             callback = self.set_next
+            bound = []
             if text == "Exit":
                 callback = self.back_to_lobby
+                bound = [pg.K_ESCAPE]
             Button((topleft, (88, 65)), self.buttons,
-                       args=next_state_name, call=callback)
+                       args=next_state_name, call=callback, bindings=bound)
             if topleft[0] == 34:
                 rect_pos = {"midleft": (topleft[0] + 115, topleft[1] + 32)}
             else:
@@ -164,7 +166,9 @@ class ATMMenu(ATMState):
         
     def get_event(self, event, scale):
         self.buttons.get_event(event)
-
+        if event.type == pg.QUIT:
+            self.back_to_lobby()
+            
     def update(self, surface, keys, current, dt, scale, player):      
         self.buttons.update(tools.scaled_mouse_pos(scale))
         self.draw(surface)
@@ -210,9 +214,19 @@ class DepositScreen(ATMState):
         self.next = "MESSAGESCREEN"
         self.done = True
         
+    def back_to_menu(self):
+        self.beep()
+        self.next = "MAINMENU"
+        self.done = True
+        
     def get_event(self, event, scale):
         self.textbox.get_event(event, tools.scaled_mouse_pos(scale))
         self.buttons.get_event(event)
+        if event.type == pg.QUIT:
+            self.back_to_menu()
+        elif event.type == pg.KEYUP:
+            if event.key == pg.K_ESCAPE:
+                self.back_to_menu()             
     
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
@@ -280,9 +294,19 @@ class WithdrawalScreen(ATMState):
         self.next = "MESSAGESCREEN"
         self.done = True
         
+    def back_to_menu(self):
+        self.beep()
+        self.next = "MAINMENU"
+        self.done = True
+        
     def get_event(self, event, scale):
         self.textbox.get_event(event, tools.scaled_mouse_pos(scale))
         self.buttons.get_event(event)
+        if event.type == pg.QUIT:
+            self.back_to_menu()
+        elif event.type == pg.KEYUP:
+            if event.key == pg.K_ESCAPE:
+                self.back_to_menu()
         
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
@@ -352,13 +376,24 @@ class AdvanceScreen(ATMState):
 
     def leave_message(self, msg):
         self.make_textbox()
+        self.beep()
         self.persist["message"] = msg
         self.next = "MESSAGESCREEN"
+        self.done = True
+        
+    def back_to_menu(self):
+        self.beep()
+        self.next = "MAINMENU"
         self.done = True
         
     def get_event(self, event, scale):
         self.textbox.get_event(event, tools.scaled_mouse_pos(scale))
         self.buttons.get_event(event)
+        if event.type == pg.QUIT:
+            self.back_to_menu()
+        elif event.type == pg.KEYUP:
+            if event.key == pg.K_ESCAPE:
+                self.back_to_menu()               
         
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
@@ -405,7 +440,12 @@ class AccountScreen(ATMState):
         
     def get_event(self, event, scale):
         self.buttons.get_event(event)
-    
+        if event.type == pg.QUIT:
+            self.back_to_menu()
+        elif event.type == pg.KEYUP:
+            if event.key == pg.K_ESCAPE:
+                self.back_to_menu()
+                
     def update(self, surface, keys, current, dt, scale, player):
         self.buttons.update(tools.scaled_mouse_pos(scale))
         self.labels = []
