@@ -106,7 +106,7 @@ class Blackjack(tools._State):
 
     def new_game(self, player_cash, chips=None):
         """Start a new round of blackjack."""
-        self.deck = Deck((20, 20), prepare.CARD_SIZE, 20)
+        self.deck = Deck((20, 20), prepare.CARD_SIZE, 40)
         self.dealer = Dealer()
         self.chip_rack = ChipRack((1100, 130), self.chip_size)
         self.moving_cards =  []

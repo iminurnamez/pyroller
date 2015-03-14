@@ -373,6 +373,30 @@ class GameButton(Button):
         return (image, highlight)
 
 
+class MoneyIcon(object):
+    def __init__(self, topleft, size=(156, 70)):
+        self.font = prepare.FONTS["Saniretro"]
+        self.font_scale =  size[0] / 156.
+        dollar = prepare.GFX["dollar_bill_yall"]
+        self.dollar_image = pg.transform.smoothscale(dollar, size).convert_alpha()
+        self.rect = self.dollar_image.get_rect(topleft=topleft)
+        
+    def update(self, amount):
+        text = "${0:,.0f}".format(amount)
+        font_size = int((64 - ((len(text) - 4) * 4)) * self.font_scale)
+        self.surf = pg.Surface(self.rect.size).convert()
+        dollar_rect = pg.Rect((0,0), self.rect.size)
+        money_label = Label(self.font, font_size, text, "gray10",
+                                       {"center": dollar_rect.center})
+        self.surf.blit(self.dollar_image, (0,0))
+        money_label.draw(self.surf)
+        self.surf.set_alpha(140)
+    
+    def draw(self, surface):
+        surface.blit(self.dollar_image, self.rect)
+        surface.blit(self.surf, self.rect)
+
+        
 class TextBox(object):
     def __init__(self,rect,**kwargs):
         self.rect = pg.Rect(rect)

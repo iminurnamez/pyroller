@@ -1,6 +1,6 @@
 import pygame as pg
 from .. import tools, prepare
-from ..components.labels import Label, ButtonGroup, Button, TextBox
+from ..components.labels import Label, ButtonGroup, Button, TextBox, MoneyIcon
 
 
 class ATMScreen(tools._State):
@@ -28,6 +28,8 @@ class ATMScreen(tools._State):
         self.state_name = "MAINMENU"
         self.state = self.states[self.state_name]
         self.frame = prepare.GFX["atm_frame"]
+        topleft = self.screen_rect.left, self.screen_rect.bottom - 88
+        self.cash_icon = MoneyIcon(topleft, (195, 88))
         
     def startup(self, current, persistent):
         self.persist = persistent
@@ -38,6 +40,7 @@ class ATMScreen(tools._State):
     
     def update(self, surface, keys, current, dt, scale):
         self.player.account.update(current)
+        self.cash_icon.update(self.player.cash)
         if self.state.quit:
             self.state.quit = False
             self.done = True
@@ -51,8 +54,10 @@ class ATMScreen(tools._State):
             self.state.startup(persistent)
         else:
             self.state.update(surface, keys, current, dt, scale, self.player)
-        surface.blit(self.frame, (0, 0))
         
+        surface.blit(self.frame, (0, 0))
+        self.cash_icon.draw(surface)
+       
        
 class ATMState(object):
     """Base class for different ATM screen states."""
