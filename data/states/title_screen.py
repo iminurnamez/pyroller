@@ -118,6 +118,10 @@ class TitleScreen(tools._State):
         elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
             for scroller in self.scrollers:
                 scroller.done = True
+        elif event.type == pg.KEYUP:
+            if event.key == pg.K_ESCAPE:
+                self.done = True
+                self.quit = True
         self.buttons.get_event(event)
 
     def cleanup(self):

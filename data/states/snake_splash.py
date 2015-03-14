@@ -18,6 +18,17 @@ class SnakeSplash(tools._State):
         """This method will be called each time the state resumes."""
         self.persist = persistent
 
+    def get_event(self, event, scale):
+        if event.type == pg.QUIT:
+            self.done = True
+            self.quit = True
+        elif event.type == pg.KEYUP:
+            self.done  = True
+            if event.key == pg.K_ESCAPE:
+                self.quit = True
+        elif event.type == pg.MOUSEBUTTONUP:
+            self.done = True
+            
     def draw(self, surface):
         """This method handles drawing/blitting the state each frame."""
         surface.fill(prepare.BACKGROUND_BASE)
