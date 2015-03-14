@@ -171,8 +171,10 @@ class TableGame(tools._State):
 
         # if a stack is grabbed, dismiss the advice to grab it
         if self._grabbed_stack:
-            self._advisor.dismiss(self._stack_motion_advice)
-            self._stack_motion_advice = None
+            if self._stack_motion_advice is not None:
+                self._advisor.dismiss(self._stack_motion_advice)
+                self._stack_motion_advice = None
+                self._advisor.queue_text('Place chips into a betting area', -1)
 
         # do advice if not already shown
         elif self._stack_motion_advice is None:
@@ -237,6 +239,8 @@ class TableGame(tools._State):
         if self._stack_motion_advice is not None:
             self._advisor.dismiss(self._stack_motion_advice)
             self._stack_motion_advice = None
+        else:
+            self._advisor.empty()
 
         # clear the light areas under chips/betting areas
         if self._hovered_chip_area is not None:
@@ -419,8 +423,6 @@ class TableGame(tools._State):
 
     def place_bet(self, result, owner, chips):
         """Shortcut to place a bet with chips
-
-        Be sure to move the bet to a sensible area after placing it
 
         :param result: Deck or None
         :param owner: ChipsPile instance

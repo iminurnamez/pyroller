@@ -33,7 +33,8 @@ __all__ = (
     'NeonButton',
     'TextSprite',
     'OutlineTextSprite',
-    'remove_animations_of')
+    'remove_animations_of',
+    'make_shadow_surface')
 
 
 def remove_animations_of(group, target):
@@ -92,14 +93,19 @@ def make_shadow_surface(surface):
 
     slow.  use once and cache the result
     image must have alpha channel or results are undefined
-
-    not implemented
     """
-    shad = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-
-    # for x, y in product(*(range(i) for i in surface.get_size())):
-    #     print x, y
-
+    bg_color = 255, 0, 255
+    color = 32, 32, 32
+    w, h = surface.get_size()
+    shad = pygame.Surface((w, h), flags=pygame.RLEACCEL)
+    shad.fill(bg_color)
+    shad.set_colorkey(bg_color)
+    shad.set_alpha(64)
+    mask = pygame.mask.from_surface(surface)
+    for pixel in product(range(w), range(h)):
+        if mask.get_at(pixel):
+            shad.set_at(pixel, color)
+    return shad
 
 class Sprite(pygame.sprite.DirtySprite):
     """DirtySprite class with extra support for animations
@@ -152,6 +158,11 @@ class SpriteGroup(pygame.sprite.LayeredUpdates):
                 sprite.add_internal(self)
         else:
             raise ValueError
+
+    def pop(self):
+        sprite = self._spritelist[-1]
+        self.remove(sprite)
+        return sprite
 
     # def draw(self, surface):
     #     """draw all sprites in the right order onto the passed surface
