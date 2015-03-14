@@ -59,7 +59,7 @@ class StatsMenu(tools._State):
             button = NeonButton(pos, game, self.view_game_stats, game, buttons)
         pos = (screen_rect.centerx-(NeonButton.width//2),
                screen_rect.bottom-(NeonButton.height+10))
-        NeonButton(pos, "Lobby", self.back_to_lobby, None, buttons)
+        NeonButton(pos, "Lobby", self.back_to_lobby, None, buttons, bindings=[pg.K_ESCAPE])
         return buttons
 
     def back_to_lobby(self, *args):

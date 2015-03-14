@@ -20,7 +20,7 @@ class StatsScreen(tools._State):
                screen_rect.bottom-(NeonButton.height+10))
         NeonButton((x,y), "Lobby", self.back_to_x, "LOBBYSCREEN", buttons)
         x = screen_rect.centerx-(NeonButton.width//2)+170
-        NeonButton((x,y), "Back", self.back_to_x, "STATSMENU", buttons)
+        NeonButton((x,y), "Back", self.back_to_x, "STATSMENU", buttons, bindings=[pg.K_ESCAPE])
         return buttons
 
     def back_to_x(self, next_state):
