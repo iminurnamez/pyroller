@@ -36,6 +36,7 @@ class MusicHandler(object):
         font = prepare.FONTS["Saniretro"]
         self.volume_label = Label(font, 32, "Volume", "goldenrod3",
                                  {"midtop": (self.rect.centerx,self.rect.y+3)})
+        self.change_song("main_stem")
 
     def make_buttons(self):
         icon_sheet = prepare.GFX["audio_icon_strip"]
