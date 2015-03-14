@@ -112,6 +112,9 @@ class MessageScreen(ATMState):
         
     def get_event(self, event, scale):
         self.buttons.get_event(event)
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_RETURN:
+                self.back_to_menu()
 
     def draw(self, surface):
         surface.fill(pg.Color("blue2"))
@@ -177,9 +180,18 @@ class DepositScreen(ATMState):
         super(DepositScreen, self).__init__()  
         
         self.title = Label(self.font, 36, "Enter Deposit Amount", "white",
-                    {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 80)})
+                    {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 300)})
         self.make_textbox()
+        self.make_enter_button()
         
+    def make_enter_button(self):
+        self.buttons = ButtonGroup()
+        self.labels = []
+        Button(((1278, 840), (88, 65)), self.buttons, bindings=[pg.K_RETURN])
+        rect_pos = {"midright": (1251, 872)}           
+        label = Label(self.font, 36, "Enter", "white", rect_pos, bg="blue2")
+        self.labels.append(label)
+    
     def make_textbox(self):
         rect = (self.screen_rect.centerx - 200, self.screen_rect.top + 600,
                    400, 200)    
@@ -191,7 +203,7 @@ class DepositScreen(ATMState):
         self.textbox.update()
         self.dollar_sign = Label(self.font, 36, "$", "white",
                     {"midright": (rect[0] - 5, rect[1] + 100)})
-
+        
     def leave_message(self, msg):
         self.make_textbox()
         self.persist["message"] = msg
@@ -200,9 +212,11 @@ class DepositScreen(ATMState):
         
     def get_event(self, event, scale):
         self.textbox.get_event(event, tools.scaled_mouse_pos(scale))
+        self.buttons.get_event(event)
     
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
+        self.buttons.update(tools.scaled_mouse_pos(scale))
         if not self.textbox.active:
             self.beep()
             try:
@@ -216,6 +230,10 @@ class DepositScreen(ATMState):
                 self.leave_message(msg)
             else:
                 self.leave_message("Insufficient Funds Deposited")
+        text = "You have ${:.2f} available for deposit".format(player.cash)
+        self.dyna_label = Label(self.font, 36, text, "white", 
+                                          {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 80)})
+        
         self.draw(surface)         
          
     def draw(self, surface):
@@ -223,15 +241,26 @@ class DepositScreen(ATMState):
         self.title.draw(surface)
         self.dollar_sign.draw(surface)
         self.textbox.draw(surface)
+        for label in self.labels:
+            label.draw(surface)
+        self.dyna_label.draw(surface)
         
-    
 class WithdrawalScreen(ATMState):
     def __init__(self):
         super(WithdrawalScreen, self).__init__()  
         self.title = Label(self.font, 36, "Enter Withdrawal Amount", "white",
-                    {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 80)})
+                    {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 300)})
         
         self.make_textbox()
+        self.make_enter_button()
+        
+    def make_enter_button(self):
+        self.buttons = ButtonGroup()
+        self.labels = []
+        Button(((1278, 840), (88, 65)), self.buttons, bindings=[pg.K_RETURN])
+        rect_pos = {"midright": (1251, 872)}           
+        label = Label(self.font, 36, "Enter", "white", rect_pos, bg="blue2")
+        self.labels.append(label)
         
     def make_textbox(self):
         rect = (self.screen_rect.centerx - 200,
@@ -253,6 +282,7 @@ class WithdrawalScreen(ATMState):
         
     def get_event(self, event, scale):
         self.textbox.get_event(event, tools.scaled_mouse_pos(scale))
+        self.buttons.get_event(event)
         
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
@@ -269,6 +299,10 @@ class WithdrawalScreen(ATMState):
             else:
                 msg = "Insufficient Funds for Withdrawal"
                 self.leave_message(msg)
+        self.buttons.update(tools.scaled_mouse_pos(scale))
+        text = "You have ${:.2f} available for withdrawal".format(player.account.balance)
+        self.dyna_label = Label(self.font, 36, text, "white", 
+                                          {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 80)})
         self.draw(surface)
         
     def draw(self, surface):
@@ -276,6 +310,9 @@ class WithdrawalScreen(ATMState):
         self.title.draw(surface)
         self.dollar_sign.draw(surface)
         self.textbox.draw(surface)
+        for label in self.labels:
+            label.draw(surface)
+        self.dyna_label.draw(surface)
         
 
 class AdvanceScreen(ATMState):
@@ -283,8 +320,25 @@ class AdvanceScreen(ATMState):
         super(AdvanceScreen, self).__init__()
         self.make_textbox()
         self.title = Label(self.font, 36, "Enter Cash Advance Amount", "white",
-                    {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 80)})
-
+                    {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 300)})
+        self.make_enter_button()
+    
+    def make_dynamic_labels(self, player):
+        text = "The maximum advance is ${:.2f}".format(player.account.max_advance)
+        dyna1 = Label(self.font, 36, text, "white",
+                             {"midtop": (self.screen_rect.centerx, self.screen_rect.top + 80)})
+        fee_text = "A {}% fee will be added to the advance amount".format(player.account.lending_rate * 100)
+        dyna2 = Label(self.font, 36, fee_text, "white", {"midtop": (self.screen_rect.centerx, dyna1.rect.bottom + 10)})
+        self.dynamic_labels = [dyna1, dyna2]
+        
+    def make_enter_button(self):
+        self.button_labels = []
+        self.buttons = ButtonGroup()
+        Button(((1278, 840), (88, 65)), self.buttons, bindings=[pg.K_RETURN])
+        rect_pos = {"midright": (1251, 872)}           
+        label = Label(self.font, 36, "Enter", "white", rect_pos, bg="blue2")
+        self.button_labels.append(label)
+        
     def make_textbox(self):
         rect = (self.screen_rect.centerx - 200,
                    self.screen_rect.top + 600, 400, 200)
@@ -304,7 +358,8 @@ class AdvanceScreen(ATMState):
         
     def get_event(self, event, scale):
         self.textbox.get_event(event, tools.scaled_mouse_pos(scale))
-
+        self.buttons.get_event(event)
+        
     def update(self, surface, keys, current, dt, scale, player):
         self.textbox.update()
         if not self.textbox.active:
@@ -313,10 +368,16 @@ class AdvanceScreen(ATMState):
                 amount = int(self.textbox.final)
             except ValueError:
                 amount = 0
-            player.account.cash_advance(amount)
-            player.cash += amount
-            msg = "${:.2f} Dispensed".format(amount)
-            self.leave_message(msg)
+            if amount > player.account.max_advance:
+                amount = 0
+                self.leave_message("You are not authorized for this amount")       
+            else:
+                player.account.cash_advance(amount)
+                player.cash += amount
+                msg = "${:.2f} Dispensed".format(amount)
+                self.leave_message(msg)
+        self.buttons.update(tools.scaled_mouse_pos(scale))
+        self.make_dynamic_labels(player)
         self.draw(surface)
 
     def draw(self, surface):
@@ -324,6 +385,10 @@ class AdvanceScreen(ATMState):
         self.title.draw(surface)
         self.dollar_sign.draw(surface)
         self.textbox.draw(surface)
+        for label in self.dynamic_labels:
+            label.draw(surface)
+        for b_label in self.button_labels:
+            b_label.draw(surface)        
 
 
 class AccountScreen(ATMState):
