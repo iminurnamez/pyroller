@@ -8,11 +8,13 @@ from ...components.labels import Label, Blinker, MultiLineLabel
 from ...components.cards import Deck
 from ...components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
 from ...components.warning_window import NoticeWindow, WarningWindow
+from ...components.advisor import Advisor
 from .blackjack_dealer import Dealer
 from .blackjack_player import Player
 from .blackjack_hand import Hand
 from .blackjack_advisor_window import AdvisorWindow
 from .blackjack_bot import BlackjackBot
+
 
 
 class Blackjack(tools._State):
@@ -41,7 +43,12 @@ class Blackjack(tools._State):
         self.last_bet = 0
         self.bot = None
         self.bot_queue = []
-
+        self.draw_group = pg.sprite.Group()
+        self.move_animations = pg.sprite.Group()
+        self.advisor = Advisor(self.draw_group, self.move_animations)
+        self.advisor_back = prepare.GFX["advisor_back"]
+        self.advisor_front = prepare.GFX["advisor_front"]
+        
     def make_buttons(self):
         side_margin = 10
         vert_space = 15
@@ -106,7 +113,7 @@ class Blackjack(tools._State):
 
     def new_game(self, player_cash, chips=None):
         """Start a new round of blackjack."""
-        self.deck = Deck((20, 20), prepare.CARD_SIZE, 40)
+        self.deck = Deck((20, 100), prepare.CARD_SIZE, 40)
         self.dealer = Dealer()
         self.chip_rack = ChipRack((1100, 130), self.chip_size)
         self.moving_cards =  []
@@ -120,13 +127,16 @@ class Blackjack(tools._State):
         self.labels = self.make_labels()
         self.current_player_hand = self.player.hands[0]
         self.game_started = True
+        
         if self.quick_bet and (self.quick_bet <= self.player.chip_pile.get_chip_total()):
             chips = self.player.chip_pile.withdraw_chips(self.quick_bet)
             self.current_player_hand.bet.add_chips(chips)
             self.state = "Dealing"
             self.casino_player.increase("games played")
             self.quick_bet = 0
-
+        else:
+            self.advisor.queue_text("Click chips in your chip pile to place bet", dismiss_after=3000)
+            self.advisor.queue_text("Click chips in pot to remove from bet", dismiss_after=3000)            
 
     def startup(self, current_time, persistent):
         """Get state ready to resume."""
@@ -138,7 +148,6 @@ class Blackjack(tools._State):
         if not self.game_started:
             self.new_game(self.casino_player.cash)
         self.window = None
-        self.elapsed = 17.0
 
     def deal(self, *args):
         if not self.moving_stacks and not self.window:
@@ -148,6 +157,7 @@ class Blackjack(tools._State):
                 self.quick_bet = 0
                 self.state = "Dealing"
                 self.casino_player.increase("games played", 1)
+                self.advisor.empty()
             else:
                 text = "You need to make a bet first!"
                 center = self.screen_rect.center
@@ -396,6 +406,7 @@ class Blackjack(tools._State):
                     self.moving_cards.append(card)
                 else:
                     self.state = "Player Turn"
+                    
 
         elif self.state == "Player Turn":
             self.split_button.active = False
@@ -498,16 +509,16 @@ class Blackjack(tools._State):
         self.moving_cards = [x for x in self.moving_cards if x not in arrived]
         self.chip_rack.update()
 
+
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale, pg.mouse.get_pos())
-        self.elapsed += dt
-        while self.elapsed >= 17.0:
-            self.elapsed -= 17.0
-            self.update_game(surface, keys, current_time, dt, scale)
+        self.update_game(surface, keys, current_time, dt, scale)
         self.buttons.update(mouse_pos)
         self.update_windows(mouse_pos)
         for blinker in self.result_labels:
             blinker.update(dt)
+        self.move_animations.update(dt)
+        
         self.draw(surface, dt)
 
     def update_windows(self, mouse_pos):
@@ -540,3 +551,8 @@ class Blackjack(tools._State):
         if not self.window:
             self.buttons.draw(surface)
         self.window and self.window.draw(surface)
+        
+        
+        surface.blit(self.advisor_back, (0, 0))
+        self.draw_group.draw(surface)
+        surface.blit(self.advisor_front, (0, 0))
