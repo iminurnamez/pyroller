@@ -49,10 +49,12 @@ class TableGame(tools._State):
         self.confirm_button_rect = None
 
         self.interested_events = [
+            ('SNAP_STACK', self.on_snap_stack),
+            ('RETURN_STACK', self.on_return_stack),
+            ('SNAP_STACK_MOTION', self.on_snap_stack_motion),
             ('PICKUP_STACK', self.on_pickup_stack),
             ('DROP_STACK', self.on_drop_stack),
-            ('HOVER_STACK', self.on_stack_motion),
-            ('RETURN_STACK', self.on_return_stack)
+            ('PICKUP_STACK_MOTION', self.on_pickup_stack_motion),
         ]
 
         names = ["cardshove{}".format(x) for x in (1, 3, 4)]
@@ -63,14 +65,14 @@ class TableGame(tools._State):
         self.chip_sounds = [prepare.SFX[name] for name in names]
 
         self._allow_exit = True
-        self._highlight_areas = False
-        self._mouse_tooltip = None
         self._enable_chips = False
+        self._mouse_tooltip = None
         self._background = None
+        self._hovered_sprite = None
         self._clicked_sprite = None
         self._hovered_chip_area = None
         self._grabbed_stack = False
-        self._stack_motion_advice = None
+        self._locked_advice = None
 
         self.font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
         self.large_font = pg.font.Font(prepare.FONTS["Saniretro"], 120)
@@ -152,105 +154,14 @@ class TableGame(tools._State):
         for name, f in self.interested_events:
             B.unlinkEvent(name, f)
 
-    def on_stack_motion(self, *args):
-        """When mouse is hovering over a stack or moving it
-        """
-        chips, position = args[0]
-
-        if self._mouse_tooltip is None:
-            value = TextSprite('', self.large_font)
-            self._mouse_tooltip = value
-            self.hud.add(value, layer=100)
-        else:
-            value = self._mouse_tooltip
-
-        amount = str(chips_to_cash(chips))
-        value.text = "${}".format(amount)
-        value.rect.midleft = position
-        value.rect.x += 30
-
-        # if a stack is grabbed, dismiss the advice to grab it
-        if self._grabbed_stack:
-            if self._stack_motion_advice is not None:
-                self._advisor.dismiss(self._stack_motion_advice)
-                self._stack_motion_advice = None
-                self._advisor.queue_text('Place chips into a betting area', -1)
-
-        # do advice if not already shown
-        elif self._stack_motion_advice is None:
-            self._advisor.empty()
-            sprite = self._advisor.queue_text('Click to grab chips', 0)
-            self._stack_motion_advice = sprite
-
-        # quit if we have not grabbed a stack yet
-        else:
-            return
-
-        # check if mouse is hovering over betting area
-        areas = chain(self.betting_areas.values(), [self.player_chips])
-        if self._hovered_chip_area is None:
-            for area in areas:
-                if area.drop_rect.collidepoint(position):
-                    self._hovered_chip_area = area
-                    sprite = getattr(area, 'sprite', None)
-                    if sprite is None:
-                        sprite = Sprite()
-                        sprite.rect = area.drop_rect.copy()
-                        sprite.image = pg.Surface(sprite.rect.size)
-                        sprite.image.fill((255, 255, 255))
-                        area.sprite = sprite
-
-                    self.hud.add(sprite)
-                    self.remove_animations(sprite.image)
-                    ani = Animation(set_alpha=48, initial=0,
-                                    duration=500, transition='out_quint')
-                    ani.start(sprite.image)
-                    self.animations.add(ani)
-
-        # handle when mouse moves outside previously hovered area
-        elif not self._hovered_chip_area.drop_rect.collidepoint(position):
-            self.clear_drop_area_overlay()
-
-    def clear_drop_area_overlay(self):
-        self.remove_animations(self._hovered_chip_area.sprite.image)
-
-        ani = Animation(
-            set_alpha=0,
-            initial=self._hovered_chip_area.sprite.image.get_alpha,
-            duration=500, transition='out_quint')
-
-        ani.callback = self._hovered_chip_area.sprite.kill
-        ani.start(self._hovered_chip_area.sprite.image)
-        self.animations.add(ani)
-
-        self._hovered_chip_area = None
-
-    def on_return_stack(self, *args):
-        """When a stack of chips is returned to pile
-        """
-        self._grabbed_stack = False
-
-        # remove money tooltip
-        if self._mouse_tooltip is not None:
-            self.hud.remove(self._mouse_tooltip)
-            self._mouse_tooltip = None
-
-        # remove 'click to grab chips' message
-        if self._stack_motion_advice is not None:
-            self._advisor.dismiss(self._stack_motion_advice)
-            self._stack_motion_advice = None
-        else:
-            self._advisor.empty()
-
-        # clear the light areas under chips/betting areas
-        if self._hovered_chip_area is not None:
-            self.clear_drop_area_overlay()
-
     def on_pickup_stack(self, *args):
         """When a stack of chips is picked up
         """
-        self._highlight_areas = True
         self._grabbed_stack = True
+
+        self._locked_advice = None
+        self._advisor.empty()
+        self._advisor.queue_text('Place chips into a betting area', 0)
 
     def on_drop_stack(self, *args):
         """When a stack of chips is dropped anywhere
@@ -262,7 +173,12 @@ class TableGame(tools._State):
                 if owner.value == 0:
                     self.bets.remove(owner)
 
-        self._highlight_areas = False
+        # clear the light areas under chips/betting areas
+        if self._hovered_chip_area is not None:
+            self.clear_area_highlight()
+
+        self._grabbed_stack = False
+
         d = args[0]
         position = d['position']
         owner = d['object']
@@ -276,7 +192,9 @@ class TableGame(tools._State):
             owner.origin = owner
 
         if self._hovered_chip_area is not None:
-            self.clear_drop_area_overlay()
+            self.clear_area_highlight()
+
+        self._advisor.empty()
 
         # check if chip is dropped onto a bet pile or player chips
         areas = chain(self.bets.groups(), [self.player_chips])
@@ -302,6 +220,7 @@ class TableGame(tools._State):
                 bet = self.place_bet(area.hand, owner.origin, chips)
                 bet.origin = owner.origin
                 bet.rect.bottomleft = position
+
                 # TODO: should not be hardcoded
                 bet.rect.x -= 32
                 self.clear_background()
@@ -314,12 +233,11 @@ class TableGame(tools._State):
                 if bet.result is self.dealer_hand:
                     com = int(self.options['commission'] * 100)
                     msg = 'There is a {}% commission on dealer bets'.format(com)
-                    self._advisor.queue_text(msg, 3000)
+                    self._advisor.push_text(msg, 3000)
 
                 if needs_advice:
                     # TODO: remove from baseclass
                     self.show_bet_confirm_button()
-                    self._advisor.queue_text('Click "Confirm Bets" to play')
 
                 return True, bet
 
@@ -334,6 +252,92 @@ class TableGame(tools._State):
                     new_chips.append(chip)
             self.player_chips.extend(new_chips)
 
+    def on_pickup_stack_motion(self, *args):
+        """When mouse is hovering over a stack or moving it
+        """
+        chips, position = args[0]
+
+        self.on_snap_stack_motion(*args)
+
+        # check if mouse is hovering over betting area
+        areas = chain(self.betting_areas.values(), [self.player_chips])
+        if self._hovered_chip_area is None:
+            for area in areas:
+                if area.drop_rect.collidepoint(position):
+                    self._hovered_chip_area = area
+                    sprite = getattr(area, 'sprite', None)
+                    if sprite is None:
+                        sprite = Sprite()
+                        sprite.rect = area.drop_rect.copy()
+                        sprite.image = pg.Surface(sprite.rect.size)
+                        sprite.image.fill((255, 255, 255))
+                        area.sprite = sprite
+
+                    self.hud.add(sprite)
+                    self.remove_animations(sprite.image)
+                    ani = Animation(set_alpha=48, initial=0,
+                                    duration=500, transition='out_quint')
+                    ani.start(sprite.image)
+                    self.animations.add(ani)
+
+        # handle when mouse moves outside previously hovered area
+        elif not self._hovered_chip_area.drop_rect.collidepoint(position):
+            self.clear_area_highlight()
+
+    def on_snap_stack(self, *args):
+        """When chips snap to cursor for first time
+        """
+        value = TextSprite('', self.large_font)
+        self._mouse_tooltip = value
+        self.hud.add(value, layer=100)
+
+        # essentially just updates the tool tip value
+        self.on_snap_stack_motion(*args)
+
+        if self._locked_advice is None:
+            self._advisor.empty()
+            sprite = self._advisor.queue_text('Click to grab chips', 0)
+            self._locked_advice = sprite
+
+    def on_return_stack(self, *args):
+        """When a stack of chips was previously snapped, but not any longer
+        """
+        # remove money tooltip
+        self.hud.remove(self._mouse_tooltip)
+        self._mouse_tooltip = None
+
+        # remove 'click to grab chips' message
+        if self._locked_advice is not None:
+            self._advisor.dismiss(self._locked_advice)
+            self._locked_advice = None
+
+    def on_snap_stack_motion(self, *args):
+        """When snapped stack is moved around
+        """
+        chips, position = args[0]
+        amount = str(chips_to_cash(chips))
+        sprite = self._mouse_tooltip
+        sprite.text = "${}".format(amount)
+        self.update_tooltip(sprite, position)
+
+    def update_tooltip(self, sprite, position):
+        sprite.rect.midleft = position
+        sprite.rect.x += 30
+
+    def clear_area_highlight(self):
+        self.remove_animations(self._hovered_chip_area.sprite.image)
+
+        ani = Animation(
+            set_alpha=0,
+            initial=self._hovered_chip_area.sprite.image.get_alpha,
+            duration=500, transition='out_quint')
+
+        ani.callback = self._hovered_chip_area.sprite.kill
+        ani.start(self._hovered_chip_area.sprite.image)
+        self.animations.add(ani)
+
+        self._hovered_chip_area = None
+
     def get_event(self, event, scale=(1, 1)):
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
@@ -347,13 +351,17 @@ class TableGame(tools._State):
                 sprite.pressed = sprite.rect.collidepoint(pos)
 
             for sprite in self.hud.sprites():
-                if hasattr(sprite, 'on_mouse_enter'):
-                    if sprite.rect.collidepoint(pos):
-                        sprite.on_mouse_enter(pos)
+                if self._hovered_sprite is None:
+                    if hasattr(sprite, 'on_mouse_enter'):
+                        if sprite.rect.collidepoint(pos):
+                            self._hovered_sprite = sprite
+                            sprite.on_mouse_enter(pos)
 
-                elif hasattr(sprite, 'on_mouse_leave'):
-                    if not sprite.rect.collidepoint(pos):
-                        sprite.on_mouse_leave(pos)
+                elif sprite is self._hovered_sprite:
+                    if hasattr(sprite, 'on_mouse_leave'):
+                        if not sprite.rect.collidepoint(pos):
+                            self._hovered_sprite = None
+                            sprite.on_mouse_leave(pos)
 
         elif event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:
