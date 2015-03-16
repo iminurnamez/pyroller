@@ -17,6 +17,7 @@ class Advisor(object):
     def __init__(self, draw_group, animation_group):
         self._draw_group = draw_group
         self._animations = animation_group
+        self._animation_dict = dict()
         self._message_queue = list()
         self._font = pg.font.Font(prepare.FONTS["Saniretro"], 64)
         self._dialog_box = GraphicBox(
@@ -53,7 +54,31 @@ class Advisor(object):
 
         self._message_queue.append((text, sprite, dismiss_after, sound))
         if len(self._message_queue) == 1:
-            self.show_next()
+            self.show_current()
+
+        return sprite
+
+    def push_text(self, text, dismiss_after=2000, sound=None):
+        """Put text at top of stack.  Will be displayed right away
+
+        A unique sprite will be returned from this function.  That sprite
+        can be passed to Advisor.dismiss() to remove that specific sprite.
+
+        :param text: Text to be displayed
+        :param sound: Sound to be played when message is shown
+        :param dismiss_after: Number of milliseconds to show message,
+                            Negative numbers will cause message to be displayed
+                            until dismissed.
+
+        :return: pygame.sprite.Sprite
+        """
+        sprite = self._render_message(text)
+
+        if self._message_queue:
+            self.hide_current()
+
+        self._message_queue.insert(0, (text, sprite, dismiss_after, sound))
+        self.show_current()
 
         return sprite
 
@@ -66,63 +91,41 @@ class Advisor(object):
         :param target: Specific message to be removed
         :return: None
         """
-        show_next = True
+        if not self._message_queue:
+            return
 
-        if target is None:
-            sprite = self.current_message
-            if sprite is None:
-                return
-        else:
-            if target in [i[1] for i in self._message_queue]:
-                show_next = target is self.current_message
-                sprite = target
-            else:
-                return
-
-        # animations may be playing of the sprite
-        remove_animations_of(self._animations, sprite.rect)
-
-        # hide the sprite
-        ani = self._animate_hide_sprite(sprite)
-        self._animations.add(ani)
-
-        # show next sprite if there is one
-        if show_next:
+        current_sprite = self._message_queue[0][1]
+        if target is None or target is current_sprite:
+            self.hide_current()
             self._message_queue.pop(0)
-            self.show_next()
+            if self._message_queue:
+                self.show_current()
 
-    def show_next(self):
-        """Show the next message, if any
+        else:
+            index = None
+            for item in self._message_queue:
+                if item[1] is target:
+                    index = item
+                    break
+
+            if index is not None:
+                self._message_queue.remove(index)
+
+    def show_current(self, index=0):
+        """Show the current message
 
         :return: None
         """
-        if self._message_queue:
-            self._show_message(*self._message_queue[0])
+        text, sprite, dismiss_after, sound = self._message_queue[index]
 
-    def empty(self):
-        """Remove all message and dismiss the current one
-
-        :return: None
-        """
-        if self._message_queue:
-            self._message_queue = [self._message_queue[0]]
-            self.dismiss()
-
-    def _show_message(self, text, sprite, dismiss_after=2000, sound=None):
-        """Show a sprite, play sound, and set timer to remove it
-
-        :param sprite: test to be displayed
-        :param dismiss_after: Number of milliseconds to show message,
-                            0 or Negative numbers will cause message to be
-                            displayed until dismissed.
-        :return: Unique sprite for the message
-        """
-        # animate the sprite showing
+        # remove old animations and animate the slide in
+        self._empty_animations(sprite)
         ani = self._animate_show_sprite(sprite)
         self._animations.add(ani)
 
         # add the sprite to the group that contains the advisor
-        self._draw_group.add(sprite)
+        if sprite not in self._draw_group:
+            sprite.add(self._draw_group)
 
         # play sound associated with the message
         sound = prepare.SFX['misc_menu_4']
@@ -134,6 +137,43 @@ class Advisor(object):
             task = Task(self.dismiss, dismiss_after, args=(sprite, ))
             self._animations.add(task)
 
+    def hide_current(self):
+        """Hide the current message
+
+        :return: None
+        """
+        sprite = self._message_queue[0][1]
+
+        self._empty_animations(sprite)
+        ani = self._animate_hide_sprite(sprite)
+        self._animations.add(ani)
+
+        if sprite not in self._draw_group:
+            sprite.add(self._draw_group)
+
+    def empty(self):
+        """Remove all message and dismiss the current one
+
+        :return: None
+        """
+        if self._message_queue:
+            self._message_queue = self._message_queue[:1]
+            self.dismiss()
+
+    def _empty_animations(self, target):
+        # remove tasks
+        for obj in self._animations.sprites():
+            if isinstance(obj, Task):
+                if target in obj._args:
+                    obj.kill()
+
+        # remove animations
+        # a dictionary must be used because rect references often
+        # change during the life of a sprite
+        ani = self._animation_dict.get(target, None)
+        if ani is not None:
+            ani.kill()
+
     def _animate_show_sprite(self, sprite):
         """Animate and show the sprite dropping down from advisor
 
@@ -144,6 +184,7 @@ class Advisor(object):
         ani = Animation(y=self.position[1], round_values=True, duration=500,
                         transition='out_quint')
         ani.start(sprite.rect)
+        self._animation_dict[sprite] = ani
         return ani
 
     def _animate_hide_sprite(self, sprite):
@@ -152,10 +193,15 @@ class Advisor(object):
         :param sprite: pygame.sprite.Sprite
         :return: None
         """
+        def kill():
+            del self._animation_dict[sprite]
+            sprite.kill()
+
         ani = Animation(y=-sprite.rect.height, round_values=True,
                         duration=500, transition='out_quint')
-        ani.callback = sprite.kill
+        ani.callback = kill
         ani.start(sprite.rect)
+        self._animation_dict[sprite] = ani
         return ani
 
     def _render_message(self, text):

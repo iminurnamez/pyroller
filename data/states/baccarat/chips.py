@@ -263,6 +263,7 @@ class ChipPile(Stacker):
         if self.ignore_until_away:
             if closest_sprite is None:
                 self.ignore_until_away = False
+            else:
                 return
 
         # ignore chips in motion
@@ -289,6 +290,8 @@ class ChipPile(Stacker):
                 self._followed_sprite = closest_sprite
                 self._popped_chips.append(closest_sprite)
                 self._initial_snap = closest_sprite.rect.center
+                if len(self._popped_chips) == 1:
+                    B.processEvent(('SNAP_STACK', (self, pos)))
 
         # we have a sprite following the pointer
         # if self._followed_sprite is not None:
@@ -321,7 +324,10 @@ class ChipPile(Stacker):
         return -20 if self._selected_stack else 15
 
     def move_followed_sprite(self, pos):
-        B.processEvent(('HOVER_STACK', (self._popped_chips, pos)))
+        if self._selected_stack:
+            B.processEvent(('PICKUP_STACK_MOTION', (self._popped_chips, pos)))
+        else:
+            B.processEvent(('SNAP_STACK_MOTION', (self._popped_chips, pos)))
         self._desired_pos = pos[0], pos[1] + self.height_offset
         self._needs_arrange = True
 
@@ -335,7 +341,7 @@ class ChipPile(Stacker):
         """
         if distance is None:
             if self.ignore_until_away:
-                distance = self._maximum_distance_until_drop
+                distance = self._initial_snapping
             elif self._followed_sprite:
                 distance = self._fine_snapping
             else:
@@ -358,8 +364,7 @@ class ChipPile(Stacker):
         # drop will be be true when somebody
         # has accepted the dropped stack
         drop = self.handle_drop(B.processEvent(('DROP_STACK', d)))
-        if drop:
-            self.return_stack()
+        self.return_stack()
 
     def return_stack(self, *args):
         B.processEvent(('RETURN_STACK', self))
