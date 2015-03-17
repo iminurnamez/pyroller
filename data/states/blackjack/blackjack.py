@@ -69,11 +69,11 @@ class Blackjack(tools._State):
         self.nav_buttons = ButtonGroup()
         self.new_game_button = NeonButton((0,0), "Change", self.new_game_click,
                                           None, self.nav_buttons)
-        self.new_game_button.rect.midbottom = (self.screen_rect.centerx,
-                                               self.screen_rect.centery-30)
-        self.quick_bet_button = NeonButton((0, 0), "Ride", self.quick_bet_click,
+        self.quick_bet_button = NeonButton((0, 0), "Again", self.quick_bet_click,
                                            None, self.nav_buttons)
-        self.quick_bet_button.rect.center = (self.screen_rect.centerx,
+        self.quick_bet_button.rect.midbottom = (self.screen_rect.centerx,
+                                               self.screen_rect.centery-30)
+        self.new_game_button.rect.center = (self.screen_rect.centerx,
                                              self.screen_rect.centery+30)
         pos = (self.screen_rect.right-(NeonButton.width+side_margin),
                self.screen_rect.bottom-(NeonButton.height+15))
@@ -248,7 +248,13 @@ class Blackjack(tools._State):
     def back_to_lobby(self, *args):
         if not self.window:
             if any(hand.bet.get_chip_total() for hand in self.player.hands):
-                self.bet_warning()
+                if self.state == "Betting":
+                    for hand in self.player.hands:
+                        self.player.chip_pile.add_chips(hand.bet.chips)
+                        hand.bet.chips = []
+                        self.leave_state()
+                else:
+                    self.bet_warning()
             else:
                 self.leave_state()
 
@@ -534,7 +540,10 @@ class Blackjack(tools._State):
         self.dealer.draw_hand(surface)
         self.deck.draw(surface)
         self.chip_rack.draw(surface)
-        self.player.draw(surface)
+        draw_bets = True
+        if self.state == "Show Results":
+            draw_bets = False
+        self.player.draw(surface, draw_bets)
         for card in self.moving_cards:
             card.draw(surface)
         for stack in self.moving_stacks:

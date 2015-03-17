@@ -48,6 +48,24 @@ Source URL: http://opengameart.org/content/gui-sound-effects
 Artist: http://opengameart.org/users/lokif
 License: CC-0
 
+Audio File: knock1.ogg
+Source URL: https://www.freesound.org/people/florian_reinke/sounds/63535/
+Artist: https://www.freesound.org/people/florian_reinke/
+License: CC-0
+
+Audio File: knock2.ogg, knock3.ogg
+Source URL: https://www.freesound.org/people/ripper351/sounds/151089/
+Artist: https://www.freesound.org/people/ripper351/
+License: CC-0
+
+Audio File: knock4, knock5, knock6, knock7, knock8.ogg
+Source URL: https://www.freesound.org/people/florian_reinke/sounds/63539/
+Artist: https://www.freesound.org/people/florian_reinke/
+License: CC-0
+
+
+
+
 The following recordings are believed to be in the public domain, but cannot be verified as such. These files may be copyrighted.
 If you are the copyright owner of any of these recordings, please contact easinerf@gmail.com.
 

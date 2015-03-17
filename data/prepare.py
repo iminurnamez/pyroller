@@ -14,7 +14,7 @@ RESOLUTIONS = [(600,400),(800, 600), (928, 696), (1280, 960), (1400, 1050)]
 CARD_SIZE = (125, 181)
 CHIP_SIZE = (32, 19)
 WIN_POS = (0,0)
-MONEY = 999
+MONEY = 1000
 ARGS = tools.get_cli_args(CAPTION, WIN_POS, START_SIZE, MONEY)
 #adjust settings based on args
 START_SIZE = int(ARGS['size'][0]), int(ARGS['size'][1])

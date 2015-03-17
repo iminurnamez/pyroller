@@ -7,13 +7,13 @@ from ..components.labels import Label, ButtonGroup, Button
 
 SONGS = [
     ("main_stem", "Main Stem - U.S. Army Blues", 0.2),
-    ("gospel_truth", "The Gospel Truth - U.S. Army Blues", 0.2),
     ("betcha_nickel",
         "Betcha' Nickel - Ella Fitzgerald and Her Famous Orchestra", 0.2),
     ("buckin_the_dice", "Buckin' The Dice - Fats Waller and His Rhythm", 0.2),
     ("money_burns_a_hole_in_my_pocket",
         "Money Burns A Hole In My Pocket - Dean Martin", 0.2),
     ("ace_in_the_hole", "Ace In The Hole - Ella Fitzgerald", 0.25),
+    ("gospel_truth", "The Gospel Truth - U.S. Army Blues", 0.2),
     ("world_on_a_string",
         "I've Got The World On A String - Frank Sinatra", 0.3),
     ("im_shooting_high", "I'm Shooting High - Chris Connor", 0.5),

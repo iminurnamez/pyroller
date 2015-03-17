@@ -40,6 +40,8 @@ STAY_PERCENTS = {
             }
 
 class AIPlayer(object):
+    fold_sounds = [prepare.SFX[x] for x in ["cardslide{}".format(num) for num in (2, 3, 4)]]
+    stay_sounds = [prepare.SFX[x] for x in ["knock{}".format(num) for num in range(1, 7)]]
     def __init__(self, name, orientation, hand_topleft):
         self.name = name
         self.orientation = orientation
@@ -75,18 +77,23 @@ class AIPlayer(object):
         self.guts = randint(-10, 20)
         self.won = 0
         self.lost = 0
+        names = ["cardslide{}".format(x) for x in (2, 3, 4)]
+        self.fold_sounds = [prepare.SFX[name] for name in names]
         
        
     def stay(self):
+        choice(self.stay_sounds).play()
         self.stayed = True
         self.label = self.stay_label
         
     def stay_out(self):
+        choice(self.fold_sounds).play()
         self.passed = True
         self.label = self.pass_label
         self.fold()
         
     def fold(self):
+        choice(self.fold_sounds).play()
         for card in self.cards:
             center = card.rect.center
             card.face_up = False

@@ -6,6 +6,8 @@ from ...components.labels import Label
 
 
 class GutsPlayer(object):
+    fold_sounds = [prepare.SFX[x] for x in ["cardslide{}".format(num) for num in (2, 3, 4)]]
+    stay_sounds = [prepare.SFX[x] for x in ["knock{}".format(num) for num in range(1, 7)]]
     def __init__(self, cash=0, chips=None):
         self.name = "YOU"
         self.cards = []
@@ -25,7 +27,7 @@ class GutsPlayer(object):
         self.orientation = "bottom"
         self.won = 0
         self.lost = 0
-        
+               
     def draw_from_deck(self, deck):
         card = deck.draw_card()
         x, y = deck.rect.center
@@ -47,10 +49,12 @@ class GutsPlayer(object):
             card.draw(surface)
     
     def stay(self):
+        choice(self.stay_sounds).play()
         self.stayed = True
         self.label = self.stay_label
         
     def stay_out(self):
+        choice(self.fold_sounds).play()
         self.passed = True
         self.label = self.pass_label
         self.fold()

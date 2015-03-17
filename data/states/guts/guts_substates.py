@@ -7,12 +7,14 @@ from ...components.animation import Animation, Task
 
 
 class GutsState(object):
+    deal_sounds = [prepare.SFX["cardshove{}".format(x)] for x in (1,3,4)]
+    flip_sounds = [prepare.SFX["cardplace{}".format(x)] for x in (2,3,4)]
     def __init__(self, game):
         self.done = False
         self.game = game
         self.players = game.players
-        self.timer = 0.0
-
+        self.timer = 0.0        
+        
     def startup(self):
         pass
 
@@ -25,7 +27,19 @@ class GutsState(object):
     def draw(self, surface):
         pass
 
+    def play_deal_sound(self):
+        choice(self.deal_sounds).play()
 
+    def play_flip_sound(self):
+        choice(self.flip_sounds).play()
+
+    def play_stay_sound(self):
+        choice(self.stay_sounds).play()
+    
+    def play_pass_sound(self):
+        choice(self.fold_sounds).play()
+        
+        
 class StartGame(GutsState):
     def __init__(self, game):
         super(StartGame, self).__init__(game)
@@ -180,9 +194,7 @@ class Betting(GutsState):
 class Dealing(GutsState):
     def __init__(self, game):
         super(Dealing, self).__init__(game)
-        self.make_dealing_animations()
-        self.deal_sounds = [prepare.SFX["cardshove{}".format(x)] for x in (1,3,4)]
-        self.flip_sounds = [prepare.SFX["cardplace{}".format(x)] for x in (2,3,4)]
+        self.make_dealing_animations()      
 
     def make_dealing_animations(self):
         self.animations = pg.sprite.Group()
@@ -210,12 +222,8 @@ class Dealing(GutsState):
                 delay_time += 100
                 toggle += 1
 
-    def play_deal_sound(self):
-        choice(self.deal_sounds).play()
-
-    def play_flip_sound(self):
-        choice(self.flip_sounds).play()
-
+    
+        
     def update(self, dt, scale):
         self.animations.update(dt)
         if not self.animations:
@@ -273,7 +281,7 @@ class AITurn(GutsState):
 
     def update(self, dt, scale):
         self.timer += dt
-        if self.timer > 500:
+        if self.timer > 700:
             self.player.play_hand(self.game)
             self.done = True
 

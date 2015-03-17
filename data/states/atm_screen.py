@@ -1,3 +1,4 @@
+import string
 import pygame as pg
 from .. import tools, prepare
 from ..components.labels import Label, ButtonGroup, Button, TextBox, MoneyIcon
@@ -208,6 +209,7 @@ class DepositScreen(ATMState):
                                           color=pg.Color("blue2"), 
                                           font=pg.font.Font(self.font, 36),
                                           font_color=pg.Color("white"))
+        self.textbox.accepted = string.digits
         #update needed to set textbox.render_area
         self.textbox.update()
         self.dollar_sign = Label(self.font, 36, "$", "white",
@@ -288,6 +290,7 @@ class WithdrawalScreen(ATMState):
                                          color=pg.Color("blue2"), 
                                          font=pg.font.Font(self.font, 36), 
                                          font_color=pg.Color("white"))
+        self.textbox.accepted = string.digits
         self.dollar_sign = Label(self.font, 36, "$", "white", 
                     {"midright": (rect[0] - 5, rect[1] + 100)})
         #update needed to set textbox.render_area
@@ -375,6 +378,7 @@ class AdvanceScreen(ATMState):
                                           color=pg.Color("blue2"), 
                                           font=pg.font.Font(self.font, 36),
                                           font_color=pg.Color("white"))
+        self.textbox.accepted = string.digits
         self.dollar_sign = Label(self.font, 36, "$", "white", 
                     {"midright": (rect[0] - 5, rect[1] + 100)})
         self.textbox.update()
