@@ -9,6 +9,7 @@ from ...components.cards import Deck
 from ...components.chips import ChipStack, ChipRack, cash_to_chips, chips_to_cash
 from ...components.warning_window import NoticeWindow, WarningWindow
 from ...components.advisor import Advisor
+from ...components.animation import Animation
 from .blackjack_dealer import Dealer
 from .blackjack_player import Player
 from .blackjack_hand import Hand
@@ -38,6 +39,7 @@ class Blackjack(tools._State):
         self.window = None
         self.make_buttons()
         self.result_labels = []
+        self.fade_labels = []
         self.labels = []
         self.quick_bet = 0
         self.last_bet = 0
@@ -48,6 +50,7 @@ class Blackjack(tools._State):
         self.advisor = Advisor(self.draw_group, self.move_animations)
         self.advisor_back = prepare.GFX["advisor_back"]
         self.advisor_front = prepare.GFX["advisor_front"]
+        self.animations = pg.sprite.Group()
         
     def make_buttons(self):
         side_margin = 10
@@ -125,6 +128,8 @@ class Blackjack(tools._State):
         self.hit_button.active = True
         self.stand_button.active = True
         self.labels = self.make_labels()
+        self.result_labels = []
+        self.fade_labels = []
         self.current_player_hand = self.player.hands[0]
         self.game_started = True
         
@@ -463,6 +468,7 @@ class Blackjack(tools._State):
                     self.state = "End Round"
 
         elif self.state == "End Round":
+            self.alpha = 255
             self.tally_hands()
             payout = self.pay_out()
             self.player.chip_pile.add_chips(payout)
@@ -477,6 +483,8 @@ class Blackjack(tools._State):
             else:
                 text_size = 96
             for hand in hands:
+                amount = hand.bet.get_chip_total()
+                hand.bet_amount  = amount
                 if hand.blackjack:
                     text, color = "Blackjack", "gold3"
                     text_size -= 8
@@ -486,14 +494,27 @@ class Blackjack(tools._State):
                     text, color = "Push", "gold3"
                 elif hand.busted:
                     text, color = "Bust", "darkred"
+                    amount *= -1
                 else:
                     text, color = "Loss", "darkred"
+                    amount *= -1
                 centerx = (hand.slots[0].left + hand.slots[-1].right) // 2
                 centery = hand.slots[0].centery
                 label = Blinker(self.result_font, text_size, text, color,
                                       {"center": (centerx, centery)},
                                       450)
                 self.result_labels.append(label)
+                amt_color = "darkgreen" if amount >= 0 else "darkred"
+                bl = hand.bet.stack_spots[0]
+                bet_label = Label(self.result_font, 80, "{}".format(amount), amt_color,
+                                          {"bottomleft": bl}, bg=prepare.FELT_GREEN)
+                move_ani = Animation(y=bl[1]-100, duration=1500, round_values=True)
+                move_ani.start(bet_label.rect)
+                fade_ani = Animation(alpha=0, duration=1500)
+                fade_ani.start(self)
+                self.animations.add(move_ani)
+                self.animations.add(fade_ani)
+                self.fade_labels.append(bet_label)
                 hand.bet.chips = []
             self.state = "Show Results"
 
@@ -524,7 +545,7 @@ class Blackjack(tools._State):
         for blinker in self.result_labels:
             blinker.update(dt)
         self.move_animations.update(dt)
-        
+        self.animations.update(dt)
         self.draw(surface, dt)
 
     def update_windows(self, mouse_pos):

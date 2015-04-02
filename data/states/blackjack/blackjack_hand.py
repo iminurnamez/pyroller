@@ -16,6 +16,7 @@ class Hand(object):
         self.push = False
         self.blackjack = False
         self.bet = BetPile((self.tl[0], self.tl[1] - 20), (48, 30), bet_chips)
+        self.bet_amount = 0
         
     def get_scores(self):
         scores = []
