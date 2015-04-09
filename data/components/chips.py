@@ -57,7 +57,8 @@ class ChipStack(object):
     """Class to represent a stack of same-colored casino chips."""
     def __init__(self, chips, bottomleft):
         self.chips = chips
-        self.bottomleft = bottomleft
+        self.rect = pg.Rect((0,0), (10, 10))
+        self.rect.bottomleft = bottomleft
         self.align()
 
     def pop(self):
@@ -89,7 +90,7 @@ class ChipStack(object):
 
     def align(self):
         """Positions the chips in a stack."""
-        left, bottom = self.bottomleft
+        left, bottom = self.rect.bottomleft
         for chip in self.chips:
             chip.rect.bottomleft = (left, bottom)
             bottom -= chip.thickness
@@ -123,9 +124,9 @@ class BetPile(object):
         stacks = [ChipStack(chips[color], (0, 0)) for color in chips]
         stacks = sorted(stacks, key=lambda x: len(x.chips), reverse=True)
         for stack, spot in zip(stacks, self.stack_spots):
-            stack.bottomleft = spot
+            stack.rect.bottomleft = spot
             stack.align()
-        return sorted(stacks, key=lambda x: x.bottomleft[1])
+        return sorted(stacks, key=lambda x: x.rect.bottom)
 
     def grab_chips(self, click_pos):
         """Return a new ChipStack if click_pos splits one
@@ -226,11 +227,18 @@ class ChipPile(object):
         """Withdraw chips totalling amount and adjust stacks."""
         if self.get_chip_total() < amount:
             return
-        chips = cash_to_chips(self.get_chip_total() - amount, self.chip_size)
-        withdrawal = cash_to_chips(amount, self.chip_size)
-        for color in self.chips:
-            self.chips[color] = [x for x in chips if x.color == color]
-        self.stacks = self.make_stacks()
+        total_withdrawal = cash_to_chips(amount, self.chip_size)[::-1]
+        withdrawal = []
+        for chip in total_withdrawal:
+            try:
+                withdrawal.append(self.chips[chip.color].pop())
+            except IndexError:
+                withdrawal = total_withdrawal
+                chips = cash_to_chips(self.get_chip_total() - amount, self.chip_size)
+                for color in self.chips:
+                    self.chips[color] = [x for x in chips if x.color == color]
+                break
+        self.stacks = self.make_stacks()            
         return withdrawal
 
     def make_stacks(self):
@@ -255,7 +263,7 @@ class ChipPile(object):
                     bottom_ += h + self.vert_space
                 stacks.append(stack)
             left += (w + self.horiz_space) * 2
-        return sorted(stacks, key=lambda x: x.bottomleft[1])
+        return sorted(stacks, key=lambda x: x.rect.bottom)
 
     def grab_chips(self, click_pos):
         """

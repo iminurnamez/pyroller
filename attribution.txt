@@ -65,6 +65,11 @@ License: CC-0
 
 
 
+Audio File: coins.ogg
+Source URL: https://www.freesound.org/people/Rickmk2/sounds/162195/ 
+Artist: https://www.freesound.org/people/Rickmk2/
+License: CC-0
+
 
 The following recordings are believed to be in the public domain, but cannot be verified as such. These files may be copyrighted.
 If you are the copyright owner of any of these recordings, please contact easinerf@gmail.com.
