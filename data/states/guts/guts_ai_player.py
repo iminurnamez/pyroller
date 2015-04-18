@@ -70,6 +70,7 @@ class AIPlayer(object):
         center = self.name_label.rect.midbottom
         label_center = center[0], center[1] + 20
         self.stay_label = Label(font, 48, "Stayed in", "gold3", {"center": label_center}, bg=prepare.FELT_GREEN)
+        self.stay_label.image.set_alpha(200)
         self.pass_label = Label(font, 48, "Passed", "darkred", {"center": label_center}, bg=prepare.FELT_GREEN)
         self.pass_label.image.set_alpha(200)
         self.label = None
@@ -81,16 +82,18 @@ class AIPlayer(object):
         self.fold_sounds = [prepare.SFX[name] for name in names]
         
        
-    def stay(self):
+    def stay(self, game):
         choice(self.stay_sounds).play()
         self.stayed = True
         self.label = self.stay_label
+        game.current_player_index += 1
         
-    def stay_out(self):
+    def stay_out(self, game):
         choice(self.fold_sounds).play()
         self.passed = True
         self.label = self.pass_label
         self.fold()
+        game.current_player_index += 1
         
     def fold(self):
         choice(self.fold_sounds).play()
@@ -106,7 +109,7 @@ class AIPlayer(object):
         others = [x for x in game.players if x is not self]
         stays = len([x for x in others if x.stayed])
         if game.dealer is self and stays < 1:
-            self.stay()
+            self.stay(game)
             return
         card_vals = [card.value for card in self.cards]
         card_vals.sort(reverse=True)
@@ -118,21 +121,21 @@ class AIPlayer(object):
             percent -= stays * 5
             risk_it = randint(1, 100)
             if risk_it < percent:
-                self.stay()
+                self.stay(game)
             else:
                 if randint(1, 100) < self.guts:
-                    self.stay()
+                    self.stay(game)
                 else:
-                    self.stay_out()
+                    self.stay_out(game)
         else:
             risk_it = self.guts
             if stays < 1:
                 if randint(1, 100) < risk_it:
-                    self.stay()
+                    self.stay(game)
                 else:
-                    self.stay_out()
+                    self.stay_out(game)
             else:
-                self.stay_out()
+                self.stay_out(game)
                     
     def draw(self, surface):
         self.name_label.draw(surface)

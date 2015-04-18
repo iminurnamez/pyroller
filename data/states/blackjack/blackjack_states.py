@@ -19,43 +19,42 @@ class BlackjackState(object):
         self.next = None
         self.animations = pg.sprite.Group()
         self.window = None
-        
+
     def leave_state(self):
         self.done = True
         self.quit = True
-        
-    def back_to_lobby(self, *args):        
+
+    def back_to_lobby(self, *args):
         if any(hand.bet.get_chip_total() for hand in self.game.player.hands):
             self.bet_warning()
         else:
             self.leave_state()
-        
+
     def bet_warning(self):
         warn = "You sure? Exiting the game will forfeit your current bets!"
         center = self.screen_rect.center
-        self.window = WarningWindow(center, warn, self.leave_state)   
-        
-    
+        self.window = WarningWindow(center, warn, self.leave_state)
+
+
     def play_deal_sound(self):
         choice(self.game.deal_sounds).play()
-        
+
     def play_chip_sound(self):
         choice(self.game.chip_sounds).play()
-        
+
     def startup(self, game):
         self.game = game
-    
+
     def get_event(self, event, scale=(1,1)):
         pass
-        
+
     def update(self, surface, keys, current_time, dt, scale):
         pass
-        
+
     def draw(self, surface):
         pass
-        
-    def draw_advisor(self, surface):    
-        
+
+    def draw_advisor(self, surface):
         if self.game.advisor_active:
             surface.blit(self.game.advisor_back, (0, 0))
             self.game.draw_group.draw(surface)
@@ -64,7 +63,7 @@ class BlackjackState(object):
             surface.blit(self.game.advisor_back_dim, (0, 0))
             surface.blit(self.game.advisor_front_dim, (0, 0))
 
-            
+
 class Betting(BlackjackState):
     def __init__(self):
         super(Betting, self).__init__()
@@ -72,13 +71,13 @@ class Betting(BlackjackState):
         pos = (self.screen_rect.right-(NeonButton.width+10),
                self.screen_rect.bottom-(NeonButton.height+15))
         self.lobby_button = NeonButton(pos, "Lobby", self.back_to_lobby, None, self.buttons, bindings=[pg.K_ESCAPE])
-    
+
     def back_to_lobby(self, *args):
         player = self.game.player
         for hand in player.hands:
             player.chip_pile.add_chips(cash_to_chips(hand.bet.get_chip_total()))
         self.leave_state()
-        
+
     def startup(self, game):
         self.game = game
         if self.game.quick_bet and (self.game.quick_bet <= self.game.player.chip_pile.get_chip_total()):
@@ -87,16 +86,16 @@ class Betting(BlackjackState):
             self.deal()
         elif self.game.advisor_active:
             self.game.advisor.queue_text("Click chips in your chip pile to place bet", dismiss_after=3000)
-            self.game.advisor.queue_text("Click chips in pot to remove from bet", dismiss_after=3000)   
-        
+            self.game.advisor.queue_text("Click chips in pot to remove from bet", dismiss_after=3000)
+
     def make_buttons(self):
         self.buttons = ButtonGroup()
         side_margin = 10
         vert_space = 15
         left = self.screen_rect.right-(NeonButton.width + side_margin)
         top = self.screen_rect.bottom-((NeonButton.height*5)+vert_space*4)
-        self.deal_button = NeonButton((left, top), "Deal", self.deal, None, self.buttons)        
-    
+        self.deal_button = NeonButton((left, top), "Deal", self.deal, None, self.buttons)
+
     def deal(self, *args):
         bets = [x.bet.get_chip_total() for x in self.game.player.hands]
         self.game.last_bet = max(bets)
@@ -105,7 +104,7 @@ class Betting(BlackjackState):
         self.game.casino_player.increase("games played")
         self.game.advisor.empty()
         self.done = True
-        
+
     def get_event(self, event, scale):
         self.game.get_event(event)
         if event.type == pg.QUIT:
@@ -123,7 +122,7 @@ class Betting(BlackjackState):
                     if unbet_stack:
                         self.play_chip_sound()
                         self.game.player.chip_pile.add_chips(unbet_stack.chips)
-       
+
         elif event.type == pg.MOUSEBUTTONUP:
             now = pg.time.get_ticks()
             span = now - self.last_click
@@ -146,25 +145,25 @@ class Betting(BlackjackState):
         else:
             self.lobby_button.get_event(event)
             self.deal_button.get_event(event)
-            
-    def update(self, surface, keys, current_time, dt, scale): 
+
+    def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(pg.mouse.get_pos(), scale)
         self.game.update(dt, mouse_pos)
         bets = [x.bet.get_chip_total() for x in self.game.player.hands]
-        self.deal_button.visible = any(bets) and not self.game.moving_stacks      
-               
+        self.deal_button.visible = any(bets) and not self.game.moving_stacks
+
         if self.window:
             self.window.update(mouse_pos)
             if self.window.done:
                 self.window = None
-        else:    
+        else:
             self.lobby_button.update(mouse_pos)
             self.deal_button.update(mouse_pos)
         for stack in self.game.moving_stacks:
             x, y = mouse_pos
             stack.rect.bottomleft = (x - (self.game.chip_size[0] // 2),
                                          y + 6)
-    
+
     def draw(self, surface):
         g = self.game
         surface.fill(prepare.FELT_GREEN)
@@ -182,7 +181,7 @@ class Betting(BlackjackState):
         self.buttons.draw(surface)
         self.draw_advisor(surface)
         self.window and self.window.draw(surface)
-    
+
 
 class Dealing(BlackjackState):
     def __init__(self):
@@ -194,11 +193,11 @@ class Dealing(BlackjackState):
     def startup(self, game):
         self.game = game
         self.make_card_animations()
-    
+
     def flip_card(self, card):
         card.face_up = True
-        
-    def make_card_animations(self):    
+
+    def make_card_animations(self):
         g = self.game
         self.animations = pg.sprite.Group()
         deal_delay = 0
@@ -206,24 +205,24 @@ class Dealing(BlackjackState):
             card = g.deck.draw_card()
             destination = g.current_player_hand.slots[-1]
             dest_x, dest_y = destination.topleft
-            dur = get_distance(destination.center, card.pos) * 20 // card.speed 
-            ani = Animation(x=dest_x, y=dest_y, duration=dur, 
-                                    delay=deal_delay, round_values=True) 
+            dur = get_distance(destination.center, card.pos) * 20 // card.speed
+            ani = Animation(x=dest_x, y=dest_y, duration=dur,
+                                    delay=deal_delay, round_values=True)
             ani2 = Task(self.play_deal_sound, deal_delay)
             ani3 = Task(self.flip_card, deal_delay + dur, args=(card,))
             g.current_player_hand.cards.append(card)
             if not i % 2:
                 g.player.add_slot(g.current_player_hand)
             ani.start(card.rect)
-            self.animations.add(ani, ani2, ani3)            
+            self.animations.add(ani, ani2, ani3)
             deal_delay += dur
         for i in range(2):
             card = g.deck.draw_card()
             destination = g.dealer.hand.slots[-1]
             dest_x, dest_y = destination.topleft
             dur = get_distance(destination.center, card.pos) * 20 // card.speed
-            ani = Animation(x=dest_x, y=dest_y, duration=dur, 
-                                    delay=deal_delay, round_values=True) 
+            ani = Animation(x=dest_x, y=dest_y, duration=dur,
+                                    delay=deal_delay, round_values=True)
             ani2 = Task(self.play_deal_sound, deal_delay)
             ani.start(card.rect)
             g.dealer.hand.cards.append(card)
@@ -233,7 +232,7 @@ class Dealing(BlackjackState):
                 ani3 = Task(self.flip_card, deal_delay + dur, args=(card,))
                 self.animations.add(ani3)
             deal_delay += dur
-               
+
     def get_event(self, event, scale):
         if event.type == pg.QUIT:
             self.back_to_lobby()
@@ -242,7 +241,7 @@ class Dealing(BlackjackState):
             self.window.get_event(event)
         else:
             self.lobby_button.get_event(event)
-           
+
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(pg.mouse.get_pos(), scale)
         self.game.update(dt, mouse_pos)
@@ -257,14 +256,14 @@ class Dealing(BlackjackState):
             else:
                 self.next = "Player Turn"
                 self.done = True
-        
+
     def draw(self, surface):
         g = self.game
         surface.fill(prepare.FELT_GREEN)
         for label in g.labels:
             label.draw(surface)
         g.player.draw_hand_bets(surface)
-        
+
         g.chip_total_label.draw(surface)
         g.dealer.draw_hand(surface)
         g.deck.draw(surface)
@@ -274,22 +273,22 @@ class Dealing(BlackjackState):
         g.player.chip_pile.draw(surface)
         self.draw_advisor(surface)
         self.window and self.window.draw(surface)
-            
-    
-    
+
+
+
 
 class PlayerTurn(BlackjackState):
-    def __init__(self):    
+    def __init__(self):
         super(PlayerTurn, self).__init__()
         pos = (self.screen_rect.right-(NeonButton.width+10),
                self.screen_rect.bottom-(NeonButton.height+15))
         self.make_buttons()
         self.lobby_button = NeonButton(pos, "Lobby", self.back_to_lobby, None, self.buttons, bindings=[pg.K_ESCAPE])
         self.last_click = 0
-        
+
     def play_deal_sound(self):
         choice(self.game.deal_sounds).play()
-        
+
     def make_buttons(self):
         side_margin = 10
         vert_space = 12
@@ -306,7 +305,7 @@ class PlayerTurn(BlackjackState):
         self.buttons = ButtonGroup(self.hit_button, self.stand_button,
                                           self.double_down_button,
                                           self.split_button)
-    
+
     def hit_click(self, *args):
         self.hit(self.game.current_player_hand)
 
@@ -319,11 +318,11 @@ class PlayerTurn(BlackjackState):
         destination = hand.slots[-1]
         dest_x, dest_y = destination.topleft
         hand.cards.append(card)
-        dur = get_distance(destination.center, card.pos) * 20 // card.speed 
+        dur = get_distance(destination.center, card.pos) * 20 // card.speed
         ani = Animation(x=dest_x, y=dest_y, duration=dur, round_values=True)
         ani.start(card.rect)
         self.animations.add(ani)
-        
+
 
     def stand(self, *args):
         """Player is done with this hand."""
@@ -340,7 +339,7 @@ class PlayerTurn(BlackjackState):
         hand.bet.add_chips(bet_chips)
         self.hit(hand)
         hand.final = True
-            
+
     def split_hand(self, *args):
         """
         Split player's hand into two hands, adjust hand locations
@@ -349,7 +348,7 @@ class PlayerTurn(BlackjackState):
         player = self.game.player
         hand = self.game.current_player_hand
         bet = hand.bet.get_chip_total()
-       
+
         hand.slots = hand.slots[:-1]
         move = ((self.screen_rect.left+50)-hand.slots[0].left, 0)
         player.move_hands(move)
@@ -362,7 +361,7 @@ class PlayerTurn(BlackjackState):
         card.rect.topleft = hand_slot.topleft
         player.hands.append(new_hand)
         player.add_slot(new_hand)
-        
+
         self.play_deal_sound()
         self.game.player.add_slot(hand)
         card1 = self.game.deck.draw_card()
@@ -372,7 +371,7 @@ class PlayerTurn(BlackjackState):
         hand.cards.append(card1)
         ani = Animation(x=dest_x, y=dest_y, duration=1000, round_values=True)
         ani.start(card1.rect)
-        
+
         card2 = self.game.deck.draw_card()
         dest = new_hand.slots[-1]
         dest_x, dest_y = dest.topleft
@@ -382,11 +381,11 @@ class PlayerTurn(BlackjackState):
         ani2.start(card2.rect)
         ani3 = Task(self.play_deal_sound, 1500)
         self.animations.add(ani, ani2, ani3)
-        
+
     def startup(self, game):
         self.game = game
         self.animations = pg.sprite.Group()
-        
+
     def get_event(self, event, scale):
         now = pg.time.get_ticks()
         span = now - self.last_click
@@ -398,14 +397,14 @@ class PlayerTurn(BlackjackState):
         if span > 300:
             if self.window:
                 self.window.get_event(event)
-            else: 
+            else:
                 self.buttons.get_event(event)
-            
+
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(pg.mouse.get_pos(), scale)
         g = self.game
         g.update(dt, mouse_pos)
-        
+
         self.split_button.active = False
         self.split_button.visible = False
         self.double_down_button.active = False
@@ -418,7 +417,7 @@ class PlayerTurn(BlackjackState):
             hand.final = True
         chip_total = g.player.chip_pile.get_chip_total()
         bet = hand.bet.get_chip_total()
-        
+
         if len(hand.cards) == 2 and len(g.player.hands) < 2:
             c1 = hand.card_values[hand.cards[0].value]
             c2 = hand.card_values[hand.cards[1].value]
@@ -432,7 +431,7 @@ class PlayerTurn(BlackjackState):
             elif chip_total >= bet:
                 self.double_down_button.active = True
                 self.double_down_button.visible = True
-                
+
         if hand.final:
             if all([hand.final for hand in g.player.hands]):
                 if not self.animations:
@@ -446,16 +445,16 @@ class PlayerTurn(BlackjackState):
             self.window.update(mouse_pos)
             if self.window.done:
                 self.window = None
-        else:    
+        else:
             self.buttons.update(mouse_pos)
             self.animations.update(dt)
-        
+
     def draw_hand_frame(self, surface):
         hand = self.game.current_player_hand
         rects = [x for x in hand.slots]
         pg.draw.rect(surface, pg.Color("gold3"),
                      hand.slots[0].unionall(rects).inflate(8, 8), 3)
-        
+
     def draw(self, surface):
         g = self.game
         surface.fill(prepare.FELT_GREEN)
@@ -474,22 +473,22 @@ class PlayerTurn(BlackjackState):
         self.draw_hand_frame(surface)
         self.game.player.chip_pile.draw(surface)
         self.window and self.window.draw(surface)
-        
-        
+
+
 class DealerTurn(BlackjackState):
     def __init__(self):
         super(DealerTurn, self).__init__()
         pos = (self.screen_rect.right-(NeonButton.width+10),
                self.screen_rect.bottom-(NeonButton.height+15))
         self.lobby_button = NeonButton(pos, "Lobby", self.back_to_lobby, bindings=[pg.K_ESCAPE])
-        
+
     def startup(self, game):
         self.game = game
         g = game
         if all([hand.busted for hand in g.player.hands]):
             g.dealer.hand.final = True
             self.state = "End Round"
-        delay = 1000        
+        delay = 1000
         while not g.dealer.hand.final:
             hand_score = g.dealer.hand.best_score()
             if hand_score is None:
@@ -503,7 +502,7 @@ class DealerTurn(BlackjackState):
                 delay += 1000
             else:
                 g.dealer.hand.final = True
-            
+
     def hit(self, hand, delay_time=0):
         """Draw a card from deck and add to hand."""
         self.play_deal_sound()
@@ -511,14 +510,14 @@ class DealerTurn(BlackjackState):
         card.face_up = True
         destination = hand.slots[-1]
         dest_x, dest_y = destination.topleft
-        dur = get_distance(destination.center, card.pos) * 20 // card.speed 
+        dur = get_distance(destination.center, card.pos) * 20 // card.speed
         self.game.dealer.add_slot()
         hand.cards.append(card)
-        ani = Animation(x=dest_x, y=dest_y, duration=dur, 
+        ani = Animation(x=dest_x, y=dest_y, duration=dur,
                                 delay=delay_time, round_values=True)
         ani.start(card.rect)
         self.animations.add(ani)
-        
+
     def get_event(self, event, scale):
         if event.type == pg.QUIT:
             self.back_to_lobby()
@@ -527,21 +526,21 @@ class DealerTurn(BlackjackState):
             self.window.get_event(event)
         else:
             self.lobby_button.get_event(event)
-       
-    def update(self, surface, keys, current_time, dt, scale):          
+
+    def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(pg.mouse.get_pos(), scale)
         self.game.update(dt, mouse_pos)
         if self.window:
             self.window.update(mouse_pos)
             if self.window.done:
                 self.window = None
-        else:    
+        else:
             self.lobby_button.update(mouse_pos)
             self.animations.update(dt)
             if not self.animations:
                 self.next = "Show Results"
                 self.done = True
-            
+
     def draw(self, surface):
         g = self.game
         surface.fill(prepare.FELT_GREEN)
@@ -558,8 +557,8 @@ class DealerTurn(BlackjackState):
         self.draw_advisor(surface)
         self.game.player.chip_pile.draw(surface)
         self.window and self.window.draw(surface)
-        
- 
+
+
 class ShowResults(BlackjackState):
     def __init__(self):
         super(ShowResults, self).__init__()
@@ -567,7 +566,7 @@ class ShowResults(BlackjackState):
                self.screen_rect.bottom-(NeonButton.height+15))
         self.lobby_button = NeonButton(pos, "Lobby", self.back_to_lobby, bindings=[pg.K_ESCAPE])
         self.coin_sound = prepare.SFX["coins"]
-        
+
     def startup(self, game):
         self.game = game
         self.game.result_labels = []
@@ -627,7 +626,7 @@ class ShowResults(BlackjackState):
                                   450)
             self.game.result_labels.append(label)
             amt_color = "darkgreen" if amount >= 0 else "darkred"
-            
+
             bet_label = Label(self.font, 120, "{:+}".format(amount), amt_color,
                                       {"bottomleft": bl}, bg=prepare.FELT_GREEN)
             move_ani = Animation(bottom=bl[1]-150, duration=total_ani_time, round_values=True)
@@ -636,7 +635,7 @@ class ShowResults(BlackjackState):
             self.fade_labels.append(bet_label)
             hand.bet.chips = []
             hand.bet.stacks = []
-        
+
         payout_duration = 1000
         center = self.game.player.chip_pile.rect.center
         for pile in win_piles:
@@ -656,15 +655,15 @@ class ShowResults(BlackjackState):
         remove_chips = Task(self.remove_chips, payout_duration)
         end_it = Task(self.end_state, total_ani_time)
         self.animations.add(pay_ani, remove_chips, end_it)
-        
+
     def remove_chips(self):
         self.winnings = []
         self.losses = []
-        
+
     def end_state(self):
         self.next = "End Round"
         self.done = True
-        
+
     def get_event(self, event, scale):
         if event.type == pg.QUIT:
             self.back_to_lobby()
@@ -673,7 +672,7 @@ class ShowResults(BlackjackState):
             self.window.get_event(event)
         else:
             self.lobby_button.get_event(event)
-    
+
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(pg.mouse.get_pos(), scale)
         self.game.update(dt, mouse_pos)
@@ -686,9 +685,9 @@ class ShowResults(BlackjackState):
             self.window.update(mouse_pos)
             if self.window.done:
                 self.window = None
-        else:    
+        else:
             self.lobby_button.update(mouse_pos)
-    
+
     def draw(self, surface):
         g = self.game
         surface.fill(prepare.FELT_GREEN)
@@ -705,7 +704,7 @@ class ShowResults(BlackjackState):
         for blinker in self.game.result_labels:
             blinker.draw(surface)
         for fader in self.fade_labels:
-            fader.draw(surface)        
+            fader.draw(surface)
         self.draw_advisor(surface)
         self.game.player.chip_pile.draw(surface)
         for pile in self.winnings:
@@ -714,7 +713,7 @@ class ShowResults(BlackjackState):
             pile_.draw(surface)
         self.window and self.window.draw(surface)
 
- 
+
 class EndRound(BlackjackState):
     def __init__(self):
         super(EndRound, self).__init__()
@@ -722,8 +721,8 @@ class EndRound(BlackjackState):
                self.screen_rect.bottom-(NeonButton.height+15))
         self.lobby_button = NeonButton(pos, "Lobby", self.back_to_lobby, bindings=[pg.K_ESCAPE])
         self.make_buttons()
-        
-    def make_buttons(self): 
+
+    def make_buttons(self):
         self.buttons = ButtonGroup()
         self.new_game_button = NeonButton((0,0), "Change", self.new_game_click,
                                           None, self.buttons)
@@ -733,7 +732,7 @@ class EndRound(BlackjackState):
                                                self.screen_rect.centery-30)
         self.new_game_button.rect.center = (self.screen_rect.centerx,
                                              self.screen_rect.centery+30)
-    
+
     def new_game_click(self, *args):
         self.game.advisor.empty()
         self.next = "Betting"
@@ -752,7 +751,7 @@ class EndRound(BlackjackState):
             self.game.advisor.queue_text(text2, dismiss_after=3000)
             text3 = "Press the Lobby button to exit"
             self.game.advisor.queue_text(text3, dismiss_after=3000)
-        
+
     def get_event(self, event, scale):
         if event.type == pg.QUIT:
             self.back_to_lobby()
@@ -762,8 +761,8 @@ class EndRound(BlackjackState):
         else:
             self.buttons.get_event(event)
             self.lobby_button.get_event(event)
-        
-    
+
+
     def update(self, surface, keys, current_time, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(pg.mouse.get_pos(), scale)
         self.game.update(dt, mouse_pos)
@@ -773,10 +772,10 @@ class EndRound(BlackjackState):
             self.window.update(mouse_pos)
             if self.window.done:
                 self.window = None
-        else:    
+        else:
             self.buttons.update(mouse_pos)
-            self.lobby_button.update(mouse_pos)        
-    
+            self.lobby_button.update(mouse_pos)
+
     def draw(self, surface):
         g = self.game
         surface.fill(prepare.FELT_GREEN)
@@ -796,6 +795,6 @@ class EndRound(BlackjackState):
         self.draw_advisor(surface)
         self.game.player.chip_pile.draw(surface)
         self.window and self.window.draw(surface)
- 
- 
- 
+
+
+

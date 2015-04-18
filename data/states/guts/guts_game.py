@@ -8,6 +8,7 @@ class GutsGame(object):
     def __init__(self, players, dealer_index, player, casino_player, bet, pot, free_ride):
         self.players = players 
         self.dealer_index = dealer_index
+        self.current_player_index = 0
         self.dealer = self.players[self.dealer_index]
         self.dealer_button = DealerButton(self.dealer.dealer_button_topleft)
         self.player = player
@@ -15,12 +16,15 @@ class GutsGame(object):
         self.bet = bet
         self.pot = pot
         self.deal_queue = self.make_deal_queue()
-        self.deck = Deck((20,20))
+        self.deck = Deck((620,400))
         self.font = prepare.FONTS["Saniretro"]
         self.make_labels()
         self.free_ride = free_ride
+        self.game_over = False
+            
+    def update(self):
+        self.make_labels()
         
-    
     def make_deal_queue(self):
         left = self.players[self.dealer_index + 1:]
         right = self.players[:self.dealer_index + 1]
@@ -28,7 +32,8 @@ class GutsGame(object):
     
     def make_labels(self):
         color= "antiquewhite" if self.pot != 420 else "darkgreen"
-        self.pot_label = Label(self.font, 48, "Pot: ${}".format(self.pot), color, {"center": (700, 525)})
+        self.pot_label = Label(self.font, 48, "Pot: ${}".format(self.pot), color, 
+                                       {"midleft": (630, 610)}) #{"center": (700, 610)})
         
     def compare_hands(self, player1, player2):
         h1 = []

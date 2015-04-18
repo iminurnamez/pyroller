@@ -19,10 +19,12 @@ class GutsPlayer(object):
         label_center = (700, 820)
         self.stay_label = Label(font, 48, "Stayed in", "gold3", {"center": label_center})
         self.pass_label = Label(font, 48, "Passed", "darkred", {"center": label_center})
-        self.name_label = Label(font, 48, self.name, "gold3", {"center": (label_center[0], label_center[1] + 50)})
+        self.name_label = Label(font, 48, self.name, "gold3", {"center": (label_center[0], label_center[1] + 60)})
+        for label in [self.stay_label, self.pass_label, self.name_label]:
+            label.image.set_alpha(200)
         self.label = None
         self.dealer_button_topleft = label_center[0] - 40, label_center[1] - 100
-        slot_rect = pg.Rect((645, 850), prepare.CARD_SIZE)
+        slot_rect = pg.Rect((645, 860), prepare.CARD_SIZE)
         self.card_slots = [slot_rect, slot_rect.move(60, 0)]
         self.orientation = "bottom"
         self.won = 0
@@ -49,15 +51,17 @@ class GutsPlayer(object):
             card.draw(surface)
     
     def stay(self):
-        choice(self.stay_sounds).play()
-        self.stayed = True
-        self.label = self.stay_label
+        if not self.stayed:
+            choice(self.stay_sounds).play()
+            self.stayed = True
+            self.label = self.stay_label
         
     def stay_out(self):
-        choice(self.fold_sounds).play()
-        self.passed = True
-        self.label = self.pass_label
-        self.fold()
+        if not self.passed:
+            choice(self.fold_sounds).play()
+            self.passed = True
+            self.label = self.pass_label
+            self.fold()
         
     def fold(self):
         for card in self.cards:

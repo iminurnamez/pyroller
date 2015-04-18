@@ -60,7 +60,7 @@ class BlackjackGame(object):
         return labels
         
     def toggle_advisor(self, *args):
-        BlackjackGame.advisor_active = not self.advisor_active
+        BlackjackGame.advisor_active = not BlackjackGame.advisor_active
         
     def tally_hands(self):
         """
