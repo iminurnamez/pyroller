@@ -290,19 +290,21 @@ class Betting(GutsState):
         sr = self.screen_rect
         self.labels = []
         self.alpha = 255
+        self.big_alpha = 255
         self.animations = pg.sprite.Group()
-        if self.game.free_ride:
-            label = Label(self.font, 192, "Free Ride", "gold3",
-                               {"center": sr.center}, bg=prepare.FELT_GREEN)
-            label.image.set_colorkey(prepare.FELT_GREEN)
-            self.labels.append(label)
-            left, top = label.rect.topleft
-            ani = Animation(x=left, y=top-500, duration=2000, round_values=True)
-            fade = Animation(alpha=0, duration=2000, round_values=True)
-            fade.start(self)
-            ani.start(label.rect)
-            self.animations.add(ani, fade)
-        else:
+        text = "Free Ride" if self.game.free_ride else "Ante Up"     
+        self.big_label = Label(self.font, 320, text, "gold3",
+                           {"center": sr.center}, bg=prepare.FELT_GREEN)
+        self.big_label.image.set_colorkey(prepare.FELT_GREEN)
+        left, top = self.big_label.rect.topleft
+        ani = Animation(x=left, y=top-500, duration=2000, round_values=True)
+        fade = Animation(alpha=0, duration=2000, round_values=True)
+        big_fader = Animation(big_alpha=0, duration=1500, delay=500, round_values=True)
+        fade.start(self)
+        ani.start(self.big_label.rect)
+        big_fader.start(self)
+        self.animations.add(ani, fade, big_fader)
+        if not self.game.free_ride:
             dest = self.game.pot_label.rect.center
             for p in self.game.players:
                 pos = p.name_label.rect.center
@@ -311,7 +313,7 @@ class Betting(GutsState):
                 label.image.set_colorkey(prepare.FELT_GREEN)
                 left, top = label.rect.topleft
                 self.labels.append(label)
-                ani = Animation(centerx=dest[0], centery=dest[1], duration=2000,
+                ani = Animation(centerx=dest[0], centery=dest[1], duration=2000, delay=50,
                                         round_values=True, transition="in_quart")
                 ani.callback = self.add_bet_to_pot
                 ani.start(label.rect)
@@ -350,7 +352,8 @@ class Betting(GutsState):
             self.next = "Dealing"
         for label in self.labels:
             label.image.set_alpha(self.alpha)
-
+        self.big_label.image.set_alpha(self.big_alpha)
+        
     def draw(self, surface):
         if not self.done:
             surface.fill(prepare.FELT_GREEN)
@@ -359,6 +362,7 @@ class Betting(GutsState):
                 p.draw(surface)
             for label in self.labels:
                 label.draw(surface)
+            self.big_label.draw(surface)    
         self.buttons.draw(surface)
         self.money_icon.draw(surface)
         self.draw_advisor(surface)
@@ -390,7 +394,7 @@ class Dealing(GutsState):
                 card = player.draw_from_deck(self.game.deck)
                 fx, fy = slot.topleft
                 ani = Animation(x=fx, y=fy, duration=400,
-                                        delay=delay_time, #transition="in_out_quint",
+                                        delay=delay_time, transition="in_out_quint",
                                         round_values=True)
                 if toggle > 0:
                     if player is self.game.player:
@@ -417,7 +421,7 @@ class Dealing(GutsState):
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
         self.game.draw(surface)
-        for player in self.game.players: #deal_queue[::-1]:
+        for player in self.game.deal_queue[::-1]:
             player.draw(surface)
         
         self.buttons.draw(surface)
@@ -515,12 +519,39 @@ class ShowCards(GutsState):
             
     def startup(self, game):
         self.game = game
-        self.timer = 0.0
+        self.alpha = 255
+        self.showdown_alpha = 255
+        
+        self.showdown_font_size = 64
+        self.make_showdown_label()
+
+        
+        fader = Animation(alpha=0, duration=2500, delay=500, round_values=True)
+        sizer = Animation(showdown_font_size=320, duration=500, round_values=True) 
+        fader.start(self)
+        sizer.start(self)
+        quitter = Task(self.end_state, 3000)
+        flipper = Task(self.flip_cards, 1000)
+        self.animations.add(fader, sizer, quitter, flipper)
+        
+    def flip_cards(self):
         for p in self.game.players:
             if p.stayed:
                 for card in p.cards:
                     card.face_up = True
-
+                self.play_flip_sound()    
+                    
+    def end_state(self):
+        self.done = True
+        
+    def make_showdown_label(self):    
+        pos = self.screen_rect.center          
+        self.label = Label(self.font, self.showdown_font_size, "Showdown!", "gold3",
+                                {"center": pos}, 
+                                bg=prepare.FELT_GREEN)
+        self.label.image.set_colorkey(prepare.FELT_GREEN)
+        self.label.image.set_alpha(self.alpha)
+        
     def get_event(self, event):
         if self.window:
             self.window.get_event(event)
@@ -530,11 +561,7 @@ class ShowCards(GutsState):
     def update(self, dt, scale):
         mouse_pos = tools.scaled_mouse_pos(scale)
         self.general_update(dt, mouse_pos)
-
-        if self.timer > 3000:
-          self.done = True
-        if not self.window:
-            self.timer += dt
+        self.make_showdown_label()
 
     def draw(self, surface):
         surface.fill(prepare.FELT_GREEN)
@@ -543,6 +570,7 @@ class ShowCards(GutsState):
             player.draw(surface)
         self.buttons.draw(surface)
         self.money_icon.draw(surface)
+        self.label.draw(surface)
         self.draw_advisor(surface)
         if self.window:
             self.window.draw(surface)
@@ -554,7 +582,7 @@ class ShowResults(GutsState):
         self.buttons = ButtonGroup()
         pos = (self.screen_rect.right-(NeonButton.width+10),
                self.screen_rect.bottom-(NeonButton.height+10))
-        lobby_button = NeonButton(pos, "Lobby", self.warn, None, self.buttons, bindings=[pg.K_ESCAPE])
+        self.lobby_button = NeonButton(pos, "Lobby", self.warn, None, self.buttons, bindings=[pg.K_ESCAPE])
 
     def make_player_buttons(self, free_ride):
         self.player_buttons = ButtonGroup()
@@ -568,6 +596,7 @@ class ShowResults(GutsState):
         self.game.game_over = True
         self.done = True
         self.next = "Betting"
+        self.advisor.empty()
 
     def add_player_cash(self, amount):
         self.game.player.cash += amount
@@ -588,6 +617,7 @@ class ShowResults(GutsState):
         
     def startup(self, game):
         self.game = game
+        self.lobby_button.call = self.warn
         self.toggled = False
         self.alpha = 255
         self.labels = []
@@ -595,13 +625,12 @@ class ShowResults(GutsState):
         self.calculated = False
         self.animations = pg.sprite.Group()
         
-        
         stayers = [x for x in self.game.players if x.stayed]
         winners = self.game.get_winners()
         share = self.game.pot // len(winners)
 
         ani_duration = 2000
-        free_ride = False
+        self.free_ride = False
         
         for stayer in stayers:
             pos = stayer.name_label.rect.center
@@ -611,7 +640,7 @@ class ShowResults(GutsState):
                 text = "${}".format(self.game.pot)
                 color = "darkred"
                 stayer.lost = self.game.pot
-                free_ride = True
+                self.free_ride = True
                 dest = self.game.pot_label.rect.center
                 if stayer is self.game.player:
                     pos = self.money_icon.rect.center
@@ -651,9 +680,9 @@ class ShowResults(GutsState):
         self.animations.add(fader)
         self.game.pot = 0
 
-        self.make_player_buttons(free_ride)
+        self.make_player_buttons(self.free_ride)
         self.toggle_buttons(False)
-        if free_ride:
+        if self.free_ride:
             self.advice_texts = ["Press OK to play the next round"]
         else:
             self.advice_texts = ["Ante Up ${} to play again".format(self.game.bet)]
@@ -676,7 +705,9 @@ class ShowResults(GutsState):
                 self.toggled = True
                 for text in self.advice_texts:
                     self.advisor.queue_text(text, dismiss_after=3500)
-
+                if not self.free_ride:
+                    self.lobby_button.call = self.back_to_lobby
+                
     def get_event(self, event):
         if self.window:
             self.window.get_event(event)
