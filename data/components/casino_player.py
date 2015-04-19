@@ -23,7 +23,7 @@ class BankAccount(object):
         self.last_interest_time = 0
         self.elapsed_interest_time = 0
         self.transactions = []
-        self.max_advance = 50000000
+        self.max_advance = 500
 
     def update(self, current):
         diff = current - self.last_interest_time

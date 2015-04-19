@@ -16,7 +16,7 @@ class GutsGame(object):
         self.bet = bet
         self.pot = pot
         self.deal_queue = self.make_deal_queue()
-        self.deck = Deck((620,400))
+        self.deck = Deck((640,400))
         self.font = prepare.FONTS["Saniretro"]
         self.make_labels()
         self.free_ride = free_ride
@@ -33,7 +33,7 @@ class GutsGame(object):
     def make_labels(self):
         color= "antiquewhite" if self.pot != 420 else "darkgreen"
         self.pot_label = Label(self.font, 48, "Pot: ${}".format(self.pot), color, 
-                                       {"midleft": (630, 610)}) #{"center": (700, 610)})
+                                       {"midleft": (650, 610)}) #{"center": (700, 610)})
         
     def compare_hands(self, player1, player2):
         h1 = []

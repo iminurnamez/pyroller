@@ -17,8 +17,8 @@ class GutsPlayer(object):
         self.passed = False
         font = prepare.FONTS["Saniretro"]
         label_center = (700, 820)
-        self.stay_label = Label(font, 48, "Stayed in", "gold3", {"center": label_center})
-        self.pass_label = Label(font, 48, "Passed", "darkred", {"center": label_center})
+        self.stay_label = Label(font, 48, "Stayed in", "gold3", {"center": label_center}, bg=prepare.FELT_GREEN)
+        self.pass_label = Label(font, 48, "Passed", "darkred", {"center": label_center}, bg=prepare.FELT_GREEN)
         self.name_label = Label(font, 48, self.name, "gold3", {"center": (label_center[0], label_center[1] + 60)})
         for label in [self.stay_label, self.pass_label, self.name_label]:
             label.image.set_alpha(200)

@@ -5,7 +5,7 @@ from ...components.labels import Label, NeonButton, ButtonGroup, MoneyIcon, Butt
 from ...components.labels import MultiLineLabel
 from ...components.animation import Animation, Task
 from ...components.advisor import Advisor
-from ...components.warning_window import WarningWindow
+from ...components.warning_window import WarningWindow, NoticeWindow
 
 
 class GutsState(object):
@@ -33,14 +33,16 @@ class GutsState(object):
         self.advisor_button = Button(rect, call=self.toggle_advisor)
         self.buttons = ButtonGroup()
         pos = (self.screen_rect.right-(NeonButton.width+10),
-               self.screen_rect.bottom-(NeonButton.height+15))
+               self.screen_rect.bottom-(NeonButton.height+10))
         lobby_button = NeonButton(pos, "Lobby", self.back_to_lobby, None, self.buttons, bindings=[pg.K_ESCAPE])
         self.animations = pg.sprite.Group()
         
-
     def warn(self, *args):
         warning = "Exiting the game will abandon the current pot!"
         GutsState.window = WarningWindow(self.screen_rect.center, warning, self.leave)
+    
+    def notice(self, msg):
+        GutsState.window = NoticeWindow(self.screen_rect.center, msg)
     
     def back_to_lobby(self, *args):
         if self.game.pot:
@@ -278,7 +280,7 @@ class Betting(GutsState):
         super(Betting, self).__init__()
         self.buttons = ButtonGroup()
         pos = (self.screen_rect.right-(NeonButton.width+10),
-               self.screen_rect.bottom-(NeonButton.height+15))
+               self.screen_rect.bottom-(NeonButton.height+10))
         lobby_button = NeonButton(pos, "Lobby", self.warn, None, self.buttons, bindings=[pg.K_ESCAPE])
 
     def add_bet_to_pot(self):
@@ -551,7 +553,7 @@ class ShowResults(GutsState):
         super(ShowResults, self).__init__()
         self.buttons = ButtonGroup()
         pos = (self.screen_rect.right-(NeonButton.width+10),
-               self.screen_rect.bottom-(NeonButton.height+15))
+               self.screen_rect.bottom-(NeonButton.height+10))
         lobby_button = NeonButton(pos, "Lobby", self.warn, None, self.buttons, bindings=[pg.K_ESCAPE])
 
     def make_player_buttons(self, free_ride):
@@ -578,11 +580,15 @@ class ShowResults(GutsState):
             button.active = boolean
             button.visible = boolean
 
+    def cash_advance(self, amount):
+        acct = self.game.casino_player.account
+        acct.cash_advance(amount)
+        self.add_player_cash(amount)
+       
+        
     def startup(self, game):
         self.game = game
-        self.timer = 0.0
-        self.fade_timer = 0.0
-        self.fade_freq = 8.0
+        self.toggled = False
         self.alpha = 255
         self.labels = []
         self.blinkers = []
@@ -609,6 +615,11 @@ class ShowResults(GutsState):
                 dest = self.game.pot_label.rect.center
                 if stayer is self.game.player:
                     pos = self.money_icon.rect.center
+                    if self.game.player.cash < stayer.lost:
+                        amount = stayer.lost - self.game.player.cash
+                        self.cash_advance(amount)
+                        msg = "You were forced to take a cash advance to cover your loss. Visit the ATM to view your account."
+                        self.notice(msg)
                     self.add_player_cash(-stayer.lost)
                 task = Task(self.add_to_pot, ani_duration, args=[stayer.lost])
                 self.animations.add(task)
@@ -642,6 +653,11 @@ class ShowResults(GutsState):
 
         self.make_player_buttons(free_ride)
         self.toggle_buttons(False)
+        if free_ride:
+            self.advice_texts = ["Press OK to play the next round"]
+        else:
+            self.advice_texts = ["Ante Up ${} to play again".format(self.game.bet)]
+        self.advice_texts.append("Press the Lobby button to exit")            
 
     def fade_labels(self):
         for label in self.labels:
@@ -655,8 +671,11 @@ class ShowResults(GutsState):
                 blinker.update(dt)
             self.player_buttons.update(mouse_pos)
             self.fade_labels()
-            if self.alpha < 1:
+            if self.alpha < 1 and not self.toggled:
                 self.toggle_buttons(True)
+                self.toggled = True
+                for text in self.advice_texts:
+                    self.advisor.queue_text(text, dismiss_after=3500)
 
     def get_event(self, event):
         if self.window:

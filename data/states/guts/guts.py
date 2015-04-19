@@ -94,7 +94,6 @@ class Guts(tools._State):
             pot = sum([x.lost for x in self.players])
             self.new_game(pot)
         self.state.startup(self.game)
-        print self.state_name
     
     def update(self, surface, keys, current_time, dt, scale):
         if self.state.quit:
