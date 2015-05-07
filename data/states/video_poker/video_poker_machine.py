@@ -30,7 +30,6 @@ class PayBoard:
 
         self.rank_sound = prepare.SFX['bingo-card-success']
 
-
         self.build()
 
     def update_bet_rect(self, bet):
@@ -59,10 +58,9 @@ class PayBoard:
         y = y_initial = self.rect.top
         for row in RANKS:
             label = Label(self.font, self.text_size, row, self.text_color,
-                                      {"topleft": (x, y)})
+                          {"topleft": (x, y)})
             self.table.append(label)
             y += self.line_height
-
 
         x += self.col_space*2 - self.padding*2
         y = y_initial
@@ -70,7 +68,7 @@ class PayBoard:
             for row in col:
                 text = str(row)
                 label = Label(self.font, self.text_size, text, self.text_color,
-                                      {"topright": (x, y)})
+                              {"topright": (x, y)})
                 self.table.append(label)
                 y += self.line_height
             x += self.col_space
@@ -86,12 +84,10 @@ class PayBoard:
             x += self.col_space
 
         self.rank_rect = pg.Rect((self.rect.left, self.rect.top),
-                                            (self.rect.w, (self.line_height)))
-
+                                 (self.rect.w, self.line_height))
 
         self.bet_rect = pg.Rect((self.rect.left, self.rect.top),
-                                                 (self.col_space, self.rect.h))
-
+                                (self.col_space, self.rect.h))
 
     def draw(self, surface):
         pg.draw.rect(surface, self.bg_color, self.rect)
@@ -105,9 +101,6 @@ class PayBoard:
 
         for line in self.lines:
             pg.draw.line(surface, self.border_color, line[0], line[1], self.border_size)
-
-
-
 
 
 class Machine:
@@ -149,13 +142,12 @@ class Machine:
         y += self.padding
         w -= self.padding*2
         h = 319
-        self.pay_board = PayBoard((x,y), (w,h))
+        self.pay_board = PayBoard((x, y), (w, h))
 
         # calculate cards table position position
         y += self.padding + self.pay_board.rect.h
         h = 300
-        self.dealer = Dealer((x,y), (w,h))
-
+        self.dealer = Dealer((x, y), (w, h))
 
         # buttons
         y = self.dealer.rect.bottom + self.padding*4 + self.btn_padding
@@ -177,8 +169,8 @@ class Machine:
 
         for text, func, args in button_list:
             rect_style = (x, y, self.btn_width, self.btn_height)
-            settings.update({'text':text, 'hover_text':text,
-                              'disable_text':text, 'call':func, 'args':args})
+            settings.update({'text': text, 'hover_text': text,
+                            'disable_text': text, 'call': func, 'args': args})
             button = Button(rect_style, **settings)
             self.buttons.append(button)
             x += self.btn_width + self.btn_padding
@@ -200,8 +192,8 @@ class Machine:
         self.coins_button = Button(rect_style, **settings)
 
         rect_style = ((self.rect.right + self.padding), (y - 300), 200, 60,)
-        settings.update({'text': 'Cash out','hover_text': 'Cash out',
-                                                      'call': self.cash_out})
+        settings.update({'text': 'Cash out', 'hover_text': 'Cash out',
+                         'call': self.cash_out})
         self.cash_button = Button(rect_style, **settings)
 
         # yes no buttons
@@ -235,24 +227,22 @@ class Machine:
         button.rect.centery = self.dealer.rect.centery
         self.yes_no_buttons.append(button)
 
-
     def make_help_labels(self, rect):
         labels = []
         text = "Credits {}".format(self.credits)
         label = Blinker(self.font, 100, text, "red",
-                               {"centerx":rect.centerx, "top": rect.top}, 700)
+                        {"centerx": rect.centerx, "top": rect.top}, 700)
         labels.append(label)
         text = "If selected card beats dealers player wins Ace is highest, two is lowets"
         label = MultiLineLabel(self.font, self.text_size, text,
-                     self.text_color, {"center": rect.center}, align="center")
+                               self.text_color, {"center": rect.center}, align="center")
         labels.append(label)
         text = "Double up ?"
         label = Blinker(self.font, 100, text, "red",
-                          {"centerx":rect.centerx, "bottom": rect.bottom}, 700)
+                        {"centerx": rect.centerx, "bottom": rect.bottom}, 700)
         labels.append(label)
 
         return labels
-
 
     def make_info_label(self, rect):
         labels = []
@@ -260,41 +250,40 @@ class Machine:
         if self.state == "WON" or self.state == "DOUBLE UP":
             text = "you have won: {} double up to: {}".format(self.win, self.win*2)
             label = MultiLineLabel(self.font, 35, text, self.text_color,
-                             {"centerx": rect.centerx, "top": y},
-                                                char_limit=20, align="center")
+                                   {"centerx": rect.centerx, "top": y},
+                                   char_limit=20, align="center")
             labels.append(label)
         else:
             if self.state == "GAME OVER":
                 if self.win > 0:
                     text = 'you win {}'.format(self.win)
                     label = Label(self.font, self.text_size, text,
-                                          self.text_color,
-                                          {"centerx": rect.centerx, "top": y})
+                                  self.text_color,
+                                  {"centerx": rect.centerx, "top": y})
                     labels.append(label)
                 elif self.coins > 0:
                     text = "game over"
                     label = Label(self.font, self.text_size, text,
-                                          self.text_color,
-                                          {"centerx": rect.centerx, "top": y})
+                                  self.text_color,
+                                  {"centerx": rect.centerx, "top": y})
                     labels.append(label)
 
             text = 'Credits {}'.format(self.credits)
             label = Label(self.font, self.text_size, text, self.text_color,
-                            {"topright": (rect.right, y)})
+                          {"topright": (rect.right, y)})
             labels.append(label)
             coins_text = "Coins in {}".format(self.coins)
             label = Label(self.font, self.text_size, coins_text, self.text_color,
-                            {"topleft": (rect.x, y)})
+                          {"topleft": (rect.x, y)})
             labels.append(label)
 
         balance = 'Balance: ${}'.format(self.player.stats["cash"])
         pos = ((self.rect.right + self.padding), (self.rect.top + 300))
         label = Label(self.font, 50, balance, self.text_color,
-                        {"topleft": pos})
+                      {"topleft": pos})
         labels.append(label)
 
         return labels
-
 
     def insert_coin(self, *args):
         self.start_waiting()
@@ -302,11 +291,9 @@ class Machine:
         self.player.stats["cash"] -= self.bet_value
         self.credits_sound.play()
 
-
     def start_waiting(self):
         self.dealer.playing = True
         self.dealer.waiting = True
-
 
     def cash_out(self, *args):
         if self.state == "GAME OVER":
@@ -314,11 +301,9 @@ class Machine:
                 self.player.stats['cash'] += self.credits
                 self.credits = 0
 
-
     def toogle_buttons(self, buttons, active=True):
         for button in buttons:
                 button.active = active
-
 
     def bet_one(self, *args):
         if self.credits > 0:
@@ -335,8 +320,7 @@ class Machine:
                 self.credits += 4
             self.bet_sound.play()
         self.pay_board.update_bet_rect(self.coins)
-        self.buttons[-1].active = True # draw button
-
+        self.buttons[-1].active = True  # draw button
 
     def bet_max(self, *args):
         if self.credits > 0:
@@ -352,7 +336,7 @@ class Machine:
             self.bet_sound.play()
             self.draw_cards()
         self.pay_board.update_bet_rect(self.coins)
-        self.buttons[-1].active = True # draw button
+        self.buttons[-1].active = True  # draw button
 
     def make_last_bet(self):
         """ """
@@ -402,7 +386,6 @@ class Machine:
             self.state = "GAME OVER"
             self.start_waiting()
 
-
     def draw_cards(self, *args):
         if self.coins > 0:
             if self.state == "GAME OVER":
@@ -410,7 +393,6 @@ class Machine:
                 self.new_game()
             elif self.state == "PLAYING":
                 self.evaluate_final_hand()
-
 
     def make_held(self, *args):
         """ Some unkonow issue with 0 Int args,
@@ -420,7 +402,7 @@ class Machine:
         if self.state == "PLAYING":
             self.dealer.toogle_held(index)
         elif self.state == "DOUBLE UP":
-            if index > 0: # if is not the first card
+            if index > 0:  # if is not the first card
                 win = self.dealer.select_card(index)
                 self.dealer.draw_cards()
                 if win:
@@ -431,7 +413,6 @@ class Machine:
                     self.win = 0
                     self.state = "GAME OVER"
                     self.start_waiting()
-
 
     def check_double_up(self, *args):
         double_up = args[0][0]
@@ -444,12 +425,6 @@ class Machine:
             self.credits += self.win
             self.state = "GAME OVER"
             self.start_waiting()
-
-
-
-
-
-
 
     def get_event(self, event, scale):
         self.coins_button.get_event(event)
@@ -465,9 +440,7 @@ class Machine:
                 mouse_pos = tools.scaled_mouse_pos(scale)
                 index = self.dealer.get_event(mouse_pos)
                 if type(index) == int:
-                    self.make_held(str(index)) # Little hack
-
-
+                    self.make_held(str(index))  # Little hack
 
     def update(self, mouse_pos, dt):
         self.info_labels = self.make_info_label(self.dealer.rect)
@@ -492,12 +465,10 @@ class Machine:
                     label.update(dt)
             self.buttons[-1].active = False
 
-
         self.coins_button.update(mouse_pos)
         self.cash_button.update(mouse_pos)
         for button in self.buttons:
             button.update(mouse_pos)
-
 
     def draw(self, surface):
         self.dealer.draw(surface)
