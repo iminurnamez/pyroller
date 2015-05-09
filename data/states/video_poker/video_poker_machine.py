@@ -151,6 +151,30 @@ class Machine:
         self.build()
         self.dealer.startup()
 
+    def build(self):
+        print("In Machine Build")
+        x, y = self.rect.topleft
+        w, h = self.rect.size
+
+        # calculate pay board position
+        x += self.padding
+        y += self.padding
+        w -= self.padding*2
+        h = 319
+        self.pay_board = PayBoard((x, y), (w, h))
+
+        # calculate cards table position
+        y += self.padding + self.pay_board.rect.h
+        h = 300
+        self.dealer = Dealer((x, y), (w, h))
+
+        # buttons
+        y = self.dealer.rect.bottom + self.padding*4 + self.btn_padding
+        self.build_main_buttons(x, y)
+        self.build_coins_button(y)
+        self.build_cash_button(y)
+        self.build_yes_no_buttons()
+
     def build_main_buttons(self, x, y):
         button_list = [('bet', self.bet_one, None), ('bet max', self.bet_max, None),
                        ('held', self.make_held, '0'), ('held', self.make_held, '1'),
@@ -236,30 +260,6 @@ class Machine:
         button.rect.centerx = self.dealer.rect.centerx + from_center
         button.rect.centery = self.dealer.rect.centery
         self.yes_no_buttons.append(button)
-
-    def build(self):
-        print("In Machine Build")
-        x, y = self.rect.topleft
-        w, h = self.rect.size
-
-        # calculate pay board position
-        x += self.padding
-        y += self.padding
-        w -= self.padding*2
-        h = 319
-        self.pay_board = PayBoard((x, y), (w, h))
-
-        # calculate cards table position
-        y += self.padding + self.pay_board.rect.h
-        h = 300
-        self.dealer = Dealer((x, y), (w, h))
-
-        # buttons
-        y = self.dealer.rect.bottom + self.padding*4 + self.btn_padding
-        self.build_main_buttons(x, y)
-        self.build_coins_button(y)
-        self.build_cash_button(y)
-        self.build_yes_no_buttons()
 
     def make_help_labels(self, rect):
         labels = []
