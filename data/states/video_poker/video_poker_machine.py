@@ -129,8 +129,8 @@ class Machine:
         self.max_bet = 5
         self.bet_value = 1
 
-        self.bet = 0
-        self.coins = 0
+        self.current_bet = 0
+        self.last_bet = 0
         self.credits = 0
 
         self.win = 0
@@ -143,9 +143,9 @@ class Machine:
     def startup(self, player):
         print("In Machine startup")
         self.state = "GAME OVER"
-        self.bet = 0
+        self.current_bet = 0
+        self.last_bet = 0
         self.credits = 0
-        self.coins = 0
         self.win = 0
         self.player = player
         self.build()
@@ -295,7 +295,7 @@ class Machine:
                                   self.text_color,
                                   {"centerx": rect.centerx, "top": y})
                     labels.append(label)
-                elif self.coins > 0:
+                elif self.current_bet > 0:
                     text = "game over"
                     label = Label(self.font, self.text_size, text,
                                   self.text_color,
@@ -306,7 +306,7 @@ class Machine:
             label = Label(self.font, self.text_size, text, self.text_color,
                           {"topright": (rect.right, y)})
             labels.append(label)
-            coins_text = "Coins in {}".format(self.coins)
+            coins_text = "Current Bet {}".format(self.current_bet)
             label = Label(self.font, self.text_size, coins_text, self.text_color,
                           {"topleft": (rect.x, y)})
             labels.append(label)
@@ -341,48 +341,40 @@ class Machine:
 
     def bet_one(self, *args):
         if self.credits > 0:
-            if self.bet < self.max_bet:
-                self.bet += 1
-                if self.coins < self.max_bet:
-                    self.coins += 1
-                else:
-                    self.coins = 1
+            if self.current_bet < self.max_bet:
+                self.current_bet += 1
                 self.credits -= 1
             else:
-                self.bet = 1
-                self.coins = 1
+                self.current_bet = 1
                 self.credits += 4
             self.bet_sound.play()
-        self.pay_board.update_bet_rect(self.coins)
+        self.pay_board.update_bet_rect(self.current_bet)
         self.main_buttons[-1].active = True  # draw button
 
     def bet_max(self, *args):
         if self.credits > 0:
             if self.credits >= self.max_bet:
-                aux = self.max_bet - self.coins
-                self.bet += aux
-                self.coins += aux
+                aux = self.max_bet - self.current_bet
+                self.current_bet += aux
                 self.credits -= aux
             else:
-                self.bet = self.credits
-                self.coins = self.credits
+                self.current_bet += self.credits
                 self.credits = 0
             self.bet_sound.play()
             self.draw_cards()
-        self.pay_board.update_bet_rect(self.coins)
+        self.pay_board.update_bet_rect(self.current_bet)
         self.main_buttons[-1].active = True  # draw button
 
     def make_last_bet(self):
         """ """
         if self.credits > 0:
-            if self.credits >= self.coins:
-                self.bet = self.coins
-                self.credits -= self.coins
+            if self.credits >= self.last_bet:
+                self.current_bet = self.last_bet
+                self.credits -= self.last_bet
             else:
-                self.bet = self.credits
-                self.coins = self.credits
+                self.current_bet = self.credits
                 self.credits = 0
-        self.pay_board.update_bet_rect(self.coins)
+        self.pay_board.update_bet_rect(self.current_bet)
 
     def new_game(self):
         self.state = "PLAYING"
@@ -390,12 +382,11 @@ class Machine:
         self.dealer.playing = True
         self.dealer.waiting = False
         self.win = 0
-        if self.bet > 0:
+        if self.current_bet > 0:
             self.dealer.draw_cards()
             rank = self.dealer.evaluate_hand()
             self.pay_board.update_rank_rect(rank)
-        else:
-            if self.coins > 0:
+        elif self.last_bet > 0:
                 self.make_last_bet()
                 self.dealer.draw_cards()
                 rank = self.dealer.evaluate_hand()
@@ -411,17 +402,19 @@ class Machine:
         rank = self.dealer.evaluate_hand()
         self.pay_board.update_rank_rect(rank)
         if rank != NO_HAND:
-            index = self.bet - 1
+            index = self.current_bet - 1
             self.win = PAYTABLE[index][rank]
             self.help_labels = self.make_help_labels(self.pay_board.rect)
             self.state = "WON"
         else:
-            self.bet = 0
             self.state = "GAME OVER"
             self.start_waiting()
 
+        self.last_bet = self.current_bet
+        self.current_bet = 0
+
     def draw_cards(self, *args):
-        if self.coins > 0:
+        if self.current_bet > 0 or self.last_bet > 0:
             if self.state == "GAME OVER":
                 self.pay_board.reset()
                 self.new_game()
