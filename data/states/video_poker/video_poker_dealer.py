@@ -7,9 +7,21 @@ from .video_poker_data import *
 
 class Dealer:
     def __init__(self, topleft, size):
+        print("In Dealer init")
         self.rect = pg.Rect(topleft, size)
 
         self.deck = Deck((20, 20), card_size=(187, 271), infinite=True)
+
+        self.hand = []
+        self.hand_len = 0
+        self.card_index = None
+        self.max_cards = None
+        self.revealing = False
+        self.held_cards = []
+        self.changing_cards = []
+        self.waiting = False
+        self.playing = False
+        self.double_up = False
 
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 30
@@ -39,6 +51,7 @@ class Dealer:
         self.held_sound = prepare.SFX["bingo-ball-chosen"]
 
     def startup(self):
+        print("In Dealer Startup")
         self.hand = self.deck.make_hand()
         self.hand_len = len(self.hand)
         self.build()
@@ -69,6 +82,7 @@ class Dealer:
         self.revealing = True
 
     def build(self):
+        print("In Dealer Build")
         x = self.rect.left
         y = self.rect.top + self.line_height
         for index, card in enumerate(self.hand):

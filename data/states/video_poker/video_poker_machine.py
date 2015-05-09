@@ -25,6 +25,8 @@ class PayBoard:
         self.padding = 10
 
         self.bet_rect_color = pg.Color("red")
+        self.bet_rect = None
+        self.rank_rect = None
         self.show_bet_rect = False
         self.show_rank_rect = False
 
@@ -105,6 +107,7 @@ class PayBoard:
 
 class Machine:
     def __init__(self, topleft, size):
+        print("In Machine init")
         self.rect = pg.Rect(topleft, size)
 
         self.font = prepare.FONTS["Saniretro"]
@@ -112,17 +115,33 @@ class Machine:
         self.text_color = "white"
         self.padding = 25
 
-        self.buttons = []
-        self.btn_width = self.btn_height = 100
-        self.btn_padding = 35
-        self.max_bet = 5
-
-        self.info_labels = []
-
         self.credits_sound = prepare.SFX["bingo-pay-money"]
         self.bet_sound = prepare.SFX["bingo-pick-1"]
 
+        self.buttons = []
+        self.btn_width = self.btn_height = 100
+        self.btn_padding = 35
+        self.coins_button = None
+        self.cash_button = None
+        self.yes_no_buttons = []
+
+        self.info_labels = []
+        self.help_labels = []
+
+        self.max_bet = 5
+        self.bet_value = 1
+        self.bet = 0
+        self.coins = 0
+        self.credits = 0
+
+        self.win = 0
+        self.state = "GAME OVER"
+        self.player = None
+        self.pay_board = None
+        self.dealer = None
+
     def startup(self, player):
+        print("In Machine startup")
         self.state = "GAME OVER"
         self.bet = 0
         self.bet_value = 1
@@ -134,6 +153,7 @@ class Machine:
         self.dealer.startup()
 
     def build(self):
+        print("In Machine Build")
         x, y = self.rect.topleft
         w, h = self.rect.size
 
