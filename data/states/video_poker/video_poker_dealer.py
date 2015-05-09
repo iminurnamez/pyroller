@@ -146,10 +146,10 @@ class Dealer:
         for val in values:
             matches = values.count(val)
             if matches == 2:
-                if not val in pairs:
+                if val not in pairs:
                     pairs.append(val)
             elif matches == 3:
-                if are_three == False:
+                if not are_three:
                     are_three = True
 
         pairs_len = len(pairs)

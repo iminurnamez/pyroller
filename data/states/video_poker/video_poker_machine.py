@@ -56,7 +56,7 @@ class PayBoard:
         self.rank_rect.top = 0
 
     def build(self):
-        x = x_initial = self.rect.left + self.padding
+        x = self.rect.left + self.padding
         y = y_initial = self.rect.top
         for row in RANKS:
             label = Label(self.font, self.text_size, row, self.text_color,
