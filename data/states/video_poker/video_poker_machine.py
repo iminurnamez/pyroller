@@ -109,18 +109,16 @@ class Machine:
     def __init__(self, topleft, size):
         print("In Machine init")
         self.rect = pg.Rect(topleft, size)
-
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 35
         self.text_color = "white"
         self.padding = 25
-
+        self.btn_width = self.btn_height = 100
+        self.btn_padding = 35
         self.credits_sound = prepare.SFX["bingo-pay-money"]
         self.bet_sound = prepare.SFX["bingo-pick-1"]
 
-        self.buttons = []
-        self.btn_width = self.btn_height = 100
-        self.btn_padding = 35
+        self.main_buttons = []
         self.coins_button = None
         self.cash_button = None
         self.yes_no_buttons = []
@@ -130,12 +128,14 @@ class Machine:
 
         self.max_bet = 5
         self.bet_value = 1
+
         self.bet = 0
         self.coins = 0
         self.credits = 0
 
         self.win = 0
         self.state = "GAME OVER"
+
         self.player = None
         self.pay_board = None
         self.dealer = None
@@ -144,7 +144,6 @@ class Machine:
         print("In Machine startup")
         self.state = "GAME OVER"
         self.bet = 0
-        self.bet_value = 1
         self.credits = 0
         self.coins = 0
         self.win = 0
@@ -152,84 +151,75 @@ class Machine:
         self.build()
         self.dealer.startup()
 
-    def build(self):
-        print("In Machine Build")
-        x, y = self.rect.topleft
-        w, h = self.rect.size
+    def build_main_buttons(self, x, y):
+        button_list = [('bet', self.bet_one, None), ('bet max', self.bet_max, None),
+                       ('held', self.make_held, '0'), ('held', self.make_held, '1'),
+                       ('held', self.make_held, '2'), ('held', self.make_held, '3'),
+                       ('held', self.make_held, '4'), ('draw', self.draw_cards, None)]
 
-        # calculate pay board position
-        x += self.padding
-        y += self.padding
-        w -= self.padding*2
-        h = 319
-        self.pay_board = PayBoard((x, y), (w, h))
-
-        # calculate cards table position position
-        y += self.padding + self.pay_board.rect.h
-        h = 300
-        self.dealer = Dealer((x, y), (w, h))
-
-        # buttons
-        y = self.dealer.rect.bottom + self.padding*4 + self.btn_padding
-
-        button_list = [
-            ('bet', self.bet_one, None), ('bet max', self.bet_max, None),
-            ('held', self.make_held, '0'), ('held', self.make_held, '1'),
-            ('held', self.make_held, '2'), ('held', self.make_held, '3'),
-            ('held', self.make_held, '4'), ('draw', self.draw_cards, None)]
-
-        settings = {"fill_color"         : pg.Color("#222222"),
-                    "font"               : self.font,
-                    "font_size"          : 25,
-                    "hover_text_color"   : pg.Color("white"),
-                    "disable_text_color" : pg.Color("#cccccc"),
-                    "hover_fill_color"   : pg.Color("#353535"),
-                    "disable_fill_color" : pg.Color("#999999"),
-                    "active"             : False}
+        settings = {"fill_color": pg.Color("#222222"),
+                    "font": self.font,
+                    "font_size": 25,
+                    "hover_text_color": pg.Color("white"),
+                    "disable_text_color": pg.Color("#cccccc"),
+                    "hover_fill_color": pg.Color("#353535"),
+                    "disable_fill_color": pg.Color("#999999"),
+                    "active": False}
 
         for text, func, args in button_list:
             rect_style = (x, y, self.btn_width, self.btn_height)
             settings.update({'text': text, 'hover_text': text,
                             'disable_text': text, 'call': func, 'args': args})
             button = Button(rect_style, **settings)
-            self.buttons.append(button)
+            self.main_buttons.append(button)
             x += self.btn_width + self.btn_padding
 
-        # cash out and insert coins buttons
-        settings = {"text"               : "Insert coin",
-                    "hover_text"         : "Insert coin",
-                    "fill_color"         : pg.Color("gold"),
-                    "font"               : self.font,
-                    "font_size"          : self.text_size,
-                    "text_color"         : pg.Color("#333333"),
-                    "hover_text_color"   : pg.Color("#333333"),
-                    "disable_text_color" : pg.Color("#cccccc"),
-                    "hover_fill_color"   : pg.Color("yellow"),
-                    "disable_fill_color" : pg.Color("#999999"),
+    def build_coins_button(self, y):
+        settings = {"text": "Insert coin",
+                    "hover_text": "Insert coin",
+                    "fill_color": pg.Color("gold"),
+                    "font": self.font,
+                    "font_size": self.text_size,
+                    "text_color": pg.Color("#333333"),
+                    "hover_text_color": pg.Color("#333333"),
+                    "disable_text_color": pg.Color("#cccccc"),
+                    "hover_fill_color": pg.Color("yellow"),
+                    "disable_fill_color": pg.Color("#999999"),
                     "call": self.insert_coin}
 
         rect_style = ((self.rect.right + self.padding), y, 200, 60,)
         self.coins_button = Button(rect_style, **settings)
 
+    def build_cash_button(self, y):
+        settings = {"text": "Cash out",
+                    "hover_text": "Cash out",
+                    "fill_color": pg.Color("gold"),
+                    "font": self.font,
+                    "font_size": self.text_size,
+                    "text_color": pg.Color("#333333"),
+                    "hover_text_color": pg.Color("#333333"),
+                    "disable_text_color": pg.Color("#cccccc"),
+                    "hover_fill_color": pg.Color("yellow"),
+                    "disable_fill_color": pg.Color("#999999"),
+                    "call": self.cash_out}
+
         rect_style = ((self.rect.right + self.padding), (y - 300), 200, 60,)
-        settings.update({'text': 'Cash out', 'hover_text': 'Cash out',
-                         'call': self.cash_out})
         self.cash_button = Button(rect_style, **settings)
 
-        # yes no buttons
+    def build_yes_no_buttons(self):
         self.yes_no_buttons = []
         from_center = 125
-        settings = {"text"             : "Yes",
-                    "hover_text"       : "Yes",
-                    "font"             : self.font,
-                    "font_size"        : 80,
-                    "text_color"       : pg.Color("white"),
-                    "hover_text_color" : pg.Color("white"),
-                    "fill_color"       : pg.Color("#0000c3"),
-                    "hover_fill_color" : pg.Color("blue"),
-                    "call"             : self.check_double_up,
-                    "args"             : (True,),
-                    "bindings"         : [pg.K_y]}
+        settings = {"text": "Yes",
+                    "hover_text": "Yes",
+                    "font": self.font,
+                    "font_size": 80,
+                    "text_color": pg.Color("white"),
+                    "hover_text_color": pg.Color("white"),
+                    "fill_color": pg.Color("#0000c3"),
+                    "hover_fill_color": pg.Color("blue"),
+                    "call": self.check_double_up,
+                    "args": (True,),
+                    "bindings": [pg.K_y]}
         rect_style = (0, 0, 200, 100)
         button = Button(rect_style, **settings)
         button.rect.centerx = self.dealer.rect.centerx - from_center
@@ -246,6 +236,30 @@ class Machine:
         button.rect.centerx = self.dealer.rect.centerx + from_center
         button.rect.centery = self.dealer.rect.centery
         self.yes_no_buttons.append(button)
+
+    def build(self):
+        print("In Machine Build")
+        x, y = self.rect.topleft
+        w, h = self.rect.size
+
+        # calculate pay board position
+        x += self.padding
+        y += self.padding
+        w -= self.padding*2
+        h = 319
+        self.pay_board = PayBoard((x, y), (w, h))
+
+        # calculate cards table position
+        y += self.padding + self.pay_board.rect.h
+        h = 300
+        self.dealer = Dealer((x, y), (w, h))
+
+        # buttons
+        y = self.dealer.rect.bottom + self.padding*4 + self.btn_padding
+        self.build_main_buttons(x, y)
+        self.build_coins_button(y)
+        self.build_cash_button(y)
+        self.build_yes_no_buttons()
 
     def make_help_labels(self, rect):
         labels = []
@@ -340,7 +354,7 @@ class Machine:
                 self.credits += 4
             self.bet_sound.play()
         self.pay_board.update_bet_rect(self.coins)
-        self.buttons[-1].active = True  # draw button
+        self.main_buttons[-1].active = True  # draw button
 
     def bet_max(self, *args):
         if self.credits > 0:
@@ -356,7 +370,7 @@ class Machine:
             self.bet_sound.play()
             self.draw_cards()
         self.pay_board.update_bet_rect(self.coins)
-        self.buttons[-1].active = True  # draw button
+        self.main_buttons[-1].active = True  # draw button
 
     def make_last_bet(self):
         """ """
@@ -387,10 +401,10 @@ class Machine:
                 rank = self.dealer.evaluate_hand()
                 self.pay_board.update_rank_rect(rank)
 
-        for button in self.buttons:
+        for button in self.main_buttons:
             button.active = True
         # bet and bet max buttons
-        self.toggle_buttons((self.buttons[0], self.buttons[1]), False)
+        self.toggle_buttons((self.main_buttons[0], self.main_buttons[1]), False)
 
     def evaluate_final_hand(self):
         self.dealer.draw_cards()
@@ -449,7 +463,7 @@ class Machine:
     def get_event(self, event, scale):
         self.coins_button.get_event(event)
         self.cash_button.get_event(event)
-        for button in self.buttons:
+        for button in self.main_buttons:
             button.get_event(event)
         if self.state == "WON":
             for button in self.yes_no_buttons:
@@ -467,11 +481,11 @@ class Machine:
 
         if self.state == "GAME OVER" and self.credits > 0:
             # draw, bet and bet max buttons
-            buttons = (self.buttons[0], self.buttons[1], self.buttons[-1])
+            buttons = (self.main_buttons[0], self.main_buttons[1], self.main_buttons[-1])
             self.toggle_buttons(buttons)
 
         if self.credits == 0 and self.state == "GAME OVER":
-            self.toggle_buttons(self.buttons, False)
+            self.toggle_buttons(self.main_buttons, False)
             self.dealer.playing = False
 
         self.dealer.update(dt)
@@ -483,18 +497,18 @@ class Machine:
             for label in self.help_labels:
                 if isinstance(label, Blinker):
                     label.update(dt)
-            self.buttons[-1].active = False
+            self.main_buttons[-1].active = False
 
         self.coins_button.update(mouse_pos)
         self.cash_button.update(mouse_pos)
-        for button in self.buttons:
+        for button in self.main_buttons:
             button.update(mouse_pos)
 
     def draw(self, surface):
         self.dealer.draw(surface)
         for label in self.info_labels:
             label.draw(surface)
-        for button in self.buttons:
+        for button in self.main_buttons:
             button.draw(surface)
         self.coins_button.draw(surface)
         self.cash_button.draw(surface)
