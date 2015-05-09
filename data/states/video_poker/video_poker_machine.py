@@ -473,14 +473,24 @@ class Machine:
     def update(self, mouse_pos, dt):
         self.info_labels = self.make_info_label(self.dealer.rect)
 
-        if self.state == "GAME OVER" and self.credits > 0:
-            # draw, bet and bet max buttons
-            buttons = (self.main_buttons[0], self.main_buttons[1], self.main_buttons[-1])
-            self.toggle_buttons(buttons)
-
-        if self.credits == 0 and self.state == "GAME OVER":
-            self.toggle_buttons(self.main_buttons, False)
-            self.dealer.playing = False
+        if self.state == "GAME OVER":
+            if self.credits == 0:
+                if self.current_bet == 0:
+                    # Turn all the buttons off
+                    self.toggle_buttons(self.main_buttons, False)
+                    self.dealer.playing = False
+                else:
+                    # Turn everything except Draw off
+                    self.toggle_buttons(self.main_buttons[0:-1], False)
+                    # Turn Draw on
+                    self.toggle_buttons([self.main_buttons[-1]])
+            else:
+                # Turn on Bet, Bet Max and Draw Buttons
+                self.toggle_buttons([self.main_buttons[0],
+                                     self.main_buttons[1],
+                                     self.main_buttons[-1]])
+                # Turn other buttons off
+                self.toggle_buttons(self.main_buttons[2:-1], False)
 
         self.dealer.update(dt)
 
