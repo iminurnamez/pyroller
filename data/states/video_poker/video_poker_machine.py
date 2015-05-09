@@ -233,7 +233,7 @@ class Machine:
         label = Blinker(self.font, 100, text, "red",
                         {"centerx": rect.centerx, "top": rect.top}, 700)
         labels.append(label)
-        text = "If selected card beats dealers player wins Ace is highest, two is lowets"
+        text = "If selected card beats dealers, player wins. Ace is highest, two is lowest"
         label = MultiLineLabel(self.font, self.text_size, text,
                                self.text_color, {"center": rect.center}, align="center")
         labels.append(label)
@@ -301,7 +301,7 @@ class Machine:
                 self.player.stats['cash'] += self.credits
                 self.credits = 0
 
-    def toogle_buttons(self, buttons, active=True):
+    def toggle_buttons(self, buttons, active=True):
         for button in buttons:
                 button.active = active
 
@@ -370,7 +370,7 @@ class Machine:
         for button in self.buttons:
             button.active = True
         # bet and bet max buttons
-        self.toogle_buttons((self.buttons[0], self.buttons[1]), False)
+        self.toggle_buttons((self.buttons[0], self.buttons[1]), False)
 
     def evaluate_final_hand(self):
         self.dealer.draw_cards()
@@ -395,12 +395,12 @@ class Machine:
                 self.evaluate_final_hand()
 
     def make_held(self, *args):
-        """ Some unkonow issue with 0 Int args,
+        """ Some unknown issue with 0 Int args,
             so Str values passed to the func and
             here are converter to Int"""
         index = int(args[0])
         if self.state == "PLAYING":
-            self.dealer.toogle_held(index)
+            self.dealer.toggle_held(index)
         elif self.state == "DOUBLE UP":
             if index > 0:  # if is not the first card
                 win = self.dealer.select_card(index)
@@ -448,10 +448,10 @@ class Machine:
         if self.state == "GAME OVER" and self.credits > 0:
             # draw, bet and bet max buttons
             buttons = (self.buttons[0], self.buttons[1], self.buttons[-1])
-            self.toogle_buttons(buttons)
+            self.toggle_buttons(buttons)
 
         if self.credits == 0 and self.state == "GAME OVER":
-            self.toogle_buttons(self.buttons, False)
+            self.toggle_buttons(self.buttons, False)
             self.dealer.playing = False
 
         self.dealer.update(dt)

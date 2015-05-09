@@ -58,7 +58,7 @@ class Dealer:
         self.changing_cards = list(range(5))
         # first card
         self.hand[0].face_up = True
-        self.toogle_held(0)
+        self.toggle_held(0)
         self.build()
 
     def draw_cards(self):
@@ -87,7 +87,7 @@ class Dealer:
             self.double_up_labels.append(label)
             x += self.card_spacing + card.rect.w
 
-    def toogle_held(self, index):
+    def toggle_held(self, index):
         if index in self.held_cards:
             self.held_cards.remove(index)
             self.changing_cards.append(index)
@@ -99,7 +99,7 @@ class Dealer:
 
     def select_card(self, index):
         self.hand[index].face_up = True
-        self.toogle_held(index)
+        self.toggle_held(index)
         return self.compare_cards(index)
 
     def compare_cards(self, index):
