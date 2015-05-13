@@ -176,6 +176,8 @@ class Machine:
         self.build_yes_no_buttons()
 
     def build_main_buttons(self, x, y):
+        self.main_buttons = []
+        
         button_list = [('bet', self.bet_one, None), ('bet max', self.bet_max, None),
                        ('held', self.make_held, '0'), ('held', self.make_held, '1'),
                        ('held', self.make_held, '2'), ('held', self.make_held, '3'),
