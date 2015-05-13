@@ -177,7 +177,7 @@ class Machine:
 
     def build_main_buttons(self, x, y):
         self.main_buttons = []
-        
+
         button_list = [('bet', self.bet_one, None), ('bet max', self.bet_max, None),
                        ('held', self.make_held, '0'), ('held', self.make_held, '1'),
                        ('held', self.make_held, '2'), ('held', self.make_held, '3'),
@@ -487,12 +487,18 @@ class Machine:
                     # Turn Draw on
                     self.toggle_buttons([self.main_buttons[-1]])
             else:
-                # Turn on Bet, Bet Max and Draw Buttons
-                self.toggle_buttons([self.main_buttons[0],
-                                     self.main_buttons[1],
-                                     self.main_buttons[-1]])
-                # Turn other buttons off
-                self.toggle_buttons(self.main_buttons[2:-1], False)
+                if self.current_bet > 0 or self.last_bet > 0:
+                    # Turn on Bet, Bet Max and Draw Buttons
+                    self.toggle_buttons([self.main_buttons[0],
+                                        self.main_buttons[1],
+                                        self.main_buttons[-1]])
+                    # Turn other buttons off
+                    self.toggle_buttons(self.main_buttons[2:-1], False)
+                else:
+                    # Turn on Bet and Bet Max
+                    self.toggle_buttons(self.main_buttons[0:2])
+                    # Turn other buttons off
+                    self.toggle_buttons(self.main_buttons[2:], False)
 
         self.dealer.update(dt)
 
