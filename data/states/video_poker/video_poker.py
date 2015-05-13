@@ -7,7 +7,6 @@ from .video_poker_machine import Machine
 class VideoPoker(tools._State):
     """Class to represent the Video Poker game."""
     def __init__(self):
-        print("In VP init")
         super(VideoPoker, self).__init__()
         w, h = prepare.RENDER_SIZE
         self.screen_rect = pg.Rect((0, 0), (w, h))
@@ -21,7 +20,6 @@ class VideoPoker(tools._State):
         self.next = "LOBBYSCREEN"
 
     def startup(self, current_time, persistent):
-        print("In VP startup")
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
         self.machine.startup(self.casino_player)

@@ -107,7 +107,6 @@ class PayBoard:
 
 class Machine:
     def __init__(self, topleft, size):
-        print("In Machine init")
         self.rect = pg.Rect(topleft, size)
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 35
@@ -141,7 +140,6 @@ class Machine:
         self.dealer = None
 
     def startup(self, player):
-        print("In Machine startup")
         self.state = "GAME OVER"
         self.current_bet = 0
         self.last_bet = 0
@@ -152,7 +150,6 @@ class Machine:
         self.dealer.startup()
 
     def build(self):
-        print("In Machine Build")
         x, y = self.rect.topleft
         w, h = self.rect.size
 
