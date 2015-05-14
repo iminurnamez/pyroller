@@ -353,7 +353,7 @@ class Machine:
 
     def bet_max(self, *args):
         if self.credits > 0:
-            if self.credits >= self.max_bet:
+            if self.credits >= (self.max_bet - self.current_bet):
                 aux = self.max_bet - self.current_bet
                 self.current_bet += aux
                 self.credits -= aux
