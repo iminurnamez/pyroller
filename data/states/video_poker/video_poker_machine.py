@@ -330,10 +330,12 @@ class Machine:
 
     def cash_out(self, *args):
         if self.state == "GAME OVER":
-            self.player.stats['cash'] += self.credits
+            total_credits = self.credits + self.current_bet
             self.credits = 0
-            self.player.stats['cash'] += self.current_bet
             self.current_bet = 0
+            self.player.stats['cash'] += total_credits
+            for _ in range(total_credits):
+                self.credits_sound.play()
 
     def toggle_buttons(self, buttons, active=True):
         for button in buttons:
