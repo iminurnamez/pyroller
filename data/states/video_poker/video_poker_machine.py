@@ -340,13 +340,13 @@ class Machine:
                 button.active = active
 
     def bet_one(self, *args):
-        if self.credits > 0:
-            if self.current_bet < self.max_bet:
-                self.current_bet += 1
-                self.credits -= 1
-            else:
-                self.current_bet = 1
-                self.credits += 4
+        if self.credits > 0 and self.current_bet < self.max_bet:
+            self.current_bet += 1
+            self.credits -= 1
+            self.bet_sound.play()
+        elif self.current_bet > 1:
+            self.credits += self.current_bet - 1
+            self.current_bet = 1
             self.bet_sound.play()
         self.pay_board.update_bet_rect(self.current_bet)
         self.main_buttons[-1].active = True  # draw button
@@ -478,11 +478,16 @@ class Machine:
                     # Turn all the buttons off
                     self.toggle_buttons(self.main_buttons, False)
                     self.dealer.playing = False
-                else:
+                elif self.current_bet == 1:
                     # Turn everything except Draw off
                     self.toggle_buttons(self.main_buttons[0:-1], False)
                     # Turn Draw on
                     self.toggle_buttons([self.main_buttons[-1]])
+                else:
+                    # Turn everything except Draw and Bet One off
+                    self.toggle_buttons(self.main_buttons[1:-1], False)
+                    # Turn Bet On and Draw on
+                    self.toggle_buttons([self.main_buttons[0], self.main_buttons[-1]])
             else:
                 if self.current_bet > 0 or self.last_bet > 0:
                     # Turn on Bet, Bet Max and Draw Buttons
