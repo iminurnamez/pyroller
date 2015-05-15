@@ -319,10 +319,11 @@ class Machine:
         return labels
 
     def insert_coin(self, *args):
-        self.start_waiting()
-        self.credits += self.bet_value
-        self.player.stats["cash"] -= self.bet_value
-        self.credits_sound.play()
+        if self.state == "GAME OVER":
+            self.start_waiting()
+            self.credits += self.bet_value
+            self.player.stats["cash"] -= self.bet_value
+            self.credits_sound.play()
 
     def start_waiting(self):
         self.dealer.playing = True
