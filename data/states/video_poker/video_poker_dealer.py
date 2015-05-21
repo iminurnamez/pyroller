@@ -4,11 +4,23 @@ from ...components.labels import Blinker, Label
 from ...components.cards import Deck
 from .video_poker_data import *
 
+
 class Dealer:
     def __init__(self, topleft, size):
         self.rect = pg.Rect(topleft, size)
 
         self.deck = Deck((20, 20), card_size=(187, 271), infinite=True)
+
+        self.hand = []
+        self.hand_len = 0
+        self.card_index = None
+        self.max_cards = None
+        self.revealing = False
+        self.held_cards = []
+        self.changing_cards = []
+        self.waiting = False
+        self.playing = False
+        self.double_up = False
 
         self.font = prepare.FONTS["Saniretro"]
         self.text_size = 30
@@ -23,11 +35,11 @@ class Dealer:
 
         self.text = " insert coins "
         self.no_playing_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
-                                      {"center":self.rect.center}, 700, self.text_bg_color)
+                                        {"center": self.rect.center}, 700, self.text_bg_color)
 
         self.text = " play 1 to 5 coins "
         self.waiting_label = Blinker(self.font, self.big_text_size, self.text, self.big_text_color,
-                                      {"center":self.rect.center}, 700, self.text_bg_color)
+                                     {"center": self.rect.center}, 700, self.text_bg_color)
 
         self.card_spacing = 30
 
@@ -36,7 +48,6 @@ class Dealer:
 
         self.deal_sound = prepare.SFX["cardplace2"]
         self.held_sound = prepare.SFX["bingo-ball-chosen"]
-
 
     def startup(self):
         self.hand = self.deck.make_hand()
@@ -58,7 +69,7 @@ class Dealer:
         self.changing_cards = list(range(5))
         # first card
         self.hand[0].face_up = True
-        self.toogle_held(0)
+        self.toggle_held(0)
         self.build()
 
     def draw_cards(self):
@@ -70,26 +81,24 @@ class Dealer:
 
     def build(self):
         x = self.rect.left
-        y = self.rect.top  + self.line_height
+        y = self.rect.top + self.line_height
         for index, card in enumerate(self.hand):
             card.rect.left = x
             card.rect.top = y
             label = Label(self.font, self.text_size, 'held', self.text_color,
-                                {"bottom":card.rect.top, "centerx":card.rect.centerx})
+                          {"bottom": card.rect.top, "centerx": card.rect.centerx})
             self.held_labels.append(label)
 
             if index == 0:
                 label = Label(self.font, self.text_size, 'dealer', self.text_color,
-                                    {"bottom":card.rect.top, "centerx":card.rect.centerx})
+                              {"bottom": card.rect.top, "centerx": card.rect.centerx})
             else:
                 label = Label(self.font, self.text_size, 'player', self.text_color,
-                                {"bottom":card.rect.top, "centerx":card.rect.centerx})
+                              {"bottom": card.rect.top, "centerx": card.rect.centerx})
             self.double_up_labels.append(label)
             x += self.card_spacing + card.rect.w
 
-
-
-    def toogle_held(self, index):
+    def toggle_held(self, index):
         if index in self.held_cards:
             self.held_cards.remove(index)
             self.changing_cards.append(index)
@@ -99,10 +108,9 @@ class Dealer:
         self.held_sound.play()
         self.changing_cards.sort()
 
-
     def select_card(self, index):
         self.hand[index].face_up = True
-        self.toogle_held(index)
+        self.toggle_held(index)
         return self.compare_cards(index)
 
     def compare_cards(self, index):
@@ -116,7 +124,6 @@ class Dealer:
             return False
         else:
             return not val1 > val2
-
 
     def evaluate_hand(self):
         values = []
@@ -136,10 +143,10 @@ class Dealer:
         for val in values:
             matches = values.count(val)
             if matches == 2:
-                if not val in pairs:
+                if val not in pairs:
                     pairs.append(val)
             elif matches == 3:
-                if are_three == False:
+                if not are_three:
                     are_three = True
 
         pairs_len = len(pairs)
@@ -165,9 +172,9 @@ class Dealer:
             else Check if 5 cards are continuous in rank"""
         if 1 in values:
             a = values[1] == 2 and values[2] == 3 \
-                         and values[3] == 4 and values[4] == 5
+                and values[3] == 4 and values[4] == 5
             b = values[1] == 10 and values[2] == 11 \
-                         and values[3] == 12 and values[4] == 13
+                and values[3] == 12 and values[4] == 13
             is_straight = a or b
         else:
             test_value = values[0] + 1
@@ -205,8 +212,6 @@ class Dealer:
         # and finally return the current rank
         return rank
 
-
-
     def get_event(self, mouse_pos):
         if self.playing:
             for index, card in enumerate(self.hand):
@@ -232,7 +237,6 @@ class Dealer:
 
         if self.waiting:
             self.waiting_label.update(dt)
-
 
     def draw(self, surface):
         for card in self.hand:
