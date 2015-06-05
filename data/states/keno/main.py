@@ -10,6 +10,7 @@ from .round_history import RoundHistory
 from .action import Action
 from .model import Wallet, Pot, InsufficientFundsException
 from .helpers import pick_numbers, PAYTABLE
+from .keno_advisor import KenoAdvisor
 
 # Utilize the logger along with the following functions to print to console instead of prints.
 log = getLogger("KENO")
@@ -24,7 +25,7 @@ class Keno(tools._State):
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.game_started = False
         self.font = prepare.FONTS["Saniretro"]
-
+        self.advisor = KenoAdvisor()
         self.mock_label = Label(self.font, 64, 'KENO [WIP]', 'gold3', {'center':(672,102)})
 
         b_width = 360
@@ -281,7 +282,7 @@ class Keno(tools._State):
         surface.fill(prepare.FELT_GREEN)
 
         self.buttons.draw(surface)
-
+        self.advisor.draw(surface)
         for widget in self.gui_widgets.values():
             if widget:
                 widget.draw(surface)
@@ -298,6 +299,8 @@ class Keno(tools._State):
         since pygame was initialized. dt is the number of milliseconds since
         the last frame.
         """
+
+        self.advisor.update(dt)
 
         if self.play_max_active:
             self.continue_playmax()
