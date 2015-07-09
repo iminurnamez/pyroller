@@ -1,11 +1,11 @@
 from random import choice
 import pygame as pg
-from .... import prepare, tools
-from ....components.labels import Label, NeonButton, ButtonGroup, MoneyIcon, Button, Blinker
-from ....components.labels import MultiLineLabel
-from ....components.animation import Animation, Task
-from ....components.advisor import Advisor
-from ....components.warning_window import WarningWindow, NoticeWindow
+from data import prepare, tools
+from data.components.labels import Label, NeonButton, ButtonGroup, MoneyIcon, Button, Blinker
+from data.components.labels import MultiLineLabel
+from data.components.animation import Animation, Task
+from data.components.advisor import Advisor
+from data.components.warning_window import WarningWindow, NoticeWindow
 
 
 class GutsState(object):

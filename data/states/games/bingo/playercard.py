@@ -2,8 +2,8 @@
 
 import pygame as pg
 
-from ....components import common
-from .... import prepare
+from data.components import common
+from data import prepare
 from . import bingocard
 from .settings import SETTINGS as S
 from . import events

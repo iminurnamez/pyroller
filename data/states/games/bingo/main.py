@@ -6,10 +6,10 @@ import random
 import pygame as pg
 from collections import OrderedDict
 
-from .... import tools, prepare
-from ....components.labels import NeonButton
-from ....components import common
-from ....prepare import BROADCASTER as B
+from data import tools, prepare
+from data.components.labels import NeonButton
+from data.components import common
+from data.prepare import BROADCASTER as B
 
 from . import statemachine
 from . import playercard

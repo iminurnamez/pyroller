@@ -1,7 +1,7 @@
 """Component that allows the player to select how many cards to play"""
 
-from ....events import EventAware
-from ....components import common
+from data.events import EventAware
+from data.components import common
 from . import loggable
 from .settings import SETTINGS as S
 from . import events

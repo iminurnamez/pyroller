@@ -1,6 +1,6 @@
 import pygame as pg
-from ....components.labels import Label
-from .... import prepare
+from data.components.labels import Label
+from data import prepare
 from .helpers import PAYTABLE
 
 class PayTable(object):

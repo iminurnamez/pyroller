@@ -117,7 +117,7 @@ setting a property "card_selected" on the state.
 import collections
 import pygame as pg
 
-from .... import tools
+from data import tools
 import pygame
 from . import loggable
 

@@ -1,6 +1,6 @@
 """Main settings for the bingo game"""
 
-from .... import prepare
+from data import prepare
 
 
 SQUARE_ROWS = [-2, -1, 0, 1, 2]

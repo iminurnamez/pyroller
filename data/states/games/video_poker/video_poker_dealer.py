@@ -1,7 +1,7 @@
 import pygame as pg
-from .... import prepare
-from ....components.labels import Blinker, Label
-from ....components.cards import Deck
+from data import prepare
+from data.components.labels import Blinker, Label
+from data.components.cards import Deck
 from .video_poker_data import *
 
 

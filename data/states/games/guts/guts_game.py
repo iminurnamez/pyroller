@@ -1,8 +1,9 @@
 from random import randint
-from .... import prepare
-from ....components.cards import Deck
-from ....components.labels import Label
+from data import prepare
+from data.components.cards import Deck
+from data.components.labels import Label
 from .guts_helpers import DealerButton
+
 
 class GutsGame(object):
     def __init__(self, players, dealer_index, player, casino_player, bet, pot, free_ride):

@@ -3,7 +3,7 @@
 import random
 import pygame as pg
 
-from ....components import common
+from data.components import common
 from . import loggable
 from .settings import SETTINGS as S
 from . import statemachine

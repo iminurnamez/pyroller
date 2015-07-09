@@ -1,9 +1,9 @@
 """UI for a button bar of bonus buttons"""
 
-from ....components import common
-from ....components import loggable
+from data.components import common
+from data.components import loggable
 from .settings import SETTINGS as S
-from .... import events
+from data import events
 from . import events as event_types
 
 

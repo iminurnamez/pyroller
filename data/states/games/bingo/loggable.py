@@ -4,5 +4,5 @@ At one point this was where the loggable code sat
 
 """
 
-from ....components.loggable import *
+from data.components.loggable import *
 

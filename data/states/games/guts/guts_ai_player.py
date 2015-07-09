@@ -1,7 +1,7 @@
 from random import randint, choice
 import pygame as pg
-from .... import prepare
-from ....components.labels import Label
+from data import prepare
+from data.components.labels import Label
 
 STAY_PERCENTS = {
             "11,10": 8,

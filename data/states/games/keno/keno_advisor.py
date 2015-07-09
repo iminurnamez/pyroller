@@ -1,7 +1,8 @@
 import pygame as pg
-from .... import prepare
-from ....components.advisor import Advisor
-from ....components.labels import Button
+from data import prepare
+from data.components.advisor import Advisor
+from data.components.labels import Button
+
 
 class KenoAdvisor(object):
 

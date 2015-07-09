@@ -3,8 +3,8 @@
 import pygame as pg
 import random
 
-from ....prepare import BROADCASTER as B
-from ....components import common
+from data.prepare import BROADCASTER as B
+from data.components import common
 from .settings import SETTINGS as S
 from . import events
 

@@ -1,6 +1,6 @@
 """Classes to help with matching patterns of squares on the cards"""
 
-from ....components import common
+from data.components import common
 from . import loggable
 from .settings import SETTINGS as S
 

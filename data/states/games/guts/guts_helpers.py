@@ -1,5 +1,5 @@
 import pygame as pg
-from .... import prepare
+from data import prepare
 
 
 class DealerButton(object):

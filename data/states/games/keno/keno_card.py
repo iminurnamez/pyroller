@@ -1,7 +1,8 @@
 import pygame as pg
-from ....components.labels import Label
-from .... import prepare
+from data.components.labels import Label
+from data import prepare
 from .keno_spot import KenoSpot
+
 
 class KenoCard(object):
     def __init__(self, sprite_sheet=None):

@@ -1,6 +1,6 @@
 """Classes to display the total amount of money that the player has"""
 
-from ....components import common, loggable
+from data.components import common, loggable
 from .settings import SETTINGS as S
 
 

@@ -1,8 +1,8 @@
 from random import choice
 import pygame as pg
-from .... import prepare
-from ....components.chips import ChipPile
-from ....components.labels import Label
+from data import prepare
+from data.components.chips import ChipPile
+from data.components.labels import Label
 
 
 class GutsPlayer(object):
