@@ -1,13 +1,16 @@
 import os
+import math
 import json
-from math import ceil
+from importlib import import_module
+from collections import OrderedDict
+
 import pygame as pg
 
-from .. import tools, prepare
-from ..components.labels import Label, GameButton, NeonButton
-from ..components.labels import Button, ButtonGroup
-from ..components.flair_pieces import ChipCurtain
-from ..components.animation import Animation
+from data import tools, prepare
+from data.components.labels import Label, GameButton, NeonButton
+from data.components.labels import Button, ButtonGroup
+from data.components.flair_pieces import ChipCurtain
+from data.components.animation import Animation
 
 
 CURTAIN_SETTINGS = {"single_color" : True,
@@ -27,13 +30,10 @@ class LobbyScreen(tools._State):
     def __init__(self):
         super(LobbyScreen, self).__init__()
         screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.games = [("Bingo", "BINGO"), ("Blackjack", "BLACKJACK"),
-                      ("Craps", "CRAPS"), ("Keno", "KENO"),
-                      ("video_poker", "VIDEOPOKER"), ("Pachinko", "PACHINKO"),
-                      ("Baccarat", "BACCARAT"), ("Guts", "GUTS"),
-                      ("Slots", "SLOTS")]
+        self.game = None
+        self.games = self.auto_discovery()
         per_page = 6
-        number_of_pages = int(ceil(len(self.games)/float(per_page)))
+        number_of_pages = int(math.ceil(len(self.games)/float(per_page)))
         self.loop_length = prepare.RENDER_SIZE[0]*number_of_pages
         self.game_buttons = self.make_game_pages(screen_rect, per_page)
         nav_buttons = self.make_navigation_buttons(screen_rect)
@@ -41,9 +41,27 @@ class LobbyScreen(tools._State):
         self.buttons = ButtonGroup(nav_buttons, main_buttons)
         self.chip_curtain = None #Created on startup.
         self.animations = pg.sprite.Group()
+        
+    def auto_discovery(self):
+        games = OrderedDict()
+        package = "data.states.games."
+        game_folder = os.path.join(".", "data", "states", "games")
+        exclude_endings = (".py", ".pyc", "__pycache__")
+        for folder in os.listdir(game_folder):
+            if any(folder.endswith(end) for end in exclude_endings):
+                continue
+            try:
+                game_module = import_module(package+folder)
+                games[folder] = game_module.Game
+            except Exception as e:
+                template = "{} failed to load or is not a valid game package"
+                print(e)
+                print(template.format(folder))
+        return games
 
     def make_game_pages(self, screen_rect, per):
-        groups = (self.games[i:i+per] for i in range(0,len(self.games),per))
+        games = list(self.games.keys())
+        groups = (games[i:i+per] for i in range(0,len(games),per))
         columns = 3
         width, height = GameButton.width, GameButton.height
         spacer_x, spacer_y = 50, 80
@@ -53,11 +71,10 @@ class LobbyScreen(tools._State):
         buttons = ButtonGroup()
         for offset,group in enumerate(groups):
             offset *= prepare.RENDER_SIZE[0]
-            for i,data in enumerate(group):
-                game,payload = data
+            for i,game in enumerate(group):
                 y,x = divmod(i, columns)
                 pos = (start_x+step_x*x+offset, start_y+step_y*y)
-                GameButton(pos, game, self.change_state, payload, buttons)
+                GameButton(pos, game, self.start_game, buttons)
         return buttons
 
     def make_navigation_buttons(self, screen_rect):
@@ -91,10 +108,9 @@ class LobbyScreen(tools._State):
         NeonButton(pos, "Exit", self.exit_game, None,
                    buttons, bindings=[pg.K_ESCAPE])
         rect_style = (screen_rect.left, screen_rect.top, 150, 95)
-        b = Button(rect_style, idle_image=prepare.GFX["atm_dim"],
-                         hover_image=prepare.GFX["atm_bright"], call=self.change_state,
-                         args="ATMSCREEN")
-        buttons.add(b)
+        Button(rect_style, buttons, idle_image=prepare.GFX["atm_dim"],
+               hover_image=prepare.GFX["atm_bright"],
+               call=self.change_state, args="ATMSCREEN")
         return buttons
 
     def scroll_page(self, mag):
@@ -128,19 +144,32 @@ class LobbyScreen(tools._State):
         self.done = True
         self.next = next_state
 
+    def start_game(self, game):
+        self.game = self.games[game]()
+        self.game.startup(pg.time.get_ticks(), self.persist)
+
     def get_event(self, event, scale=(1,1)):
-        if event.type == pg.QUIT:
+        if self.game:
+            self.game.get_event(event, scale)
+        elif event.type == pg.QUIT:
             self.exit_game()
-        self.buttons.get_event(event)
-        self.game_buttons.get_event(event)
+        else:
+            self.buttons.get_event(event)
+            self.game_buttons.get_event(event)
 
     def update(self, surface, keys, current_time, dt, scale):
-        mouse_pos = tools.scaled_mouse_pos(scale)
-        self.chip_curtain.update(dt)
-        self.buttons.update(mouse_pos)
-        self.game_buttons.update(mouse_pos)
-        self.animations.update(dt)
-        self.draw(surface)
+        if self.game:
+            self.game.update(surface, keys, current_time, dt, scale)
+            if self.game.done:
+                self.game.cleanup()
+                self.game = None
+        else:
+            mouse_pos = tools.scaled_mouse_pos(scale)
+            self.chip_curtain.update(dt)
+            self.buttons.update(mouse_pos)
+            self.game_buttons.update(mouse_pos)
+            self.animations.update(dt)
+            self.draw(surface)
 
     def draw(self, surface):
         rect = surface.get_rect()

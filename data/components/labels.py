@@ -1,8 +1,10 @@
+import os
+import string
 from itertools import cycle
 
 import pygame as pg
 from .. import prepare, tools
-import string
+
 
 
 LOADED_FONTS = {}
@@ -319,10 +321,22 @@ class NeonButton(Button):
     height = 101
 
     def __init__(self, pos, text, call=None, args=None, *groups, **kwargs):
-        on = "neon_button_on_{}".format(text.lower())
-        off = "neon_button_off_{}".format(text.lower())
-        on_image = prepare.GFX[on]
-        off_image = prepare.GFX[off]
+        try:
+            on = "neon_button_on_{}".format(text.lower())
+            off = "neon_button_off_{}".format(text.lower())
+            on_image = prepare.GFX[on]
+            off_image = prepare.GFX[off]
+        except KeyError:
+            text = text.replace("_", " ")
+            blank = prepare.GFX["neon_button_blank"].copy()
+            on_label = Label(prepare.FONTS["Saniretro"], 48, text,
+                             (238,219,30), {"center":(159,50)})
+            off_label = Label(prepare.FONTS["Saniretro"], 48, text,
+                              (156,128,19), {"center":(159,50)})
+            on_image = blank.subsurface((318,0,318,101))
+            off_image = blank.subsurface((0,0,318,101))
+            on_label.draw(on_image)
+            off_label.draw(off_image)
         rect = on_image.get_rect(topleft=pos)
         settings = {"hover_image" : on_image,
                     "idle_image"  : off_image,
@@ -338,14 +352,18 @@ class GameButton(Button):
     height = ss_size[1]+20
     font = prepare.FONTS["Saniretro"]
 
-    def __init__(self, pos, game, call, args, *groups, **kwargs):
-        screenshot = prepare.GFX["screenshot_{}".format(game.lower())]
-        idle, highlight = self.make_images(game, screenshot)
+    def __init__(self, pos, game, call, *groups, **kwargs):
+        path = os.path.join(".", "data", "states", "games", game)
+        try:
+            image = pg.image.load(os.path.join(path, "image.png")).convert()
+        except pg.error:
+            image = prepare.GFX["default_image"]
+        idle, highlight = self.make_images(game, image)
         rect = idle.get_rect(topleft=pos)
         settings = {"hover_image" : highlight,
                     "idle_image"  : idle,
                     "call"        : call,
-                    "args"        : args}
+                    "args"        : game}
         settings.update(kwargs)
         super(GameButton, self).__init__(rect, *groups, **settings)
 

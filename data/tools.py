@@ -6,6 +6,7 @@ for States.  Also contained here are resource loading functions.
 import os
 import copy
 import argparse
+from collections import OrderedDict
 import pygame as pg
 
 
@@ -176,6 +177,15 @@ class _State(object):
         self.previous = None
         self.persist = persistant
         self.use_music_handler = True
+
+    @staticmethod
+    def initialize_stats():
+        """Return OrderedDict suitable for use in game stats
+
+        :return: collections.OrderedDict
+        """
+        stats = OrderedDict([("games played", 0)])
+        return stats
 
     def get_event(self, event, scale=(1,1)):
         """

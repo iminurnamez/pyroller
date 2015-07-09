@@ -69,10 +69,7 @@ def _get_neon_buttons(gfx):
     """Cut neon button sheets into subsurfaces."""
     b_width = 318
     b_height = 101
-    b_texts = {"games"    : ["Bingo", "Blackjack", "Craps", "Keno",
-                             "Video Poker", "Pachinko", "Slots", "Guts",
-                             "Baccarat"],
-               "general"  : ["Credits", "Exit", "Stats", "Lobby", "New",
+    b_texts = {"general"  : ["Credits", "Exit", "Stats", "Lobby", "New",
                              "Load", "Back", "OK", "Cancel"],
                "specific" : ["Again", "Deal", "Hit", "Stand", "Split",
                              "Double", "Roll", "Ride", "Change",

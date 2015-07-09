@@ -1,7 +1,8 @@
+import os
 import pygame as pg
 
-from .. import tools, prepare
-from ..components.labels import Label, NeonButton, ButtonGroup
+from data import tools, prepare
+from data.components.labels import Label, NeonButton, ButtonGroup
 
 
 class StatsMenu(tools._State):
@@ -15,8 +16,12 @@ class StatsMenu(tools._State):
         self.font = prepare.FONTS["Saniretro"]
         self.title = Label(self.font, 64, "Statistics", "darkred",
                           {"midtop":(screen_rect.centerx, screen_rect.top+10)})
-        self.games = ["Blackjack", "Bingo", "Craps", "Keno", "Video Poker",
-                      "Pachinko", "Guts", "Baccarat", "Slots"]
+        game_folder = os.path.join(".", "data", "states", "games")
+        exclude_endings = (".py", ".pyc", "__pycache__")
+        self.games = []
+        for folder in os.listdir(game_folder):
+            if not any(folder.endswith(end) for end in exclude_endings):
+                self.games.append(folder)
         self.buttons = self.make_buttons(screen_rect, 3)
         self.labels = []
         self.lines = []
@@ -30,10 +35,10 @@ class StatsMenu(tools._State):
         starting_cash = prepare.MONEY
         profit = assets - starting_cash
         label_info = [("Cash", cash, 110),
-                            ("Account", balance, 150),
-                            ("Assets", assets, 198),
-                            ("Starting Cash", -starting_cash, 238),
-                            ("Profit", profit, 283)]
+                      ("Account", balance, 150),
+                      ("Assets", assets, 198),
+                      ("Starting Cash", -starting_cash, 238),
+                      ("Profit", profit, 283)]
         left = 500
         right = 900
         for name, value, topy in label_info:
@@ -59,7 +64,8 @@ class StatsMenu(tools._State):
             button = NeonButton(pos, game, self.view_game_stats, game, buttons)
         pos = (screen_rect.centerx-(NeonButton.width//2),
                screen_rect.bottom-(NeonButton.height+10))
-        NeonButton(pos, "Lobby", self.back_to_lobby, None, buttons, bindings=[pg.K_ESCAPE])
+        NeonButton(pos, "Lobby", self.back_to_lobby, None, buttons,
+                   bindings=[pg.K_ESCAPE])
         return buttons
 
     def back_to_lobby(self, *args):

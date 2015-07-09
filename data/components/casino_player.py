@@ -1,10 +1,11 @@
-import inspect
 import os
+import inspect
 import datetime
+from importlib import import_module
 from collections import OrderedDict
-from .. import prepare
+from data import prepare
 from . import loggable
-from ..states.baccarat import Baccarat
+##from ..states.baccarat import Baccarat
 
 
 class BankAccount(object):
@@ -89,65 +90,24 @@ class CasinoPlayer(loggable.Loggable):
         self.addLogger()
         self._current_game = None
         self._stats = OrderedDict([("cash", prepare.MONEY),
-                                             ("account balance", 0),
-                                             ("Blackjack", OrderedDict(
-                                                    [("games played", 0),
-                                                    ("hands played", 0),
-                                                    ("hands won", 0),
-                                                    ("hands lost", 0),
-                                                    ("blackjacks", 0),
-                                                    ("pushes", 0),
-                                                    ("busts", 0),
-                                                    ("total bets", 0),
-                                                    ("total winnings", 0)])),
-                                            ("Guts", OrderedDict(
-                                                    [("games played", 0),
-                                                    ("hands played", 0),
-                                                    ("hands won", 0),
-                                                    ("hands lost", 0),
-                                                    ("stays", 0),
-                                                    ("passes", 0),
-                                                    ("total bets", 0),
-                                                    ("total losses", 0),
-                                                    ("total winnings", 0)])),
-                                             ("Craps", OrderedDict(
-                                                    [('times as shooter', 0),
-                                                     ('bets placed', 0),
-                                                     ('bets won', 0),
-                                                     ('bets lost', 0),
-                                                     ('total bets', 0),
-                                                     ('total winnings', 0)])),
-                                             ("Bingo", OrderedDict(
-                                                    [("games played", 0),
-                                                    ("cards won", 0),
-                                                    ("cards lost", 0),
-                                                    ("total lost", 0),
-                                                    ("total won", 0),
-                                                    ("time played", '00:00:00'),
-                                                    ("_last squares", [])])),
-                                             ("Keno", OrderedDict(
-                                                    [("games played", 0)])),
-                                             ("Video Poker", OrderedDict(
-                                                    [("games played", 0)])),
-                                             ("Pachinko", OrderedDict(
-                                                    [('games played', 0),
-                                                    ('total winnings', 0),
-                                                    ('earned', 0),
-                                                    ('jackpots', 0),
-                                                    ('gutters', 0),
-                                                    ])),
-                                             ('Baccarat', Baccarat.initialize_stats()),
-                                             ("Slots", OrderedDict(
-                                                    [('spins', 0),
-                                                    ('total winnings', 0),
-                                                    ('jackpots', 0),
-                                                    ])),
-                                            ])
+                                   ("account balance", 0)])
+        package = "data.states.games."
+        game_folder = os.path.join(".", "data", "states", "games")
+        exclude_endings = (".py", ".pyc", "__pycache__")
+        for folder in os.listdir(game_folder):
+            if any(folder.endswith(end) for end in exclude_endings):
+                continue
+            try:
+                game_module = import_module(package+folder)
+                self._stats[folder] = game_module.Game.initialize_stats()
+            except Exception as e:
+                template = "{} failed to load stats."
+                print(e)
+                print(template.format(folder))
 
         if stats is not None:
             self.cash = stats["cash"]
             self.account_balance = stats["account balance"]
-
             for game in self.game_names():
                 self.current_game = game
                 for stat_name in self.get_stat_names():
