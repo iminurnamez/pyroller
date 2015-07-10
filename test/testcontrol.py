@@ -6,6 +6,9 @@ import os
 
 
 # Default test settings
+import data.control
+import data.state
+
 RESOLUTIONS = (
     (5, 10),
     (10, 20),
@@ -518,14 +521,14 @@ class TestControl(unittest.TestCase):
         self.assertEqual(5, self.call_times['pgupdate-2'])
 
 
-class SimpleControl(tools.Control):
+class SimpleControl(data.control.Control):
     """A simple control to use for testing"""
 
     def __init__(self, *args, **kw):
         super(SimpleControl, self).__init__(*args, **kw)
 
 
-class SimpleState(tools._State):
+class SimpleState(data.state.State):
     """A simple state to use for testing"""
 
     def __init__(self, name):

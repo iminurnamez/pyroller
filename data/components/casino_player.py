@@ -1,11 +1,9 @@
 import os
 import inspect
 import datetime
-from importlib import import_module
 from collections import OrderedDict
-from data import prepare
+from .. import prepare
 from . import loggable
-##from ..states.baccarat import Baccarat
 
 
 class BankAccount(object):
@@ -81,37 +79,22 @@ class CasinoPlayer(loggable.Loggable):
     allows persistence of player statistics between
     sessions."""
 
-    # Game states for which no statistics are collected
-    no_stats_stats = [
-        'LOBBYSCREEN', 'STATSMENU', 'STATSSCREEN',
-    ]
-
-    def __init__(self, stats=None):
+    def __init__(self, stats_init=None):
         self.addLogger()
         self._current_game = None
+
         self._stats = OrderedDict([("cash", prepare.MONEY),
                                    ("account balance", 0)])
-        package = "data.states.games."
-        game_folder = os.path.join(".", "data", "states", "games")
-        exclude_endings = (".py", ".pyc", "__pycache__")
-        for folder in os.listdir(game_folder):
-            if any(folder.endswith(end) for end in exclude_endings):
-                continue
-            try:
-                game_module = import_module(package+folder)
-                self._stats[folder] = game_module.Game.initialize_stats()
-            except Exception as e:
-                template = "{} failed to load stats."
-                print(e)
-                print(template.format(folder))
 
-        if stats is not None:
-            self.cash = stats["cash"]
-            self.account_balance = stats["account balance"]
-            for game in self.game_names():
-                self.current_game = game
-                for stat_name in self.get_stat_names():
-                    self.set(stat_name, stats[game].get(stat_name, self.get(stat_name)))
+        if stats_init is not None:
+            self.cash = stats_init.pop("cash")
+            self.account_balance = stats_init.pop("account balance")
+            for game_name, game_stats in stats_init.items():
+                self._stats[game_name] = OrderedDict()
+                self.current_game = game_name
+                for stat_name, value in game_stats.items():
+                    self.set(stat_name, value)
+
         self.account = BankAccount(self, self.account_balance)
 
     @property
@@ -157,19 +140,16 @@ class CasinoPlayer(loggable.Loggable):
     @current_game.setter
     def current_game(self, value):
         """Set the current game"""
-        if value in self.no_stats_stats:
-            self._current_game = None
+        #
+        # The case of the the current game is not handled very consistently so
+        # the following code makes sure this works whatever the case is
+        # TODO: remove case inconsistencies and then remove this code
+        for name in self._stats:
+            if name.lower() == value.lower():
+                self._current_game = name
+                break
         else:
-            #
-            # The case of the the current game is not handled very consistently so
-            # the following code makes sure this works whatever the case is
-            # TODO: remove case inconsistencies and then remove this code
-            for name in self._stats:
-                if name.lower() == value.lower():
-                    self._current_game = name
-                    break
-            else:
-                raise GameNotFound('There was no game called "{0}" in the stats collection'.format(value))
+            raise GameNotFound('There was no game called "{0}" in the stats collection'.format(value))
 
     def increase(self, name, amount=1):
         """Increase the value of a stat"""
