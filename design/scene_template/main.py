@@ -1,4 +1,3 @@
-import random
 from collections import OrderedDict
 import pygame as pg
 
@@ -8,7 +7,8 @@ import data.state
 
 
 class Scene(data.state.State):
-    name = "Template Scene"
+    show_in_lobby = True
+    name = "scene_template" # Scene folder name.
 
     def __init__(self):
         super(Scene, self).__init__()
@@ -33,13 +33,13 @@ class Scene(data.state.State):
         return buttons
 
     def back_to_lobby(self, *args):
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
         self.done = True
 
     def startup(self, current_time, persistent):
         self.persist = persistent
         self.casino_player = self.persist["casino_player"]
-        self.casino_player.current_game = "template"
+        self.casino_player.current_game = self.name
 
     def cleanup(self):
         self.done = False
