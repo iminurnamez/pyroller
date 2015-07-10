@@ -10,7 +10,7 @@ import data.state
 
 class Slots(data.state.State):
     show_in_lobby = True
-    name = 'Slots'
+    name = 'slots'
 
     def __init__(self):
         super(Slots, self).__init__()
@@ -44,7 +44,7 @@ class Slots(data.state.State):
         return buttons
 
     def back_to_lobby(self, *args):
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
         self.done = True
 
     def startup(self, current_time, persistent):

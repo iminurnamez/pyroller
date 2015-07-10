@@ -10,7 +10,7 @@ class StatsMenu(data.state.State):
     This state allows the player to choose which game's stats they
     want to view or return to the lobby.
     """
-    name = 'STATSMENU'
+    name = "stats_menu"
 
     def __init__(self):
         super(StatsMenu, self).__init__()
@@ -69,11 +69,11 @@ class StatsMenu(data.state.State):
 
     def back_to_lobby(self, *args):
         self.done = True
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
 
     def view_game_stats(self, game):
         self.persist["current_game_stats"] = game
-        self.next = "STATSSCREEN"
+        self.next = "stats_screen"
         self.done = True
 
     def startup(self, current_time, persistent):
@@ -90,7 +90,7 @@ class StatsMenu(data.state.State):
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
             self.done = True
-            self.next = "LOBBYSCREEN"
+            self.next = "lobby"
         self.buttons.get_event(event)
 
     def draw(self, surface):

@@ -353,7 +353,7 @@ class GameButton(Button):
     font = prepare.FONTS["Saniretro"]
 
     def __init__(self, pos, game, call, *groups, **kwargs):
-        path = os.path.join(".", "data", "states", "games", game)
+        path = os.path.join(".", "data", "states", game)
         try:
             image = pg.image.load(os.path.join(path, "image.png")).convert()
         except pg.error:

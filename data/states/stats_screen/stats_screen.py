@@ -7,8 +7,9 @@ import data.state
 
 class StatsScreen(data.state.State):
     """This state displays the player's statistics for a
-    particular game."""
-    name = 'STATSSCREEN'
+    particular game.
+    """
+    name = "stats_screen"
 
     def __init__(self):
         super(StatsScreen, self).__init__()
@@ -22,9 +23,9 @@ class StatsScreen(data.state.State):
         buttons = ButtonGroup()
         x,y = (screen_rect.centerx-(NeonButton.width//2)-170,
                screen_rect.bottom-(NeonButton.height+10))
-        NeonButton((x,y), "Lobby", self.back_to_x, "LOBBYSCREEN", buttons)
+        NeonButton((x,y), "Lobby", self.back_to_x, "lobby", buttons)
         x = screen_rect.centerx-(NeonButton.width//2)+170
-        NeonButton((x,y), "Back", self.back_to_x, "STATSMENU",
+        NeonButton((x,y), "Back", self.back_to_x, "stats_menu",
                    buttons, bindings=[pg.K_ESCAPE])
         return buttons
 
@@ -56,7 +57,7 @@ class StatsScreen(data.state.State):
 
     def get_event(self, event, scale=(1,1)):
         if event.type == pg.QUIT:
-            self.back_to_x("LOBBYSCREEN")
+            self.back_to_x("lobby")
         self.buttons.get_event(event)
 
     def draw(self, surface):

@@ -45,27 +45,18 @@ class Control(object):
         """
         if scene_folder is None:
             scene_folder = os.path.join(".", "data", "states")
-
         exclude_endings = (".py", ".pyc", "__pycache__")
         for folder in os.listdir(scene_folder):
             if any(folder.endswith(end) for end in exclude_endings):
                 continue
-
             state = self.load_state_from_path(folder)
-            self.register_state(state)
+            self.register_state(state, folder)
 
-    def register_state(self, state):
-        try:
-            name = state.name
-        except AttributeError:
-            print('state {} is missing class name'.format(state))
-            raise AttributeError
-
-        if name in self.state_dict:
-            print('Duplicate state detected: {}'.format(name))
+    def register_state(self, state, folder):
+        if folder in self.state_dict:
+            print('Duplicate state detected: {}'.format(folder))
             raise RuntimeError
-
-        self.state_dict[name] = state
+        self.state_dict[folder] = state
 
     @property
     def saved_stats_are_available(self):

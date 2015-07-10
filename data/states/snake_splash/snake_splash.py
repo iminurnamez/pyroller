@@ -7,12 +7,11 @@ import data.state
 
 
 class SnakeSplash(data.state.State):
-    """Class to represent a casino game."""
-    name = 'SNAKESPLASH'
+    name = "snake_splash"
 
     def __init__(self):
         super(SnakeSplash, self).__init__()
-        self.next = "TITLESCREEN"
+        self.next = "title_screen"
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
         self.image = prepare.GFX["snakesign"]
         self.on = False

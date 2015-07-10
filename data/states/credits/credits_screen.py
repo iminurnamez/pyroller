@@ -132,12 +132,12 @@ class CreditsScreen(data.state.State):
     """
     This is the main state governing the credits screen.
     """
-    name = 'CREDITSSCREEN'
+    name = 'credits'
 
     def __init__(self):
         super(CreditsScreen, self).__init__()
         self.screen = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
         self.font = prepare.FONTS["Saniretro"]
         self.dev_names = DEVELOPERS
         self.artist_names = ARTISTS

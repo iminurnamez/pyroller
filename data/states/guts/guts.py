@@ -13,7 +13,7 @@ from .guts_substates import ShowResults, Betting, StartGame, BankruptScreen
 
 class Guts(data.state.State):
     show_in_lobby = True
-    name = 'Guts'
+    name = 'guts'
 
     def __init__(self):
         super(Guts, self).__init__()
@@ -100,7 +100,7 @@ class Guts(data.state.State):
 
     def back_to_lobby(self, *args):
         self.persist["casino_player"].cash = self.player.cash
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
         self.done = True
 
     def get_event(self, event, scale):

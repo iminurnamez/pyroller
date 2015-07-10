@@ -36,7 +36,7 @@ class TitleScreen(data.state.State):
     Initial state of the game. Introduces the game and lets user load a
     saved game if there's one present.
     """
-    name = 'TITLESCREEN'
+    name = "title_screen"
 
     def __init__(self):
         super(TitleScreen, self).__init__()
@@ -84,8 +84,7 @@ class TitleScreen(data.state.State):
     def load_or_new(self, try_to_load_data):
         if try_to_load_data:
             self.persist = self.controller.load_persist_from_disk()
-
-        self.next = 'LOBBYSCREEN'
+        self.next = "lobby"
         self.done = True
 
     def get_event(self, event, scale):

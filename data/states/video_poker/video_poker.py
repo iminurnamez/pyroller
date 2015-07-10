@@ -11,7 +11,7 @@ from .video_poker_machine import Machine
 class VideoPoker(data.state.State):
     """Class to represent the Video Poker game."""
     show_in_lobby = True
-    name = 'Video Poker'
+    name = 'video_poker'
 
     def __init__(self):
         super(VideoPoker, self).__init__()
@@ -33,7 +33,7 @@ class VideoPoker(data.state.State):
 
     def back_to_lobby(self, *args):
         self.done = True
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
 
     def startup(self, current_time, persistent):
         self.persist = persistent

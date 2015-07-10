@@ -464,7 +464,7 @@ class TableGame(data.state.State):
         """
         self.cash_out()
         self.done = True
-        self.next = 'LOBBYSCREEN'
+        self.next = 'lobby'
 
     def cash_in(self):
         """Change player's cash to chips

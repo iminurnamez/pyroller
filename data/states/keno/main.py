@@ -26,7 +26,7 @@ log = getLogger("KENO")
 class Keno(data.state.State):
     """Class to represent a casino game."""
     show_in_lobby = True
-    name = 'Keno'
+    name = 'keno'
 
     def __init__(self):
         super(Keno, self).__init__()
@@ -245,7 +245,7 @@ class Keno(data.state.State):
     def back_to_lobby(self, *args):
         self.game_started = False
         self.done = True
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
 
     def startup(self, current_time, persistent):
         """This method will be called each time the state resumes."""
@@ -273,7 +273,7 @@ class Keno(data.state.State):
         """
         if event.type == pg.QUIT and not self.alert:
             self.done = True
-            self.next = "LOBBYSCREEN"
+            self.next = "lobby"
         elif event.type == pg.MOUSEBUTTONDOWN and not self.alert:
             #Use tools.scaled_mouse_pos(scale, event.pos) for correct mouse
             #position relative to the pygame window size.

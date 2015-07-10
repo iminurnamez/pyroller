@@ -12,7 +12,7 @@ class Blackjack(data.state.State):
     back into cash before returning to the lobby.
     """
     show_in_lobby = True
-    name = 'Blackjack'
+    name = 'blackjack'
 
     def __init__(self):
         super(Blackjack, self).__init__()
@@ -64,7 +64,7 @@ class Blackjack(data.state.State):
         """Prepare to exit game and return to lobby screen."""
         self.cash_out_player()
         self.done = True
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
 
     def get_event(self, event, scale):
         self.state.get_event(event, scale)

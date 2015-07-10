@@ -27,7 +27,7 @@ from .settings import SETTINGS as S
 
 class Bingo(statemachine.StateMachine):
     """State to represent a bing game"""
-    name = 'Bingo'
+    name = "bingo"
     show_in_lobby = True
 
     def __init__(self):
@@ -117,7 +117,7 @@ class Bingo(statemachine.StateMachine):
                 sys.exit()
             else:
                 self.done = True
-                self.next = "LOBBYSCREEN"
+                self.next = "lobby"
         elif event.type in (pg.MOUSEBUTTONDOWN, pg.MOUSEMOTION):
             #
             self.ui.process_events(event, scale)
@@ -127,7 +127,7 @@ class Bingo(statemachine.StateMachine):
         elif event.type == pg.KEYUP:
             if event.key == pg.K_ESCAPE:
                 self.done = True
-                self.next = "LOBBYSCREEN"
+                self.next = "lobby"
             elif event.key == pg.K_SPACE:
                 self.next_chip(None, None)
             elif event.key == pg.K_m:
@@ -141,7 +141,7 @@ class Bingo(statemachine.StateMachine):
         """Return to the lobby screen"""
         self.game_started = False
         self.done = True
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
         self.casino_player.set('_last squares', self.cards.get_card_numbers())
         self.casino_player.cash = self.money_display.amount
         self.casino_player.increase_time('time played', time.time() - self.time_started)

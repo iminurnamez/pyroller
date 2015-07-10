@@ -22,7 +22,7 @@ def main():
     run_it.auto_discovery()
 
     # default state
-    default_state = "SNAKESPLASH"
+    default_state = "snake_splash"
 
     straight = prepare.ARGS['straight']
     state = straight if straight else default_state

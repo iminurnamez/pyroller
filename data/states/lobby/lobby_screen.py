@@ -26,7 +26,7 @@ class LobbyScreen(data.state.State):
     which game they want to play or view their game statistics. This is also
     the exit point for the game.
     """
-    name = 'LOBBYSCREEN'
+    name = "lobby"
     per_page = 6
 
     def __init__(self):
@@ -92,10 +92,10 @@ class LobbyScreen(data.state.State):
     def make_main_buttons(self, screen_rect):
         buttons = ButtonGroup()
         pos = (9, screen_rect.bottom-(NeonButton.height+11))
-        NeonButton(pos, "Credits", self.change_state, "CREDITSSCREEN", buttons)
+        NeonButton(pos, "Credits", self.change_state, "credits", buttons)
         pos = (screen_rect.right-(NeonButton.width+10),
                screen_rect.bottom-(NeonButton.height+11))
-        NeonButton(pos, "Stats", self.change_state, "STATSMENU", buttons)
+        NeonButton(pos, "Stats", self.change_state, "stats_menu", buttons)
         pos = (screen_rect.centerx-(NeonButton.width//2),
                screen_rect.bottom-(NeonButton.height+11))
         NeonButton(pos, "Exit", self.exit_game, None,
@@ -103,7 +103,7 @@ class LobbyScreen(data.state.State):
         rect_style = (screen_rect.left, screen_rect.top, 150, 95)
         Button(rect_style, buttons, idle_image=prepare.GFX["atm_dim"],
                hover_image=prepare.GFX["atm_bright"],
-               call=self.change_state, args="ATMSCREEN")
+               call=self.change_state, args="atm")
         return buttons
 
     def scroll_page(self, mag):

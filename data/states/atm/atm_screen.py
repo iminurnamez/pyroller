@@ -16,13 +16,13 @@ class ATMScreen(data.state.State):
 
     Uses a state system to handle the different ATM screens.
     """
-    name = 'ATMSCREEN'
+    name = "atm"
 
     def __init__(self):
         super(ATMScreen, self).__init__()
         self.use_music_handler = False
         self.screen_rect = pg.Rect((0, 0), prepare.RENDER_SIZE)
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
         self.states = {"MAINMENU": ATMMenu(),
                              "DEPOSIT": DepositScreen(),
                              "WITHDRAWAL": WithdrawalScreen(),

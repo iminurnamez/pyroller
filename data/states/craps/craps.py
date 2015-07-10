@@ -11,7 +11,7 @@ import data.state
 
 class Craps(data.state.State):
     show_in_lobby = True
-    name = 'Craps'
+    name = 'craps'
 
     def __init__(self):
         super(Craps, self).__init__()
@@ -78,7 +78,7 @@ class Craps(data.state.State):
 
     def back_to_lobby(self, *args):
         self.game_started = False
-        self.next = "LOBBYSCREEN"
+        self.next = "lobby"
         self.done = True
 
     def debug_roll(self, id, text):
@@ -123,7 +123,7 @@ class Craps(data.state.State):
         if event.type == pg.QUIT:
             #self.cash_out_player()
             self.done = True
-            self.next = "LOBBYSCREEN"
+            self.next = "lobby"
         elif event.type == pg.VIDEORESIZE:
             self.set_table()
         self.buttons.get_event(event)

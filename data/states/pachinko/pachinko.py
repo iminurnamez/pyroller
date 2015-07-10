@@ -16,7 +16,7 @@ font_size = 64
 class Pachinko(data.state.State):
     """Pachinko game."""
     show_in_lobby = True
-    name = 'Pachinko'
+    name = 'pachinko'
 
     # hack related to game states that do not finish
     did_startup = False
@@ -123,7 +123,7 @@ class Pachinko(data.state.State):
     def goto_lobby(self):
         self.cash_out()
         self.done = True
-        self.next = 'LOBBYSCREEN'
+        self.next = 'lobby'
 
     def on_jackpot(self, *args):
         self.casino_player.stats["Pachinko"]["jackpots"] += 1
