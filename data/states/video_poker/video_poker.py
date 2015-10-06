@@ -16,6 +16,7 @@ class VideoPoker(tools._State):
         self.casino_player = None
 
     def back_to_lobby(self, *args):
+        self.machine.cash_out()
         self.done = True
         self.next = "LOBBYSCREEN"
 
