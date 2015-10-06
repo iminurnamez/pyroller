@@ -330,13 +330,16 @@ class Machine:
         self.dealer.waiting = True
 
     def cash_out(self, *args):
+        total_credits = self.credits
+        self.credits = 0
+
         if self.state == "GAME OVER":
-            total_credits = self.credits + self.current_bet
-            self.credits = 0
+            total_credits += self.current_bet
             self.current_bet = 0
-            self.player.stats['cash'] += total_credits
-            for _ in range(total_credits):
-                self.credits_sound.play()
+
+        self.player.stats['cash'] += total_credits
+        for _ in range(total_credits):
+            self.credits_sound.play()
 
     def toggle_buttons(self, buttons, active=True):
         for button in buttons:
