@@ -32,6 +32,7 @@ class VideoPoker(data.state.State):
         return stats
 
     def back_to_lobby(self, *args):
+        self.machine.cash_out()
         self.done = True
         self.next = "lobby"
 
