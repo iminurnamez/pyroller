@@ -28,7 +28,13 @@ class VideoPoker(data.state.State):
 
         :return: collections.OrderedDict
         """
-        stats = OrderedDict([("games played", 0)])
+        stats = OrderedDict([("games played", 0),
+                             ("games won", 0),
+                             ("games lost", 0),
+                             ("total bets", 0),
+                             ("total winnings", 0),
+                             ("double ups won", 0),
+                             ("double ups lost", 0)])
         return stats
 
     def back_to_lobby(self, *args):

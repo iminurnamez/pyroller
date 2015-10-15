@@ -389,6 +389,7 @@ class Machine:
         self.dealer.playing = True
         self.dealer.waiting = False
         self.win = 0
+        self.player.increase('games played')
         if self.current_bet > 0:
             self.dealer.draw_cards()
             rank = self.dealer.evaluate_hand()
