@@ -390,15 +390,13 @@ class Machine:
         self.dealer.waiting = False
         self.win = 0
         self.player.increase('games played')
-        if self.current_bet > 0:
-            self.dealer.draw_cards()
-            rank = self.dealer.evaluate_hand()
-            self.pay_board.update_rank_rect(rank)
-        elif self.last_bet > 0:
-                self.make_last_bet()
-                self.dealer.draw_cards()
-                rank = self.dealer.evaluate_hand()
-                self.pay_board.update_rank_rect(rank)
+
+        if self.current_bet == 0 and self.last_bet > 0:
+            self.make_last_bet()
+
+        self.dealer.draw_cards()
+        rank = self.dealer.evaluate_hand()
+        self.pay_board.update_rank_rect(rank)
 
         for button in self.main_buttons:
             button.active = True
