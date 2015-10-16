@@ -311,7 +311,7 @@ class Machine:
                           {"topleft": (rect.x, y)})
             labels.append(label)
 
-        balance = 'Balance: ${}'.format(self.player.stats["cash"])
+        balance = 'Balance: ${}'.format(self.player.cash)
         pos = ((self.rect.right + self.padding), (self.rect.top + 300))
         label = Label(self.font, 50, balance, self.text_color,
                       {"topleft": pos})
@@ -323,7 +323,7 @@ class Machine:
         if self.state == "GAME OVER":
             self.start_waiting()
             self.credits += self.bet_value
-            self.player.stats["cash"] -= self.bet_value
+            self.player.cash -= self.bet_value
             self.credits_sound.play()
 
     def start_waiting(self):
@@ -338,7 +338,7 @@ class Machine:
             total_credits += self.current_bet
             self.current_bet = 0
 
-        self.player.stats['cash'] += total_credits
+        self.player.cash += total_credits
         for _ in range(total_credits):
             self.credits_sound.play()
 
