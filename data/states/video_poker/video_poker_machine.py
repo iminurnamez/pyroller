@@ -394,6 +394,7 @@ class Machine:
         if self.current_bet == 0 and self.last_bet > 0:
             self.make_last_bet()
 
+        self.player.increase('total wagered', self.current_bet)
         self.dealer.draw_cards()
         rank = self.dealer.evaluate_hand()
         self.pay_board.update_rank_rect(rank)
@@ -411,8 +412,11 @@ class Machine:
             index = self.current_bet - 1
             self.win = PAYTABLE[index][rank]
             self.help_labels = self.make_help_labels(self.pay_board.rect)
+            self.player.increase('games won')
             self.state = "WON"
         else:
+            self.player.increase('games lost')
+            self.player.increase('total lost', self.current_bet)
             self.state = "GAME OVER"
             self.start_waiting()
 
@@ -440,10 +444,14 @@ class Machine:
                 self.dealer.draw_cards()
                 if win:
                     self.win *= 2
+                    self.player.increase('double ups won')
                     self.state = "WON"
                     self.pay_board.rank_sound.play()
                 else:
                     self.win = 0
+                    self.player.increase('double ups lost')
+                    # Use last_bet because it has already been updated to the bet from the current hand
+                    self.player.increase('total lost', self.last_bet)
                     self.state = "GAME OVER"
                     self.start_waiting()
 
@@ -456,6 +464,7 @@ class Machine:
             self.dealer.double_up = True
         else:
             self.credits += self.win
+            self.player.increase('total won', self.win)
             self.state = "GAME OVER"
             self.start_waiting()
 
