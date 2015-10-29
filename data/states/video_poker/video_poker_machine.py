@@ -295,7 +295,7 @@ class Machine:
                                   self.text_color,
                                   {"centerx": rect.centerx, "top": y})
                     labels.append(label)
-                else:
+                elif self.current_bet == 0:
                     text = "game over"
                     label = Label(self.font, self.text_size, text,
                                   self.text_color,
