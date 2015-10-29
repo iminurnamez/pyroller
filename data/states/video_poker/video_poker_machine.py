@@ -177,9 +177,9 @@ class Machine:
         self.main_buttons = []
 
         button_list = [('bet', self.bet_one, None), ('bet max', self.bet_max, None),
-                       ('held', self.make_held, '0'), ('held', self.make_held, '1'),
-                       ('held', self.make_held, '2'), ('held', self.make_held, '3'),
-                       ('held', self.make_held, '4'), ('draw', self.draw_cards, None)]
+                       ('hold', self.make_held, '0'), ('hold', self.make_held, '1'),
+                       ('hold', self.make_held, '2'), ('hold', self.make_held, '3'),
+                       ('hold', self.make_held, '4'), ('draw', self.draw_cards, None)]
 
         settings = {"fill_color": pg.Color("#222222"),
                     "font": self.font,
@@ -434,10 +434,11 @@ class Machine:
     def make_held(self, *args):
         """ Some unknown issue with 0 Int args,
             so Str values passed to the func and
-            here are converter to Int"""
+            here are converted to Int"""
         index = int(args[0])
         if self.state == "PLAYING":
             self.dealer.toggle_held(index)
+
         elif self.state == "DOUBLE UP":
             if index > 0:  # if is not the first card
                 win = self.dealer.select_card(index)
