@@ -263,17 +263,13 @@ class Machine:
 
     def make_help_labels(self, rect):
         labels = []
-        text = "Credits {}".format(self.credits)
+        text = "Double up ?"
         label = Blinker(self.font, 100, text, "red",
                         {"centerx": rect.centerx, "top": rect.top}, 700)
         labels.append(label)
         text = "If selected card beats dealers, player wins. Ace is highest, two is lowest"
         label = MultiLineLabel(self.font, self.text_size, text,
                                self.text_color, {"center": rect.center}, align="center")
-        labels.append(label)
-        text = "Double up ?"
-        label = Blinker(self.font, 100, text, "red",
-                        {"centerx": rect.centerx, "bottom": rect.bottom}, 700)
         labels.append(label)
 
         return labels
@@ -302,14 +298,14 @@ class Machine:
                                   {"centerx": rect.centerx, "top": y})
                     labels.append(label)
 
-            text = 'Credits {}'.format(self.credits)
-            label = Label(self.font, self.text_size, text, self.text_color,
-                          {"topright": (rect.right, y)})
-            labels.append(label)
-            coins_text = "Current Bet {}".format(self.current_bet)
-            label = Label(self.font, self.text_size, coins_text, self.text_color,
-                          {"topleft": (rect.x, y)})
-            labels.append(label)
+        text = 'Credits {}'.format(self.credits)
+        label = Label(self.font, self.text_size, text, self.text_color,
+                      {"topright": (rect.right, y)})
+        labels.append(label)
+        coins_text = "Current Bet {}".format(self.current_bet)
+        label = Label(self.font, self.text_size, coins_text, self.text_color,
+                      {"topleft": (rect.x, y)})
+        labels.append(label)
 
         balance = 'Balance: ${}'.format(self.player.cash)
         pos = ((self.rect.right + self.padding), (self.rect.top + 300))
