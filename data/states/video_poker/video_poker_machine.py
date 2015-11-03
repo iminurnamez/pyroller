@@ -177,9 +177,9 @@ class Machine:
         self.main_buttons = []
 
         button_list = [('bet', self.bet_one, None), ('bet max', self.bet_max, None),
-                       ('held', self.make_held, '0'), ('held', self.make_held, '1'),
-                       ('held', self.make_held, '2'), ('held', self.make_held, '3'),
-                       ('held', self.make_held, '4'), ('draw', self.draw_cards, None)]
+                       ('hold', self.make_held, '0'), ('hold', self.make_held, '1'),
+                       ('hold', self.make_held, '2'), ('hold', self.make_held, '3'),
+                       ('hold', self.make_held, '4'), ('draw', self.draw_cards, None)]
 
         settings = {"fill_color": pg.Color("#222222"),
                     "font": self.font,
@@ -263,17 +263,13 @@ class Machine:
 
     def make_help_labels(self, rect):
         labels = []
-        text = "Credits {}".format(self.credits)
+        text = "Double up ?"
         label = Blinker(self.font, 100, text, "red",
                         {"centerx": rect.centerx, "top": rect.top}, 700)
         labels.append(label)
         text = "If selected card beats dealers, player wins. Ace is highest, two is lowest"
         label = MultiLineLabel(self.font, self.text_size, text,
                                self.text_color, {"center": rect.center}, align="center")
-        labels.append(label)
-        text = "Double up ?"
-        label = Blinker(self.font, 100, text, "red",
-                        {"centerx": rect.centerx, "bottom": rect.bottom}, 700)
         labels.append(label)
 
         return labels
@@ -295,21 +291,21 @@ class Machine:
                                   self.text_color,
                                   {"centerx": rect.centerx, "top": y})
                     labels.append(label)
-                elif self.current_bet > 0:
+                elif self.current_bet == 0:
                     text = "game over"
                     label = Label(self.font, self.text_size, text,
                                   self.text_color,
                                   {"centerx": rect.centerx, "top": y})
                     labels.append(label)
 
-            text = 'Credits {}'.format(self.credits)
-            label = Label(self.font, self.text_size, text, self.text_color,
-                          {"topright": (rect.right, y)})
-            labels.append(label)
-            coins_text = "Current Bet {}".format(self.current_bet)
-            label = Label(self.font, self.text_size, coins_text, self.text_color,
-                          {"topleft": (rect.x, y)})
-            labels.append(label)
+        text = 'Credits {}'.format(self.credits)
+        label = Label(self.font, self.text_size, text, self.text_color,
+                      {"topright": (rect.right, y)})
+        labels.append(label)
+        coins_text = "Current Bet {}".format(self.current_bet)
+        label = Label(self.font, self.text_size, coins_text, self.text_color,
+                      {"topleft": (rect.x, y)})
+        labels.append(label)
 
         balance = 'Balance: ${}'.format(self.player.cash)
         pos = ((self.rect.right + self.padding), (self.rect.top + 300))
@@ -434,10 +430,11 @@ class Machine:
     def make_held(self, *args):
         """ Some unknown issue with 0 Int args,
             so Str values passed to the func and
-            here are converter to Int"""
+            here are converted to Int"""
         index = int(args[0])
         if self.state == "PLAYING":
             self.dealer.toggle_held(index)
+
         elif self.state == "DOUBLE UP":
             if index > 0:  # if is not the first card
                 win = self.dealer.select_card(index)
